@@ -1,0 +1,6 @@
+@VieBook.BE_HostAddress = http://localhost:5143
+
+GET {{VieBook.BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
