@@ -24,7 +24,7 @@ The system is built with **ReactJS (Vite)** for the frontend and **ASP.NET Core 
 
 | Layer          | Stack                                              |
 |----------------|----------------------------------------------------|
-| Frontend       | ReactJS (Vite), TypeScript, TailwindCSS, Axios     |
+| Frontend       | ReactJS (Vite), JavaScript, TailwindCSS, Axios     |
 | Backend        | ASP.NET Core Web API, Entity Framework Core        |
 | Database       | SQL Server                                         |
 | AI Services    | OCR, Text-to-Speech API, Chatbot AI                |
