@@ -1,6 +1,28 @@
+using BusinessObject;
+using DataAccess;
+using DTOs;
+using Microsoft.EntityFrameworkCore;
+using Repositories;
+using Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddDbContext<VieBookContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+//Add DAO
+builder.Services.AddScoped<UserDAO>();
+
+
+//Add Repo
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+//Add Service
+builder.Services.AddScoped<IUserService, UserService>();
+
+//Add automapper
+builder.Services.AddAutoMapper(typeof(MappingDTO));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
