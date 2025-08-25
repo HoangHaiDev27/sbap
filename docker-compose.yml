@@ -1,0 +1,46 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: viebook-db
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1443:1433"
+    networks:
+      - viebook-net
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  backend:
+    build:
+      context: .
+      dockerfile: VieBook.BE/Dockerfile
+    container_name: viebook-api
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=VieBookDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+    ports:
+      - "5757:8080"
+    networks:
+      - viebook-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: VieBook.FE/Dockerfile
+    container_name: viebook-fe
+    depends_on:
+      - backend
+    ports:
+      - "3008:80"
+    networks:
+      - viebook-net
+
+networks:
+  viebook-net:
+    driver: bridge
+volumes:
+  sql_data:

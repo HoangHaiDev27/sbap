@@ -22,15 +22,15 @@ The system is built with **ReactJS (Vite)** for the frontend and **ASP.NET Core 
 
 ## 🛠️ Tech Stack
 
-| Layer          | Stack                                              |
-|----------------|----------------------------------------------------|
-| Frontend       | ReactJS (Vite), JavaScript, TailwindCSS, Axios     |
-| Backend        | ASP.NET Core Web API, Entity Framework Core        |
-| Database       | SQL Server                                         |
-| AI Services    | OCR, Text-to-Speech API, Chatbot AI                |
-| Auth           | Cookie-based Auth, JWT (API), Google OAuth         |
-| Real-time      | SignalR                                            |
-| Deployment     | Docker, CI/CD                                      |
+| Layer       | Stack                                          |
+| ----------- | ---------------------------------------------- |
+| Frontend    | ReactJS (Vite), JavaScript, TailwindCSS, Axios |
+| Backend     | ASP.NET Core Web API, Entity Framework Core    |
+| Database    | SQL Server                                     |
+| AI Services | OCR, Text-to-Speech API, Chatbot AI            |
+| Auth        | Cookie-based Auth, JWT (API), Google OAuth     |
+| Real-time   | SignalR                                        |
+| Deployment  | Docker, CI/CD                                  |
 
 ---
 
@@ -39,5 +39,6 @@ The system is built with **ReactJS (Vite)** for the frontend and **ASP.NET Core 
 ### 1. Clone repository
 
 ```bash
-git clone https://github.com/your-org/viebook.git
+git clone https://github.com/Thaohuong2k3/sbap.git
 cd viebook
+```
