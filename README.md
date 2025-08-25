@@ -42,3 +42,37 @@ The system is built with **ReactJS (Vite)** for the frontend and **ASP.NET Core 
 git clone https://github.com/Thaohuong2k3/sbap.git
 cd viebook
 ```
+
+### 2. Install frontend dependencies
+
+cd VieBook.FE
+npm install
+
+### 3. Run with Docker
+
+From the project root, build and start all services:
+
+docker-compose up --build
+
+if want to clear the container + network + volume :
+
+docker-compose down -v
+
+NOTE:
+Localhost configuration:
+
+Database (SQL Server)
+
+Host: localhost,1433
+
+Username: sa
+
+Password: YourStrong@Passw0rd
+
+Backend API
+
+URL: http://localhost:5757
+
+Frontend App
+
+URL: http://localhost:3008
