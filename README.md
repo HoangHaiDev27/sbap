@@ -22,15 +22,15 @@ The system is built with **ReactJS (Vite)** for the frontend and **ASP.NET Core 
 
 ## 🛠️ Tech Stack
 
-| Layer          | Stack                                              |
-|----------------|----------------------------------------------------|
-| Frontend       | ReactJS (Vite), JavaScript, TailwindCSS, Axios     |
-| Backend        | ASP.NET Core Web API, Entity Framework Core        |
-| Database       | SQL Server                                         |
-| AI Services    | OCR, Text-to-Speech API, Chatbot AI                |
-| Auth           | Cookie-based Auth, JWT (API), Google OAuth         |
-| Real-time      | SignalR                                            |
-| Deployment     | Docker, CI/CD                                      |
+| Layer       | Stack                                          |
+| ----------- | ---------------------------------------------- |
+| Frontend    | ReactJS (Vite), JavaScript, TailwindCSS, Axios |
+| Backend     | ASP.NET Core Web API, Entity Framework Core    |
+| Database    | SQL Server                                     |
+| AI Services | OCR, Text-to-Speech API, Chatbot AI            |
+| Auth        | Cookie-based Auth, JWT (API), Google OAuth     |
+| Real-time   | SignalR                                        |
+| Deployment  | Docker, CI/CD                                  |
 
 ---
 
@@ -39,5 +39,41 @@ The system is built with **ReactJS (Vite)** for the frontend and **ASP.NET Core 
 ### 1. Clone repository
 
 ```bash
-git clone https://github.com/your-org/viebook.git
+git clone https://github.com/Thaohuong2k3/sbap.git
 cd viebook
+```
+
+### 2. Install frontend dependencies
+
+```bash
+cd VieBook.FE
+npm install
+```
+
+### 3. Run with Docker
+
+From the project root, build and start all services:
+
+```bash
+docker-compose up --build
+```
+
+if want to clear the container + network + volume :
+
+```bash
+docker-compose down -v
+```
+
+## Localhost configuration:
+
+### Database (SQL Server):
+
+Host: localhost,1443
+
+#### Backend API:
+
+URL: http://localhost:5757
+
+### Frontend App:
+
+URL: http://localhost:3008
