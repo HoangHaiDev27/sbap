@@ -68,7 +68,7 @@ docker-compose down -v
 
 ### Database (SQL Server):
 
-Host: localhost,1433
+Host: localhost,1443
 
 #### Backend API:
 
