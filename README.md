@@ -66,18 +66,14 @@ docker-compose down -v
 
 ## Localhost configuration:
 
-### Database (SQL Server)
+### Database (SQL Server):
 
 Host: localhost,1433
 
-Username: sa
-
-Password: YourStrong@Passw0rd
-
-#### Backend API
+#### Backend API:
 
 URL: http://localhost:5757
 
-### Frontend App
+### Frontend App:
 
 URL: http://localhost:3008
