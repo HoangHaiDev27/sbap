@@ -1,0 +1,106 @@
+import { Link } from "react-router-dom";
+import useActiveMenu from "../../hooks/useActiveMenu";
+import logo from "../../assets/logo.png";
+import {
+  RiHomeLine,
+  RiVipCrownLine,
+  RiBook2Line,
+  RiTrophyLine,
+  RiHeadphoneLine,
+  RiChat3Line,
+  RiBookOpenLine,
+  RiBookReadLine,
+} from "react-icons/ri";
+
+export default function ClientSidebar() {
+  const menuItems = [
+    { id: "home", label: "Trang chủ", icon: RiHomeLine, href: "/" },
+    { id: "vip", label: "Mua gói VIP", icon: RiVipCrownLine, href: "/vip" },
+    { id: "library", label: "Thư viện", icon: RiBook2Line, href: "/library" },
+    {
+      id: "ranking",
+      label: "Bảng xếp hạng",
+      icon: RiTrophyLine,
+      href: "/ranking",
+    },
+    {
+      id: "listening",
+      label: "Đang nghe",
+      icon: RiHeadphoneLine,
+      href: "/listening",
+    },
+    { id: "forum", label: "Diễn đàn sách", icon: RiChat3Line, href: "/forum" },
+  ];
+
+  const categoryItems = [
+    {
+      id: "audiobook",
+      label: "Sách nói",
+      icon: RiBookOpenLine,
+      href: "/audiobooks",
+    },
+    {
+      id: "story",
+      label: "Truyện nói",
+      icon: RiBookReadLine,
+      href: "/stories",
+    },
+  ];
+
+  const { activeMenu, setActiveMenu, pathname } = useActiveMenu(menuItems);
+
+  return (
+    <aside className="fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg">
+      {/* logo */}
+      <div className="p-6">
+        <Link to="/" className="flex items-center space-x-3">
+          <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
+          <span className="text-2xl font-bold text-orange-500">VieBook</span>
+        </Link>
+      </div>
+
+      {/* menu chính */}
+      <nav className="px-4">
+        <ul className="space-y-1">
+          {menuItems.map((item) => (
+            <li key={item.id}>
+              <Link
+                to={item.href}
+                className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
+                  pathname === item.href || activeMenu === item.id
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+                onClick={() => setActiveMenu(item.id)}
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                <span className="text-sm">{item.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <hr className="my-6 border-gray-700" />
+
+        {/* danh mục */}
+        <ul className="space-y-1">
+          {categoryItems.map((item) => (
+            <li key={item.id}>
+              <Link
+                to={item.href}
+                className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
+                  pathname === item.href
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                <span className="text-sm">{item.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </aside>
+  );
+}

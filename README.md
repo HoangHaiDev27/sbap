@@ -48,6 +48,9 @@ cd viebook
 ```bash
 cd VieBook.FE
 npm install
+npm install tailwindcss @tailwindcss/vite
+npm install react-router-dom
+npm install react-icons
 ```
 
 ### 3. Run with Docker
