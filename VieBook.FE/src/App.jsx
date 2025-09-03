@@ -22,7 +22,7 @@ function App() {
         <main className="flex-1 overflow-auto p-6">
           <Routes>
             {/* Routes cho client */}
-            <Route path="/" element={<h1>Trang chủ</h1>} />
+            <Route path="/" element={<UsersPage/>} />
             <Route path="/vip" element={<h1>Mua gói VIP</h1>} />
             <Route path="/library" element={<h1>Thư viện</h1>} />
             <Route path="/ranking" element={<h1>Bảng xếp hạng</h1>} />
