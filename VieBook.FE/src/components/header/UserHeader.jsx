@@ -7,8 +7,9 @@ import {
   RiShoppingCartLine,
   RiUserLine,
 } from "react-icons/ri";
+import UserMenu from "../user/UserMenu";
 
-export default function ClientHeader() {
+export default function UserHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
@@ -60,12 +61,7 @@ export default function ClientHeader() {
             </span>
           </Link>
 
-          <Link
-            to="/auth/login"
-            className="w-8 h-8 flex items-center justify-center hover:text-blue-400 transition-colors cursor-pointer"
-          >
-            <RiUserLine className="text-xl" />
-          </Link>
+          <UserMenu />
         </div>
       </div>
     </header>

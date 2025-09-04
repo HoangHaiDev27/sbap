@@ -1,6 +1,7 @@
 import React from "react";
 import LibraryPage from "../pages/LibraryPage";
 import { Route, Routes } from "react-router-dom";
+import CustomerPage from "../pages/CustomerPage";
 
 function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ function AppRoutes() {
       {/* Routes cho staff/admin */}
       <Route path="/admin" element={<h1>Admin Dashboard</h1>} />
       <Route path="/staff" element={<h1>Staff Panel</h1>} />
+      <Route path="/customer" element={<CustomerPage />} />
     </Routes>
   );
 }

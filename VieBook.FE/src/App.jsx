@@ -7,7 +7,7 @@ import { Route, Routes } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  const [role, setRole] = useState("client");
+  const [role, setRole] = useState("user");
 
   return (
     <div className="flex h-screen">
