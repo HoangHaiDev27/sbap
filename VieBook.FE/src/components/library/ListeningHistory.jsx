@@ -179,16 +179,16 @@ export default function ListeningHistory() {
   return (
     <div className="space-y-6">
       {/* Header + Filter */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Lịch sử nghe sách</h2>
-        <div className="flex items-center space-x-3">
+        <div className="w-full sm:w-auto flex items-center gap-3">
           <select
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8"
+            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto"
           >
             <option value="all">Tất cả</option>
             <option value="listening">Đang nghe</option>
@@ -197,7 +197,7 @@ export default function ListeningHistory() {
         </div>
       </div>
       {/* 🔹 Stats */}
-      <div className="grid grid-cols-3 gap-6 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
         <div>
           <p className="text-2xl font-bold text-blue-400">{listeningCount}</p>
           <p className="text-gray-300">Đang nghe</p>
@@ -215,7 +215,7 @@ export default function ListeningHistory() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {currentBooks.map((book) => (
           <div
             key={book.id}

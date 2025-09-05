@@ -12,7 +12,7 @@ import {
   RiBookReadLine,
 } from "react-icons/ri";
 
-export default function ClientSidebar() {
+export default function ClientSidebar({ isOpen, onClose }) {
   const menuItems = [
     { id: "home", label: "Trang chủ", icon: RiHomeLine, href: "/" },
     { id: "vip", label: "Mua gói VIP", icon: RiVipCrownLine, href: "/vip" },
@@ -50,7 +50,20 @@ export default function ClientSidebar() {
   const { activeMenu, setActiveMenu, pathname } = useActiveMenu(menuItems);
 
   return (
-    <aside className="fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg">
+    <>
+      {/* Overlay for mobile */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity ${
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={onClose}
+      ></div>
+
+      <aside
+        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg transform transition-transform duration-200 lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
       {/* logo */}
       <div className="p-6">
         <Link to="/" className="flex items-center space-x-3">
@@ -101,6 +114,7 @@ export default function ClientSidebar() {
           ))}
         </ul>
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }

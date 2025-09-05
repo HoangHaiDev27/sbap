@@ -193,16 +193,16 @@ export default function PurchasedBook() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Sách đã mua</h2>
-        <div className="flex items-center space-x-3">
+        <div className="w-full sm:w-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
           <select
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8"
+            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8 w-full"
           >
             <option value="all">Tất cả định dạng</option>
             <option value="audiobook">Sách nói</option>
@@ -215,7 +215,7 @@ export default function PurchasedBook() {
               setSortBy(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8"
+            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8 w-full"
           >
             <option value="recent">Mới nhất</option>
             <option value="oldest">Cũ nhất</option>
@@ -227,7 +227,7 @@ export default function PurchasedBook() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginatedBooks.map((book) => (
           <div
             key={book.id}

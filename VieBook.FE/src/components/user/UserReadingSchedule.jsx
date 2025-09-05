@@ -52,11 +52,11 @@ function UserReadingSchedule() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Lịch trình đọc sách</h2>
         <button
           onClick={() => setShowAddModal(true)}
-          className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+          className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
         >
           <i className="ri-add-line mr-2"></i>
           Thêm lịch trình
@@ -64,7 +64,7 @@ function UserReadingSchedule() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-gray-750 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-orange-400 mb-1">
             {weeklyStats.totalTime} phút
@@ -86,8 +86,8 @@ function UserReadingSchedule() {
       </div>
 
       {/* Schedule list */}
-      <div className="bg-gray-750 rounded-lg p-6">
-        <div className="flex items-center space-x-4 mb-6">
+      <div className="bg-gray-750 rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Chọn ngày
@@ -124,9 +124,9 @@ function UserReadingSchedule() {
                   schedule.completed ? "border-green-500" : "border-orange-500"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <span className="font-semibold text-white">
                         {schedule.time}
                       </span>
@@ -141,7 +141,7 @@ function UserReadingSchedule() {
                     <div className="text-sm text-gray-400 mb-2">
                       {schedule.chapter}
                     </div>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
                       <span>
                         <i className="ri-time-line mr-1"></i>
                         {schedule.duration} phút
@@ -154,7 +154,7 @@ function UserReadingSchedule() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                     {!schedule.completed && (
                       <button className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm text-white whitespace-nowrap">
                         Hoàn thành

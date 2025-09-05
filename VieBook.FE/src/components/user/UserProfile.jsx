@@ -32,28 +32,28 @@ export default function UserProfile() {
   return (
     <div className="bg-gray-800 rounded-xl p-6 text-white">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h2 className="text-xl font-semibold">Thông tin cá nhân</h2>
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+            className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
           >
             <i className="ri-edit-line mr-2"></i>
             Chỉnh sửa
           </button>
         ) : (
-          <div className="flex space-x-2">
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:space-x-2">
             <button
               onClick={handleSave}
-              className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+              className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
             >
               <i className="ri-check-line mr-2"></i>
               Lưu
             </button>
             <button
               onClick={handleCancel}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
             >
               <i className="ri-close-line mr-2"></i>
               Hủy
@@ -98,7 +98,7 @@ export default function UserProfile() {
             <p className="font-medium">Thông báo email</p>
             <p className="text-gray-400 text-sm">Nhận thông báo qua email</p>
           </span>
-          <label className="inline-flex items-center cursor-pointer">
+          <label className="inline-flex items-center cursor-pointer ml-4">
             <input type="checkbox" className="sr-only peer" />
             <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:bg-green-500"></div>
           </label>

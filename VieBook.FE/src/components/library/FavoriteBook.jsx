@@ -206,7 +206,7 @@ export default function FavoriteBook() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Sách yêu thích</h2>
         <select
           value={filter}
@@ -214,7 +214,7 @@ export default function FavoriteBook() {
             setFilter(e.target.value);
             setCurrentPage(1);
           }}
-          className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8"
+          className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto"
         >
           <option value="all">Tất cả</option>
           <option value="reading">Đang đọc</option>
@@ -225,7 +225,7 @@ export default function FavoriteBook() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {currentBooks.map((book) => (
           <div
             key={book.id}

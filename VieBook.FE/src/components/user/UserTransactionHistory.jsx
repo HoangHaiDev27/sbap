@@ -143,11 +143,11 @@ export default function UserTransactionHistory() {
       <h2 className="text-xl font-semibold">Lịch sử giao dịch</h2>
 
       {/* List books */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {currentBooks.map((book) => (
           <div
             key={book.id}
-            className="flex bg-gray-800 rounded-lg p-4 space-x-4 cursor-pointer hover:bg-gray-700 transition"
+            className="flex bg-gray-800 rounded-lg p-4 gap-4 cursor-pointer hover:bg-gray-700 transition"
             onClick={() => setSelectedBook(book)}
           >
             <img
@@ -155,16 +155,16 @@ export default function UserTransactionHistory() {
               alt={book.title}
               className="w-24 h-32 object-cover rounded"
             />
-            <div className="flex-1 flex flex-col justify-between">
+            <div className="flex-1 flex flex-col justify-between min-w-0">
               <div>
-                <h3 className="font-semibold text-lg text-white line-clamp-2">
+                <h3 className="font-semibold text-base sm:text-lg text-white line-clamp-2">
                   {book.title}
                 </h3>
                 <p className="text-sm text-gray-400">By {book.author}</p>
                 <p className="text-sm text-gray-400">
                   Narrated by {book.narrator}
                 </p>
-                <div className="flex items-center space-x-2 mt-1 text-sm text-gray-400">
+                <div className="flex items-center gap-2 mt-1 text-sm text-gray-400 flex-wrap">
                   <i className="ri-time-line"></i>
                   <span>{book.duration}</span>
                   <span className="bg-orange-600 text-white text-xs px-2 py-0.5 rounded">
@@ -226,7 +226,7 @@ export default function UserTransactionHistory() {
       {/* Modal */}
       {selectedBook && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-3xl relative shadow-lg">
+          <div className="bg-gray-900 rounded-xl p-4 sm:p-6 w-full max-w-3xl relative shadow-lg mx-4">
             {/* Close button (X) */}
             <button
               onClick={handleCloseModal}

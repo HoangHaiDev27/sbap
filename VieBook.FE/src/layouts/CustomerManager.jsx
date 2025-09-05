@@ -71,7 +71,7 @@ export default function CustomerManager() {
       </p>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, index) => (
           <div
             key={index}
@@ -93,7 +93,7 @@ export default function CustomerManager() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-6 py-4 whitespace-nowrap font-medium transition-all duration-200 flex-1 justify-center ${
+              className={`flex items-center space-x-2 px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap font-medium transition-all duration-200 flex-1 justify-center ${
                 activeTab === tab.id
                   ? "text-orange-500 border-b-2 border-orange-500 bg-gray-750"
                   : "text-gray-400 border-b-2 border-transparent hover:text-white hover:bg-gray-750"
@@ -106,7 +106,7 @@ export default function CustomerManager() {
         </div>
 
         {/* Tab Content */}
-        <div className="p-6">{tabComponents[activeTab]}</div>
+        <div className="p-4 sm:p-6">{tabComponents[activeTab]}</div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import {
 } from "react-icons/ri";
 import UserMenu from "../user/UserMenu";
 
-export default function UserHeader() {
+export default function UserHeader({ onToggleSidebar }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
@@ -19,7 +19,10 @@ export default function UserHeader() {
         {/* Nút menu mobile */}
         <button
           className="lg:hidden w-6 h-6 flex items-center justify-center"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => {
+            setIsMenuOpen(!isMenuOpen);
+            onToggleSidebar && onToggleSidebar();
+          }}
         >
           <RiMenuLine className="text-xl" />
         </button>

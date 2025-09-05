@@ -124,19 +124,19 @@ export default function ReadingHistory() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Lịch sử đọc sách</h2>
-        <div className="flex items-center space-x-3">
+        <div className="w-full sm:w-auto flex items-center gap-3">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white pr-8"
+            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto"
           >
             <option value="all">Tất cả</option>
             <option value="reading">Đang đọc</option>
             <option value="completed">Đã hoàn thành</option>
           </select>
-          <button className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors">
+          <button className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto">
             <i className="ri-download-line mr-2"></i>
             Xuất dữ liệu
           </button>
@@ -144,7 +144,7 @@ export default function ReadingHistory() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-6 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
         <div>
           <p className="text-2xl font-bold text-blue-400">
             {readingHistory.filter((b) => b.status === "reading").length}
