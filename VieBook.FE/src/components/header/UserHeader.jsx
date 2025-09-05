@@ -51,16 +51,6 @@ export default function UserHeader() {
             <RiBookmarkLine className="text-xl" />
           </Link>
 
-          <Link
-            to="/cart"
-            className="w-6 h-6 flex items-center justify-center hover:text-blue-400 transition-colors cursor-pointer relative"
-          >
-            <RiShoppingCartLine className="text-xl" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              3
-            </span>
-          </Link>
-
           <UserMenu />
         </div>
       </div>

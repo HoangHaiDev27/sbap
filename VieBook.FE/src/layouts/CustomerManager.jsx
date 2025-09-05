@@ -6,39 +6,9 @@ import {
   RiExchangeDollarLine,
 } from "react-icons/ri";
 import UserProfile from "../components/user/UserProfile";
-function ReadingSchedule() {
-  return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Lịch trình đọc sách</h2>
-      <p className="text-gray-400">
-        Danh sách lịch trình đọc sách sẽ hiển thị ở đây.
-      </p>
-    </div>
-  );
-}
-
-function ListeningSchedule() {
-  return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Lịch trình nghe sách</h2>
-      <p className="text-gray-400">
-        Danh sách lịch trình nghe sách sẽ hiển thị ở đây.
-      </p>
-    </div>
-  );
-}
-
-function TransactionHistory() {
-  return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Lịch sử giao dịch</h2>
-      <p className="text-gray-400">
-        Thông tin giao dịch của khách hàng sẽ hiển thị ở đây.
-      </p>
-    </div>
-  );
-}
-
+import UserReadingSchedule from "../components/user/UserReadingSchedule";
+import UserListeningSchedule from "../components/user/UserListeningSchedule";
+import UserTransactionHistory from "../components/user/UserTransactionHistory";
 export default function CustomerManager() {
   const [activeTab, setActiveTab] = useState("personal");
 
@@ -86,9 +56,9 @@ export default function CustomerManager() {
 
   const tabComponents = {
     personal: <UserProfile />,
-    reading: <ReadingSchedule />,
-    listening: <ListeningSchedule />,
-    transactions: <TransactionHistory />,
+    reading: <UserReadingSchedule />,
+    listening: <UserListeningSchedule />,
+    transactions: <UserTransactionHistory />,
   };
 
   return (

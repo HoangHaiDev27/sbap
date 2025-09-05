@@ -125,7 +125,7 @@ export default function ReadingHistory() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-      <h2 className="text-xl font-semibold">Lịch sử đọc sách</h2>
+        <h2 className="text-xl font-semibold">Lịch sử đọc sách</h2>
         <div className="flex items-center space-x-3">
           <select
             value={filter}
@@ -145,26 +145,25 @@ export default function ReadingHistory() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-6 text-center">
-  <div>
-    <p className="text-2xl font-bold text-blue-400">
-      {readingHistory.filter((b) => b.status === "reading").length}
-    </p>
-    <p className="text-gray-300">Đang đọc</p>
-  </div>
-  <div>
-    <p className="text-2xl font-bold text-green-400">
-      {readingHistory.filter((b) => b.status === "completed").length}
-    </p>
-    <p className="text-gray-300">Đã hoàn thành</p>
-  </div>
-  <div>
-    <p className="text-2xl font-bold text-orange-400">
-      {Math.round(totalHours)}h
-    </p>
-    <p className="text-gray-300">Đã đọc</p>
-  </div>
-</div>
-
+        <div>
+          <p className="text-2xl font-bold text-blue-400">
+            {readingHistory.filter((b) => b.status === "reading").length}
+          </p>
+          <p className="text-gray-300">Đang đọc</p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-green-400">
+            {readingHistory.filter((b) => b.status === "completed").length}
+          </p>
+          <p className="text-gray-300">Đã hoàn thành</p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-orange-400">
+            {Math.round(totalHours)}h
+          </p>
+          <p className="text-gray-300">Đã đọc</p>
+        </div>
+      </div>
 
       {/* Book grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -228,12 +227,6 @@ export default function ReadingHistory() {
             <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-700">
               <button className="flex-1 bg-orange-500 hover:bg-orange-600 py-2 rounded-lg text-white text-sm font-medium">
                 Tiếp tục đọc
-              </button>
-              <button className="p-2 hover:bg-gray-600 rounded-lg">
-                <i className="ri-bookmark-line text-gray-400"></i>
-              </button>
-              <button className="p-2 hover:bg-gray-600 rounded-lg">
-                <i className="ri-share-line text-gray-400"></i>
               </button>
             </div>
           </div>

@@ -266,7 +266,9 @@ export default function ListeningHistory() {
                       {book.rating}
                     </span>
                   </div>
-                  <span>{new Date(book.lastListened).toLocaleDateString("vi-VN")}</span>
+                  <span>
+                    {new Date(book.lastListened).toLocaleDateString("vi-VN")}
+                  </span>
                 </div>
               </div>
             </div>
@@ -274,12 +276,6 @@ export default function ListeningHistory() {
             <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-700">
               <button className="flex-1 bg-orange-500 hover:bg-orange-600 py-2 rounded-lg text-white text-sm font-medium">
                 Tiếp tục nghe
-              </button>
-              <button className="p-2 hover:bg-gray-600 rounded-lg">
-                <i className="ri-bookmark-line text-gray-400"></i>
-              </button>
-              <button className="p-2 hover:bg-gray-600 rounded-lg">
-                <i className="ri-share-line text-gray-400"></i>
               </button>
             </div>
           </div>

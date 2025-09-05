@@ -5,6 +5,8 @@ function CustomerPage() {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex justify-center">
       <main className="w-full max-w-7xl p-8">
+        {/* ⚡ pt-24 để đẩy nội dung xuống dưới header */}
+
         {/* Thông tin khách hàng */}
         <div className="bg-gray-800 rounded-xl p-8 mb-8">
           <div className="flex items-center space-x-6">
