@@ -1,12 +1,13 @@
 import React from "react";
 import LibraryPage from "../pages/LibraryPage";
 import { Route, Routes } from "react-router-dom";
+import Home from "../pages/Home";
 
 function AppRoutes() {
   return (
     <Routes>
       {/* Routes cho client */}
-      <Route path="/" element={<h1>Trang chủ</h1>} />
+      <Route path="/" element={<Home />} />
       <Route path="/vip" element={<h1>Mua gói VIP</h1>} />
       <Route path="/library" element={<LibraryPage />} />
       <Route path="/ranking" element={<h1>Bảng xếp hạng</h1>} />

@@ -20,8 +20,10 @@ function App() {
         <HeaderManager role={role} />
 
         {/* Main content */}
-
-        <AppRoutes />
+        <main className="flex-1">
+          <AppRoutes />
+        </main>
+        {/* <AppRoutes /> */}
 
         {/* Footer */}
         <Footer />
