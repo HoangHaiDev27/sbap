@@ -5,7 +5,8 @@ import Footer from "./components/Footer";
 import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  const [role, setRole] = useState("user");
+  //const [role, setRole] = useState("user");
+  const [role, setRole] = useState("owner");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (

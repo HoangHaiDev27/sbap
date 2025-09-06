@@ -4,6 +4,9 @@ import { Route, Routes } from "react-router-dom";
 import CustomerPage from "../pages/CustomerPage";
 import UserWishlist from "../components/user/UserWishlist";
 import WishListPage from "../pages/WishListPage";
+import Dashboard from "../pages/owner/Dashboard";
+import OwnerBooks from "../pages/owner/books/OwnerBooks";
+import BookForm from "../pages/owner/books/BookForm";
 
 function AppRoutes() {
   return (
@@ -20,6 +23,11 @@ function AppRoutes() {
       <Route path="/admin" element={<h1>Admin Dashboard</h1>} />
       <Route path="/staff" element={<h1>Staff Panel</h1>} />
       <Route path="/customer" element={<CustomerPage />} />
+
+      {/* Routes cho book owner */}
+      <Route path="/owner/dashboard" element={<Dashboard />} />
+      <Route path="/owner/books" element={<OwnerBooks />} />
+      <Route path="/owner/books/new" element={<BookForm />} />
     </Routes>
   );
 }
