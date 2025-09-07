@@ -1,38 +1,23 @@
-import { RiAddLine, RiBook2Line, RiCheckLine, RiGiftLine, RiDraftLine } from "react-icons/ri";
+import {
+  RiAddLine,
+  RiBook2Line,
+  RiCheckLine,
+  RiGiftLine,
+  RiDraftLine,
+  RiEdit2Line,
+  RiEyeLine,
+  RiDeleteBin6Line,
+} from "react-icons/ri";
+import { Link, useParams } from "react-router-dom";
 
 export default function OwnerChapters() {
+  const { bookId } = useParams(); // lấy id sách từ URL
+
   // Demo data
   const chapters = [
-    {
-      id: 1,
-      title: "Chương 1: Khởi đầu cuộc hành trình",
-      words: 2500,
-      status: "Đã xuất bản",
-      free: true,
-      preview: true,
-      price: 0,
-      date: "15/1/2024",
-    },
-    {
-      id: 2,
-      title: "Chương 2: Gặp gỡ những người bạn mới",
-      words: 3200,
-      status: "Đã xuất bản",
-      free: false,
-      preview: false,
-      price: 5000,
-      date: "16/1/2024",
-    },
-    {
-      id: 3,
-      title: "Chương 3: Thách thức đầu tiên",
-      words: 2800,
-      status: "Nháp",
-      free: false,
-      preview: false,
-      price: 5000,
-      date: "—",
-    },
+    { id: 1, title: "Chương 1: Khởi đầu cuộc hành trình", words: 2500, status: "Đã xuất bản", free: true, preview: true, price: 0, date: "15/1/2024" },
+    { id: 2, title: "Chương 2: Gặp gỡ những người bạn mới", words: 3200, status: "Đã xuất bản", free: false, preview: false, price: 5000, date: "16/1/2024" },
+    { id: 3, title: "Chương 3: Thách thức đầu tiên", words: 2800, status: "Nháp", free: false, preview: false, price: 5000, date: "—" },
   ];
 
   return (
@@ -43,9 +28,13 @@ export default function OwnerChapters() {
           <h1 className="text-2xl font-bold">Quản lý Chương</h1>
           <p className="text-gray-400">Truyện: Triết học cuộc sống</p>
         </div>
-        <button className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
+
+        <Link
+          to={`/owner/books/${bookId}/chapters/new`}
+          className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+        >
           <RiAddLine className="mr-2" /> Thêm chương mới
-        </button>
+        </Link>
       </div>
 
       {/* Stats */}

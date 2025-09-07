@@ -15,8 +15,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import RecentOrders from "./components/RecentOrders";
-import BestSellers from "./components/BestSellers";
+import RecentOrders from "../../components/owner/dashboard/RecentOrders";
+import BestSellers from "../../components/owner/dashboard/BestSellers";
 
 export default function OwnerDashboard() {
   // dữ liệu demo
