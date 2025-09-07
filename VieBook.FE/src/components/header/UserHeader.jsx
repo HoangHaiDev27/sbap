@@ -7,8 +7,9 @@ import {
   RiShoppingCartLine,
   RiUserLine,
 } from "react-icons/ri";
+import UserMenu from "../user/UserMenu";
 
-export default function ClientHeader() {
+export default function UserHeader({ onToggleSidebar }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
@@ -18,7 +19,10 @@ export default function ClientHeader() {
         {/* Nút menu mobile */}
         <button
           className="lg:hidden w-6 h-6 flex items-center justify-center"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => {
+            setIsMenuOpen(!isMenuOpen);
+            onToggleSidebar && onToggleSidebar();
+          }}
         >
           <RiMenuLine className="text-xl" />
         </button>
@@ -50,22 +54,7 @@ export default function ClientHeader() {
             <RiBookmarkLine className="text-xl" />
           </Link>
 
-          <Link
-            to="/cart"
-            className="w-6 h-6 flex items-center justify-center hover:text-blue-400 transition-colors cursor-pointer relative"
-          >
-            <RiShoppingCartLine className="text-xl" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              3
-            </span>
-          </Link>
-
-          <Link
-            to="/auth/login"
-            className="w-8 h-8 flex items-center justify-center hover:text-blue-400 transition-colors cursor-pointer"
-          >
-            <RiUserLine className="text-xl" />
-          </Link>
+          <UserMenu />
         </div>
       </div>
     </header>

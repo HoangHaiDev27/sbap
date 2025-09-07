@@ -1,31 +1,36 @@
 import React, { useState } from "react";
-import UsersPage from "./pages/UsersPage";
 import SidebarManager from "./layouts/SidebarManager";
 import HeaderManager from "./layouts/HeaderManager";
 import Footer from "./components/Footer";
-import { Route, Routes } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  const [role, setRole] = useState("client");
+  const [role, setRole] = useState("user");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar - fixed position */}
-      <SidebarManager role={role} />
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <SidebarManager
+        role={role}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col ml-64 bg-gray-900 text-white">
+      {/* Main layout */}
+      <div className="flex flex-col flex-1 bg-gray-900 text-white lg:ml-64">
         {/* Header */}
-        <HeaderManager role={role} />
+        <HeaderManager
+          role={role}
+          onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
+        />
 
-        {/* Main content */}
+        {/* Main content (chiếm hết phần trống còn lại) */}
         <main className="flex-1">
           <AppRoutes />
         </main>
-        {/* <AppRoutes /> */}
 
-        {/* Footer */}
+        {/* Footer (luôn nằm cuối trang, không đè nội dung) */}
         <Footer />
       </div>
     </div>

@@ -63,9 +63,9 @@ export default function LibraryManager() {
   };
 
   return (
-    <div className="bg-gray-900 min-h-screen p-6 text-white">
+    <div className="bg-gray-900  p-6 text-white">
       {/* Title */}
-      <h1 className="text-2xl font-bold mb-2">Thư viện của tôi</h1>
+      <h1 className="text-3xl font-bold mb-2">Thư viện của tôi</h1>
       <p className="text-gray-400 mb-6">
         Quản lý tất cả nội dung đã nghe và yêu thích của bạn
       </p>
@@ -88,12 +88,12 @@ export default function LibraryManager() {
 
       {/* Tabs */}
       <div className="bg-gray-800 rounded-xl overflow-hidden mb-6">
-        <div className="flex border-b border-gray-700 overflow-x-auto">
+        <div className="flex justify-evenly border-b border-gray-700">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-6 py-4 whitespace-nowrap font-medium transition-colors border-b-2 ${
+              className={`flex items-center space-x-2 px-6 py-4 whitespace-nowrap font-medium transition-colors border-b-2 flex-1 justify-center ${
                 activeTab === tab.id
                   ? "text-orange-500 border-orange-500 bg-gray-750"
                   : "text-gray-400 border-transparent hover:text-white hover:bg-gray-750"

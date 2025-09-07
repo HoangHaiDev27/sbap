@@ -1,16 +1,16 @@
 import React from "react";
-import ClientHeader from "../components/header/ClientHeader";
+import UserHeader from "../components/header/UserHeader";
 import StaffHeader from "../components/header/StaffHeader";
 import AdminHeader from "../components/header/AdminHeader";
 
-export default function HeaderManager({ role }) {
+export default function HeaderManager({ role, onToggleSidebar }) {
   switch (role) {
-    case "client":
-      return <ClientHeader />;
+    case "user":
+      return <UserHeader onToggleSidebar={onToggleSidebar} />;
     case "staff":
-      return <StaffHeader />;
+      return <StaffHeader onToggleSidebar={onToggleSidebar} />;
     case "admin":
-      return <AdminHeader />;
+      return <AdminHeader onToggleSidebar={onToggleSidebar} />;
     default:
       return null;
   }
