@@ -10,7 +10,7 @@ export default function BookCarousel({ title, books, hasCategories, categories }
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">{title}</h2>
         <Link
-          to="/books"
+          to="/bookdetails"
           className="text-blue-400 hover:text-blue-300 text-sm cursor-pointer whitespace-nowrap flex items-center"
         >
           Xem thêm <span className="ml-1">➔</span>
@@ -41,7 +41,7 @@ export default function BookCarousel({ title, books, hasCategories, categories }
         {books.map((book) => (
           <Link
             key={book.id}
-            to={`/books/${book.id}`}
+            to={`/bookdetails/${book.id}`}
             className="flex-shrink-0 cursor-pointer group"
           >
             <div className="min-w-[10rem] w-40">
