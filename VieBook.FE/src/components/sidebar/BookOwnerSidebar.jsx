@@ -16,7 +16,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
     { id: "dashboard", label: "Dashboard", icon: RiDashboardLine, href: "/owner/dashboard" },
     { id: "books", label: "Quản lý Sách", icon: RiBook2Line, href: "/owner/books" },
     { id: "sales", label: "Lịch sử bán hàng", icon: RiFileListLine, href: "/owner/sales-history" },
-    { id: "promotion", label: "Quản lý Promotion", icon: RiCoupon2Line, href: "/owner/promotions" },
+    { id: "promotion", label: "Quản lý Khuyến mãi", icon: RiCoupon2Line, href: "/owner/promotions" },
     { id: "articles", label: "Quản lý Bài viết", icon: RiArticleLine, href: "/owner/articles" },
     { id: "chat", label: "Chat với Staff", icon: RiMessage3Line, href: "/owner/chat" },
     { id: "feedback", label: "Đánh giá & phản hồi", icon: RiFeedbackLine, href: "/owner/feedback" },
