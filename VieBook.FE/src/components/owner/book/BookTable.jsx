@@ -1,4 +1,12 @@
-import { RiStarFill } from "react-icons/ri";
+import { Link } from "react-router-dom";
+import {
+  RiStarFill,
+  RiBookOpenLine,
+  RiEyeLine,
+  RiEdit2Line,
+  RiDeleteBinLine,
+  RiSoundModuleLine,
+} from "react-icons/ri";
 
 export default function BookTable({ books }) {
   return (
@@ -50,20 +58,23 @@ export default function BookTable({ books }) {
                 </span>
               </td>
               <td className="p-3 flex space-x-2">
-                <button className="px-2 py-1 bg-blue-500 rounded text-xs hover:bg-blue-600">
-                  Xem
+                <button className="flex items-center px-2 py-1 bg-blue-500 rounded text-xs hover:bg-blue-600">
+                  <RiEyeLine className="mr-1" /> Xem
                 </button>
-                <button className="px-2 py-1 bg-green-500 rounded text-xs hover:bg-green-600">
-                  Sửa
+                <button className="flex items-center px-2 py-1 bg-green-500 rounded text-xs hover:bg-green-600">
+                  <RiEdit2Line className="mr-1" /> Sửa
                 </button>
-                <button className="px-2 py-1 bg-purple-500 rounded text-xs hover:bg-purple-600">
-                  Audio
+                <Link
+                  to={`/owner/books/${book.id}/chapters`}
+                  className="flex items-center px-2 py-1 bg-indigo-500 rounded text-xs hover:bg-indigo-600"
+                >
+                  <RiBookOpenLine className="mr-1" /> Quản lý chương
+                </Link>
+                <button className="flex items-center px-2 py-1 bg-purple-500 rounded text-xs hover:bg-purple-600">
+                  <RiSoundModuleLine className="mr-1" /> Audio
                 </button>
-                <button className="px-2 py-1 bg-orange-500 rounded text-xs hover:bg-orange-600">
-                  Tạm dừng
-                </button>
-                <button className="px-2 py-1 bg-red-500 rounded text-xs hover:bg-red-600">
-                  Xóa
+                <button className="flex items-center px-2 py-1 bg-red-500 rounded text-xs hover:bg-red-600">
+                  <RiDeleteBinLine className="mr-1" /> Xóa
                 </button>
               </td>
             </tr>

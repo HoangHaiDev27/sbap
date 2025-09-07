@@ -5,8 +5,9 @@ import CustomerPage from "../pages/CustomerPage";
 import UserWishlist from "../components/user/UserWishlist";
 import WishListPage from "../pages/WishListPage";
 import Dashboard from "../pages/owner/Dashboard";
-import OwnerBooks from "../pages/owner/books/OwnerBooks";
-import BookForm from "../pages/owner/books/BookForm";
+import OwnerBooks from "../pages/owner/OwnerBooks";
+import BookForm from "../components/owner/forms/BookForm";
+import OwnerChapters from "../pages/owner/OwnerChapters";
 
 function AppRoutes() {
   return (
@@ -28,6 +29,9 @@ function AppRoutes() {
       <Route path="/owner/dashboard" element={<Dashboard />} />
       <Route path="/owner/books" element={<OwnerBooks />} />
       <Route path="/owner/books/new" element={<BookForm />} />
+      {/* Quản lý chương theo từng sách */}
+      <Route path="/owner/books/:bookId/chapters" element={<OwnerChapters />} />
+      
     </Routes>
   );
 }

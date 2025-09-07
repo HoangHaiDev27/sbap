@@ -1,7 +1,7 @@
 import { RiAddLine } from "react-icons/ri";
 import { useState } from "react";
-import BookFilters from "./BookFilters";
-import BookTable from "./BookTable";
+import BookFilters from "../../components/owner/book/BookFilters";
+import BookTable from "../../components/owner/book/BookTable";
 import { Link } from "react-router-dom";
 
 export default function OwnerBooks() {
