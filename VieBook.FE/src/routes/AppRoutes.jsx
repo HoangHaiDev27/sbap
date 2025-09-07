@@ -8,6 +8,9 @@ import Home from "../pages/HomePage";
 import AudiobookPage from "../pages/AudiobookPage";
 import StoryPage from "../pages/StoryPage";
 import BookDetailPage from "../pages/BookDetailPage";
+import ReaderPage from "../pages/ReaderPage";
+import ReaderManager from "../layouts/ReaderManager";
+import PlayerPage from "../pages/PlayerPage";
 
 function AppRoutes() {
   return (
@@ -24,6 +27,9 @@ function AppRoutes() {
       <Route path="/stories" element={<StoryPage />} />
       <Route path="/stories" element={<StoryPage />} />
       <Route path="/bookdetails/:id" element={<BookDetailPage />} />
+      {/* Reader dùng ReaderManager làm layout */}
+      <Route path="/reader/:id" element={<ReaderPage />} />
+      <Route path="/player/:id" element={<PlayerPage />} />
       {/* Routes cho staff/admin */}
       <Route path="/admin" element={<h1>Admin Dashboard</h1>} />
       <Route path="/staff" element={<h1>Staff Panel</h1>} />

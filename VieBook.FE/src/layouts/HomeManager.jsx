@@ -74,7 +74,7 @@ export default function HomeManager() {
         />
 
         {/* Podcast đặc sắc */}
-        <BookCarousel
+        {/* <BookCarousel
           title="Podcast đặc sắc"
           hasCategories
           categories={[
@@ -102,7 +102,7 @@ export default function HomeManager() {
               category: "Văn hóa",
             },
           ]}
-        />
+        /> */}
 
         {/* Tác giả nổi bật */}
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">

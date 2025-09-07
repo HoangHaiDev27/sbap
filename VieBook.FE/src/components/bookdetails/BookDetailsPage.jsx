@@ -74,7 +74,7 @@ export default function BookDetailPage() {
           Trang chủ
         </Link>
         <RiArrowRightSLine />
-        <Link to="/books" className="hover:text-white">
+        <Link to="/audiobooks" className="hover:text-white">
           Sách
         </Link>
         <RiArrowRightSLine />
@@ -127,7 +127,7 @@ export default function BookDetailPage() {
               </button>
               <button className="flex-1 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex items-center justify-center gap-2">
                 <RiShareLine />
-                Chia sẻ
+                Báo cáo
               </button>
             </div>
           </div>

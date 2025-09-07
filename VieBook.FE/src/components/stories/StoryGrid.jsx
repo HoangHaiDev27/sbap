@@ -58,7 +58,8 @@ export default function StoryGrid() {
           key={story.id}
           className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors"
         >
-          <Link href={`/player/${story.id}`}>
+          {/* 👉 đổi book.id thành story.id */}
+          <Link to={`/player/${story.id}`}>
             <div className="relative">
               <img
                 src={story.coverImage}
