@@ -3,11 +3,18 @@ import SidebarManager from "./layouts/SidebarManager";
 import HeaderManager from "./layouts/HeaderManager";
 import Footer from "./components/Footer";
 import AppRoutes from "./routes/AppRoutes";
-
+import { useLocation } from "react-router-dom";
 function App() {
   const [role, setRole] = useState("user");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const noLayoutRoutes = ["/auth"]; 
 
+  const hideLayout = noLayoutRoutes.includes(location.pathname);
+
+  if (hideLayout) {
+    //  Chỉ render nội dung route, không layout
+    return <AppRoutes />;
+  }
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
