@@ -12,6 +12,7 @@ import ChapterForm from "../pages/owner/ChapterForm";
 import OwnerOrders from "../pages/owner/OwnerOrders";
 import OrderDetail from "../pages/owner/OrderDetail";
 import PromotionPage from "../pages/owner/PromotionPage";
+import OwnerReviews from "../pages/owner/OwnerReviews";
 
 function AppRoutes() {
   return (
@@ -38,6 +39,7 @@ function AppRoutes() {
       <Route path="/owner/sales-history" element={<OwnerOrders />} />
       <Route path="/owner/orders/:orderId" element={<OrderDetail />} />
       <Route path="/owner/promotions" element={<PromotionPage />} />
+      <Route path="/owner/feedback" element={<OwnerReviews />} />
       
     </Routes>
   );
