@@ -13,6 +13,7 @@ import OwnerOrders from "../pages/owner/OwnerOrders";
 import OrderDetail from "../pages/owner/OrderDetail";
 import PromotionPage from "../pages/owner/PromotionPage";
 import OwnerReviews from "../pages/owner/OwnerReviews";
+import SupportChat from "../pages/owner/SupportChat";
 
 function AppRoutes() {
   return (
@@ -40,6 +41,7 @@ function AppRoutes() {
       <Route path="/owner/orders/:orderId" element={<OrderDetail />} />
       <Route path="/owner/promotions" element={<PromotionPage />} />
       <Route path="/owner/feedback" element={<OwnerReviews />} />
+      <Route path="/owner/chat" element={<SupportChat />} />
       
     </Routes>
   );
