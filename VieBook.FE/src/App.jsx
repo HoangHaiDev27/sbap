@@ -2,13 +2,45 @@ import React, { useState } from "react";
 import SidebarManager from "./layouts/SidebarManager";
 import HeaderManager from "./layouts/HeaderManager";
 import Footer from "./components/Footer";
+import ReaderManager from "./layouts/ReaderManager";
+import PlayerManager from "./layouts/PlayerManager";
 import AppRoutes from "./routes/AppRoutes";
-
+import { useLocation } from "react-router-dom";
 function App() {
-  //const [role, setRole] = useState("user");
-  const [role, setRole] = useState("owner");
+  const location = useLocation();
+  const [role, setRole] = useState("user");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const noLayoutRoutes = ["/auth"]; 
 
+  const hideLayout = noLayoutRoutes.includes(location.pathname);
+
+  if (hideLayout) {
+    //  Chỉ render nội dung route, không layout
+    return <AppRoutes />;
+  }
+   // Kiểm tra layout đặc biệt
+  const isReaderPage = location.pathname.startsWith("/reader");
+  const isPlayerPage = location.pathname.startsWith("/player");
+
+  // Nếu là trang Reader
+  if (isReaderPage) {
+    return (
+      <ReaderManager>
+        <AppRoutes />
+      </ReaderManager>
+    );
+  }
+
+  // Nếu là trang Player
+  if (isPlayerPage) {
+    return (
+      <PlayerManager>
+        <AppRoutes />
+      </PlayerManager>
+    );
+  }
+
+  // Layout mặc định cho tất cả các trang khác
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
@@ -26,12 +58,12 @@ function App() {
           onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
         />
 
-        {/* Main content (chiếm hết phần trống còn lại) */}
+        {/* Main content */}
         <main className="flex-1">
           <AppRoutes />
         </main>
 
-        {/* Footer (luôn nằm cuối trang, không đè nội dung) */}
+        {/* Footer */}
         <Footer />
       </div>
     </div>

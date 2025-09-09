@@ -1,4 +1,17 @@
 services:
+  db-init:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      - db
+    volumes:
+      - ./DB/init.sql:/init.sql
+    entrypoint: >
+      /bin/bash -c "
+        sleep 20;
+        /opt/mssql-tools/bin/sqlcmd -S db -U sa -P YourStrong@Passw0rd -d master -i /init.sql
+      "
+    networks:
+      - viebook-net
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: viebook-db
@@ -21,7 +34,7 @@ services:
       - db
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=VieBookDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=db;Database=VieBook;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
     ports:
       - "5757:8080"
     networks:
