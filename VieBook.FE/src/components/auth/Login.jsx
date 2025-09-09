@@ -1,25 +1,27 @@
 import React, { useState } from "react";
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
+
 export default function Login({ setActiveTab }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Login:", { email, password, rememberMe });
   };
 
   return (
-    <div className="w-full max-w-md mx-auto ">
+    <div className="w-full max-w-md mx-auto py-8">
       {/* Logo */}
       <div className="text-center mb-4">
         <img
           src={logo}
           alt="VieBook Logo"
-          className="w-20 h-20 mx-auto "
+          className="w-20 h-20 mx-auto"
         />
         <p className="text-gray-400 text-sm">Chào mừng bạn trở lại</p>
       </div>
@@ -29,7 +31,7 @@ export default function Login({ setActiveTab }) {
         Đăng nhập
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email Field */}
         <div>
           <label className="block text-sm text-gray-400 mb-2">Email</label>
@@ -182,26 +184,26 @@ export default function Login({ setActiveTab }) {
 
       {/* Back to Homepage */}
       <div className="text-center mt-6">
-            <button
-                onClick={() => navigate("/")}
-                className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
-            >
-                <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                />
-                </svg>
-                Về trang chủ
-            </button>
-        </div>
+        <button
+          onClick={() => navigate("/")}
+          className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
+        >
+          <svg
+            className="w-4 h-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Về trang chủ
+        </button>
+      </div>
     </div>
   );
 }

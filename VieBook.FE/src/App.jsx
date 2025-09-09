@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
-
 import SidebarManager from "./layouts/SidebarManager";
 import HeaderManager from "./layouts/HeaderManager";
 import Footer from "./components/Footer";
