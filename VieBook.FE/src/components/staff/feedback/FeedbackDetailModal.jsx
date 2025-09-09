@@ -14,10 +14,19 @@ export default function FeedbackDetailModal({
   if (!feedback) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose} // click nền để đóng
+    >
+      <div
+        className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
+        onClick={(e) => e.stopPropagation()} // chặn click trong modal
+      >
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Chi tiết Feedback</h3>
+          <h3 className="text-xl font-semibold text-gray-900">
+            Chi tiết Feedback
+          </h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer text-gray-700"
@@ -26,15 +35,18 @@ export default function FeedbackDetailModal({
           </button>
         </div>
 
+        {/* Content */}
         <div className="space-y-6">
           <div className="flex items-center space-x-4">
             <img
               className="h-16 w-16 rounded-full object-cover object-top"
               src={feedback.avatar}
-              alt=""
+              alt={feedback.user}
             />
             <div>
-              <h4 className="text-lg font-medium text-gray-900">{feedback.user}</h4>
+              <h4 className="text-lg font-medium text-gray-900">
+                {feedback.user}
+              </h4>
               <p className="text-gray-600">{feedback.email}</p>
               <div className="flex items-center space-x-2 mt-1">
                 <span
@@ -64,7 +76,9 @@ export default function FeedbackDetailModal({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tiêu đề
             </label>
-            <div className="text-lg font-medium text-gray-900">{feedback.title}</div>
+            <div className="text-lg font-medium text-gray-900">
+              {feedback.title}
+            </div>
           </div>
 
           <div>
@@ -81,7 +95,9 @@ export default function FeedbackDetailModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Sách liên quan
               </label>
-              <div className="text-blue-600 font-medium">{feedback.bookTitle}</div>
+              <div className="text-blue-600 font-medium">
+                {feedback.bookTitle}
+              </div>
             </div>
           )}
 
@@ -92,6 +108,7 @@ export default function FeedbackDetailModal({
             <div className="text-gray-900">{feedback.submitDate}</div>
           </div>
 
+          {/* Actions */}
           <div className="flex space-x-3">
             {feedback.status === "new" && (
               <button

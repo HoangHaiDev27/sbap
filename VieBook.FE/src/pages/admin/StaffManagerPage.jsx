@@ -22,7 +22,7 @@ export default function StaffManagement() {
         const onKey = (e) => { if (e.key === 'Escape') setShowModal(false); };
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
-        }, [showModal]);
+    }, [showModal]);
 
     // Fake data (sau này thay API)
     const staffMembers = [
@@ -222,8 +222,8 @@ export default function StaffManagement() {
             {/* Modal */}
             {showModal && (
                 <div
-                    // overlay: mờ sáng + blur, click ngoài sẽ đóng modal
-                    className="fixed inset-0 bg-gray-200/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn"
+                    // overlay: nền tối mờ, click ngoài sẽ đóng modal
+                    className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fadeIn"
                     onClick={() => setShowModal(false)}
                 >
                     <div
@@ -303,6 +303,7 @@ export default function StaffManagement() {
                     </div>
                 </div>
             )}
+
 
         </div>
     );

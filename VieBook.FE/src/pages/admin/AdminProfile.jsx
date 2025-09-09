@@ -127,7 +127,7 @@ export default function AdminProfile() {
 
             {/* Modal chỉnh sửa */}
             {showEditModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
                     <div className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative text-gray-800">
                         <h3 className="text-lg font-semibold mb-4">Chỉnh sửa thông tin</h3>
 

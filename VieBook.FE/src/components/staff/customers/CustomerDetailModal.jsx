@@ -3,12 +3,12 @@ import React from "react";
 export default function CustomerDetailModal({ customer, onClose, onToggleStatus }) {
   return (
     <div
-      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={onClose} // click nền để đóng
     >
       {/* Modal content */}
       <div
-        className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg"
+        className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
         onClick={(e) => e.stopPropagation()} // chặn click trong modal
       >
         {/* Header */}

@@ -6,8 +6,8 @@ import AppRoutes from "./routes/AppRoutes";
 
 function App() {
   //const [role, setRole] = useState("user");
-  //const [role, setRole] = useState("admin");
-  const [role, setRole] = useState("staff");
+  const [role, setRole] = useState("admin");
+  //const [role, setRole] = useState("staff");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (

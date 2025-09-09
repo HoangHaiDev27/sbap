@@ -5,9 +5,16 @@ export default function BookDetailModal({ book, onClose, onApprove, onReject }) 
   if (!book) return null;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
-      {/* Nội dung modal */}
-      <div className="relative bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-lg">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose} // click ngoài để đóng
+    >
+      {/* Modal box */}
+      <div
+        className="relative bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-lg"
+        onClick={(e) => e.stopPropagation()} // chặn click bên trong modal
+      >
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">Chi tiết sách</h3>
           <button

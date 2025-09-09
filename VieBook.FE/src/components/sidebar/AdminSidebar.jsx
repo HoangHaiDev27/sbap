@@ -1,6 +1,7 @@
 // src/components/sidebar/AdminSidebar.jsx
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import logo from "../../assets/logo.png"; // ⚡ chỉnh lại path cho đúng
 
 export default function AdminSidebar({ isOpen, onClose }) {
   const location = useLocation();
@@ -17,9 +18,9 @@ export default function AdminSidebar({ isOpen, onClose }) {
     >
       {/* Logo */}
       <div className="p-6">
-        <Link to="/admin" className="flex items-center space-x-2">
-          <img src="/logo.png" alt="Logo" className="w-8 h-8" />
-          <span className="text-xl font-bold font-['Pacifico']">VieBook</span>
+        <Link to="/" className="flex items-center space-x-3">
+          <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
+          <span className="text-2xl font-bold text-orange-500">VieBook</span>
         </Link>
       </div>
 
@@ -35,7 +36,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
               className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors whitespace-nowrap
                 ${
                   isActive
-                    ? "bg-red-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
                 }`}
             >
@@ -45,18 +46,6 @@ export default function AdminSidebar({ isOpen, onClose }) {
           );
         })}
       </nav>
-
-      {/* Footer link */}
-      <div className="absolute bottom-6 left-4 right-4">
-        <Link
-          to="/"
-          onClick={onClose}
-          className="block w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors text-center"
-        >
-          <i className="ri-arrow-left-line mr-2 inline-flex items-center justify-center" />
-          Về trang chủ
-        </Link>
-      </div>
     </div>
   );
 }

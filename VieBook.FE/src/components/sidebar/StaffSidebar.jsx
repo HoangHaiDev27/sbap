@@ -1,5 +1,6 @@
 'use client';
 import { Link, useLocation } from 'react-router-dom';
+import logo from '../../assets/logo.png'; // ⚡ nhớ chỉnh lại đường dẫn cho đúng
 
 export default function StaffSidebar() {
   const location = useLocation();
@@ -19,9 +20,11 @@ export default function StaffSidebar() {
   return (
     <div className="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white overflow-y-auto z-40 flex flex-col">
       {/* Logo */}
-      <div className="p-6 flex items-center space-x-2">
-        <img src="/logo.png" alt="Logo" className="w-8 h-8" />
-        <span className="text-xl font-bold font-['Pacifico']">VieBook</span>
+      <div className="p-6">
+        <Link to="/" className="flex items-center space-x-3">
+          <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
+          <span className="text-2xl font-bold text-orange-500">VieBook</span>
+        </Link>
       </div>
 
       {/* Menu */}
@@ -45,16 +48,6 @@ export default function StaffSidebar() {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4">
-        <Link
-          to="/"
-          className="block w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer text-center"
-        >
-          <i className="ri-arrow-left-line mr-2 w-4 h-4 inline-flex items-center justify-center"></i>
-          Về trang chủ
-        </Link>
-      </div>
     </div>
   );
 }

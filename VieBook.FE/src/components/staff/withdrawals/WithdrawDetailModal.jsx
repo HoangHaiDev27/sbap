@@ -4,15 +4,15 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
   if (!withdraw) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      {/* Overlay: chỉ làm mờ, không phủ màu đen */}
-      <div
-        className="absolute inset-0 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
-
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      onClick={onClose} // click nền để đóng
+    >
       {/* Modal content */}
-      <div className="relative bg-white rounded-xl shadow-lg w-full max-w-lg p-6 z-10">
+      <div
+        className="relative bg-white rounded-xl shadow-lg w-full max-w-lg p-6"
+        onClick={(e) => e.stopPropagation()} // chặn click bên trong
+      >
         {/* Close button */}
         <button
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -60,8 +60,7 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
             {withdraw.amount}
           </p>
           <p>
-            <span className="font-semibold">Số dư khả dụng:</span>{" "}
-            3.200.000đ
+            <span className="font-semibold">Số dư khả dụng:</span> 3.200.000đ
           </p>
 
           <p>
@@ -79,8 +78,8 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
           </p>
 
           <p className="col-span-2">
-            <span className="font-semibold">Ghi chú:</span> Rút tiền từ doanh
-            thu bán sách tháng 1/2024
+            <span className="font-semibold">Ghi chú:</span> Rút tiền từ doanh thu
+            bán sách tháng 1/2024
           </p>
         </div>
 
