@@ -1,18 +1,23 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
-
 import SidebarManager from "./layouts/SidebarManager";
 import HeaderManager from "./layouts/HeaderManager";
 import Footer from "./components/Footer";
 import ReaderManager from "./layouts/ReaderManager";
 import PlayerManager from "./layouts/PlayerManager";
 import AppRoutes from "./routes/AppRoutes";
-
+import { useLocation } from "react-router-dom";
 function App() {
   const location = useLocation();
   const [role, setRole] = useState("user");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const noLayoutRoutes = ["/auth"]; 
 
+  const hideLayout = noLayoutRoutes.includes(location.pathname);
+
+  if (hideLayout) {
+    //  Chỉ render nội dung route, không layout
+    return <AppRoutes />;
+  }
    // Kiểm tra layout đặc biệt
   const isReaderPage = location.pathname.startsWith("/reader");
   const isPlayerPage = location.pathname.startsWith("/player");
