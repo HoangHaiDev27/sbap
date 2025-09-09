@@ -6,7 +6,6 @@ function UsersPage() {
 
   return (
     <div>
-      <h1>User List</h1>
       {users.map((u) => (
         <UserCard key={u.userID} user={u} />
       ))}

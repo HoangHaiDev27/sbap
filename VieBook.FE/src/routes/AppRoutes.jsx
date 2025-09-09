@@ -1,6 +1,6 @@
 import React from "react";
 import LibraryPage from "../pages/LibraryPage";
-import { Route, Routes } from "react-router-dom";
+import { Form, Route, Routes } from "react-router-dom";
 import CustomerPage from "../pages/CustomerPage";
 import UserWishlist from "../components/user/UserWishlist";
 import WishListPage from "../pages/WishListPage";
@@ -17,18 +17,47 @@ import BookOwnersManagement from '../pages/staff/BookOwnersManagement';
 import TransactionsManagement from '../pages/staff/TransactionsManagement';
 import FeedbackManagement from '../pages/staff/FeedbackManagement';
 
+import Dashboard from "../pages/owner/Dashboard";
+import OwnerBooks from "../pages/owner/OwnerBooks";
+import BookForm from "../pages/owner/BookForm";
+import OwnerChapters from "../pages/owner/OwnerChapters";
+import ChapterForm from "../pages/owner/ChapterForm";
+import OwnerOrders from "../pages/owner/OwnerOrders";
+import OrderDetail from "../pages/owner/OrderDetail";
+import PromotionPage from "../pages/owner/PromotionPage";
+import OwnerReviews from "../pages/owner/OwnerReviews";
+import SupportChat from "../pages/owner/SupportChat";
+import AuthenticationPage from "../pages/AuthenticationPage";
+import VipPackagesPage from "../pages/VipPackagesPage";
+import RankingPage from "../pages/RankingPage";
+import { FaForumbee } from "react-icons/fa";
+import ForumPage from "../pages/ForumPage";
+import Home from "../pages/HomePage";
+import AudiobookPage from "../pages/AudiobookPage";
+import StoryPage from "../pages/StoryPage";
+import BookDetailPage from "../pages/BookDetailPage";
+import ReaderPage from "../pages/ReaderPage";
+import ReaderManager from "../layouts/ReaderManager";
+import PlayerPage from "../pages/PlayerPage";
 
 function AppRoutes() {
   return (
     <Routes>
       {/* Routes cho client */}
-      <Route path="/" element={<h1>Trang chủ</h1>} />
-      <Route path="/vip" element={<h1>Mua gói VIP</h1>} />
+      <Route path="/auth" element={<AuthenticationPage/>} />
+      <Route path="/vip" element={<VipPackagesPage/>} />
+      <Route path="/" element={<Home />} />
       <Route path="/library" element={<LibraryPage />} />
-      <Route path="/ranking" element={<h1>Bảng xếp hạng</h1>} />
+      <Route path="/ranking" element={<RankingPage />} />
       <Route path="/listening" element={<h1>Đang nghe</h1>} />
-      <Route path="/forum" element={<h1>Diễn đàn</h1>} />
+      <Route path="/forum" element={<ForumPage/>} />
       <Route path="/wishlist" element={<WishListPage />} />
+      <Route path="/audiobooks" element={<AudiobookPage />} />
+      <Route path="/stories" element={<StoryPage />} />
+      <Route path="/bookdetails/:id" element={<BookDetailPage />} />
+      {/* Reader dùng ReaderManager làm layout */}
+      <Route path="/reader/:id" element={<ReaderPage />} />
+      <Route path="/player/:id" element={<PlayerPage />} />
       {/* Routes cho staff/admin */}
       {/* Admin routes */}
       <Route path="/admin" element={<AdminPage />} />
@@ -47,9 +76,21 @@ function AppRoutes() {
       <Route path="/staff/transactions" element={<TransactionsManagement />} />
       <Route path="/staff/feedback" element={<FeedbackManagement />} />
       {/* Staff routes */}
-      {/* <Route path="/staff" element={<h1>Staff Panel</h1>} /> */}
 
       <Route path="/customer" element={<CustomerPage />} />
+
+      {/* Routes cho book owner */}
+      <Route path="/owner/dashboard" element={<Dashboard />} />
+      <Route path="/owner/books" element={<OwnerBooks />} />
+      <Route path="/owner/books/new" element={<BookForm />} />
+      <Route path="/owner/books/:bookId/chapters" element={<OwnerChapters />} />
+      <Route path="/owner/books/:bookId/chapters/new" element={<ChapterForm />} />
+      <Route path="/owner/sales-history" element={<OwnerOrders />} />
+      <Route path="/owner/orders/:orderId" element={<OrderDetail />} />
+      <Route path="/owner/promotions" element={<PromotionPage />} />
+      <Route path="/owner/feedback" element={<OwnerReviews />} />
+      <Route path="/owner/chat" element={<SupportChat />} />
+      
     </Routes>
   );
 }
