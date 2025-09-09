@@ -15,6 +15,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { FaCoins } from "react-icons/ri";
 import RecentOrders from "../../components/owner/dashboard/RecentOrders";
 import BestSellers from "../../components/owner/dashboard/BestSellers";
 
@@ -23,8 +24,8 @@ export default function OwnerDashboard() {
   const stats = [
     {
       label: "Doanh thu",
-      value: "120M",
-      icon: <RiMoneyDollarCircleLine size={28} />,
+      value: `120.000.000\u00A0₫`,
+      icon: <FaCoins size={28} />,
       color: "bg-green-500",
     },
     {
