@@ -11,7 +11,6 @@ const StaffBooksPage = () => {
         { label: "Tổng số sách", value: 6, color: "text-blue-600" },
         { label: "Đang hoạt động", value: 5, color: "text-green-600" },
         { label: "Đã ẩn", value: 1, color: "text-orange-600" },
-        { label: "Tổng feedback", value: 304, color: "text-purple-600" },
     ];
 
     const books = [

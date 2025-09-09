@@ -25,10 +25,8 @@ export default function AdminHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 left-64 right-0 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 z-30">
       {/* Logo / Title */}
       <div className="flex items-center space-x-4">
-        <h1 className="text-lg font-semibold text-gray-900">Trang quản lí của quản trị viên</h1>
       </div>
 
       {/* Right section */}
@@ -60,7 +58,6 @@ export default function AdminHeader() {
               src="https://readdy.ai/api/search-image?query=professional%20senior%20asian%20male%20administrator%20portrait%20with%20executive%20background%2C%20formal%20business%20attire&width=80&height=80&seq=adminuser&orientation=squarish"
               alt="Admin"
             />
-            <span className="text-gray-900 font-medium">Admin</span>
             <i className="ri-arrow-down-s-line w-4 h-4 text-gray-500"></i>
           </button>
 

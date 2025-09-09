@@ -9,12 +9,9 @@ export default function StaffSidebar() {
     { id: 'dashboard', label: 'Tổng quan', icon: 'ri-dashboard-line', href: '/staff' },
     { id: 'categories', label: 'Quản lý Thể loại', icon: 'ri-bookmark-line', href: '/staff/categories' },
     { id: 'books', label: 'Quản lý Sách', icon: 'ri-book-2-line', href: '/staff/books' },
-    { id: 'book-owners', label: 'Quản lý Book Owner', icon: 'ri-user-star-line', href: '/staff/book-owners' },
-    { id: 'customers', label: 'Quản lý Customer', icon: 'ri-user-line', href: '/staff/customers' },
     { id: 'pending-books', label: 'Duyệt sách mới', icon: 'ri-file-check-line', href: '/staff/pending-books' },
     { id: 'transactions', label: 'Giao dịch', icon: 'ri-money-dollar-circle-line', href: '/staff/transactions' },
     { id: 'withdrawals', label: 'Phê duyệt rút tiền', icon: 'ri-bank-card-line', href: '/staff/withdrawals' },
-    { id: 'feedback', label: 'Feedback', icon: 'ri-message-2-line', href: '/staff/feedback' },
   ];
 
   return (
