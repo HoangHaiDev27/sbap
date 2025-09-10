@@ -4,6 +4,7 @@ export default function PurchasedBook() {
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedBook, setSelectedBook] = useState(null); // 🔹 Modal state
 
   const booksPerPage = 6;
 
@@ -231,7 +232,8 @@ export default function PurchasedBook() {
         {paginatedBooks.map((book) => (
           <div
             key={book.id}
-            className="bg-gray-750 rounded-lg p-4 hover:bg-gray-700 transition-colors group"
+            onClick={() => setSelectedBook(book)} // 🔹 Mở modal khi click card
+            className="bg-gray-750 rounded-lg p-4 hover:bg-gray-700 transition-colors group cursor-pointer"
           >
             <div className="flex space-x-4">
               <div className="relative">
@@ -334,9 +336,57 @@ export default function PurchasedBook() {
           <p className="text-gray-500 mb-4">
             Khám phá và mua sách yêu thích để xây dựng thư viện riêng
           </p>
-          <button className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium">
-            Mua sách ngay
-          </button>
+        </div>
+      )}
+
+      {/* 🔹 Modal chi tiết sách */}
+      {selectedBook && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-800 w-full max-w-2xl rounded-lg p-6 relative">
+            {/* Nút đóng */}
+            <button
+              onClick={() => setSelectedBook(null)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-white text-xl"
+            >
+              ×
+            </button>
+
+            {/* Nội dung */}
+            <div className="flex space-x-6">
+              <img
+                src={selectedBook.cover}
+                alt={selectedBook.title}
+                className="w-36 h-52 object-cover rounded-lg"
+              />
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {selectedBook.title}
+                </h2>
+                <p className="text-gray-400 mb-2">{selectedBook.author}</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  {selectedBook.category} • {selectedBook.format}
+                </p>
+                <div className="text-green-400 font-semibold mb-4">
+                  {selectedBook.price.toLocaleString("vi-VN")}đ
+                </div>
+                <button className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium">
+                  Xem chi tiết
+                </button>
+              </div>
+            </div>
+
+            {/* Demo danh sách chương */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-white mb-3">
+                Danh sách chương
+              </h3>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li>Chương 1: Giới thiệu</li>
+                <li>Chương 2: Nội dung chính</li>
+                <li>Chương 3: Bài học & Kết luận</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>
