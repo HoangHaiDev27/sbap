@@ -32,7 +32,7 @@ namespace Tests
             // Arrange
             var newUser = new UserDTO
             {
-                Email = "newuser2@test.com",
+                Email = "newuser3@test.com",
                 Status = "Active",
                 CreatedAt = DateTime.UtcNow,
                 LastLoginAt = DateTime.UtcNow
