@@ -20,5 +20,6 @@ namespace Repositories
         public Task AddAsync(User book) => _userDAO.AddAsync(book);
         public Task UpdateAsync(User book) => _userDAO.UpdateAsync(book);
         public Task DeleteAsync(User book) => _userDAO.DeleteAsync(book);
+        public Task<User?> GetByEmailAsync(string email) => _userDAO.GetByEmailAsync(email);
     }
 }
