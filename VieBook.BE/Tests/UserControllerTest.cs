@@ -1,28 +1,26 @@
 using System.Net;
 using System.Net.Http.Json;
 using DTOs;
-using BusinessObject;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Xunit;
-using System.Threading.Tasks;
+
 namespace Tests
 {
-    public class UserControllerTest : IClassFixture<WebApplicationFactory<Program>>
+    public class UserControllerTest : IClassFixture<CustomWebApplicationFactory<Program>>
     {
         private readonly HttpClient _client;
 
-        public UserControllerTest(WebApplicationFactory<Program> factory)
+        public UserControllerTest(CustomWebApplicationFactory<Program> factory)
         {
             _client = factory.CreateClient();
-
         }
 
         [Fact]
         public async Task GetUsers_ReturnsOk()
         {
+            // Act
             var response = await _client.GetAsync("/api/users");
 
+            // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
@@ -32,7 +30,7 @@ namespace Tests
             // Arrange
             var newUser = new UserDTO
             {
-                Email = "newuser3@test.com",
+                Email = "newuser@test.com",
                 Status = "Active",
                 CreatedAt = DateTime.UtcNow,
                 LastLoginAt = DateTime.UtcNow
@@ -49,6 +47,35 @@ namespace Tests
             Assert.Equal(newUser.Email, createdUser.Email);
             Assert.Equal("Active", createdUser.Status);
             Assert.True(createdUser.UserId > 0);
+        }
+
+        [Fact]
+        public async Task GetUsers_ReturnsCreatedUser()
+        {
+            // Arrange
+            var newUser = new UserDTO
+            {
+                Email = "getuser@test.com",
+                Status = "Active",
+                CreatedAt = DateTime.UtcNow,
+                LastLoginAt = DateTime.UtcNow
+            };
+
+            var createResponse = await _client.PostAsJsonAsync("/api/users", newUser);
+            Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+            var createdUser = await createResponse.Content.ReadFromJsonAsync<UserDTO>();
+            Assert.NotNull(createdUser);
+
+            // Act
+            var getResponse = await _client.GetAsync("/api/users");
+            getResponse.EnsureSuccessStatusCode();
+
+            var users = await getResponse.Content.ReadFromJsonAsync<List<UserDTO>>();
+
+            // Assert
+            Assert.NotNull(users);
+            Assert.Contains(users, u => u.Email == newUser.Email);
         }
     }
 }

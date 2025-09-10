@@ -22,10 +22,17 @@ namespace VieBook.BE.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
-            var users = await _userService.GetAllAsync();
-            return Ok(_mapper.Map<IEnumerable<UserDTO>>(users));
+            try
+            {
+                var users = await _userService.GetAllAsync();
+                return Ok(_mapper.Map<IEnumerable<UserDTO>>(users));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetUsers: {ex}");
+                throw;
+            }
         }
-
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetUser(int id)
         {
@@ -42,11 +49,19 @@ namespace VieBook.BE.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<UserDTO>> Postuser(UserDTO dto)
+        public async Task<ActionResult<UserDTO>> PostUser(UserDTO dto)
         {
-            var user = _mapper.Map<User>(dto);
-            await _userService.AddAsync(user);
-            return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, _mapper.Map<UserDTO>(user));
+            try
+            {
+                var user = _mapper.Map<User>(dto);
+                await _userService.AddAsync(user);
+                return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, _mapper.Map<UserDTO>(user));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] PostUser: {ex}");
+                throw;
+            }
         }
 
         // [HttpPut("{id}")]
