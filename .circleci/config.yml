@@ -30,34 +30,16 @@ jobs:
           name: "Run tests"
           command: |
             cd VieBook.BE
+            mkdir -p TestResults
             dotnet test --no-build --verbosity normal \
               --logger "trx;LogFileName=test_results.trx" \
-              --results-directory ./test_results
-      - run:
-          name: Parse test results & Send Discord notification
-          command: |
-            apt-get update && apt-get install -y libxml2-utils
-
-            cd VieBook.BE/TestResults
-            ls -l
-
-            PASSED=$(xmllint --xpath "string(//Counters/@passed)" test_results.trx || echo 0)
-            FAILED=$(xmllint --xpath "string(//Counters/@failed)" test_results.trx || echo 0)
-            SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" test_results.trx || echo 0)
-            TOTAL=$(xmllint --xpath "string(//Counters/@total)" test_results.trx || echo 0)
-
-            COMMIT_MSG=$(git log -1 --pretty=%B)
-
-            if [ "$FAILED" -eq 0 ]; then
-              STATUS="✅ Build và Unit Test thành công"
-            else
-              STATUS="❌ Build hoặc Unit Test thất bại"
-            fi
-
-            curl -H "Content-Type: application/json" \
-              -d "{
-                \"content\": \"🔔 Thông báo\n👤 Tài khoản: $CIRCLE_USERNAME\n🎯 Hành động: push\n🌿 Nhánh: $CIRCLE_BRANCH\n📦 Repo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME\n📝 Commit: $COMMIT_MSG\n$STATUS bởi $CIRCLE_USERNAME trên nhánh $CIRCLE_BRANCH tại repo $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.\n📊 Unit Test Summary:\n✅ Passed: $PASSED\n❌ Failed: $FAILED\n⏭️ Skipped: $SKIPPED\n📦 Total: $TOTAL\" }" \
-              $DISCORD_WEBHOOK
+              --results-directory ./TestResults
+            echo ">>> Test results saved to: $(pwd)/TestResults/test_results.trx"
+            ls -l ./TestResults
+      - persist_to_workspace:
+          root: VieBook.BE
+          paths:
+            - TestResults
   build-and-push:
     environment:
       DOCKER_IMAGE: devhoanghai/viebook
@@ -77,7 +59,60 @@ jobs:
           name: Push image to Docker Hub
           command: |
             docker-compose -f docker-compose.yml push
-  
+  notify:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+
+      - attach_workspace:
+          at: ./VieBook.BE
+
+      - run:
+          name: Debug workspace files
+          command: |
+            echo ">>> Checking for test result files..."
+            ls -R VieBook.BE/TestResults || echo "⚠️ No TestResults directory found"
+
+      - run:
+          name: Parse test results
+          command: |
+            apt-get update && apt-get install -y libxml2-utils
+
+            if [ ! -f VieBook.BE/TestResults/test_results.trx ]; then
+              echo "⚠️ File test_results.trx not found. Using defaults."
+              PASSED=0
+              FAILED=0
+              SKIPPED=0
+              TOTAL=0
+            else
+              PASSED=$(xmllint --xpath "string(//Counters/@passed)" VieBook.BE/TestResults/test_results.trx || echo 0)
+              FAILED=$(xmllint --xpath "string(//Counters/@failed)" VieBook.BE/TestResults/test_results.trx || echo 0)
+              SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" VieBook.BE/TestResults/test_results.trx || echo 0)
+              TOTAL=$(xmllint --xpath "string(//Counters/@total)" VieBook.BE/TestResults/test_results.trx || echo 0)
+            fi
+
+            echo "export PASSED=$PASSED" >> $BASH_ENV
+            echo "export FAILED=$FAILED" >> $BASH_ENV
+            echo "export SKIPPED=$SKIPPED" >> $BASH_ENV
+            echo "export TOTAL=$TOTAL" >> $BASH_ENV
+
+      - run:
+          name: Send Discord notification
+          command: |
+            source $BASH_ENV
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+
+            if [ "$FAILED" -eq 0 ]; then
+              STATUS="✅ Build và Unit Test thành công"
+            else
+              STATUS="❌ Build hoặc Unit Test thất bại"
+            fi
+
+            curl -H "Content-Type: application/json" \
+              -d "{
+                \"content\": \"🔔 Thông báo\n👤 Tài khoản: $CIRCLE_USERNAME\n🎯 Hành động: push\n🌿 Nhánh: $CIRCLE_BRANCH\n📦 Repo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME\n📝 Commit: $COMMIT_MSG\n$STATUS bởi $CIRCLE_USERNAME.\n📊 Unit Test Summary:\n✅ Passed: $PASSED\n❌ Failed: $FAILED\n⏭️ Skipped: $SKIPPED\n📦 Total: $TOTAL\" }" \
+              $DISCORD_WEBHOOK
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/guides/orchestrate/workflows/ & https://circleci.com/docs/reference/configuration-reference/#workflows
@@ -93,3 +128,9 @@ workflows:
             branches:
               only:
                 - main
+      - notify:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /.*/
