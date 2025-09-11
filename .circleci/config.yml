@@ -96,7 +96,6 @@ jobs:
               STATUS="❌ Build hoặc Unit Test thất bại"
             fi
 
-            # Xác định event: push hay PR
             if [ -n "$CIRCLE_PULL_REQUEST" ]; then
               EVENT="Pull Request"
               TARGET_BRANCH=$(echo $CIRCLE_PULL_REQUEST | awk -F/ '{print $NF}')
@@ -127,8 +126,3 @@ workflows:
       - notify:
           requires:
             - test
-          filters:
-            branches:
-              only: /.*/
-            pull_requests:
-                ignore: none
