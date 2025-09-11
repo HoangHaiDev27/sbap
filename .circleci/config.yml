@@ -63,7 +63,13 @@ jobs:
       - checkout
 
       - attach_workspace:
-          at: ./VieBook.BE
+          at: .
+
+      - run:
+          name: Debug workspace files
+          command: |
+            echo ">>> Listing workspace files..."
+            ls -R VieBook.BE/TestResults || true
 
       - run:
           name: Parse test results
