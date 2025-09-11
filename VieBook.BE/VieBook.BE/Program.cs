@@ -39,7 +39,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // 👈 Thay URL frontend tại đây
+            policy.WithOrigins("http://localhost:3008") // 👈 Thay URL frontend tại đây
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials() // Nếu cần gửi cookie/token
