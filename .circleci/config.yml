@@ -88,15 +88,21 @@ jobs:
             FILE=$(ls *.trx | head -n 1)
             echo ">>> Using test file: $FILE"
 
+            echo ">>> Dumping TRX content (first 50 lines):"
+            head -n 50 $FILE
+
             PASSED=$(xmllint --xpath "string(//Counters/@passed)" $FILE || echo 0)
             FAILED=$(xmllint --xpath "string(//Counters/@failed)" $FILE || echo 0)
             SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" $FILE || echo 0)
             TOTAL=$(xmllint --xpath "string(//Counters/@total)" $FILE || echo 0)
 
+            echo ">>> Parsed results: PASSED=$PASSED, FAILED=$FAILED, SKIPPED=$SKIPPED, TOTAL=$TOTAL"
+
             echo "export PASSED=$PASSED" >> $BASH_ENV
             echo "export FAILED=$FAILED" >> $BASH_ENV
             echo "export SKIPPED=$SKIPPED" >> $BASH_ENV
             echo "export TOTAL=$TOTAL" >> $BASH_ENV
+
 
       - run:
           name: Send Discord notification
