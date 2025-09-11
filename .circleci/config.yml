@@ -1,0 +1,144 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/reference/configuration-reference
+version: 2.1
+orbs:
+  docker: circleci/docker@3.0.0
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#jobs-overview & https://circleci.com/docs/reference/configuration-reference/#jobs
+jobs:
+  test:
+    # Specify the execution environment for .NET testing
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:8.0
+
+    # Add steps to the job
+    # See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#steps-overview & https://circleci.com/docs/reference/configuration-reference/#steps
+    steps:
+      # Checkout the code as the first step.
+      - checkout
+      - run:
+          name: "Restore dependencies"
+          command: |
+            cd VieBook.BE
+            dotnet restore
+      - run:
+          name: "Build solution"
+          command: |
+            cd VieBook.BE
+            dotnet build --no-restore
+      - run:
+          name: "Run tests"
+          command: |
+            cd VieBook.BE
+            mkdir -p TestResults
+            dotnet test --no-build --verbosity normal \
+              --logger "trx;LogFileName=test_results.trx" \
+              --results-directory ./TestResults
+            echo ">>> Test results saved to: $(pwd)/TestResults/test_results.trx"
+            ls -l ./TestResults
+      - persist_to_workspace:
+          root: VieBook.BE
+          paths:
+            - TestResults
+  build-and-push:
+    environment:
+      DOCKER_IMAGE: devhoanghai/viebook
+      DOCKER_TAG: latest
+    executor: docker/docker
+    steps:
+      - setup_remote_docker
+      - checkout
+      - docker/check:
+          docker_username: DOCKER_USERNAME
+          docker_password: DOCKER_PASSWORD
+      - run:
+          name: Build with docker-compose
+          command: |
+            docker-compose -f docker-compose.yml build
+      - run:
+          name: Push image to Docker Hub
+          command: |
+            docker-compose -f docker-compose.yml push
+  notify:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Debug workspace files
+          command: |
+            echo ">>> Current dir: $(pwd)"
+            echo ">>> Listing all files in root:"
+            ls -R .
+            echo ">>> Checking TestResults path:"
+            ls -l TestResults || echo "Not found"
+
+      - run:
+          name: Parse test results
+          command: |
+            sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+            cd TestResults || exit 1
+            echo ">>> Listing TRX files..."
+            ls -l
+
+            FILE=$(ls *.trx | head -n 1)
+            echo ">>> Using test file: $FILE"
+
+            echo ">>> Dumping TRX content (first 20 lines):"
+            head -n 20 $FILE
+
+            PASSED=$(xmllint --xpath "string(//*[local-name()='Counters']/@passed)" $FILE || echo 0)
+            FAILED=$(xmllint --xpath "string(//*[local-name()='Counters']/@failed)" $FILE || echo 0)
+            SKIPPED=$(xmllint --xpath "string(//*[local-name()='Counters']/@notExecuted)" $FILE || echo 0)
+            TOTAL=$(xmllint --xpath "string(//*[local-name()='Counters']/@total)" $FILE || echo 0)
+
+            echo ">>> Parsed results: PASSED=$PASSED, FAILED=$FAILED, SKIPPED=$SKIPPED, TOTAL=$TOTAL"
+
+            echo "export PASSED=$PASSED" >> $BASH_ENV
+            echo "export FAILED=$FAILED" >> $BASH_ENV
+            echo "export SKIPPED=$SKIPPED" >> $BASH_ENV
+            echo "export TOTAL=$TOTAL" >> $BASH_ENV
+
+
+
+      - run:
+          name: Send Discord notification
+          command: |
+            source $BASH_ENV
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+
+            if [ "$FAILED" -eq 0 ]; then
+              STATUS="✅ Build và Unit Test thành công"
+            else
+              STATUS="❌ Build hoặc Unit Test thất bại"
+            fi
+
+            curl -H "Content-Type: application/json" \
+              -d "{
+                \"content\": \"🔔 Thông báo\n👤 Tài khoản: $CIRCLE_USERNAME\n🎯 Hành động: push\n🌿 Nhánh: $CIRCLE_BRANCH\n📦 Repo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME\n📝 Commit: $COMMIT_MSG\n$STATUS bởi $CIRCLE_USERNAME.\n📊 Unit Test Summary:\n✅ Passed: $PASSED\n❌ Failed: $FAILED\n⏭️ Skipped: $SKIPPED\n📦 Total: $TOTAL\" }" \
+              $DISCORD_WEBHOOK
+
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/guides/orchestrate/workflows/ & https://circleci.com/docs/reference/configuration-reference/#workflows
+workflows:
+  test-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
+    # Inside the workflow, you define the jobs you want to run.
+    jobs:
+      - test
+      - build-and-push:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - main
+      - notify:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /.*/

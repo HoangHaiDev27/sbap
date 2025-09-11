@@ -8,8 +8,16 @@ using Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddDbContext<VieBookContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+if (builder.Environment.EnvironmentName == "Testing")
+{
+    builder.Services.AddDbContext<VieBookContext>(options =>
+        options.UseInMemoryDatabase("TestDb"));
+}
+else
+{
+    builder.Services.AddDbContext<VieBookContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 //Add DAO
 builder.Services.AddScoped<UserDAO>();
@@ -31,7 +39,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // 👈 Thay URL frontend tại đây
+            policy.WithOrigins("http://localhost:3008") // 👈 Thay URL frontend tại đây
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials() // Nếu cần gửi cookie/token
@@ -58,3 +66,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
