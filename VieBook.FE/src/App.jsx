@@ -8,9 +8,9 @@ import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
 function App() {
   const location = useLocation();
-  const [role, setRole] = useState("staff");
+  const [role, setRole] = useState("user");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const noLayoutRoutes = ["/auth"]; 
+  const noLayoutRoutes = ["/auth"];
 
   const hideLayout = noLayoutRoutes.includes(location.pathname);
 
@@ -18,7 +18,7 @@ function App() {
     //  Chỉ render nội dung route, không layout
     return <AppRoutes />;
   }
-   // Kiểm tra layout đặc biệt
+  // Kiểm tra layout đặc biệt
   const isReaderPage = location.pathname.startsWith("/reader");
   const isPlayerPage = location.pathname.startsWith("/player");
 

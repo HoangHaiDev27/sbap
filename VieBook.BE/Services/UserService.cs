@@ -20,6 +20,6 @@ namespace Services
         public Task AddAsync(User book) => _userRepo.AddAsync(book);
         public Task UpdateAsync(User book) => _userRepo.UpdateAsync(book);
         public Task DeleteAsync(User book) => _userRepo.DeleteAsync(book);
-
+        public Task<User?> GetByEmailAsync(string email) => _userRepo.GetByEmailAsync(email);
     }
 }

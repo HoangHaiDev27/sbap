@@ -5,6 +5,51 @@ export default function UserListeningSchedule() {
     new Date().toISOString().split("T")[0]
   );
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    time: "",
+    chapter: "",
+    duration: "",
+    reminder: false,
+  });
+
+  // Dữ liệu chương cho từng audiobook
+  const audiobookChapters = {
+    "Đắc Nhân Tâm (Audiobook)": [
+      "Chương 1: Những kỹ thuật cơ bản trong việc xử lý con người",
+      "Chương 2: Gây thiện cảm ngay lập tức",
+      "Chương 3: Cách để người khác suy nghĩ theo ý bạn",
+      "Chương 4: Làm thế nào để thay đổi người khác mà không gây ra sự phản kháng",
+      "Chương 5: Những bức thư tạo nên phép lạ",
+      "Chương 6: Bảy quy tắc vàng để làm cho gia đình hạnh phúc",
+      "Chương 7: Bảy cách để làm cho cuộc sống dễ dàng hơn",
+      "Chương 8: Cách để tìm hạnh phúc",
+    ],
+    "Khéo ăn nói sẽ có được thiên hạ": [
+      "Phần I: Nghệ thuật giao tiếp",
+      "Phần II: Kỹ năng thuyết trình",
+      "Phần III: Nghệ thuật thuyết phục",
+      "Phần IV: Giao tiếp trong công việc",
+      "Phần V: Giao tiếp trong cuộc sống",
+      "Phần VI: Xử lý tình huống khó khăn",
+      "Phần VII: Nghệ thuật lắng nghe",
+    ],
+    "Hạt giống tâm hồn": [
+      "Câu chuyện số 1: Niềm tin",
+      "Câu chuyện số 2: Hy vọng",
+      "Câu chuyện số 3: Tình yêu",
+      "Câu chuyện số 4: Lòng biết ơn",
+      "Câu chuyện số 5: Sự kiên trì",
+      "Câu chuyện số 6: Lòng can đảm",
+      "Câu chuyện số 7: Sự tha thứ",
+      "Câu chuyện số 8: Tình bạn",
+      "Câu chuyện số 9: Gia đình",
+      "Câu chuyện số 10: Ước mơ",
+      "Câu chuyện số 11: Thành công",
+      "Câu chuyện số 12: Niềm tin",
+    ],
+  };
 
   const schedules = [
     {
@@ -47,6 +92,43 @@ export default function UserListeningSchedule() {
 
   const getFilteredSchedules = () => {
     return schedules.filter((schedule) => schedule.date === selectedDate);
+  };
+
+  const handleEditClick = (schedule) => {
+    setEditingSchedule(schedule);
+    setEditFormData({
+      time: schedule.time,
+      chapter: schedule.chapter,
+      duration: schedule.duration.toString(),
+      reminder: schedule.reminder,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleEditSave = () => {
+    // TODO: Implement save logic here
+    console.log("Saving edited schedule:", editingSchedule.id, editFormData);
+    setShowEditModal(false);
+    setEditingSchedule(null);
+  };
+
+  const handleEditCancel = () => {
+    setShowEditModal(false);
+    setEditingSchedule(null);
+    setEditFormData({
+      time: "",
+      chapter: "",
+      duration: "",
+      reminder: false,
+    });
   };
 
   return (
@@ -161,7 +243,10 @@ export default function UserListeningSchedule() {
                         Hoàn thành
                       </button>
                     )}
-                    <button className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm text-white">
+                    <button
+                      onClick={() => handleEditClick(schedule)}
+                      className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm text-white"
+                    >
                       <i className="ri-edit-line"></i>
                     </button>
                   </div>
@@ -294,6 +379,118 @@ export default function UserListeningSchedule() {
                   className="flex-1 bg-orange-500 hover:bg-orange-600 py-2 rounded-lg text-white font-medium transition-colors"
                 >
                   Thêm lịch nghe
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingSchedule && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Chỉnh sửa lịch nghe</h3>
+              <button
+                onClick={handleEditCancel}
+                className="text-gray-400 hover:text-white"
+              >
+                <i className="ri-close-line text-xl"></i>
+              </button>
+            </div>
+
+            <form className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Audiobook
+                </label>
+                <input
+                  type="text"
+                  value={editingSchedule.book}
+                  disabled
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-400 cursor-not-allowed"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Giờ
+                  </label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={editFormData.time}
+                    onChange={handleEditFormChange}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Thời gian (phút)
+                  </label>
+                  <input
+                    type="number"
+                    name="duration"
+                    value={editFormData.duration}
+                    onChange={handleEditFormChange}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none"
+                    placeholder="30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Chương
+                </label>
+                <select
+                  name="chapter"
+                  value={editFormData.chapter}
+                  onChange={handleEditFormChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none pr-8"
+                >
+                  <option value="">Chọn chương</option>
+                  {editingSchedule &&
+                    audiobookChapters[editingSchedule.book]?.map(
+                      (chapter, index) => (
+                        <option key={index} value={chapter}>
+                          {chapter}
+                        </option>
+                      )
+                    )}
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="editReminder"
+                  name="reminder"
+                  checked={editFormData.reminder}
+                  onChange={handleEditFormChange}
+                  className="rounded"
+                />
+                <label htmlFor="editReminder" className="text-sm text-gray-300">
+                  Bật nhắc nhở
+                </label>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleEditCancel}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg text-white font-medium transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEditSave}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 py-2 rounded-lg text-white font-medium transition-colors"
+                >
+                  Lưu thay đổi
                 </button>
               </div>
             </form>
