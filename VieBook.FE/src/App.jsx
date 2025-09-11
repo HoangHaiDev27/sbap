@@ -11,7 +11,7 @@ function App() {
   const [role, setRole] = useState("user");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const noLayoutRoutes = ["/auth"];
-
+// tesst cicd
   const hideLayout = noLayoutRoutes.includes(location.pathname);
 
   if (hideLayout) {
