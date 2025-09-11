@@ -45,11 +45,11 @@ jobs:
       - run:
           name: Build with docker-compose
           command: |
-            docker-compose -f docker-compose.yaml build
+            docker-compose -f docker-compose.yml build
       - run:
           name: Push image to Docker Hub
           command: |
-            docker-compose -f docker-compose.yaml push
+            docker-compose -f docker-compose.yml push
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/guides/orchestrate/workflows/ & https://circleci.com/docs/reference/configuration-reference/#workflows
