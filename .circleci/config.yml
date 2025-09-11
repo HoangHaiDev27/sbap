@@ -88,13 +88,13 @@ jobs:
             FILE=$(ls *.trx | head -n 1)
             echo ">>> Using test file: $FILE"
 
-            echo ">>> Dumping TRX content (first 50 lines):"
-            head -n 50 $FILE
+            echo ">>> Dumping TRX content (first 20 lines):"
+            head -n 20 $FILE
 
-            PASSED=$(xmllint --xpath "string(//Counters/@passed)" $FILE || echo 0)
-            FAILED=$(xmllint --xpath "string(//Counters/@failed)" $FILE || echo 0)
-            SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" $FILE || echo 0)
-            TOTAL=$(xmllint --xpath "string(//Counters/@total)" $FILE || echo 0)
+            PASSED=$(xmllint --xpath "string(//*[local-name()='Counters']/@passed)" $FILE || echo 0)
+            FAILED=$(xmllint --xpath "string(//*[local-name()='Counters']/@failed)" $FILE || echo 0)
+            SKIPPED=$(xmllint --xpath "string(//*[local-name()='Counters']/@notExecuted)" $FILE || echo 0)
+            TOTAL=$(xmllint --xpath "string(//*[local-name()='Counters']/@total)" $FILE || echo 0)
 
             echo ">>> Parsed results: PASSED=$PASSED, FAILED=$FAILED, SKIPPED=$SKIPPED, TOTAL=$TOTAL"
 
@@ -102,6 +102,7 @@ jobs:
             echo "export FAILED=$FAILED" >> $BASH_ENV
             echo "export SKIPPED=$SKIPPED" >> $BASH_ENV
             echo "export TOTAL=$TOTAL" >> $BASH_ENV
+
 
 
       - run:
