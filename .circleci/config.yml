@@ -59,7 +59,7 @@ jobs:
           name: Push image to Docker Hub
           command: |
             docker-compose -f docker-compose.yml push
-    notify:
+  notify:
     docker:
       - image: cimg/base:current
     steps:
