@@ -59,38 +59,36 @@ jobs:
           name: Push image to Docker Hub
           command: |
             docker-compose -f docker-compose.yml push
-  notify:
+    notify:
     docker:
       - image: cimg/base:current
     steps:
       - checkout
-
       - attach_workspace:
-          at: ./VieBook.BE
+          at: .
 
       - run:
           name: Debug workspace files
           command: |
-            echo ">>> Checking for test result files..."
-            ls -R VieBook.BE/TestResults || echo "⚠️ No TestResults directory found"
+            echo ">>> Listing all files in workspace:"
+            ls -R .
 
       - run:
           name: Parse test results
           command: |
             apt-get update && apt-get install -y libxml2-utils
+            echo ">>> Moving into TestResults dir..."
+            cd VieBook.BE/TestResults || exit 1
+            echo ">>> Listing TRX files..."
+            ls -l
 
-            if [ ! -f VieBook.BE/TestResults/test_results.trx ]; then
-              echo "⚠️ File test_results.trx not found. Using defaults."
-              PASSED=0
-              FAILED=0
-              SKIPPED=0
-              TOTAL=0
-            else
-              PASSED=$(xmllint --xpath "string(//Counters/@passed)" VieBook.BE/TestResults/test_results.trx || echo 0)
-              FAILED=$(xmllint --xpath "string(//Counters/@failed)" VieBook.BE/TestResults/test_results.trx || echo 0)
-              SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" VieBook.BE/TestResults/test_results.trx || echo 0)
-              TOTAL=$(xmllint --xpath "string(//Counters/@total)" VieBook.BE/TestResults/test_results.trx || echo 0)
-            fi
+            FILE=$(ls *.trx | head -n 1)
+            echo ">>> Using test file: $FILE"
+
+            PASSED=$(xmllint --xpath "string(//Counters/@passed)" $FILE || echo 0)
+            FAILED=$(xmllint --xpath "string(//Counters/@failed)" $FILE || echo 0)
+            SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" $FILE || echo 0)
+            TOTAL=$(xmllint --xpath "string(//Counters/@total)" $FILE || echo 0)
 
             echo "export PASSED=$PASSED" >> $BASH_ENV
             echo "export FAILED=$FAILED" >> $BASH_ENV
