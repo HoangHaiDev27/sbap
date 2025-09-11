@@ -15,6 +15,7 @@ services:
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: viebook-db
+    image: devhoanghai/viebook-db:latest
     environment:
       SA_PASSWORD: "YourStrong@Passw0rd"
       ACCEPT_EULA: "Y"
