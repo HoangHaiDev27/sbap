@@ -1,13 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  RiMenuLine,
-  RiSearchLine,
-  RiBookmarkLine,
-  RiShoppingCartLine,
-  RiUserLine,
-} from "react-icons/ri";
+import { RiMenuLine, RiSearchLine, RiBookmarkLine } from "react-icons/ri";
 import UserMenu from "../user/UserMenu";
+import UserNotificationMenu from "../user/UserNotificationMenu";
 
 export default function UserHeader({ onToggleSidebar }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,7 +48,7 @@ export default function UserHeader({ onToggleSidebar }) {
           >
             <RiBookmarkLine className="text-xl" />
           </Link>
-
+          <UserNotificationMenu />
           <UserMenu />
         </div>
       </div>

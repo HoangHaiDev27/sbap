@@ -1,16 +1,24 @@
 import React, { useState } from "react";
-import { RiCloseLine } from "react-icons/ri";
+import {
+  RiCloseLine,
+  RiBookOpenLine,
+  RiWallet3Line,
+  RiRefund2Line,
+  RiArrowDownCircleLine,
+} from "react-icons/ri";
 
 export default function UserTransactionHistory() {
-  const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedTx, setSelectedTx] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const booksPerPage = 6;
+  const txPerPage = 6;
 
-  const handleCloseModal = () => setSelectedBook(null);
+  const handleCloseModal = () => setSelectedTx(null);
 
-  const books = [
+  // ⚡️ Demo data
+  const transactions = [
     {
       id: 1,
+      type: "purchase",
       title: "Sapiens: A Brief History of Humankind",
       author: "Yuval Noah Harari",
       narrator: "Derek Perkins",
@@ -20,7 +28,6 @@ export default function UserTransactionHistory() {
       reviews: 2847,
       price: 299000,
       oldPrice: 399000,
-      type: "Audio",
       cover: "https://images-na.ssl-images-amazon.com/images/I/713jIoMO3UL.jpg",
       chapters: [
         { id: 1, name: "Chương 1: Khởi đầu", purchased: true },
@@ -28,9 +35,35 @@ export default function UserTransactionHistory() {
         { id: 3, name: "Chương 3: Đế chế", purchased: false },
         { id: 4, name: "Chương 4: Cách mạng khoa học", purchased: false },
       ],
+      date: "2025-09-01",
     },
     {
       id: 2,
+      type: "deposit",
+      amount: 500000,
+      method: "MoMo",
+      status: "success",
+      date: "2025-08-30",
+    },
+    {
+      id: 3,
+      type: "withdraw",
+      amount: 200000,
+      method: "Bank ACB",
+      status: "success",
+      date: "2025-08-28",
+    },
+    {
+      id: 4,
+      type: "refund",
+      amount: 150000,
+      reason: "Hoàn tiền sách lỗi",
+      status: "completed",
+      date: "2025-08-25",
+    },
+    {
+      id: 5,
+      type: "purchase",
       title: "Thinking, Fast and Slow",
       author: "Daniel Kahneman",
       narrator: "Patrick Egan",
@@ -40,7 +73,6 @@ export default function UserTransactionHistory() {
       reviews: 1923,
       price: 259000,
       oldPrice: 349000,
-      type: "Audio & Ebook",
       cover: "https://images-na.ssl-images-amazon.com/images/I/71UypkUjStL.jpg",
       chapters: [
         { id: 1, name: "Chương 1: Hai hệ thống tư duy", purchased: true },
@@ -48,148 +80,87 @@ export default function UserTransactionHistory() {
         { id: 3, name: "Chương 3: Quyết định", purchased: true },
         { id: 4, name: "Chương 4: Sai lệch nhận thức", purchased: false },
       ],
-    },
-    {
-      id: 3,
-      title: "The 7 Habits of Highly Effective People",
-      author: "Stephen R. Covey",
-      narrator: "Stephen R. Covey",
-      duration: "13h 4m",
-      category: "Self Development",
-      rating: 4.7,
-      reviews: 3251,
-      price: 199000,
-      oldPrice: null,
-      type: "Ebook",
-      cover: "https://images-na.ssl-images-amazon.com/images/I/71QKQ9mwV7L.jpg",
-      chapters: [
-        { id: 1, name: "Habit 1: Chủ động", purchased: true },
-        { id: 2, name: "Habit 2: Bắt đầu với mục tiêu", purchased: true },
-        { id: 3, name: "Habit 3: Ưu tiên quan trọng", purchased: true },
-        { id: 4, name: "Habit 4: Win-Win", purchased: false },
-      ],
-    },
-    // ⚡️ thêm vài sách mẫu để test phân trang
-    {
-      id: 4,
-      title: "Book 4",
-      author: "Author 4",
-      narrator: "Narrator 4",
-      duration: "10h",
-      category: "Fiction",
-      rating: 4.5,
-      reviews: 1200,
-      price: 150000,
-      oldPrice: 200000,
-      type: "Audio",
-      cover: "https://placehold.co/200x300",
-      chapters: [],
-    },
-    {
-      id: 5,
-      title: "Book 5",
-      author: "Author 5",
-      narrator: "Narrator 5",
-      duration: "12h",
-      category: "Business",
-      rating: 4.2,
-      reviews: 900,
-      price: 180000,
-      oldPrice: null,
-      type: "Ebook",
-      cover: "https://placehold.co/200x300",
-      chapters: [],
-    },
-    {
-      id: 6,
-      title: "Book 6",
-      author: "Author 6",
-      narrator: "Narrator 6",
-      duration: "8h",
-      category: "Romance",
-      rating: 4.0,
-      reviews: 500,
-      price: 120000,
-      oldPrice: 150000,
-      type: "Audio",
-      cover: "https://placehold.co/200x300",
-      chapters: [],
-    },
-    {
-      id: 7,
-      title: "Book 7",
-      author: "Author 7",
-      narrator: "Narrator 7",
-      duration: "14h",
-      category: "Science",
-      rating: 4.9,
-      reviews: 2000,
-      price: 220000,
-      oldPrice: 280000,
-      type: "Audio",
-      cover: "https://placehold.co/200x300",
-      chapters: [],
+      date: "2025-08-20",
     },
   ];
 
-  // Pagination logic
-  const indexOfLastBook = currentPage * booksPerPage;
-  const indexOfFirstBook = indexOfLastBook - booksPerPage;
-  const currentBooks = books.slice(indexOfFirstBook, indexOfLastBook);
-  const totalPages = Math.ceil(books.length / booksPerPage);
+  // Pagination
+  const indexOfLast = currentPage * txPerPage;
+  const indexOfFirst = indexOfLast - txPerPage;
+  const currentTx = transactions.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(transactions.length / txPerPage);
+
+  // Icon + label theo loại
+  const renderIcon = (type) => {
+    switch (type) {
+      case "purchase":
+        return <RiBookOpenLine className="text-orange-400 text-xl" />;
+      case "deposit":
+        return <RiWallet3Line className="text-green-400 text-xl" />;
+      case "withdraw":
+        return <RiArrowDownCircleLine className="text-blue-400 text-xl" />;
+      case "refund":
+        return <RiRefund2Line className="text-yellow-400 text-xl" />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Lịch sử giao dịch</h2>
 
-      {/* List books */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {currentBooks.map((book) => (
+      {/* List */}
+      <div className="grid grid-cols-1 gap-4">
+        {currentTx.map((tx) => (
           <div
-            key={book.id}
-            className="flex bg-gray-800 rounded-lg p-4 gap-4 cursor-pointer hover:bg-gray-700 transition"
-            onClick={() => setSelectedBook(book)}
+            key={tx.id}
+            onClick={() => setSelectedTx(tx)}
+            className="flex items-center gap-4 bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition cursor-pointer"
           >
-            <img
-              src={book.cover}
-              alt={book.title}
-              className="w-24 h-32 object-cover rounded"
-            />
-            <div className="flex-1 flex flex-col justify-between min-w-0">
-              <div>
-                <h3 className="font-semibold text-base sm:text-lg text-white line-clamp-2">
-                  {book.title}
-                </h3>
-                <p className="text-sm text-gray-400">By {book.author}</p>
-                <p className="text-sm text-gray-400">
-                  Narrated by {book.narrator}
-                </p>
-                <div className="flex items-center gap-2 mt-1 text-sm text-gray-400 flex-wrap">
-                  <i className="ri-time-line"></i>
-                  <span>{book.duration}</span>
-                  <span className="bg-orange-600 text-white text-xs px-2 py-0.5 rounded">
-                    {book.category}
-                  </span>
+            {renderIcon(tx.type)}
+            <div className="flex-1">
+              {tx.type === "purchase" ? (
+                <div>
+                  <p className="text-white font-medium">{tx.title}</p>
+                  <p className="text-sm text-gray-400">
+                    Mua sách - {tx.price.toLocaleString()}đ
+                  </p>
                 </div>
-              </div>
-              <div className="mt-2">
-                <span className="font-bold text-orange-400 mr-2">
-                  {book.price.toLocaleString()}đ
-                </span>
-                {book.oldPrice && (
-                  <span className="line-through text-gray-500">
-                    {book.oldPrice.toLocaleString()}đ
-                  </span>
-                )}
-              </div>
+              ) : tx.type === "deposit" ? (
+                <div>
+                  <p className="text-green-400 font-medium">
+                    Nạp tiền {tx.amount.toLocaleString()}đ
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Phương thức: {tx.method}
+                  </p>
+                </div>
+              ) : tx.type === "withdraw" ? (
+                <div>
+                  <p className="text-blue-400 font-medium">
+                    Rút tiền {tx.amount.toLocaleString()}đ
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Ngân hàng: {tx.method}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-yellow-400 font-medium">
+                    Hoàn tiền {tx.amount.toLocaleString()}đ
+                  </p>
+                  <p className="text-sm text-gray-400">Lý do: {tx.reason}</p>
+                </div>
+              )}
             </div>
+            <span className="text-xs text-gray-400">{tx.date}</span>
           </div>
         ))}
       </div>
 
-      {/* Pagination controls */}
+      {/* Pagination */}
       <div className="flex justify-center space-x-2 mt-6">
-        {/* Nút Trước */}
         <button
           className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
           onClick={() => setCurrentPage((p) => p - 1)}
@@ -197,8 +168,6 @@ export default function UserTransactionHistory() {
         >
           Trước
         </button>
-
-        {/* Các số trang */}
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
           <button
             key={page}
@@ -212,8 +181,6 @@ export default function UserTransactionHistory() {
             {page}
           </button>
         ))}
-
-        {/* Nút Sau */}
         <button
           className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
           onClick={() => setCurrentPage((p) => p + 1)}
@@ -224,10 +191,9 @@ export default function UserTransactionHistory() {
       </div>
 
       {/* Modal */}
-      {selectedBook && (
+      {selectedTx && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-xl p-4 sm:p-6 w-full max-w-3xl relative shadow-lg mx-4">
-            {/* Close button (X) */}
+          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-3xl relative shadow-lg mx-4">
             <button
               onClick={handleCloseModal}
               className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -235,66 +201,104 @@ export default function UserTransactionHistory() {
               <RiCloseLine className="text-2xl" />
             </button>
 
-            {/* Badge */}
-            <div className="absolute top-4 left-4">
-              <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs">
-                {selectedBook.type}
-              </span>
-            </div>
-
-            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6">
-              <img
-                src={selectedBook.cover}
-                alt={selectedBook.title}
-                className="w-40 h-60 object-cover rounded mx-auto md:mx-0"
-              />
-              <div className="flex-1 space-y-2">
-                <h3 className="text-2xl font-bold text-white">
-                  {selectedBook.title}
-                </h3>
-                <p className="text-gray-300">Tác giả: {selectedBook.author}</p>
-                <p className="text-gray-300">
-                  Narrated by: {selectedBook.narrator}
-                </p>
-                <p className="text-sm text-gray-400">
-                  Thể loại:{" "}
-                  <span className="bg-orange-600 px-2 py-0.5 rounded text-white text-xs">
-                    {selectedBook.category}
-                  </span>
-                </p>
-                <p className="text-sm text-gray-400">
-                  Thời lượng: {selectedBook.duration}
-                </p>
-                <div className="flex items-center space-x-2 text-yellow-400">
-                  <i className="ri-star-fill"></i>
-                  <span>{selectedBook.rating}</span>
-                  <span className="text-gray-400">
-                    ({selectedBook.reviews} reviews)
-                  </span>
+            {selectedTx.type === "purchase" ? (
+              <div className="flex flex-col md:flex-row gap-6">
+                <img
+                  src={selectedTx.cover}
+                  alt={selectedTx.title}
+                  className="w-40 h-60 object-cover rounded"
+                />
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    {selectedTx.title}
+                  </h3>
+                  <p className="text-gray-300">Tác giả: {selectedTx.author}</p>
+                  <p className="text-gray-300">
+                    Narrator: {selectedTx.narrator}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    Thể loại: {selectedTx.category}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    Thời lượng: {selectedTx.duration}
+                  </p>
+                  <div className="flex items-center gap-2 text-yellow-400 mt-2">
+                    <i className="ri-star-fill"></i>
+                    <span>{selectedTx.rating}</span>
+                    <span className="text-gray-400">
+                      ({selectedTx.reviews} reviews)
+                    </span>
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-orange-400 font-bold text-lg mr-2">
+                      {selectedTx.price.toLocaleString()}đ
+                    </span>
+                    {selectedTx.oldPrice && (
+                      <span className="line-through text-gray-500">
+                        {selectedTx.oldPrice.toLocaleString()}đ
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Chapters */}
-            <div className="mt-6">
-              <h4 className="text-lg font-semibold text-white mb-3">
-                Danh sách chương
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {selectedBook.chapters.map((ch) => (
-                  <div
-                    key={ch.id}
-                    className={`p-3 rounded-lg text-sm text-center cursor-default ${
-                      ch.purchased
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-700 text-gray-300"
-                    }`}
-                  >
-                    {ch.name}
-                  </div>
-                ))}
+            ) : (
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4">
+                  Chi tiết giao dịch
+                </h3>
+                {selectedTx.type === "deposit" && (
+                  <p className="text-gray-300">
+                    Bạn đã nạp{" "}
+                    <span className="text-green-400">
+                      {selectedTx.amount.toLocaleString()}đ
+                    </span>{" "}
+                    qua {selectedTx.method}.
+                  </p>
+                )}
+                {selectedTx.type === "withdraw" && (
+                  <p className="text-gray-300">
+                    Bạn đã rút{" "}
+                    <span className="text-blue-400">
+                      {selectedTx.amount.toLocaleString()}đ
+                    </span>{" "}
+                    về {selectedTx.method}.
+                  </p>
+                )}
+                {selectedTx.type === "refund" && (
+                  <p className="text-gray-300">
+                    Bạn đã được hoàn{" "}
+                    <span className="text-yellow-400">
+                      {selectedTx.amount.toLocaleString()}đ
+                    </span>{" "}
+                    ({selectedTx.reason}).
+                  </p>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Nếu có chapters */}
+            {selectedTx.type === "purchase" &&
+              selectedTx.chapters?.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-lg font-semibold text-white mb-3">
+                    Danh sách chương
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {selectedTx.chapters.map((ch) => (
+                      <div
+                        key={ch.id}
+                        className={`p-3 rounded-lg text-sm text-center ${
+                          ch.purchased
+                            ? "bg-green-600 text-white"
+                            : "bg-gray-700 text-gray-300"
+                        }`}
+                      >
+                        {ch.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
         </div>
       )}
