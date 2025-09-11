@@ -29,6 +29,7 @@ services:
     build:
       context: .
       dockerfile: VieBook.BE/Dockerfile
+    image: devhoanghai/viebook-backend:latest
     container_name: viebook-api
     depends_on:
       - db
@@ -44,6 +45,7 @@ services:
     build:
       context: .
       dockerfile: VieBook.FE/Dockerfile
+    image: devhoanghai/viebook-frontend:latest
     container_name: viebook-fe
     depends_on:
       - backend
