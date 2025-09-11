@@ -36,6 +36,10 @@ jobs:
       - store_artifacts:
           path: VieBook.BE/TestResults
           destination: test-results
+      - persist_to_workspace:
+          root: VieBook.BE
+          paths:
+            - TestResults
   build-and-push:
     environment:
       DOCKER_IMAGE: devhoanghai/viebook
@@ -60,23 +64,31 @@ jobs:
       - image: cimg/base:current
     steps:
       - checkout
+
+      - attach_workspace:
+          at: ./VieBook.BE
+
       - run:
           name: Parse test results
           command: |
             apt-get update && apt-get install -y libxml2-utils
             cd VieBook.BE/TestResults
-            PASSED=$(xmllint --xpath "string(//Counters/@passed)" test_results.trx)
-            FAILED=$(xmllint --xpath "string(//Counters/@failed)" test_results.trx)
-            SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" test_results.trx)
-            TOTAL=$(xmllint --xpath "string(//Counters/@total)" test_results.trx)
+
+            PASSED=$(xmllint --xpath "string(//Counters/@passed)" test_results.trx || echo 0)
+            FAILED=$(xmllint --xpath "string(//Counters/@failed)" test_results.trx || echo 0)
+            SKIPPED=$(xmllint --xpath "string(//Counters/@skipped)" test_results.trx || echo 0)
+            TOTAL=$(xmllint --xpath "string(//Counters/@total)" test_results.trx || echo 0)
 
             echo "export PASSED=$PASSED" >> $BASH_ENV
             echo "export FAILED=$FAILED" >> $BASH_ENV
             echo "export SKIPPED=$SKIPPED" >> $BASH_ENV
             echo "export TOTAL=$TOTAL" >> $BASH_ENV
+
       - run:
           name: Send Discord notification
           command: |
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+
             if [ "$CIRCLE_JOB_STATUS" = "success" ]; then
               STATUS="✅ Build và Unit Test thành công"
             else
@@ -85,8 +97,7 @@ jobs:
 
             curl -H "Content-Type: application/json" \
               -d "{
-                \"content\": \"🔔 Thông báo\n👤 Tài khoản: $CIRCLE_USERNAME\n🎯 Hành động: push\n🌿 Nhánh: $CIRCLE_BRANCH\n📦 Repo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME\n📝 Commit message: $CIRCLE_COMPARE_URL\n$STATUS bởi $CIRCLE_USERNAME trên nhánh $CIRCLE_BRANCH tại repo $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.\n📊 Unit Test Summary:\n✅ Passed: $PASSED\n❌ Failed: $FAILED\n⏭️ Skipped: $SKIPPED\n📦 Total: $TOTAL\"
-              }" \
+                \"content\": \"🔔 Thông báo\n👤 Tài khoản: $CIRCLE_USERNAME\n🎯 Hành động: push\n🌿 Nhánh: $CIRCLE_BRANCH\n📦 Repo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME\n📝 Commit: $COMMIT_MSG\n$STATUS bởi $CIRCLE_USERNAME trên nhánh $CIRCLE_BRANCH tại repo $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.\n📊 Unit Test Summary:\n✅ Passed: $PASSED\n❌ Failed: $FAILED\n⏭️ Skipped: $SKIPPED\n📦 Total: $TOTAL\" }" \
               $DISCORD_WEBHOOK
 
 # Orchestrate jobs using workflows
