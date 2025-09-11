@@ -33,9 +33,6 @@ jobs:
             dotnet test --no-build --verbosity normal \
               --logger "trx;LogFileName=test_results.trx" \
               --results-directory ./TestResults
-      - store_artifacts:
-          path: VieBook.BE/TestResults
-          destination: test-results
       - persist_to_workspace:
           root: VieBook.BE
           paths:
@@ -120,4 +117,3 @@ workflows:
           filters:
             branches:
               only: /.*/
-          when: always
