@@ -6,8 +6,8 @@ import {
 
 export default function ReaderBookmarks({ bookmarks, removeBookmark, setCurrentPage, close }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="relative bg-gray-700 p-6 rounded-lg max-w-md w-full">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="relative bg-gray-700/95 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl">
         <h3 className="mb-4 text-lg font-bold flex items-center gap-2">
           <RiBookmarkLine /> Dấu trang
         </h3>

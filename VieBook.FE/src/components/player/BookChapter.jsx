@@ -11,8 +11,8 @@ export default function BookChapter({
   if (!showChapters) return null; // Nếu chưa mở thì không render gì
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-96 overflow-y-auto">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="relative bg-gray-700/95 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Danh sách chương</h3>
