@@ -70,32 +70,18 @@ jobs:
       - run:
           name: Debug workspace files
           command: |
-            echo ">>> Current working directory: $(pwd)"
+            echo ">>> Current dir: $(pwd)"
             echo ">>> Listing all files in root:"
             ls -R .
-
-            echo ">>> Checking VieBook.BE/TestResults path:"
-            ls -l VieBook.BE/TestResults || echo "Not found"
-
             echo ">>> Checking TestResults path:"
             ls -l TestResults || echo "Not found"
 
       - run:
           name: Parse test results
           command: |
-            mkdir -p /var/lib/apt/lists/partial
-            apt-get update || true
-            apt-get install -y libxml2-utils
+            sudo apt-get update && sudo apt-get install -y libxml2-utils
 
-            if [ -d "VieBook.BE/TestResults" ]; then
-              cd VieBook.BE/TestResults
-            elif [ -d "TestResults" ]; then
-              cd TestResults
-            else
-              echo "❌ Không tìm thấy thư mục TestResults"
-              exit 1
-            fi
-
+            cd TestResults || exit 1
             echo ">>> Listing TRX files..."
             ls -l
 
