@@ -329,7 +329,7 @@ export default function UserListeningSchedule() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Ngày
+                    Ngày Bắt Đầu
                   </label>
                   <input
                     type="date"
@@ -338,15 +338,23 @@ export default function UserListeningSchedule() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Giờ
+                    Ngày Kết Thúc
                   </label>
                   <input
-                    type="time"
+                    type="date"
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
                   />
                 </div>
               </div>
-
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Giờ
+                </label>
+                <input
+                  type="time"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Thời gian nghe (phút)
