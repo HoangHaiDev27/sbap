@@ -22,9 +22,18 @@ export default function ReaderSettings({
   ];
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="relative bg-gray-700/95 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay nền tối */}
+      <div
+        className="fixed inset-0 bg-black/30"
+        onClick={close}
+      ></div>
+
+      {/* Popup */}
+      <div className="relative bg-gray-700/95 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl z-10">
         <h3 className="mb-6 text-lg font-bold">Cài đặt đọc</h3>
+
+        {/* Nút đóng */}
         <button
           onClick={close}
           className="absolute top-4 right-4 text-xl hover:text-red-400"

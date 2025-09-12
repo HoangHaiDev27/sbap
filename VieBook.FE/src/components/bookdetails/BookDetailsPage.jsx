@@ -93,7 +93,7 @@ export default function BookDetailPage() {
             ) : (
               <RiHeartLine /> // 🤍 khi chưa yêu thích
             )}
-            {isFavorite ? "Yêu thích" : "Yêu thích"}
+            {isFavorite ? "Đã Yêu thích" : "Yêu thích"}
             </button>
               <button
                 onClick={() => setShowReportModal(true)}
@@ -176,32 +176,39 @@ export default function BookDetailPage() {
 
       {/* Report Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="relative bg-gray-800 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl">
-            <h2 className="text-lg font-bold mb-4">Báo cáo sách</h2>
-            <textarea
-              value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
-              placeholder="Nhập lý do báo cáo..."
-              className="w-full h-32 p-3 rounded-lg bg-gray-700 text-white focus:outline-none mb-4"
-            />
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowReportModal(false)}
-                className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleReportSubmit}
-                className="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500"
-              >
-                Gửi báo cáo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    {/* Overlay mờ */}
+    <div
+      className="fixed inset-0 bg-black/30"
+      onClick={() => setShowReportModal(false)}
+    ></div>
+
+    {/* Popup */}
+    <div className="relative bg-gray-800 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl z-10">
+      <h2 className="text-lg font-bold mb-4">Báo cáo sách</h2>
+      <textarea
+        value={reportText}
+        onChange={(e) => setReportText(e.target.value)}
+        placeholder="Nhập lý do báo cáo..."
+        className="w-full h-32 p-3 rounded-lg bg-gray-700 text-white focus:outline-none mb-4"
+      />
+      <div className="flex justify-end space-x-3">
+        <button
+          onClick={() => setShowReportModal(false)}
+          className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500"
+        >
+          Hủy
+        </button>
+        <button
+          onClick={handleReportSubmit}
+          className="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500"
+        >
+          Gửi báo cáo
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
