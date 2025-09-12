@@ -43,40 +43,59 @@ export default function BookTable({ books }) {
               <td className="p-3">{book.category}</td>
               <td className="p-3">{book.price}</td>
               <td className="p-3">{book.sold}</td>
-              <td className="p-3 flex items-center text-yellow-400">
-                <RiStarFill className="mr-1" /> {book.rating}
+              <td className="p-3 align-middle text-yellow-400">
+                <div className="flex items-center">
+                  <RiStarFill className="mr-1" /> {book.rating}
+                </div>
               </td>
               <td className="p-3">
                 <span
-                  className={`px-2 py-1 rounded text-xs ${
-                    book.status === "Đang bán"
-                      ? "bg-green-600"
-                      : "bg-yellow-600"
-                  }`}
+                  className={`px-2 py-1 rounded text-xs ${book.status === "Đang bán"
+                    ? "bg-green-600"
+                    : "bg-yellow-600"
+                    }`}
                 >
                   {book.status}
                 </span>
               </td>
-              <td className="p-3 flex space-x-2">
-                <button className="flex items-center px-2 py-1 bg-blue-500 rounded text-xs hover:bg-blue-600">
-                  <RiEyeLine className="mr-1" /> Xem
-                </button>
-                <button className="flex items-center px-2 py-1 bg-green-500 rounded text-xs hover:bg-green-600">
-                  <RiEdit2Line className="mr-1" /> Sửa
-                </button>
-                <Link
-                  to={`/owner/books/${book.id}/chapters`}
-                  className="flex items-center px-2 py-1 bg-indigo-500 rounded text-xs hover:bg-indigo-600"
-                >
-                  <RiBookOpenLine className="mr-1" /> Quản lý chương
-                </Link>
-                <button className="flex items-center px-2 py-1 bg-purple-500 rounded text-xs hover:bg-purple-600">
-                  <RiSoundModuleLine className="mr-1" /> Audio
-                </button>
-                <button className="flex items-center px-2 py-1 bg-red-500 rounded text-xs hover:bg-red-600">
-                  <RiDeleteBinLine className="mr-1" /> Xóa
-                </button>
+              <td className="p-3 align-middle">
+                <div className="flex items-center space-x-2">
+                  <Link
+                    to={`/owner/books/${book.id}`}
+                    className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition"
+                    title="Xem"
+                  >
+                    <RiEyeLine className="text-white text-lg" />
+                  </Link>
+
+                  <button
+                    className="p-2 bg-green-500 rounded hover:bg-green-600 transition"
+                    title="Sửa"
+                  >
+                    <RiEdit2Line className="text-white text-lg" />
+                  </button>
+                  <Link
+                    to={`/owner/books/${book.id}/chapters`}
+                    className="p-2 bg-indigo-500 rounded hover:bg-indigo-600 transition"
+                    title="Quản lý chương"
+                  >
+                    <RiBookOpenLine className="text-white text-lg" />
+                  </Link>
+                  <button
+                    className="p-2 bg-purple-500 rounded hover:bg-purple-600 transition"
+                    title="Audio"
+                  >
+                    <RiSoundModuleLine className="text-white text-lg" />
+                  </button>
+                  <button
+                    className="p-2 bg-red-500 rounded hover:bg-red-600 transition"
+                    title="Xóa"
+                  >
+                    <RiDeleteBinLine className="text-white text-lg" />
+                  </button>
+                </div>
               </td>
+
             </tr>
           ))}
         </tbody>
