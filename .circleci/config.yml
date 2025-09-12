@@ -66,60 +66,47 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-
       - run:
-          name: Debug workspace files
-          command: |
-            echo ">>> Current dir: $(pwd)"
-            echo ">>> Listing all files in root:"
-            ls -R .
-            echo ">>> Checking TestResults path:"
-            ls -l TestResults || echo "Not found"
-
-      - run:
-          name: Parse test results
+          name: "Install XML parser"
           command: |
             sudo apt-get update && sudo apt-get install -y libxml2-utils
-
+      - run:
+          name: "Parse test results"
+          command: |
             cd TestResults || exit 1
-            echo ">>> Listing TRX files..."
-            ls -l
-
             FILE=$(ls *.trx | head -n 1)
             echo ">>> Using test file: $FILE"
-
-            echo ">>> Dumping TRX content (first 20 lines):"
-            head -n 20 $FILE
-
             PASSED=$(xmllint --xpath "string(//*[local-name()='Counters']/@passed)" $FILE || echo 0)
             FAILED=$(xmllint --xpath "string(//*[local-name()='Counters']/@failed)" $FILE || echo 0)
             SKIPPED=$(xmllint --xpath "string(//*[local-name()='Counters']/@notExecuted)" $FILE || echo 0)
             TOTAL=$(xmllint --xpath "string(//*[local-name()='Counters']/@total)" $FILE || echo 0)
-
             echo ">>> Parsed results: PASSED=$PASSED, FAILED=$FAILED, SKIPPED=$SKIPPED, TOTAL=$TOTAL"
-
             echo "export PASSED=$PASSED" >> $BASH_ENV
             echo "export FAILED=$FAILED" >> $BASH_ENV
             echo "export SKIPPED=$SKIPPED" >> $BASH_ENV
             echo "export TOTAL=$TOTAL" >> $BASH_ENV
-
-
-
       - run:
-          name: Send Discord notification
+          name: "Send Discord notification"
           command: |
             source $BASH_ENV
             COMMIT_MSG=$(git log -1 --pretty=%B)
-
             if [ "$FAILED" -eq 0 ]; then
               STATUS="✅ Build và Unit Test thành công"
             else
               STATUS="❌ Build hoặc Unit Test thất bại"
             fi
 
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              EVENT="Pull Request"
+              TARGET_BRANCH=$(echo $CIRCLE_PULL_REQUEST | awk -F/ '{print $NF}')
+            else
+              EVENT="Push"
+              TARGET_BRANCH=$CIRCLE_BRANCH
+            fi
+
             curl -H "Content-Type: application/json" \
               -d "{
-                \"content\": \"🔔 Thông báo\n👤 Tài khoản: $CIRCLE_USERNAME\n🎯 Hành động: push\n🌿 Nhánh: $CIRCLE_BRANCH\n📦 Repo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME\n📝 Commit: $COMMIT_MSG\n$STATUS bởi $CIRCLE_USERNAME.\n📊 Unit Test Summary:\n✅ Passed: $PASSED\n❌ Failed: $FAILED\n⏭️ Skipped: $SKIPPED\n📦 Total: $TOTAL\" }" \
+                \"content\": \"🔔 Thông báo\n👤 Tài khoản: $CIRCLE_USERNAME\n🎯 Hành động: $EVENT\n🌿 Nhánh: $TARGET_BRANCH\n📦 Repo: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME\n📝 Commit: $COMMIT_MSG\n$STATUS\n📊 Unit Test Summary: ✅ Passed: $PASSED ❌ Failed: $FAILED ⏭️ Skipped: $SKIPPED 📦 Total: $TOTAL\"}" \
               $DISCORD_WEBHOOK
 
 # Orchestrate jobs using workflows
@@ -139,6 +126,3 @@ workflows:
       - notify:
           requires:
             - test
-          filters:
-            branches:
-              only: /.*/
