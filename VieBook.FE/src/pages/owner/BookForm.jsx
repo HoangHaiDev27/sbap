@@ -20,7 +20,7 @@ export default function BookForm() {
       {/* Form */}
       <div className="bg-slate-800 p-6 rounded-lg shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tên sách & tác giả */}
+          {/* Tên sách */}
           <div>
             <label className="block mb-2 text-sm font-medium">Tên sách *</label>
             <input
@@ -29,6 +29,8 @@ export default function BookForm() {
               className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
             />
           </div>
+
+          {/* Tác giả */}
           <div>
             <label className="block mb-2 text-sm font-medium">Tác giả *</label>
             <input
@@ -36,6 +38,17 @@ export default function BookForm() {
               placeholder="Nhập tên tác giả..."
               className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
             />
+          </div>
+
+          {/* ISBN */}
+          <div>
+            <label className="block mb-2 text-sm font-medium">Mã ISBN</label>
+            <input
+              type="text"
+              placeholder="Nhập mã ISBN..."
+              className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
+            />
+            <p className="text-xs text-gray-400 mt-1">Mã sách quốc tế (nếu có)</p>
           </div>
 
           {/* Thể loại */}
@@ -50,7 +63,7 @@ export default function BookForm() {
           </div>
 
           {/* Ảnh bìa */}
-          <div>
+          <div className="md:col-span-2">
             <label className="block mb-2 text-sm font-medium">Ảnh bìa *</label>
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-700 cursor-pointer hover:border-orange-500">
               <p className="text-gray-400">Kéo thả ảnh hoặc nhấn để chọn</p>

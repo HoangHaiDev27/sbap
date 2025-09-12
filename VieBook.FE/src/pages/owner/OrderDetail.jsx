@@ -6,85 +6,106 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
-    // Giả lập API lấy chi tiết đơn hàng
     const mockData = {
-      id: orderId,
+      id: orderId || "ORD-001",
       customer: "Nguyễn Văn A",
       status: "Hoàn thành",
-      total: 150000,
-      date: "20/01/2024 10:30",
+      total: 50000,
+      date: "2024-01-20T10:30:00",
       items: [
-        { id: "B001", title: "Triết học cuộc sống", price: 50000, qty: 1 },
-        { id: "B002", title: "Khoa học vui", price: 100000, qty: 1 },
+        {
+          id: "B001",
+          title: "Triết học cuộc sống",
+          price: 50000,
+          qty: 1,
+          cover:
+            "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
+        },
       ],
       payment: "Ví MoMo",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
     };
 
     setOrder(mockData);
   }, [orderId]);
 
   if (!order) {
-    return <div className="text-white p-6">Đang tải dữ liệu...</div>;
+    return <div className="text-white p-6">Đang tải dữ liệu đơn hàng...</div>;
   }
+
+  const book = order.items[0];
+  const formatCurrency = (amount) => `${amount.toLocaleString()} VND`;
 
   return (
     <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">Chi tiết đơn hàng</h1>
-
-      {/* Thông tin cơ bản */}
-      <div className="bg-slate-800 p-4 rounded-lg mb-6">
-        <p><span className="font-semibold">Mã đơn:</span> {order.id}</p>
-        <p><span className="font-semibold">Khách hàng:</span> {order.customer}</p>
-        <p><span className="font-semibold">Trạng thái:</span> {order.status}</p>
-        <p><span className="font-semibold">Ngày giờ:</span> {order.date}</p>
-        <p><span className="font-semibold">Phương thức thanh toán:</span> {order.payment}</p>
-        <p><span className="font-semibold">Địa chỉ giao hàng:</span> {order.address}</p>
+      {/* Tiêu đề + quay lại */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Chi tiết đơn hàng #{order.id}</h1>
+        <Link
+          to="/owner/orders"
+          className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition text-sm"
+        >
+          ← Quay lại danh sách
+        </Link>
       </div>
 
-      {/* Danh sách sản phẩm */}
-      <div className="bg-slate-800 p-4 rounded-lg mb-6">
-        <h2 className="text-lg font-semibold mb-3">Sản phẩm</h2>
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-700 text-gray-300">
-              <th className="p-3">Mã sách</th>
-              <th className="p-3">Tên sách</th>
-              <th className="p-3">Số lượng</th>
-              <th className="p-3">Giá</th>
-              <th className="p-3">Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.items.map((item) => (
-              <tr key={item.id} className="border-b border-gray-600">
-                <td className="p-3">{item.id}</td>
-                <td className="p-3">{item.title}</td>
-                <td className="p-3">{item.qty}</td>
-                <td className="p-3">{item.price.toLocaleString()} VND</td>
-                <td className="p-3">
-                  {(item.price * item.qty).toLocaleString()} VND
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Thông tin đơn hàng */}
+      <section className="bg-slate-800 rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold mb-2">Thông tin đơn hàng</h2>
+          <p><span className="text-gray-400">Khách hàng:</span> {order.customer}</p>
+          <p>
+            <span className="text-gray-400">Ngày giờ đặt:</span>{" "}
+            {new Date(order.date).toLocaleString("vi-VN")}
+          </p>
+          <p>
+            <span className="text-gray-400">Trạng thái:</span>{" "}
+            <span
+              className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                order.status === "Hoàn thành"
+                  ? "bg-green-600"
+                  : order.status === "Đang chờ"
+                  ? "bg-yellow-600"
+                  : "bg-red-600"
+              }`}
+            >
+              {order.status}
+            </span>
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold mb-2">Thông tin thanh toán</h2>
+          <p><span className="text-gray-400">Phương thức:</span> {order.payment}</p>
+        </div>
+      </section>
+
+      {/* Sản phẩm */}
+      <section className="bg-slate-800 rounded-lg shadow p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Sản phẩm</h2>
+        <div className="flex flex-col sm:flex-row gap-6">
+          <img
+            src={book.cover}
+            alt={book.title}
+            className="w-24 h-32 object-cover rounded shadow"
+          />
+          <div className="flex-1 space-y-1">
+            <p className="text-lg font-semibold">{book.title}</p>
+            <p><span className="text-gray-400">Mã sách:</span> {book.id}</p>
+            <p><span className="text-gray-400">Số lượng:</span> {book.qty}</p>
+            <p><span className="text-gray-400">Đơn giá:</span> {formatCurrency(book.price)}</p>
+            <p className="text-green-400 font-semibold mt-2">
+              Thành tiền: {formatCurrency(book.price * book.qty)}
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Tổng cộng */}
-      <div className="bg-slate-800 p-4 rounded-lg mb-6">
-        <p className="text-lg font-bold">
-          Tổng cộng: {order.total.toLocaleString()} VND
+      <section className="bg-slate-800 rounded-lg shadow p-6 flex justify-end">
+        <p className="text-xl font-bold text-green-400">
+          Tổng cộng: {formatCurrency(order.total)}
         </p>
-      </div>
-
-      {/* Quay lại */}
-      <Link
-        to="/owner/orders"
-        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded"
-      >
-        Quay lại danh sách
-      </Link>
+      </section>
     </div>
   );
 }
