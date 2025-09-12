@@ -1,16 +1,22 @@
 import React, { useState } from "react";
 import BookDetailModal from "../../components/staff/books/BookDetailModal";
+import ConfirmModal from "../../components/staff/books/ConfirmModal";
+import toast from "react-hot-toast";
 
 const StaffBooksPage = () => {
     const [statusFilter, setStatusFilter] = useState("all");
     const [categoryFilter, setCategoryFilter] = useState("all");
     const [search, setSearch] = useState("");
     const [selectedBook, setSelectedBook] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // ✅ state popup confirm
+    const [confirmBook, setConfirmBook] = useState(null);
 
     const stats = [
-        { label: "Tổng số sách", value: 6, color: "text-blue-600" },
-        { label: "Đang hoạt động", value: 5, color: "text-green-600" },
-        { label: "Đã ẩn", value: 1, color: "text-orange-600" },
+        { label: "Tổng số sách", value: 11, color: "text-blue-600" },
+        { label: "Đang hoạt động", value: 8, color: "text-green-600" },
+        { label: "Đã ẩn", value: 3, color: "text-orange-600" },
         { label: "Tổng đánh giá", value: 304, color: "text-purple-600" },
     ];
 
@@ -19,6 +25,13 @@ const StaffBooksPage = () => {
         { id: 2, title: "Đắc nhân tâm", author: "Dale Carnegie", owner: "Trần Thị B", category: "Kỹ năng sống", views: "22.150/12.340", rating: 4.9, status: "Hiển thị" },
         { id: 3, title: "Atomic Habits", author: "James Clear", owner: "Lê Văn C", category: "Phát triển bản thân", views: "8.750/5.420", rating: 4.6, status: "Đã ẩn" },
         { id: 4, title: "Thinking, Fast and Slow", author: "Daniel Kahneman", owner: "Phạm Thị D", category: "Tâm lý học", views: "18.940/11.230", rating: 4.7, status: "Hiển thị" },
+        { id: 5, title: "Homo Deus", author: "Yuval Noah Harari", owner: "Nguyễn Văn A", category: "Khoa học", views: "12.300/7.100", rating: 4.5, status: "Hiển thị" },
+        { id: 6, title: "21 Lessons for the 21st Century", author: "Yuval Noah Harari", owner: "Nguyễn Văn A", category: "Khoa học", views: "9.500/6.300", rating: 4.4, status: "Đã ẩn" },
+        { id: 7, title: "Rich Dad Poor Dad", author: "Robert Kiyosaki", owner: "Trần Văn E", category: "Kỹ năng sống", views: "20.100/11.900", rating: 4.8, status: "Hiển thị" },
+        { id: 8, title: "The 7 Habits of Highly Effective People", author: "Stephen R. Covey", owner: "Lê Thị F", category: "Phát triển bản thân", views: "13.400/8.500", rating: 4.7, status: "Hiển thị" },
+        { id: 9, title: "Grit", author: "Angela Duckworth", owner: "Nguyễn Văn G", category: "Tâm lý học", views: "7.200/4.300", rating: 4.3, status: "Hiển thị" },
+        { id: 10, title: "Mindset", author: "Carol S. Dweck", owner: "Phạm Thị H", category: "Tâm lý học", views: "16.800/9.700", rating: 4.6, status: "Đã ẩn" },
+        { id: 11, title: "Outliers", author: "Malcolm Gladwell", owner: "Trần Văn I", category: "Khoa học", views: "14.500/8.900", rating: 4.5, status: "Hiển thị" },
     ];
 
     const filteredBooks = books.filter(
@@ -29,6 +42,18 @@ const StaffBooksPage = () => {
                 b.author.toLowerCase().includes(search.toLowerCase()) ||
                 b.owner.toLowerCase().includes(search.toLowerCase()))
     );
+
+    // Pagination
+    const itemsPerPage = 5;
+    const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedBooks = filteredBooks.slice(startIndex, startIndex + itemsPerPage);
+
+    // ✅ Hàm xử lý confirm
+    const handleConfirm = () => {
+        toast.success(`Cập nhật trạng thái sách "${confirmBook.title}" thành công!`);
+        setConfirmBook(null);
+    };
 
     return (
         <div className="pt-24 p-6 bg-gray-50 text-gray-900 min-h-screen">
@@ -97,9 +122,9 @@ const StaffBooksPage = () => {
                         </tr>
                     </thead>
                     <tbody className="text-gray-900">
-                        {filteredBooks.map((b, idx) => (
+                        {paginatedBooks.map((b, idx) => (
                             <tr key={b.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                <td className="p-3 w-16 text-center">{idx + 1}</td>
+                                <td className="p-3 w-16 text-center">{startIndex + idx + 1}</td>
                                 <td className="p-3">
                                     <div className="flex items-center gap-3">
                                         <img
@@ -119,10 +144,11 @@ const StaffBooksPage = () => {
                                 <td className="p-3">⭐ {b.rating}</td>
                                 <td className="p-3">
                                     <span
-                                        className={`px-2 py-1 text-sm rounded-full ${b.status === "Hiển thị"
-                                            ? "bg-green-100 text-green-700"
-                                            : "bg-gray-200 text-gray-700"
-                                            }`}
+                                        className={`px-2 py-1 text-sm rounded-full ${
+                                            b.status === "Hiển thị"
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-gray-200 text-gray-700"
+                                        }`}
                                     >
                                         {b.status}
                                     </span>
@@ -138,7 +164,7 @@ const StaffBooksPage = () => {
                                         </button>
                                         <button
                                             onClick={() =>
-                                                window.location.href = `/staff/feedback?bookId=${books.id}`
+                                                (window.location.href = `/staff/feedback?bookId=${b.id}`)
                                             }
                                             className="p-2 hover:bg-purple-50 rounded-lg text-purple-600"
                                             title="Nhận xét"
@@ -147,12 +173,7 @@ const StaffBooksPage = () => {
                                         </button>
 
                                         <button
-                                            onClick={() => {
-                                                if (window.confirm("Bạn có chắc muốn ẩn/hiện sách này không?")) {
-                                                    alert("Cập nhật trạng thái thành công!");
-                                                    // TODO: ở đây bạn có thể thêm logic gọi API để cập nhật trạng thái
-                                                }
-                                            }}
+                                            onClick={() => setConfirmBook(b)}
                                             className="p-2 hover:bg-orange-50 rounded-lg text-orange-600"
                                             title="Ẩn/Hiện"
                                         >
@@ -160,7 +181,6 @@ const StaffBooksPage = () => {
                                         </button>
                                     </div>
                                 </td>
-
                             </tr>
                         ))}
 
@@ -175,10 +195,40 @@ const StaffBooksPage = () => {
                 </table>
             </div>
 
-            {/* Popup */}
+            {/* Pagination */}
+            <div className="flex justify-center items-center gap-2 mt-6">
+                <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border rounded-lg bg-white shadow-sm disabled:opacity-50"
+                >
+                    Trước
+                </button>
+                <span className="px-3 py-1">
+                    Trang {currentPage} / {totalPages}
+                </span>
+                <button
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 border rounded-lg bg-white shadow-sm disabled:opacity-50"
+                >
+                    Sau
+                </button>
+            </div>
+
+            {/* Popup chi tiết sách */}
             {selectedBook && (
                 <BookDetailModal book={selectedBook} onClose={() => setSelectedBook(null)} />
             )}
+
+            {/* Popup xác nhận ẩn/hiện */}
+            <ConfirmModal
+                isOpen={!!confirmBook}
+                title="Xác nhận thay đổi trạng thái"
+                message={`Bạn có chắc muốn ẩn/hiện sách "${confirmBook?.title}" không?`}
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmBook(null)}
+            />
         </div>
     );
 };

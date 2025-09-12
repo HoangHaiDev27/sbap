@@ -1,55 +1,40 @@
 import React, { useState } from "react";
-import { FaEye, FaEnvelope, FaLock, FaLockOpen, FaCrown, FaRegCircle } from "react-icons/fa";
+import {
+  FaEye,
+  FaEnvelope,
+  FaLock,
+  FaLockOpen,
+  FaCrown,
+  FaRegCircle,
+} from "react-icons/fa";
 import BookOwnerDetailModal from "../../components/staff/book-owners/BookOwnerDetailModal";
+import EmailModal from "../../components/staff/book-owners/EmailModal";
+import ConfirmStatusModal from "../../components/staff/book-owners/ConfirmStatusModal";
 
 export default function BookOwnersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const bookOwners = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      email: "nguyenvana@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=professional%20asian%20male%20writer%20portrait&width=100&height=100&seq=avatar1&orientation=squarish",
-      bookCount: 12,
-      status: "active",
-      joinDate: "2024-01-15",
-      totalViews: 15420,
-      rating: 4.8,
-      vipPackage: "Gold",
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      email: "tranthib@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=professional%20asian%20female%20author%20portrait&width=100&height=100&seq=avatar2&orientation=squarish",
-      bookCount: 8,
-      status: "active",
-      joinDate: "2024-01-10",
-      totalViews: 9850,
-      rating: 4.6,
-      vipPackage: "Silver",
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      email: "levanc@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=professional%20young%20asian%20male%20creator%20portrait&width=100&height=100&seq=avatar3&orientation=squarish",
-      bookCount: 5,
-      status: "blocked",
-      joinDate: "2024-01-05",
-      totalViews: 3200,
-      rating: 3.8,
-      vipPackage: "None",
-    },
-  ];
+  // Fake data nhiều trang
+  const bookOwners = Array.from({ length: 20 }).map((_, i) => ({
+    id: i + 1,
+    name: `Người dùng ${i + 1}`,
+    email: `user${i + 1}@email.com`,
+    avatar: `https://i.pravatar.cc/100?img=${i + 1}`,
+    bookCount: Math.floor(Math.random() * 20),
+    status: i % 3 === 0 ? "blocked" : "active",
+    joinDate: "2024-01-15",
+    totalViews: Math.floor(Math.random() * 20000),
+    rating: (Math.random() * 5).toFixed(1),
+    vipPackage: i % 2 === 0 ? "Gold" : i % 3 === 0 ? "Silver" : "None",
+  }));
 
+  // Lọc + phân trang
   const filteredOwners = bookOwners.filter((owner) => {
     const matchesSearch =
       owner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -59,22 +44,33 @@ export default function BookOwnersManagement() {
     return matchesSearch && matchesStatus;
   });
 
+  const ownersPerPage = 5;
+  const totalPages = Math.ceil(filteredOwners.length / ownersPerPage);
+  const paginatedOwners = filteredOwners.slice(
+    (currentPage - 1) * ownersPerPage,
+    currentPage * ownersPerPage
+  );
+
+  // Actions
   const handleViewDetails = (owner) => {
     setSelectedOwner(owner);
-    setShowModal(true);
+    setShowDetailModal(true);
   };
 
-  const handleToggleStatus = (id, currentStatus) => {
-    const newStatus = currentStatus === "active" ? "blocked" : "active";
-    const action = newStatus === "blocked" ? "khóa" : "mở khóa";
-    if (window.confirm(`Bạn có chắc chắn muốn ${action} tài khoản này?`)) {
-      console.log("Toggling status for owner:", id, "to", newStatus);
-    }
+  const handleToggleStatus = (owner) => {
+    setSelectedOwner(owner);
+    setShowStatusModal(true);
   };
 
-  const handleSendEmail = (email) => {
-    console.log("Sending email to:", email);
-    alert("Đã mở ứng dụng email để gửi tin nhắn");
+  const confirmToggleStatus = (owner) => {
+    const newStatus = owner.status === "active" ? "blocked" : "active";
+    console.log("Toggling status for owner:", owner.id, "to", newStatus);
+    setShowStatusModal(false);
+  };
+
+  const handleSendEmail = (owner) => {
+    setSelectedOwner(owner);
+    setShowEmailModal(true);
   };
 
   const renderVipBadge = (vip) => {
@@ -157,7 +153,7 @@ export default function BookOwnersManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOwners.map((owner) => (
+              {paginatedOwners.map((owner) => (
                 <tr key={owner.id} className="hover:bg-gray-50 text-gray-800">
                   <td className="px-6 py-4 whitespace-nowrap flex items-center">
                     <img
@@ -198,16 +194,14 @@ export default function BookOwnersManagement() {
                       <FaEye />
                     </button>
                     <button
-                      onClick={() => handleSendEmail(owner.email)}
+                      onClick={() => handleSendEmail(owner)}
                       className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
                       title="Gửi email"
                     >
                       <FaEnvelope />
                     </button>
                     <button
-                      onClick={() =>
-                        handleToggleStatus(owner.id, owner.status)
-                      }
+                      onClick={() => handleToggleStatus(owner)}
                       className={`p-2 rounded-lg ${
                         owner.status === "active"
                           ? "text-red-600 hover:bg-red-100"
@@ -227,14 +221,51 @@ export default function BookOwnersManagement() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <div className="p-4 flex justify-between items-center border-t border-gray-200">
+          <span className="text-sm text-gray-600">
+            Trang {currentPage}/{totalPages}
+          </span>
+          <div className="space-x-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="px-3 py-1 border rounded disabled:opacity-50 text-gray-800"
+            >
+              Trước
+            </button>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="px-3 py-1 border rounded disabled:opacity-50 text-gray-800"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
       </div>
 
-      {showModal && selectedOwner && (
+      {/* Modals */}
+      {showDetailModal && selectedOwner && (
         <BookOwnerDetailModal
           owner={selectedOwner}
-          onClose={() => setShowModal(false)}
-          onSendEmail={handleSendEmail}
-          onToggleStatus={handleToggleStatus}
+          onClose={() => setShowDetailModal(false)}
+        />
+      )}
+
+      {showEmailModal && selectedOwner && (
+        <EmailModal
+          owner={selectedOwner}
+          onClose={() => setShowEmailModal(false)}
+        />
+      )}
+
+      {showStatusModal && selectedOwner && (
+        <ConfirmStatusModal
+          owner={selectedOwner}
+          onClose={() => setShowStatusModal(false)}
+          onConfirm={confirmToggleStatus}
         />
       )}
     </div>

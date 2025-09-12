@@ -53,7 +53,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="">
+      <main className="pt-20">
         <div className="p-6">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">

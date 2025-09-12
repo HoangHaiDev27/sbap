@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import FeedbackDetailModal from "../../components/staff/feedback/FeedbackDetailModal";
+import FeedbackDeleteModal from "../../components/staff/feedback/FeedbackDeleteModal";
+
 
 export default function FeedbackManagement() {
   const location = useLocation();
@@ -13,14 +15,19 @@ export default function FeedbackManagement() {
   const [showModal, setShowModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [bookFilter, setBookFilter] = useState(bookIdParam || null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [feedbackToDelete, setFeedbackToDelete] = useState(null);
+
+
+  const frogImg =
+    "https://drawcartoonstyle.com/wp-content/uploads/2022/07/10-Add-cute-blush-spots-to-the-frog-to-make-it-a-cute-chibi-frog.jpg";
 
   const feedbacks = [
     {
       id: 1,
       user: "Nguyễn Minh A",
       email: "nguyen.minh.a@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=friendly%20young%20asian%20male%20user%20portrait%20&width=80&height=80",
+      avatar: frogImg,
       type: "compliment",
       title: "Ứng dụng rất tuyệt vời",
       content:
@@ -34,8 +41,7 @@ export default function FeedbackManagement() {
       id: 2,
       user: "Trần Thị B",
       email: "tran.thi.b@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=professional%20young%20asian%20female%20user%20portrait&width=80&height=80",
+      avatar: frogImg,
       type: "suggestion",
       title: "Đề xuất cải thiện tính năng tìm kiếm",
       content:
@@ -49,14 +55,13 @@ export default function FeedbackManagement() {
       id: 3,
       user: "Lê Văn C",
       email: "levanc@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=asian%20male%20portrait%20professional&width=80&height=80",
+      avatar: frogImg,
       type: "bug_report",
       title: "Lỗi không tải được sách",
       content:
         "Khi tôi nhấn tải sách về thì bị lỗi mạng, dù internet của tôi vẫn ổn định.",
       bookId: 1,
-      bookTitle: "Java Programming Basics",
+      bookTitle: "Sapiens: Lược sử loài người",
       submitDate: "2024-01-20",
       status: "new",
     },
@@ -64,14 +69,13 @@ export default function FeedbackManagement() {
       id: 4,
       user: "Phạm Thị D",
       email: "phamd@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=asian%20female%20smiling%20portrait&width=80&height=80",
+      avatar: frogImg,
       type: "compliment",
       title: "Dịch vụ hỗ trợ khách hàng rất tốt",
       content:
         "Tôi đã liên hệ hỗ trợ và được phản hồi rất nhanh, nhân viên thân thiện và giải quyết vấn đề hiệu quả.",
-      bookId: 1,
-      bookTitle: "Sapiens: Lược sử loài người",
+      bookId: 3,
+      bookTitle: "Atomic Habits",
       submitDate: "2024-01-18",
       status: "reviewed",
     },
@@ -79,14 +83,13 @@ export default function FeedbackManagement() {
       id: 5,
       user: "Ngô Văn E",
       email: "ngovane@email.com",
-      avatar:
-        "https://readdy.ai/api/search-image?query=asian%20young%20male%20portrait&width=80&height=80",
+      avatar: frogImg,
       type: "suggestion",
       title: "Thêm chế độ đọc ban đêm",
       content:
         "Mình mong ứng dụng có chế độ Dark Mode để đọc sách vào buổi tối đỡ mỏi mắt hơn.",
-      bookId: 2,
-      bookTitle: null,
+      bookId: 4,
+      bookTitle: "Thinking, Fast and Slow",
       submitDate: "2024-01-15",
       status: "new",
     },
@@ -110,7 +113,6 @@ export default function FeedbackManagement() {
     return matchesSearch && matchesType && matchesBook;
   });
 
-  // Thống kê dựa trên danh sách đã lọc
   const total = filteredFeedbacks.length;
   const compliments = filteredFeedbacks.filter((f) => f.type === "compliment").length;
   const suggestions = filteredFeedbacks.filter((f) => f.type === "suggestion").length;
@@ -118,7 +120,7 @@ export default function FeedbackManagement() {
 
   const handleClearBookFilter = () => {
     setBookFilter(null);
-    navigate("/staff/feedback"); // xóa query param
+    navigate("/staff/feedback");
   };
 
   const handleViewDetails = (feedback) => {
@@ -126,12 +128,17 @@ export default function FeedbackManagement() {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa feedback này?")) {
-      console.log("Deleting feedback:", id);
-      setShowModal(false);
-    }
+  const handleDeleteClick = (feedback) => {
+    setFeedbackToDelete(feedback);
+    setDeleteModalOpen(true);
   };
+
+  const confirmDelete = (id) => {
+    console.log("Deleting feedback:", id);
+    setDeleteModalOpen(false);
+    setFeedbackToDelete(null);
+  };
+
 
   const handleMarkAsReviewed = (id) => {
     console.log("Marking feedback as reviewed:", id);
@@ -199,7 +206,7 @@ export default function FeedbackManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-20">
+    <div className="min-h-screen bg-gray-50 p-6 pt-25">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Quản lý Feedback</h2>
       <p className="text-gray-600 mb-6">Xem và quản lý phản hồi từ người dùng</p>
 
@@ -336,12 +343,13 @@ export default function FeedbackManagement() {
                         </button>
                       )}
                       <button
-                        onClick={() => handleDelete(feedback.id)}
+                        onClick={() => handleDeleteClick(feedback)}
                         className="text-red-600 hover:text-red-700 text-lg cursor-pointer"
                         title="Xóa feedback"
                       >
                         <i className="ri-delete-bin-line"></i>
                       </button>
+
                     </div>
                   </div>
                 </div>
@@ -367,6 +375,15 @@ export default function FeedbackManagement() {
           getStatusColor={getStatusColor}
         />
       )}
+
+      {deleteModalOpen && feedbackToDelete && (
+        <FeedbackDeleteModal
+          feedback={feedbackToDelete}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteModalOpen(false)}
+        />
+      )}
+
     </div>
   );
 }

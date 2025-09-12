@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import BookDetailModal from '../../components/staff/pending-books/BookDetailModal';
+import ApproveRejectModal from '../../components/staff/pending-books/ApproveRejectModal';
 
 export default function PendingBooksManagement() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,63 +10,25 @@ export default function PendingBooksManagement() {
   const [showModal, setShowModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
 
-  const books = [
-    {
-      id: 1,
-      title: 'Sapiens',
-      author: 'Yuval Noah Harari',
-      owner: 'Nguyễn Văn A',
-      category: 'Khoa học',
-      submitDate: '2024-01-20',
-      status: 'pending',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Khám phá lịch sử loài người từ thời kỳ đồ đá đến hiện tại...'
-    },
-    {
-      id: 2,
-      title: 'Đắc nhân tâm',
-      author: 'Dale Carnegie',
-      owner: 'Trần Thị B',
-      category: 'Kỹ năng sống',
-      submitDate: '2024-01-19',
-      status: 'approved',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Cuốn sách kinh điển về nghệ thuật giao tiếp...'
-    },
-    {
-      id: 3,
-      title: 'Atomic Habits',
-      author: 'James Clear',
-      owner: 'Lê Văn C',
-      category: 'Phát triển bản thân',
-      submitDate: '2024-01-18',
-      status: 'rejected',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Phương pháp thay đổi thói quen nhỏ để đạt kết quả lớn.'
-    },
-    {
-      id: 4,
-      title: 'Thinking, Fast and Slow',
-      author: 'Daniel Kahneman',
-      owner: 'Phạm Thị D',
-      category: 'Tâm lý học',
-      submitDate: '2024-01-17',
-      status: 'pending',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Hai hệ thống tư duy của con người và cách chúng ảnh hưởng đến quyết định hàng ngày.'
-    },
-    {
-      id: 5,
-      title: 'The Lean Startup',
-      author: 'Eric Ries',
-      owner: 'Hoàng Văn E',
-      category: 'Kinh doanh',
-      submitDate: '2024-01-16',
-      status: 'pending',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Phương pháp khởi nghiệp tinh gọn giúp doanh nghiệp phát triển nhanh chóng và bền vững.'
-    }
-  ];
+  // popup duyệt/từ chối
+  const [actionType, setActionType] = useState(null);
+
+  // phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // ✅ tạo dữ liệu test nhiều hơn
+  const books = Array.from({ length: 22 }).map((_, i) => ({
+    id: i + 1,
+    title: `Sách demo ${i + 1}`,
+    author: `Tác giả ${i + 1}`,
+    owner: `Người gửi ${i + 1}`,
+    category: ['Khoa học', 'Kỹ năng sống', 'Phát triển bản thân', 'Tâm lý học', 'Kinh doanh'][i % 5],
+    submitDate: `2024-01-${(i % 28) + 1}`,
+    status: ['pending', 'approved', 'rejected'][i % 3],
+    cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
+    summary: `Mô tả ngắn gọn cho sách demo ${i + 1}.`
+  }));
 
   const categoryColors = {
     'Khoa học': 'bg-blue-100 text-blue-800',
@@ -82,26 +45,54 @@ export default function PendingBooksManagement() {
     return matchSearch && matchCategory && matchStatus;
   });
 
+  // tính trang
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+  const paginatedBooks = filteredBooks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const handleViewDetails = (book) => {
     setSelectedBook(book);
     setShowModal(true);
   };
 
-  const handleApprove = (id) => {
-    if (confirm('Bạn có chắc chắn muốn duyệt sách này?')) {
-      alert('✅ Duyệt sách thành công!');
-      setShowModal(false);
-    }
+  const handleActionClick = (type, book) => {
+    setSelectedBook(book);
+    setActionType(type);
   };
 
-  const handleReject = (id) => {
-    const reason = prompt('Nhập lý do từ chối:');
-    if (reason && reason.trim()) {
-      alert(`❌ Đã từ chối sách.\nLý do: ${reason}`);
-      setShowModal(false);
+  const handleConfirmAction = (type, id, reason) => {
+    if (type === "approve") {
+      alert(`✅ Đã duyệt sách ID ${id}`);
     } else {
-      alert('Bạn chưa nhập lý do từ chối!');
+      alert(`❌ Từ chối sách ID ${id}.\nLý do: ${reason}`);
     }
+    setActionType(null);
+    setShowModal(false);
+  };
+
+  // 🔹 logic phân trang giống CustomerManagement
+  const getPageNumbers = () => {
+    const delta = 2; // hiển thị số trang xung quanh currentPage
+    const range = [];
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      range.unshift("...");
+    }
+    if (currentPage + delta < totalPages - 1) {
+      range.push("...");
+    }
+    range.unshift(1);
+    if (totalPages > 1) range.push(totalPages);
+    return range;
   };
 
   return (
@@ -159,9 +150,11 @@ export default function PendingBooksManagement() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredBooks.map((book, index) => (
+                  {paginatedBooks.map((book, index) => (
                     <tr key={book.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 font-semibold text-gray-700">{index + 1}</td>
+                      <td className="px-4 py-2 font-semibold text-gray-700">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
                       <td className="px-4 py-2 flex items-center space-x-3">
                         <img
                           src={book.cover}
@@ -202,8 +195,8 @@ export default function PendingBooksManagement() {
                         </span>
                       </td>
                       <td className="px-4 py-2 flex space-x-2">
-                        {/* Nút xem luôn đầu tiên */}
                         <button
+                          title="Xem chi tiết"
                           onClick={() => handleViewDetails(book)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
                         >
@@ -213,13 +206,15 @@ export default function PendingBooksManagement() {
                         {book.status === 'pending' && (
                           <>
                             <button
-                              onClick={() => handleApprove(book.id)}
+                              title="Duyệt sách"
+                              onClick={() => handleActionClick("approve", book)}
                               className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
                             >
                               <i className="ri-check-line"></i>
                             </button>
                             <button
-                              onClick={() => handleReject(book.id)}
+                              title="Từ chối sách"
+                              onClick={() => handleActionClick("reject", book)}
                               className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
                             >
                               <i className="ri-close-line"></i>
@@ -231,21 +226,54 @@ export default function PendingBooksManagement() {
                   ))}
                 </tbody>
               </table>
+
               {filteredBooks.length === 0 && (
                 <p className="p-4 text-center text-gray-500">Không có sách nào phù hợp</p>
               )}
             </div>
+            {/* Pagination */}
+        <div className="flex justify-between items-center px-6 py-4 border-t">
+          <p className="text-sm text-gray-600">
+            Trang {currentPage}/{totalPages}
+          </p>
+          <div className="space-x-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Sau
+            </button>
           </div>
+        </div>
+          </div>  
         </div>
       </main>
 
-      {/* Popup */}
+      {/* Popup chi tiết */}
       {showModal && selectedBook && (
         <BookDetailModal
           book={selectedBook}
           onClose={() => setShowModal(false)}
-          onApprove={handleApprove}
-          onReject={handleReject}
+          onApprove={(id) => handleActionClick("approve", selectedBook)}
+          onReject={(id) => handleActionClick("reject", selectedBook)}
+        />
+      )}
+
+      {/* Popup duyệt/từ chối */}
+      {actionType && selectedBook && (
+        <ApproveRejectModal
+          type={actionType}
+          book={selectedBook}
+          onClose={() => setActionType(null)}
+          onConfirm={handleConfirmAction}
         />
       )}
     </div>

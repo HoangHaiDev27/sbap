@@ -7,8 +7,6 @@ import PlayerManager from "./layouts/PlayerManager";
 import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
 function App() {
-  //const [role, setRole] = useState("user");
-  //const [role, setRole] = useState("admin");
   const [role, setRole] = useState("staff");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const noLayoutRoutes = ["/auth"];
