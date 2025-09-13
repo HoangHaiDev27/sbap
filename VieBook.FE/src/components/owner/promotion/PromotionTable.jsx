@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { RiEdit2Line, RiDeleteBin6Line } from "react-icons/ri";
 
 const promotions = [
@@ -20,9 +20,73 @@ const promotions = [
     status: "Đang hoạt động",
     effect: "45/200 lượt | Doanh thu: 6,750,000 đ",
   },
+  {
+    name: "Khuyến mãi Tết Nguyên Đán",
+    book: "Bí mật tư duy triệu phú",
+    type: "20%",
+    price: "120,000 đ → 96,000 đ",
+    time: "01/2/2024 - 14/2/2024",
+    status: "Sắp diễn ra",
+    effect: "0/150 lượt | Doanh thu: 0 đ",
+  },
+  {
+    name: "Giảm giá mùa xuân",
+    book: "Sống tối giản",
+    type: "25%",
+    price: "80,000 đ → 60,000 đ",
+    time: "10/2/2024 - 20/2/2024",
+    status: "Đang hoạt động",
+    effect: "10/50 lượt | Doanh thu: 600,000 đ",
+  },
+  {
+    name: "Sale 50k duy nhất 1 ngày",
+    book: "Thiết kế cuộc đời thịnh vượng",
+    type: "50,000 đ",
+    price: "100,000 đ → 50,000 đ",
+    time: "25/2/2024",
+    status: "Kết thúc",
+    effect: "89/100 lượt | Doanh thu: 4,450,000 đ",
+  },
+  {
+    name: "Sale ngày sách Việt Nam",
+    book: "Dám nghĩ lớn",
+    type: "15%",
+    price: "200,000 đ → 170,000 đ",
+    time: "21/4/2024 - 23/4/2024",
+    status: "Đang hoạt động",
+    effect: "33/100 lượt | Doanh thu: 5,610,000 đ",
+  },
+  {
+    name: "Black Friday",
+    book: "Marketing giỏi phải kiếm được tiền",
+    type: "40%",
+    price: "300,000 đ → 180,000 đ",
+    time: "29/11/2024",
+    status: "Sắp diễn ra",
+    effect: "0/300 lượt | Doanh thu: 0 đ",
+  },
+  {
+    name: "Cyber Monday",
+    book: "Nghệ thuật đàm phán",
+    type: "35%",
+    price: "220,000 đ → 143,000 đ",
+    time: "02/12/2024",
+    status: "Kết thúc",
+    effect: "102/150 lượt | Doanh thu: 14,586,000 đ",
+  },
 ];
 
+const ITEMS_PER_PAGE = 5;
+
 export default function PromotionTable() {
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.ceil(promotions.length / ITEMS_PER_PAGE);
+  const currentData = promotions.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="overflow-x-auto bg-slate-900 text-white rounded-2xl shadow-lg">
       <table className="w-full text-left border-collapse">
@@ -37,7 +101,7 @@ export default function PromotionTable() {
           </tr>
         </thead>
         <tbody>
-          {promotions.map((promo, i) => (
+          {currentData.map((promo, i) => (
             <tr
               key={i}
               className={`border-b border-slate-600 ${
@@ -71,6 +135,39 @@ export default function PromotionTable() {
           ))}
         </tbody>
       </table>
+
+      {/* Phân trang */}
+      <div className="flex justify-end items-center gap-2 p-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50 text-sm"
+        >
+          ←
+        </button>
+
+        {Array.from({ length: totalPages }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setPage(i + 1)}
+            className={`px-3 py-1 rounded text-sm ${
+              page === i + 1
+                ? "bg-orange-500 text-white"
+                : "bg-gray-700 text-white"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50 text-sm"
+        >
+          →
+        </button>
+      </div>
     </div>
   );
 }

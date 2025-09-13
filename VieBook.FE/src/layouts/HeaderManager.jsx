@@ -14,7 +14,7 @@ export default function HeaderManager({ role, onToggleSidebar }) {
     case "admin":
       return <AdminHeader onToggleSidebar={onToggleSidebar} />;
     case "owner":
-      return <BookOwnerHeader />;
+      return <UserHeader onToggleSidebar={onToggleSidebar} />;
     default:
       return <GuestHeader onToggleSidebar={onToggleSidebar} />;
   }

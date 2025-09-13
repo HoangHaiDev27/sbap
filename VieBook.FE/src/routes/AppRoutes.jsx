@@ -27,6 +27,9 @@ import OrderDetail from "../pages/owner/OrderDetail";
 import PromotionPage from "../pages/owner/PromotionPage";
 import OwnerReviews from "../pages/owner/OwnerReviews";
 import SupportChat from "../pages/owner/SupportChat";
+import BookDetailOwnerPage from "../pages/owner/BookDetailPage";
+import BookEditForm from "../pages/owner/BookEditForm";
+
 import AuthenticationPage from "../pages/AuthenticationPage";
 import VipPackagesPage from "../pages/VipPackagesPage";
 import RankingPage from "../pages/RankingPage";
@@ -95,6 +98,9 @@ function AppRoutes() {
       <Route path="/owner/promotions" element={<PromotionPage />} />
       <Route path="/owner/feedback" element={<OwnerReviews />} />
       <Route path="/owner/chat" element={<SupportChat />} />
+      <Route path="/owner/books/:id" element={<BookDetailOwnerPage />} />
+      <Route path="/owner/books/:bookId/edit" element={<BookEditForm />} />
+
       <Route path="/change-password" element={<ChangePassword />} />
       {/* Routes cho authentication */}
        <Route path="/auth" element={<AuthenticationPage />} />
