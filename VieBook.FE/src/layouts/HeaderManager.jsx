@@ -3,6 +3,7 @@ import UserHeader from "../components/header/UserHeader";
 import StaffHeader from "../components/header/StaffHeader";
 import AdminHeader from "../components/header/AdminHeader";
 import BookOwnerHeader from "../components/header/BookOwnerHeader";
+import GuestHeader from "../components/header/GuestHeader";
 
 export default function HeaderManager({ role, onToggleSidebar }) {
   switch (role) {
@@ -15,6 +16,6 @@ export default function HeaderManager({ role, onToggleSidebar }) {
     case "owner":
       return <UserHeader onToggleSidebar={onToggleSidebar} />;
     default:
-      return null;
+      return <GuestHeader onToggleSidebar={onToggleSidebar} />;
   }
 }

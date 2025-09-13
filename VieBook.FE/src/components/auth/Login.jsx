@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
-
+import { RiHomeLine } from "react-icons/ri";
 export default function Login({ setActiveTab }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +15,7 @@ export default function Login({ setActiveTab }) {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto py-8">
+    <div className="w-full max-w-md mx-auto ">
       {/* Logo */}
       <div className="text-center mb-4">
         <img
@@ -27,7 +27,7 @@ export default function Login({ setActiveTab }) {
       </div>
 
       {/* Form Title */}
-      <h2 className="text-2xl font-semibold text-center text-white mb-6">
+      <h2 className="text-2xl font-semibold text-center text-white mb-4">
         Đăng nhập
       </h2>
 
@@ -188,19 +188,7 @@ export default function Login({ setActiveTab }) {
           onClick={() => navigate("/")}
           className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
         >
-          <svg
-            className="w-4 h-4 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          <RiHomeLine className="w-5 h-5 mr-1" />
           Về trang chủ
         </button>
       </div>

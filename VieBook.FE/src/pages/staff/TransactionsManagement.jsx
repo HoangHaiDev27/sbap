@@ -14,6 +14,10 @@ export default function TransactionsManagement() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [userIdFilter, setUserIdFilter] = useState(null);
 
+  // phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const userId = params.get("userId");
@@ -90,6 +94,32 @@ export default function TransactionsManagement() {
       paymentMethod: "ZaloPay",
       bookTitle: "Đắc nhân tâm",
     },
+    {
+      id: "TX006",
+      user: "Nguyễn Văn F",
+      userId: "6",
+      type: "book_purchase",
+      description: "Mua sách: Atomic Habits",
+      amount: 120000,
+      status: "success",
+      date: "2024-01-20",
+      time: "13:40:20",
+      paymentMethod: "VNPay",
+      bookTitle: "Atomic Habits",
+    },
+    {
+      id: "TX007",
+      user: "Trần Văn G",
+      userId: "7",
+      type: "vip_upgrade",
+      description: "Nâng cấp VIP Basic",
+      amount: 199000,
+      status: "pending",
+      date: "2024-01-20",
+      time: "08:25:55",
+      paymentMethod: "MoMo",
+      bookTitle: null,
+    },
   ];
 
   const filteredTransactions = useMemo(() => {
@@ -142,6 +172,13 @@ export default function TransactionsManagement() {
     .filter((t) => t.status === "success")
     .reduce((sum, t) => sum + t.amount, 0);
 
+  // phân trang
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const getTypeText = (type) => {
     switch (type) {
       case "book_purchase":
@@ -185,17 +222,13 @@ export default function TransactionsManagement() {
     }
   };
 
-  const handleExportExcel = () => {
-    alert("Đã xuất file Excel thành công!");
-  };
-
   const clearUserFilter = () => {
     navigate("/staff/transactions");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      <main className="pt-16">
+      <main className="pt-25">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Quản lý Giao dịch
@@ -300,12 +333,6 @@ export default function TransactionsManagement() {
                   </button>
                 )}
               </div>
-              <button
-                onClick={handleExportExcel}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                Xuất Excel
-              </button>
             </div>
           </div>
 
@@ -338,7 +365,7 @@ export default function TransactionsManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredTransactions.map((t) => (
+                {paginatedTransactions.map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">{t.id}</td>
                     <td className="px-6 py-4">{t.user}</td>
@@ -378,7 +405,31 @@ export default function TransactionsManagement() {
                 ))}
               </tbody>
             </table>
+            {/* Pagination */}
+            <div className="flex justify-between items-center px-6 py-4 border-t">
+              <p className="text-sm text-gray-600">
+                Trang {currentPage}/{totalPages}
+              </p>
+              <div className="space-x-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                >
+                  Trước
+                </button>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
           </div>
+
+
         </div>
       </main>
 

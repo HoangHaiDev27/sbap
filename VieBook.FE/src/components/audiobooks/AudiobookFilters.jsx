@@ -1,6 +1,5 @@
 import React from "react";
 import { RiStarFill, RiStarLine } from "react-icons/ri";
-// import PropTypes from "prop-types";
 
 export default function AudiobookFilters({
   selectedCategory,
@@ -9,6 +8,8 @@ export default function AudiobookFilters({
   setSelectedDuration,
   sortBy,
   setSortBy,
+  selectedRating,
+  setSelectedRating,
 }) {
   const categories = [
     "Tất cả",
@@ -45,55 +46,52 @@ export default function AudiobookFilters({
     "Z-A",
   ];
 
+  const ratings = [5, 4, 3, 2, 1];
+
   return (
     <div className="bg-gray-800 rounded-lg p-6 space-y-6">
       {/* Thể loại */}
       <div>
-        <h3 className="font-semibold mb-3 text-orange-400">Thể loại</h3>
-        <div className="space-y-2 max-h-60 overflow-y-auto">
+        <h2 className="text-xl font-semibold text-white mb-4">
+        Bộ lọc sách nói
+      </h2>
+        <h3 className="block text-gray-300 text-sm mb-2">Thể loại</h3>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
           {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`block w-full text-left px-3 py-2 rounded-md transition-colors whitespace-nowrap ${
-                selectedCategory === category
-                  ? "bg-orange-600 text-white"
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
-              }`}
-            >
+            <option key={category} value={category}>
               {category}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Thời lượng */}
       <div>
-        <h3 className="font-semibold mb-3 text-orange-400">Thời lượng</h3>
-        <div className="space-y-2">
+        <h3 className="block text-gray-300 text-sm mb-2">Thời lượng</h3>
+        <select
+          value={selectedDuration}
+          onChange={(e) => setSelectedDuration(e.target.value)}
+          className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
           {durations.map((duration) => (
-            <button
-              key={duration}
-              onClick={() => setSelectedDuration(duration)}
-              className={`block w-full text-left px-3 py-2 rounded-md transition-colors whitespace-nowrap ${
-                selectedDuration === duration
-                  ? "bg-orange-600 text-white"
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
-              }`}
-            >
+            <option key={duration} value={duration}>
               {duration}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Sắp xếp */}
       <div>
-        <h3 className="font-semibold mb-3 text-orange-400">Sắp xếp</h3>
+        <h3 className="block text-gray-300 text-sm mb-2">Sắp xếp</h3>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 pr-8"
+          className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
           {sortOptions.map((option) => (
             <option key={option} value={option}>
@@ -103,60 +101,25 @@ export default function AudiobookFilters({
         </select>
       </div>
 
-      {/* Người kể */}
-      <div>
-        <h3 className="font-semibold mb-3 text-orange-400">Người kể</h3>
-        <div className="space-y-2">
-          {["Nguyễn Minh Hoàng", "Trần Thị Lan", "Lê Văn Nam", "Phạm Thị Hương"].map(
-            (narrator) => (
-              <label
-                key={narrator}
-                className="flex items-center space-x-2 text-gray-300 hover:text-orange-400 transition-colors cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  className="rounded bg-gray-700 border-gray-600"
-                />
-                <span>{narrator}</span>
-              </label>
-            )
-          )}
-        </div>
-      </div>
-
       {/* Đánh giá */}
-<div>
-  <h3 className="font-semibold mb-3 text-orange-400">Đánh giá</h3>
-  <div className="space-y-2">
-    {[5, 4, 3, 2, 1].map((stars) => (
-      <button
-        key={stars}
-        className="flex items-center space-x-2 text-gray-300 hover:text-orange-400 transition-colors"
-      >
-        <div className="flex">
-          {[...Array(5)].map((_, i) =>
-            i < stars ? (
-              <RiStarFill key={i} className="text-yellow-400" />
-            ) : (
-              <RiStarLine key={i} className="text-gray-500" />
-            )
-          )}
-        </div>
-        <span>{stars} sao trở lên</span>
-      </button>
-    ))}
-  </div>
-</div>
+      <div>
+        <h3 className="block text-gray-300 text-sm mb-2">Đánh giá</h3>
+        <select
+          value={selectedRating}
+          onChange={(e) => setSelectedRating(Number(e.target.value))}
+          className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <option value={0}>Tất cả</option>
+          {ratings.map((stars) => (
+            <option key={stars} value={stars}>
+              {Array.from({ length: 5 }, (_, i) =>
+                i < stars ? "★" : "☆"
+              ).join("")}{" "}
+              {stars} sao trở lên
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
-
-// ✅ Khai báo PropTypes (JS)
-// AudiobookFilters.propTypes = {
-//   selectedCategory: PropTypes.string.isRequired,
-//   setSelectedCategory: PropTypes.func.isRequired,
-//   selectedDuration: PropTypes.string.isRequired,
-//   setSelectedDuration: PropTypes.func.isRequired,
-//   sortBy: PropTypes.string.isRequired,
-//   setSortBy: PropTypes.func.isRequired,
-// };

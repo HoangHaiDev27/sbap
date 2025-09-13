@@ -8,10 +8,9 @@ import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
 function App() {
   const location = useLocation();
-  const [role, setRole] = useState("owner");
+  const [role, setRole] = useState("staff");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const noLayoutRoutes = ["/auth"];
-// tesst cicd
   const hideLayout = noLayoutRoutes.includes(location.pathname);
 
   if (hideLayout) {
@@ -51,7 +50,7 @@ function App() {
       />
 
       {/* Main layout */}
-      <div className="flex flex-col flex-1 bg-gray-900 text-white lg:ml-64">
+      <div className="flex flex-col flex-1 bg-gray-900 text-white lg:ml-64 overflow-x-hidden">
         {/* Header */}
         <HeaderManager
           role={role}

@@ -181,6 +181,7 @@ tôi muốn chính anh tiếp nhiên liệu cho máy bay của tôi vào ngày m
 
       {showContents && (
         <ReaderContents
+          currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           close={() => setShowContents(false)}
         />
