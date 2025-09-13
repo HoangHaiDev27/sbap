@@ -281,7 +281,7 @@ export default function Register({ setActiveTab }) {
       </form>
 
       {/* Back to Homepage */}
-      <div className="text-center mt-5">
+      <div className="text-center my-5">
         <button
           onClick={() => navigate("/")}
           className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"

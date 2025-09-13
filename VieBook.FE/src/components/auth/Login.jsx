@@ -183,7 +183,7 @@ export default function Login({ setActiveTab }) {
       </form>
 
       {/* Back to Homepage */}
-      <div className="text-center mt-6">
+      <div className="text-center my-4">
         <button
           onClick={() => navigate("/")}
           className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"

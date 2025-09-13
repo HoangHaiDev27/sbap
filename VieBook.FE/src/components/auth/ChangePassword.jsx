@@ -60,7 +60,6 @@ export default function ChangePassword() {
                 className="w-full bg-slate-700 text-white rounded-lg px-4 py-2 pr-10 outline-none"
                 placeholder="Nhập mật khẩu hiện tại"
               />
-              <RiLockPasswordLine className="absolute left-3 top-3 text-slate-400" />
             </div>
           </div>
 

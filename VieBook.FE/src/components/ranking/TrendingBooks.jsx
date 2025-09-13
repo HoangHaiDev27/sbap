@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function TrendingBooks() {
+  const navigate = useNavigate();
+
   const allTrendingBooks = [
     {
       id: 1,
@@ -12,6 +15,7 @@ export default function TrendingBooks() {
       listens: 5600,
       image: "https://picsum.photos/120/160?random=1",
       isHot: true,
+      liked: false,
     },
     {
       id: 2,
@@ -23,6 +27,7 @@ export default function TrendingBooks() {
       listens: 4200,
       image: "https://picsum.photos/120/160?random=2",
       isHot: true,
+      liked: false,
     },
     {
       id: 3,
@@ -34,6 +39,7 @@ export default function TrendingBooks() {
       listens: 3800,
       image: "https://picsum.photos/120/160?random=3",
       isHot: false,
+      liked: false,
     },
     {
       id: 4,
@@ -45,6 +51,7 @@ export default function TrendingBooks() {
       listens: 6100,
       image: "https://picsum.photos/120/160?random=4",
       isHot: true,
+      liked: false,
     },
     {
       id: 5,
@@ -56,6 +63,7 @@ export default function TrendingBooks() {
       listens: 4500,
       image: "https://picsum.photos/120/160?random=5",
       isHot: false,
+      liked: false,
     },
     {
       id: 6,
@@ -67,10 +75,20 @@ export default function TrendingBooks() {
       listens: 3900,
       image: "https://picsum.photos/120/160?random=6",
       isHot: false,
+      liked: false,
     },
   ];
 
+  const [books, setBooks] = useState(allTrendingBooks);
   const [visibleCount, setVisibleCount] = useState(3);
+
+  const toggleLike = (id) => {
+    setBooks((prev) =>
+      prev.map((book) =>
+        book.id === id ? { ...book, liked: !book.liked } : book
+      )
+    );
+  };
 
   const getScoreColor = (score) => {
     if (score >= 90) return "text-red-400";
@@ -84,15 +102,17 @@ export default function TrendingBooks() {
       <path d="M12 2C10 5 6 7 6 13c0 4 3 8 6 8s6-4 6-8c0-6-4-8-6-11z" />
     </svg>
   );
+
   const PlayIcon = ({ className = "w-5 h-5" }) => (
     <svg className={className} fill="currentColor" viewBox="0 0 24 24">
       <path d="M8 5v14l11-7z" />
     </svg>
   );
-  const HeartIcon = ({ className = "w-5 h-5" }) => (
+
+  const HeartIcon = ({ filled, className = "w-5 h-5" }) => (
     <svg
       className={className}
-      fill="none"
+      fill={filled ? "red" : "none"}
       stroke="currentColor"
       strokeWidth="2"
       viewBox="0 0 24 24"
@@ -100,6 +120,7 @@ export default function TrendingBooks() {
       <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z" />
     </svg>
   );
+
   const TrendingIcon = ({ className = "w-4 h-4" }) => (
     <svg
       className={className}
@@ -124,7 +145,7 @@ export default function TrendingBooks() {
 
       {/* Danh sách */}
       <div className="space-y-3">
-        {allTrendingBooks.slice(0, visibleCount).map((book, index) => (
+        {books.slice(0, visibleCount).map((book, index) => (
           <div
             key={book.id}
             className="bg-gray-700 rounded-lg p-4 flex items-center space-x-4 hover:bg-gray-600 transition-colors"
@@ -166,23 +187,28 @@ export default function TrendingBooks() {
             {/* Score */}
             <div className="text-center">
               <div
-                className={`text-2xl font-bold ${getScoreColor(
-                  book.trendScore
-                )}`}
+                className={`text-2xl font-bold ${getScoreColor(book.trendScore)}`}
               >
                 {book.trendScore}°
               </div>
-              <div className="text-green-400 text-sm font-medium">
-                {book.growth}
-              </div>
+              <div className="text-green-400 text-sm font-medium">{book.growth}</div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center space-x-2">
-              <button className="p-2 text-gray-400 hover:text-white transition-colors">
-                <HeartIcon />
+              {/* Heart button */}
+              <button
+                onClick={() => toggleLike(book.id)}
+                className="p-2 transition-colors"
+              >
+                <HeartIcon filled={book.liked} />
               </button>
-              <button className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors">
+
+              {/* Play button */}
+              <button
+                onClick={() => navigate(`/bookdetails/${book.id}`)}
+                className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors"
+              >
                 <PlayIcon />
               </button>
             </div>
@@ -191,7 +217,7 @@ export default function TrendingBooks() {
       </div>
 
       {/* Xem thêm */}
-      {visibleCount < allTrendingBooks.length && (
+      {visibleCount < books.length && (
         <div className="text-center mt-6">
           <button
             onClick={() => setVisibleCount((prev) => prev + 3)}
