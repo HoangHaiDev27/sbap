@@ -5,7 +5,7 @@ import CustomerPage from "../pages/CustomerPage";
 import UserWishlist from "../components/user/UserWishlist";
 import WishListPage from "../pages/WishListPage";
 import AdminPage from "../pages/admin/AdminPage";
-import StaffManagerPage from "../pages/admin/StaffManagerPage";
+import StaffManagerPage from "../pages/admin/StaffManagement";
 import AdminProfile from "../pages/admin/AdminProfile";
 import StaffPage from "../pages/staff/StaffPage";
 import StaffBooksPage from "../pages/staff/StaffBooksPage";

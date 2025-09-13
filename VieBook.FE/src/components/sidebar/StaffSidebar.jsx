@@ -1,8 +1,8 @@
 'use client';
 import { Link, useLocation } from 'react-router-dom';
-import logo from '../../assets/logo.png'; // ⚡ nhớ chỉnh lại đường dẫn cho đúng
+import logo from '../../assets/logo.png';
 
-export default function StaffSidebar() {
+export default function StaffSidebar({ isOpen, onClose }) {
   const location = useLocation();
 
   const menuItems = [
@@ -18,36 +18,57 @@ export default function StaffSidebar() {
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white overflow-y-auto z-40 flex flex-col">
-      {/* Logo */}
-      <div className="p-6">
-        <Link to="/" className="flex items-center space-x-3">
-          <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
-          <span className="text-2xl font-bold text-orange-500">VieBook</span>
-        </Link>
-      </div>
+    <>
+      {/* Overlay cho mobile */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      ></div>
 
-      {/* Menu */}
-      <nav className="px-4 space-y-1 flex-1">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-            <Link
-              key={item.id}
-              to={item.href}
-              className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <i className={`${item.icon} w-5 h-5 flex items-center justify-center`}></i>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <aside
+        className={`fixed top-0 left-0 w-64 h-screen bg-slate-900 text-white z-50 shadow-lg transform transition-transform duration-200 
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+      >
+        {/* Logo */}
+        <div className="p-6 flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-3">
+            <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
+            <span className="text-2xl font-bold text-orange-500">VieBook</span>
+          </Link>
+          {/* Nút close chỉ hiện mobile */}
+          <button
+            onClick={onClose}
+            className="lg:hidden text-gray-400 hover:text-white text-xl"
+          >
+            <i className="ri-close-line"></i>
+          </button>
+        </div>
 
-    </div>
+        {/* Menu */}
+        <nav className="px-4 space-y-1">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.id}
+                to={item.href}
+                onClick={onClose} // đóng khi click menu trên mobile
+                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors whitespace-nowrap
+                  ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+              >
+                <i className={`${item.icon} w-5 h-5 flex items-center justify-center`}></i>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }

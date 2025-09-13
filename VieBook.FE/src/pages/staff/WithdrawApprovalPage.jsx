@@ -1,16 +1,23 @@
 import React, { useState } from "react";
 import WithdrawDetailModal from "../../components/staff/withdrawals/WithdrawDetailModal";
+import WithdrawApproveModal from "../../components/staff/withdrawals/WithdrawApproveModal";
+import WithdrawRejectModal from "../../components/staff/withdrawals/WithdrawRejectModal";
 
 const WithdrawApprovalPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedWithdraw, setSelectedWithdraw] = useState(null);
+  const [approveWithdraw, setApproveWithdraw] = useState(null);
+  const [rejectWithdraw, setRejectWithdraw] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
 
   const stats = [
-    { label: "Tổng yêu cầu", value: 5, color: "text-blue-600" },
-    { label: "Chờ duyệt", value: 2, color: "text-yellow-600" },
-    { label: "Hoàn thành", value: 1, color: "text-green-600" },
-    { label: "Từ chối", value: 1, color: "text-red-600" },
+    { label: "Tổng yêu cầu", value: 12, color: "text-blue-600" },
+    { label: "Chờ duyệt", value: 5, color: "text-yellow-600" },
+    { label: "Hoàn thành", value: 3, color: "text-green-600" },
+    { label: "Từ chối", value: 2, color: "text-red-600" },
   ];
 
   const withdraws = [
@@ -19,6 +26,11 @@ const WithdrawApprovalPage = () => {
     { id: "WD003", user: "Lê Văn C", type: "Book Owner", amount: "500.000đ", bank: "BIDV\n5555666677", status: "Từ chối", date: "2024-01-20 16:45:30" },
     { id: "WD004", user: "Phạm Thị D", type: "Affiliate", amount: "350.000đ", bank: "ACB\n1111222233", status: "Chờ duyệt", date: "2024-01-22 11:28:00" },
     { id: "WD005", user: "Hoàng Văn E", type: "Book Owner", amount: "4.200.000đ", bank: "VPBank\n9999888877", status: "Hoàn thành", date: "2024-01-19 15:30:00" },
+    { id: "WD006", user: "Nguyễn Văn F", type: "Affiliate", amount: "750.000đ", bank: "Agribank\n8888777766", status: "Chờ duyệt", date: "2024-01-18 09:45:00" },
+    { id: "WD007", user: "Trần Thị G", type: "Book Owner", amount: "3.100.000đ", bank: "MB Bank\n2222333344", status: "Đã duyệt", date: "2024-01-17 14:00:00" },
+    { id: "WD008", user: "Phạm Văn H", type: "Affiliate", amount: "1.250.000đ", bank: "TPBank\n5555444433", status: "Từ chối", date: "2024-01-16 18:10:00" },
+    { id: "WD009", user: "Hoàng Thị I", type: "Book Owner", amount: "2.700.000đ", bank: "Sacombank\n9999000011", status: "Hoàn thành", date: "2024-01-15 13:20:00" },
+    { id: "WD010", user: "Lê Văn J", type: "Affiliate", amount: "950.000đ", bank: "VIB\n4444333322", status: "Chờ duyệt", date: "2024-01-14 07:30:00" },
   ];
 
   const filteredWithdraws = withdraws.filter(
@@ -28,23 +40,15 @@ const WithdrawApprovalPage = () => {
         w.id.toLowerCase().includes(search.toLowerCase()))
   );
 
-  // ✅ Hàm xử lý duyệt
-  const handleApprove = (id) => {
-    if (window.confirm(`Bạn có chắc muốn duyệt yêu cầu ${id}?`)) {
-      alert("✅ Duyệt thành công!");
-    }
-  };
-
-  // ✅ Hàm xử lý từ chối
-  const handleReject = (id) => {
-    const reason = window.prompt(`Nhập lý do từ chối yêu cầu ${id}:`);
-    if (reason) {
-      alert(`❌ Từ chối thành công!\nLý do: ${reason}`);
-    }
-  };
+  // Pagination
+  const totalPages = Math.ceil(filteredWithdraws.length / pageSize);
+  const paginatedWithdraws = filteredWithdraws.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
-    <div className="pt-24 p-6 bg-gray-50 min-h-screen text-gray-900">
+    <div className="pt-30 p-6 bg-gray-50 min-h-screen text-gray-900">
       {/* Page Title */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Phê duyệt rút tiền</h2>
@@ -100,7 +104,7 @@ const WithdrawApprovalPage = () => {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table className="min-w-full border border-gray-200 rounded-xl bg-white shadow-sm">
           <thead className="bg-gray-100 text-left text-gray-700">
             <tr>
@@ -115,7 +119,7 @@ const WithdrawApprovalPage = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredWithdraws.map((w) => (
+            {paginatedWithdraws.map((w) => (
               <tr
                 key={w.id}
                 className="border-b border-gray-200 hover:bg-gray-50"
@@ -146,21 +150,21 @@ const WithdrawApprovalPage = () => {
                 <td className="p-3">
                   <div className="flex gap-2">
                     <button
-                        onClick={() => setSelectedWithdraw(w)}
+                      onClick={() => setSelectedWithdraw(w)}
                       className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
                       title="Xem"
                     >
                       <i className="ri-eye-line text-lg"></i>
                     </button>
                     <button
-                      onClick={() => handleApprove(w.id)}
+                      onClick={() => setApproveWithdraw(w)}
                       className="p-2 hover:bg-green-50 rounded-lg text-green-600"
                       title="Duyệt"
                     >
                       <i className="ri-check-line text-lg"></i>
                     </button>
                     <button
-                      onClick={() => handleReject(w.id)}
+                      onClick={() => setRejectWithdraw(w)}
                       className="p-2 hover:bg-red-50 rounded-lg text-red-600"
                       title="Từ chối"
                     >
@@ -180,14 +184,49 @@ const WithdrawApprovalPage = () => {
             )}
           </tbody>
         </table>
-        
+        {/* Pagination */}
+        <div className="flex justify-between items-center px-6 py-4 border-t">
+          <p className="text-sm text-gray-600">
+            Trang {currentPage}/{totalPages}
+          </p>
+          <div className="space-x-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Modals */}
       {selectedWithdraw && (
         <WithdrawDetailModal
           withdraw={selectedWithdraw}
           onClose={() => setSelectedWithdraw(null)}
-          onApprove={handleApprove}
-          onReject={handleReject}
+        />
+      )}
+
+      {approveWithdraw && (
+        <WithdrawApproveModal
+          withdraw={approveWithdraw}
+          onClose={() => setApproveWithdraw(null)}
+        />
+      )}
+
+      {rejectWithdraw && (
+        <WithdrawRejectModal
+          withdraw={rejectWithdraw}
+          onClose={() => setRejectWithdraw(null)}
         />
       )}
     </div>
