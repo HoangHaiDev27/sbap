@@ -1,8 +1,8 @@
-import React from "react";
-import { RiPlayCircleLine, RiHeartLine, RiThumbUpLine } from "react-icons/ri";
+import React, { useState } from "react";
+import { RiEyeLine, RiHeartLine, RiThumbUpLine } from "react-icons/ri";
 
 export default function TopRated() {
-  const topRatedBooks = [
+  const allBooks = [
     {
       id: 1,
       title: "Becoming",
@@ -12,9 +12,7 @@ export default function TopRated() {
       category: "Biography",
       duration: "19h 3m",
       description: "The former First Lady shares her extraordinary journey.",
-      image: "https://via.placeholder.com/120x160/F39C12/FFFFFF?text=Top+1",
-      reviewSnippet:
-        "Inspiring and beautifully written memoir that captivates from start to finish.",
+      image: "https://picsum.photos/id/1011/200/300",
     },
     {
       id: 2,
@@ -26,8 +24,7 @@ export default function TopRated() {
       duration: "12h 10m",
       description:
         "A powerful memoir about education, family, and the struggle for self-invention.",
-      image: "https://via.placeholder.com/120x160/E74C3C/FFFFFF?text=Top+2",
-      reviewSnippet: "A gripping tale of transformation and the power of education.",
+      image: "https://picsum.photos/id/1025/200/300",
     },
     {
       id: 3,
@@ -39,8 +36,7 @@ export default function TopRated() {
       duration: "16h 17m",
       description:
         "Revolutionary understanding of how trauma affects the body and mind.",
-      image: "https://via.placeholder.com/120x160/9B59B6/FFFFFF?text=Top+3",
-      reviewSnippet: "Life-changing insights into trauma and recovery.",
+      image: "https://picsum.photos/id/1035/200/300",
     },
     {
       id: 4,
@@ -51,8 +47,7 @@ export default function TopRated() {
       category: "Self-Help",
       duration: "8h 56m",
       description: "A guide to discovering your truest, most beautiful life.",
-      image: "https://via.placeholder.com/120x160/1ABC9C/FFFFFF?text=Top+4",
-      reviewSnippet: "Empowering and authentic voice that resonates deeply.",
+      image: "https://picsum.photos/id/1041/200/300",
     },
     {
       id: 5,
@@ -63,12 +58,70 @@ export default function TopRated() {
       category: "Fiction",
       duration: "8h 52m",
       description: "Between life and death lies a library of infinite possibilities.",
-      image: "https://via.placeholder.com/120x160/3498DB/FFFFFF?text=Top+5",
-      reviewSnippet: "Thought-provoking and beautifully crafted philosophical fiction.",
+      image: "https://picsum.photos/id/1056/200/300",
+    },
+    {
+      id: 6,
+      title: "Dune",
+      author: "Frank Herbert",
+      rating: 4.4,
+      totalRatings: 9123,
+      category: "Science Fiction",
+      duration: "21h 10m",
+      description:
+        "The classic tale of politics, power, and sandworms on Arrakis.",
+      image: "https://picsum.photos/id/1062/200/300",
+    },
+    {
+      id: 7,
+      title: "Sapiens",
+      author: "Yuval Noah Harari",
+      rating: 4.7,
+      totalRatings: 18450,
+      category: "History",
+      duration: "15h 30m",
+      description: "A brief history of humankind.",
+      image: "https://picsum.photos/id/1074/200/300",
+    },
+    {
+      id: 8,
+      title: "Atomic Habits",
+      author: "James Clear",
+      rating: 4.8,
+      totalRatings: 21034,
+      category: "Self-Improvement",
+      duration: "11h 45m",
+      description: "Tiny changes, remarkable results.",
+      image: "https://picsum.photos/id/1084/200/300",
+    },
+    {
+      id: 9,
+      title: "The Alchemist",
+      author: "Paulo Coelho",
+      rating: 4.6,
+      totalRatings: 24560,
+      category: "Philosophy",
+      duration: "6h 15m",
+      description: "A journey about following your dreams.",
+      image: "https://picsum.photos/id/109/200/300",
+    },
+    {
+      id: 10,
+      title: "1984",
+      author: "George Orwell",
+      rating: 4.5,
+      totalRatings: 33450,
+      category: "Dystopian",
+      duration: "12h 20m",
+      description: "A chilling prophecy about the future.",
+      image: "https://picsum.photos/id/110/200/300",
     },
   ];
 
-  // Component Star
+  // 👇 Hiển thị trước 5 cuốn
+  const [visibleCount, setVisibleCount] = useState(5);
+
+  // Star component
   const Star = ({ filled, half }) => {
     if (filled) return <span className="text-yellow-400">★</span>;
     if (half) {
@@ -112,6 +165,8 @@ export default function TopRated() {
     return "text-red-400";
   };
 
+  const visibleBooks = allBooks.slice(0, visibleCount);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -124,7 +179,7 @@ export default function TopRated() {
 
       {/* Top 3 Showcase */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        {topRatedBooks.slice(0, 3).map((book, index) => (
+        {visibleBooks.slice(0, 3).map((book, index) => (
           <div
             key={book.id}
             className={`relative rounded-xl p-4 ${
@@ -164,18 +219,18 @@ export default function TopRated() {
                 {book.totalRatings.toLocaleString()} đánh giá
               </p>
 
-              <button className="w-full bg-white bg-opacity-20 hover:bg-orange-500 hover:text-white text-white py-2 rounded-lg transition-colors flex items-center justify-center">
-                <RiPlayCircleLine className="mr-2" />
-                Nghe ngay
+              <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
+                <RiEyeLine className="mr-2" />
+                Xem chi tiết
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Detailed List (chỉ lấy từ cuốn thứ 4 trở đi) */}
+      {/* Detailed List */}
       <div className="space-y-4">
-        {topRatedBooks.slice(3).map((book, index) => (
+        {visibleBooks.slice(3).map((book, index) => (
           <div
             key={book.id}
             className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors"
@@ -220,8 +275,9 @@ export default function TopRated() {
                     <button className="p-2 text-gray-400 hover:text-white transition-colors">
                       <RiHeartLine size={18} />
                     </button>
-                    <button className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors">
-                      <RiPlayCircleLine size={18} />
+                    <button className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors flex items-center">
+                      <RiEyeLine size={18} />
+                      <span className="ml-1">Xem chi tiết</span>
                     </button>
                   </div>
                 </div>
@@ -231,7 +287,7 @@ export default function TopRated() {
                 </p>
 
                 {/* Rating Section */}
-                <div className="flex items-center space-x-4 mb-2">
+                <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-1">
                     {renderStars(book.rating)}
                   </div>
@@ -247,14 +303,7 @@ export default function TopRated() {
                   </span>
                 </div>
 
-                {/* Review Snippet */}
-                <div className="bg-gray-800 p-3 rounded-lg mb-3">
-                  <p className="text-gray-300 text-sm italic">
-                    "{book.reviewSnippet}"
-                  </p>
-                </div>
-
-                <div className="flex items-center space-x-4 text-xs text-gray-400">
+                <div className="flex items-center space-x-4 text-xs text-gray-400 mt-2">
                   <span className="bg-gray-600 px-2 py-1 rounded">
                     {book.category}
                   </span>
@@ -267,11 +316,16 @@ export default function TopRated() {
       </div>
 
       {/* Load More */}
-      <div className="text-center mt-6">
-        <button className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
-          Xem thêm sách đánh giá cao
-        </button>
-      </div>
+      {visibleCount < allBooks.length && (
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setVisibleCount((prev) => prev + 3)}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Xem thêm sách đánh giá cao
+          </button>
+        </div>
+      )}
     </div>
   );
 }

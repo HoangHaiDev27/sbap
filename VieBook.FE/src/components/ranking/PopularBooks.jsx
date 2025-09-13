@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function PopularBooks() {
   const popularBooks = [
@@ -10,7 +10,7 @@ export default function PopularBooks() {
       listens: 12500,
       rating: 4.8,
       duration: "4h 30m",
-      image: "https://via.placeholder.com/120x160/FF6B35/FFFFFF?text=Book+1",
+      image: "https://picsum.photos/120/160?random=1",
       trend: "up",
     },
     {
@@ -21,7 +21,7 @@ export default function PopularBooks() {
       listens: 11200,
       rating: 4.9,
       duration: "5h 15m",
-      image: "https://via.placeholder.com/120x160/4ECDC4/FFFFFF?text=Book+2",
+      image: "https://picsum.photos/120/160?random=2",
       trend: "up",
     },
     {
@@ -32,7 +32,7 @@ export default function PopularBooks() {
       listens: 9800,
       rating: 4.7,
       duration: "15h 20m",
-      image: "https://via.placeholder.com/120x160/45B7D1/FFFFFF?text=Book+3",
+      image: "https://picsum.photos/120/160?random=3",
       trend: "down",
     },
     {
@@ -43,7 +43,7 @@ export default function PopularBooks() {
       listens: 8900,
       rating: 4.6,
       duration: "20h 45m",
-      image: "https://via.placeholder.com/120x160/96CEB4/FFFFFF?text=Book+4",
+      image: "https://picsum.photos/120/160?random=4",
       trend: "same",
     },
     {
@@ -54,10 +54,34 @@ export default function PopularBooks() {
       listens: 8200,
       rating: 4.8,
       duration: "5h 50m",
-      image: "https://via.placeholder.com/120x160/FFEAA7/000000?text=Book+5",
+      image: "https://picsum.photos/120/160?random=5",
       trend: "up",
     },
+    {
+      id: 6,
+      rank: 6,
+      title: "Deep Work",
+      author: "Cal Newport",
+      listens: 7400,
+      rating: 4.5,
+      duration: "7h 30m",
+      image: "https://picsum.photos/120/160?random=6",
+      trend: "up",
+    },
+    {
+      id: 7,
+      rank: 7,
+      title: "Rich Dad Poor Dad",
+      author: "Robert Kiyosaki",
+      listens: 6900,
+      rating: 4.4,
+      duration: "6h 40m",
+      image: "https://picsum.photos/120/160?random=7",
+      trend: "down",
+    },
   ];
+
+  const [visibleCount, setVisibleCount] = useState(3);
 
   const getRankColor = (rank) => {
     switch (rank) {
@@ -88,7 +112,7 @@ export default function PopularBooks() {
       <h2 className="text-xl font-bold mb-4">Top sách được nghe nhiều nhất</h2>
 
       <div className="space-y-4">
-        {popularBooks.map((book) => (
+        {popularBooks.slice(0, visibleCount).map((book) => (
           <div
             key={book.id}
             className="bg-gray-700 rounded-lg p-4 flex items-center space-x-4 hover:bg-gray-600 transition-colors"
@@ -122,7 +146,6 @@ export default function PopularBooks() {
                 <span>{book.listens.toLocaleString()} lượt nghe</span>
                 <span>{book.duration}</span>
                 <div className="flex items-center space-x-1">
-                  {/* Star Icon */}
                   <svg
                     className="w-4 h-4 text-yellow-400"
                     fill="currentColor"
@@ -138,7 +161,6 @@ export default function PopularBooks() {
             {/* Actions */}
             <div className="flex items-center space-x-2">
               <button className="p-2 text-gray-400 hover:text-white transition-colors">
-                {/* Heart Icon */}
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -157,7 +179,6 @@ export default function PopularBooks() {
                 </svg>
               </button>
               <button className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors">
-                {/* Play Icon */}
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -172,11 +193,16 @@ export default function PopularBooks() {
       </div>
 
       {/* Load More */}
-      <div className="text-center mt-6">
-        <button className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
-          Xem thêm
-        </button>
-      </div>
+      {visibleCount < popularBooks.length && (
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setVisibleCount((prev) => prev + 2)}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Xem thêm
+          </button>
+        </div>
+      )}
     </div>
   );
 }

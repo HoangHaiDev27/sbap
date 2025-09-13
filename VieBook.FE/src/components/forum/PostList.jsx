@@ -10,129 +10,75 @@ import {
   RiUserLine,
   RiStarLine,
   RiMoreLine,
+  RiCloseLine,
 } from "react-icons/ri";
 
 export default function PostList({ activeTab, searchQuery }) {
   const [likedPosts, setLikedPosts] = useState(new Set());
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [quickComments, setQuickComments] = useState({});
+  const [hiddenPosts, setHiddenPosts] = useState([]); // lưu post ẩn
+  const [reportPost, setReportPost] = useState(null); // lưu post đang report
+  const [reportText, setReportText] = useState("");
 
   const samplePosts = [
     {
       id: 1,
       type: "discussion",
-      title: 'Tặng 5 cuốn "Atomic Habits" - Thay đổi tí hon, hiệu quả bất ngờ?',
-      content: 'Mình có 5 cuốn "Atomic Habits" muốn tặng cho những bạn thật sự quan tâm đến việc xây dựng thói quen tích cực. Cuốn sách này đã thay đổi hoàn toàn cách mình nhìn nhận về việc phát triển bản thân. Nếu bạn đang muốn thay đổi cuộc sống của mình từ những việc nhỏ nhặt...',
-      author: {
-        name: "Minh Phương",
-        role: "Chủ sách",
-        avatar: null,
-        timeAgo: "602 ngày trước"
-      },
-      book: {
-        title: "Atomic Habits",
-        cover: null,
-        rating: 4.8,
-        pages: "2/5 suất"
-      },
-      stats: {
-        likes: 45,
-        comments: 23,
-        views: 1200
-      },
+      title:
+        'Tặng 5 cuốn "Atomic Habits" - Thay đổi tí hon, hiệu quả bất ngờ?',
+      content:
+        'Mình có 5 cuốn "Atomic Habits" muốn tặng cho những bạn thật sự quan tâm đến việc thay đổi thói quen...',
+      author: { name: "Minh Phương", role: "Chủ sách", timeAgo: "2 ngày trước" },
+      book: { title: "Atomic Habits", rating: 4.8, pages: "2/5 suất" },
+      stats: { likes: 45, comments: 23, views: 1200 },
       tags: ["thói quen", "phát triển bản thân", "kỹ năng"],
-      isRegistered: false
+      isRegistered: false,
+      comments: [
+        {
+          id: 1,
+          author: "Tuấn Anh",
+          text: "Cuốn này mình đọc 2 lần rồi, cực hay!",
+          replies: [{ id: 11, author: "Lan Anh", text: "Chuẩn luôn bạn ơi!" }],
+        },
+      ],
     },
     {
       id: 2,
-      type: "discussion",
-      title: 'Chia sẻ cảm nhận về "Sapiens" - Cuốn sách thay đổi cách nhìn về lịch sử',
-      content: 'Vừa đọc xong "Sapiens" của Yuval Noah Harari và mình thật sự bị choáng ngợp bởi cách tác giả kể về lịch sử loài người. Từ thời tiền sử đến cuộc cách mạng nông nghiệp và công nghiệp, mọi thứ đều được giải thích một cách logic và dễ hiểu. Các bạn đã đọc chưa?...',
-      author: {
-        name: "Tuấn Anh",
-        role: "Thành viên",
-        avatar: null,
-        timeAgo: "602 ngày trước"
-      },
-      book: {
-        title: "Sapiens",
-        cover: null
-      },
-      stats: {
-        likes: 32,
-        comments: 18,
-        views: 890
-      },
-      tags: ["lịch sử", "khoa học", "triết học"],
-      isRegistered: false
+      type: "giveaway",
+      title: 'Giveaway "Think and Grow Rich"',
+      content:
+        "Mình share 3 cuốn sách quý cho các bạn quan tâm phát triển tài chính.",
+      author: { name: "Thu Hà", role: "Thành viên", timeAgo: "4 ngày trước" },
+      book: { title: "Think and Grow Rich", rating: 4.6, pages: "0/3 suất" },
+      stats: { likes: 28, comments: 15, views: 672 },
+      tags: ["kinh doanh", "thành công", "tài chính"],
+      isRegistered: true,
+      comments: [],
     },
     {
       id: 3,
-      type: "giveaway",
-      title: 'Giveaway "Think and Grow Rich" - Bí quyết thành công từ Napoleon Hill',
-      content: 'Napoleon Hill đã dành 20 năm nghiên cứu 500 triệu phú để viết nên cuốn sách này. Mình muốn chia sẻ 3 cuốn "Think and Grow Rich" cho những bạn đang khát khao thành công trong kinh doanh và cuộc sống. Đây không chỉ là sách về làm giàu mà còn là triết lý sống.',
-      author: {
-        name: "Thu Hà",
-        role: "Thành viên",
-        avatar: null,
-        timeAgo: "604 ngày trước"
-      },
-      book: {
-        title: "Think and Grow Rich",
-        cover: null,
-        rating: 4.6,
-        pages: "0/3 suất"
-      },
-      stats: {
-        likes: 28,
-        comments: 15,
-        views: 672
-      },
-      tags: ["kinh doanh", "thành công", "tài chính"],
-      isRegistered: true
+      type: "discussion",
+      title: 'Bạn nào đã đọc "Deep Work" chưa?',
+      content:
+        "Mình nghe nhiều người recommend cuốn này, không biết có thực sự giúp tập trung làm việc sâu không?",
+      author: { name: "Hoàng Nam", role: "Thành viên", timeAgo: "1 tuần trước" },
+      book: { title: "Deep Work", rating: 4.7, pages: null },
+      stats: { likes: 60, comments: 32, views: 2300 },
+      tags: ["tập trung", "năng suất", "công việc"],
+      isRegistered: false,
+      comments: [],
     },
-    {
-      id: 4,
-      type: "question",
-      title: "Sách nào giúp bạn vượt qua giai đoạn khó khăn trong cuộc sống?",
-      content: 'Mình đang trải qua một giai đoạn khá khó khăn và cần tìm những cuốn sách có thể giúp mình có động lực và cách nhìn tích cực hơn. Các bạn có thể gợi ý một số cuốn sách đã giúp bạn vượt qua những thời điểm khó khăn tương tự không? Cảm ơn mọi người rất nhiều!',
-      author: {
-        name: "Lan Anh",
-        role: "Thành viên",
-        avatar: null,
-        timeAgo: "604 ngày trước"
-      },
-      stats: {
-        likes: 56,
-        comments: 34,
-        views: 1450
-      },
-      tags: ["tâm lý", "động lực", "tích cực"],
-      isRegistered: false
-    },
-    {
-      id: 5,
-      type: "giveaway",
-      title: 'Review "Dạy con làm giàu" - Robert Kiyosaki có phù hợp với người Việt?',
-      content: 'Vừa đọc xong "Rich Dad Poor Dad" và cảm thấy nhiều quan điểm khá mới mẻ về tiền bạc và đầu tư. Tuy nhiên mình hơi phân vân về mức độ phù hợp với bối cảnh kinh tế Việt Nam hiện tại. Không biết những lời khuyên trong cuốn sách này có phù hợp với bối cảnh kinh tế Việt Nam không. Các bạn nghĩ sao về cuốn sách này?',
-      author: {
-        name: "Hoàng Nam",
-        role: "Thành viên",
-        avatar: null,
-        timeAgo: "606 ngày trước"
-      },
-      stats: {
-        likes: 25,
-        comments: 12,
-        views: 543
-      },
-      tags: ["tài chính", "đầu tư", "giáo dục"],
-      isRegistered: false
-    }
   ];
 
-  const filteredPosts = samplePosts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.content.toLowerCase().includes(searchQuery.toLowerCase());
-    
+  const [posts, setPosts] = useState(samplePosts);
+  const [dropdownPost, setDropdownPost] = useState(null);
+
+  const filteredPosts = posts.filter((post) => {
+    const matchesSearch =
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase());
+
     switch (activeTab) {
       case "discuss":
         return post.type === "discussion" && matchesSearch;
@@ -140,21 +86,60 @@ export default function PostList({ activeTab, searchQuery }) {
         return post.type === "giveaway" && matchesSearch;
       case "registered":
         return post.isRegistered && matchesSearch;
+      case "hidden":
+        return hiddenPosts.includes(post.id);
       default:
-        return matchesSearch;
+        return matchesSearch && !hiddenPosts.includes(post.id);
     }
   });
 
   const toggleLike = (postId) => {
-    setLikedPosts(prev => {
+    setLikedPosts((prev) => {
       const newLiked = new Set(prev);
-      if (newLiked.has(postId)) {
-        newLiked.delete(postId);
-      } else {
-        newLiked.add(postId);
-      }
+      newLiked.has(postId) ? newLiked.delete(postId) : newLiked.add(postId);
       return newLiked;
     });
+  };
+
+  const handleQuickComment = (postId) => {
+    if (!quickComments[postId]?.trim()) return;
+
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              comments: [
+                ...p.comments,
+                {
+                  id: Date.now(),
+                  author: "Bạn",
+                  text: quickComments[postId],
+                  replies: [],
+                },
+              ],
+              stats: { ...p.stats, comments: p.stats.comments + 1 },
+            }
+          : p
+      )
+    );
+
+    setQuickComments((prev) => ({ ...prev, [postId]: "" }));
+  };
+
+  const handleHidePost = (id) => {
+    setHiddenPosts((prev) => [...prev, id]);
+    setDropdownPost(null);
+  };
+
+  const handleDeletePost = (id) => {
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+    setDropdownPost(null);
+  };
+
+  const handleReport = (post) => {
+    setReportPost(post);
+    setDropdownPost(null);
   };
 
   const getPostTypeIcon = (type) => {
@@ -182,7 +167,10 @@ export default function PostList({ activeTab, searchQuery }) {
   return (
     <div className="space-y-6">
       {filteredPosts.map((post) => (
-        <div key={post.id} className="bg-slate-800 rounded-lg p-6 border border-slate-700 hover:border-slate-600 transition-colors">
+        <div
+          key={post.id}
+          className="bg-slate-800 rounded-lg p-6 border border-slate-700 hover:border-slate-600 transition-colors relative"
+        >
           {/* Post Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -202,15 +190,43 @@ export default function PostList({ activeTab, searchQuery }) {
                 </div>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative">
               <div className="flex items-center gap-1 text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">
                 {getPostTypeIcon(post.type)}
                 <span>{getPostTypeLabel(post.type)}</span>
               </div>
-              <button className="text-slate-400 hover:text-white p-1">
+              <button
+                className="text-slate-400 hover:text-white p-1"
+                onClick={() =>
+                  setDropdownPost(dropdownPost === post.id ? null : post.id)
+                }
+              >
                 <RiMoreLine size={18} />
               </button>
+
+              {/* Dropdown */}
+              {dropdownPost === post.id && (
+                <div className="absolute right-0 top-6 bg-slate-700 rounded shadow-md w-40 z-10">
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
+                  >
+                    Xóa
+                  </button>
+                  <button
+                    onClick={() => handleHidePost(post.id)}
+                    className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
+                  >
+                    Ẩn
+                  </button>
+                  <button
+                    onClick={() => handleReport(post)}
+                    className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
+                  >
+                    Báo cáo
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -219,12 +235,10 @@ export default function PostList({ activeTab, searchQuery }) {
             <h2 className="text-lg font-semibold text-white mb-3 leading-relaxed">
               {post.title}
             </h2>
-            <p className="text-slate-300 leading-relaxed">
-              {post.content}
-            </p>
+            <p className="text-slate-300 leading-relaxed">{post.content}</p>
           </div>
 
-          {/* Book Info (if giveaway) */}
+          {/* Book Info */}
           {post.book && (
             <div className="bg-slate-750 rounded-lg p-4 mb-4 border border-slate-600">
               <div className="flex items-center gap-4">
@@ -232,11 +246,15 @@ export default function PostList({ activeTab, searchQuery }) {
                   <RiBookLine className="text-slate-400" size={24} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-white mb-1">{post.book.title}</h4>
+                  <h4 className="font-medium text-white mb-1">
+                    {post.book.title}
+                  </h4>
                   {post.book.rating && (
                     <div className="flex items-center gap-1 mb-2">
                       <RiStarLine className="text-yellow-500" size={16} />
-                      <span className="text-sm text-slate-300">{post.book.rating}</span>
+                      <span className="text-sm text-slate-300">
+                        {post.book.rating}
+                      </span>
                     </div>
                   )}
                   {post.book.pages && (
@@ -246,11 +264,13 @@ export default function PostList({ activeTab, searchQuery }) {
                   )}
                 </div>
                 {post.type === "giveaway" && (
-                  <button className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    post.isRegistered
-                      ? "bg-green-600 text-white"
-                      : "bg-orange-500 hover:bg-orange-600 text-white"
-                  }`}>
+                  <button
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      post.isRegistered
+                        ? "bg-green-600 text-white"
+                        : "bg-orange-500 hover:bg-orange-600 text-white"
+                    }`}
+                  >
                     {post.isRegistered ? "Đã đăng ký" : "Đăng ký"}
                   </button>
                 )}
@@ -260,7 +280,7 @@ export default function PostList({ activeTab, searchQuery }) {
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {post.tags.map((tag, index) => (
+            {post.tags?.map((tag, index) => (
               <span
                 key={index}
                 className="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded hover:bg-slate-600 cursor-pointer"
@@ -287,16 +307,42 @@ export default function PostList({ activeTab, searchQuery }) {
                 </span>
               </button>
 
-              <button className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors">
+              <button
+                onClick={() => setSelectedPost(post)}
+                className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors"
+              >
                 <RiMessage3Line size={18} />
                 <span className="text-sm">{post.stats.comments}</span>
               </button>
 
               <div className="flex items-center gap-2 text-slate-400">
                 <RiEyeLine size={18} />
-                <span className="text-sm">{post.stats.views.toLocaleString()}</span>
+                <span className="text-sm">
+                  {post.stats.views.toLocaleString()}
+                </span>
               </div>
             </div>
+          </div>
+
+          {/* Quick Comment Box */}
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              value={quickComments[post.id] || ""}
+              onChange={(e) =>
+                setQuickComments((prev) => ({
+                  ...prev,
+                  [post.id]: e.target.value,
+                }))
+              }
+              placeholder="Viết bình luận..."
+              className="flex-1 bg-slate-700 text-white rounded px-3 py-2 outline-none"
+            />
+            <button
+              onClick={() => handleQuickComment(post.id)}
+              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-white"
+            >
+              Gửi
+            </button>
           </div>
         </div>
       ))}
@@ -305,6 +351,89 @@ export default function PostList({ activeTab, searchQuery }) {
         <div className="text-center py-12">
           <RiBookLine className="mx-auto text-slate-600 mb-4" size={48} />
           <p className="text-slate-400">Không tìm thấy bài viết nào</p>
+        </div>
+      )}
+
+      {/* Popup xem chi tiết */}
+      {selectedPost && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-slate-800 w-full max-w-2xl rounded-lg p-6 relative">
+            <button
+              onClick={() => setSelectedPost(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-white"
+            >
+              <RiCloseLine size={24} />
+            </button>
+
+            <h2 className="text-xl font-bold text-white mb-3">
+              {selectedPost.title}
+            </h2>
+            <p className="text-slate-300 mb-6">{selectedPost.content}</p>
+
+            <h3 className="text-lg font-semibold text-white mb-4">Bình luận</h3>
+            <div className="space-y-4 max-h-64 overflow-y-auto">
+              {selectedPost.comments.map((cmt) => (
+                <div key={cmt.id} className="bg-slate-700 p-3 rounded">
+                  <p className="text-white font-medium">{cmt.author}</p>
+                  <p className="text-slate-300">{cmt.text}</p>
+                  {cmt.replies?.length > 0 && (
+                    <div className="pl-4 mt-2 space-y-2 border-l border-slate-600">
+                      {cmt.replies.map((rep) => (
+                        <div key={rep.id}>
+                          <p className="text-sm text-white font-medium">
+                            {rep.author}
+                          </p>
+                          <p className="text-sm text-slate-300">{rep.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup báo cáo */}
+      {reportPost && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-slate-800 w-full max-w-md rounded-lg p-6 relative">
+            <button
+              onClick={() => setReportPost(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-white"
+            >
+              <RiCloseLine size={24} />
+            </button>
+
+            <h2 className="text-lg font-bold text-white mb-3">Báo cáo bài viết</h2>
+            <p className="text-slate-300 mb-3">{reportPost.title}</p>
+            <textarea
+              value={reportText}
+              onChange={(e) => setReportText(e.target.value)}
+              className="w-full bg-slate-700 text-white rounded p-2 mb-4"
+              placeholder="Nhập lý do báo cáo..."
+              rows={4}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setReportPost(null)}
+                className="px-4 py-2 bg-slate-600 rounded text-white"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => {
+                  alert("Đã gửi báo cáo: " + reportText);
+                  setReportPost(null);
+                  setReportText("");
+                }}
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded text-white"
+              >
+                Gửi
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

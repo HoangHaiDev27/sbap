@@ -40,12 +40,13 @@ import ReaderPage from "../pages/ReaderPage";
 import ReaderManager from "../layouts/ReaderManager";
 import PlayerPage from "../pages/PlayerPage";
 import ListeningPage from "../pages/ListeningPage";
+import ChangePassword from "../components/auth/ChangePassword"; // kiểm tra đúng đường dẫn
+import AuthenticationManager from "../layouts/AuthenticationManager";
 
 function AppRoutes() {
   return (
     <Routes>
       {/* Routes cho client */}
-      <Route path="/auth" element={<AuthenticationPage />} />
       <Route path="/vip" element={<VipPackagesPage />} />
       <Route path="/" element={<Home />} />
       <Route path="/library" element={<LibraryPage />} />
@@ -94,6 +95,10 @@ function AppRoutes() {
       <Route path="/owner/promotions" element={<PromotionPage />} />
       <Route path="/owner/feedback" element={<OwnerReviews />} />
       <Route path="/owner/chat" element={<SupportChat />} />
+      <Route path="/change-password" element={<ChangePassword />} />
+      {/* Routes cho authentication */}
+       <Route path="/auth" element={<AuthenticationPage />} />
+        <Route path="/auth/change-password" element={<AuthenticationManager defaultTab="change" />} />
     </Routes>
   );
 }

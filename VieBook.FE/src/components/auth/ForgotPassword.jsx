@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
+import { RiHomeLine } from "react-icons/ri";
 
 export default function ForgotPassword({ setActiveTab }) {
   const [step, setStep] = useState(1); // 1: Email input, 2: Verification code, 3: Reset password
@@ -137,27 +138,15 @@ export default function ForgotPassword({ setActiveTab }) {
             </form>
 
             {/* Back to Homepage */}
-             <div className="text-center mt-6">
-            <button
-                onClick={() => navigate("/")}
-                className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
-            >
-                <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                />
-                </svg>
-                Về trang chủ
-            </button>
-        </div>
+             <div className="text-center mt-5">
+                     <button
+                       onClick={() => navigate("/")}
+                       className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
+                     >
+                       <RiHomeLine className="w-4 h-4 mr-1" />
+                       Về trang chủ
+                     </button>
+                   </div>
           </div>
         );
 
@@ -165,7 +154,7 @@ export default function ForgotPassword({ setActiveTab }) {
         return (
           <div className="w-full max-w-md mx-auto">
             {/* Logo */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-4">
               <img
                 src={logo}
                 alt="VieBook Logo"
@@ -175,7 +164,7 @@ export default function ForgotPassword({ setActiveTab }) {
             </div>
 
             {/* Progress Steps */}
-            <div className="flex items-center justify-center mb-8">
+            <div className="flex items-center justify-center mb-4">
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                   1
@@ -192,7 +181,7 @@ export default function ForgotPassword({ setActiveTab }) {
             {/* Success Message */}
             <div className="bg-green-800 border border-green-600 rounded-lg p-3 mb-6">
               <p className="text-green-200 text-sm text-center">
-                Mã xác nhận đã được gửi đến email của bạn
+                Mã xác nhận đã được gửi đến email của bạn {email}
               </p>
             </div>
 
@@ -200,11 +189,6 @@ export default function ForgotPassword({ setActiveTab }) {
             <h2 className="text-2xl font-semibold text-center text-white mb-4">
               Nhập mã xác thực
             </h2>
-            <p className="text-center text-gray-400 text-sm mb-8">
-              Mã xác thực đã được gửi đến{" "}
-              <span className="text-orange-400">{email}</span>
-            </p>
-
             <form onSubmit={handleVerificationSubmit} className="space-y-6">
               {/* Verification Code Field */}
               <div>
@@ -238,8 +222,8 @@ export default function ForgotPassword({ setActiveTab }) {
               </div>
 
               {/* Resend Code */}
-              <div className="text-center">
-                <p className="text-gray-400 text-sm mb-2">Không nhận được mã?</p>
+             <div className="text-center flex items-center justify-center space-x-1">
+                <p className="text-gray-400 text-sm">Không nhận được mã?</p>
                 <button
                   type="button"
                   className="text-orange-500 hover:text-orange-400 text-sm font-medium"
@@ -282,27 +266,15 @@ export default function ForgotPassword({ setActiveTab }) {
             </form>
 
             {/* Back to Homepage */}
-             <div className="text-center mt-6">
-            <button
-                onClick={() => navigate("/")}
-                className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
-            >
-                <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+             <div className="text-center mt-5">
+                <button
+                  onClick={() => navigate("/")}
+                  className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
                 >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                />
-                </svg>
-                Về trang chủ
-            </button>
-        </div>
+                  <RiHomeLine className="w-4 h-4 mr-1" />
+                  Về trang chủ
+                </button>
+              </div>
           </div>
         );
 
@@ -310,7 +282,7 @@ export default function ForgotPassword({ setActiveTab }) {
         return (
           <div className="w-full max-w-md mx-auto">
             {/* Logo */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-4">
               <img
                 src={logo}
                 alt="VieBook Logo"
@@ -320,7 +292,7 @@ export default function ForgotPassword({ setActiveTab }) {
             </div>
 
             {/* Progress Steps */}
-            <div className="flex items-center justify-center mb-8">
+            <div className="flex items-center justify-center mb-4">
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                   1
@@ -335,7 +307,7 @@ export default function ForgotPassword({ setActiveTab }) {
             </div>
 
             {/* Success Message */}
-            <div className="bg-green-800 border border-green-600 rounded-lg p-3 mb-6">
+            <div className="bg-green-800 border border-green-600 rounded-lg p-3 mb-4">
               <p className="text-green-200 text-sm text-center">
                 Mã xác nhận đã được gửi đến email cá nhân của bạn
               </p>
@@ -345,9 +317,6 @@ export default function ForgotPassword({ setActiveTab }) {
             <h2 className="text-2xl font-semibold text-center text-white mb-4">
               Đặt mật khẩu mới
             </h2>
-            <p className="text-center text-gray-400 text-sm mb-8">
-              Tạo mật khẩu mới cho tài khoản của bạn
-            </p>
 
             <form onSubmit={handlePasswordReset} className="space-y-6">
               {/* New Password Field */}
@@ -500,27 +469,15 @@ export default function ForgotPassword({ setActiveTab }) {
             </form>
 
             {/* Back to Homepage */}
-             <div className="text-center mt-6">
-            <button
-                onClick={() => navigate("/")}
-                className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
-            >
-                <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                />
-                </svg>
-                Về trang chủ
-            </button>
-        </div>
+             <div className="text-center mt-5">
+        <button
+          onClick={() => navigate("/")}
+          className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
+        >
+          <RiHomeLine className="w-4 h-4 mr-1" />
+          Về trang chủ
+        </button>
+      </div>
           </div>
         );
 

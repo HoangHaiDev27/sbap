@@ -3,8 +3,8 @@ import {
   RiCloseLine,
   RiMessage3Line,
   RiGiftLine,
-  RiImageLine,
   RiBookLine,
+  RiImageLine,
 } from "react-icons/ri";
 
 export default function CreatePostModal({ onClose }) {
@@ -12,31 +12,36 @@ export default function CreatePostModal({ onClose }) {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    imageUrl: "",
+    imageFile: null,
     tags: "",
-    // Book giveaway fields
     bookTitle: "",
-    bookCover: "",
+    bookCover: null,
     quantity: "",
     deadline: ""
   });
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value
     }));
   };
 
+  const handleFileChange = (field, file) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: file
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission here
     console.log("Submitting post:", { postType, ...formData });
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-slate-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-700">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
@@ -49,7 +54,7 @@ export default function CreatePostModal({ onClose }) {
           </button>
         </div>
 
-        {/* Post Type Selection */}
+        {/* Post Type */}
         <div className="p-6 border-b border-slate-700">
           <h3 className="text-sm font-medium text-white mb-3">Loại bài đăng *</h3>
           <div className="flex gap-4">
@@ -90,7 +95,7 @@ export default function CreatePostModal({ onClose }) {
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Nhập tiêu đề bài viết..."
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
               required
             />
           </div>
@@ -105,24 +110,33 @@ export default function CreatePostModal({ onClose }) {
               onChange={(e) => handleInputChange("content", e.target.value)}
               placeholder="Chia sẻ suy nghĩ của bạn..."
               rows={6}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 resize-none"
+              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 resize-none"
               required
             />
-            <p className="text-xs text-slate-400 mt-2">0/500 ký tự</p>
           </div>
 
-          {/* Image */}
+          {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
               Ảnh minh họa
             </label>
-            <input
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => handleInputChange("imageUrl", e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-            />
+            <label className="flex items-center gap-2 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:border-orange-500 hover:text-white cursor-pointer">
+              <RiImageLine size={18} />
+              <span>Tải ảnh lên</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) =>
+                  handleFileChange("imageFile", e.target.files[0])
+                }
+              />
+            </label>
+            {formData.imageFile && (
+              <p className="text-xs text-slate-400 mt-2">
+                Đã chọn: {formData.imageFile.name}
+              </p>
+            )}
           </div>
 
           {/* Tags */}
@@ -134,8 +148,8 @@ export default function CreatePostModal({ onClose }) {
               type="text"
               value={formData.tags}
               onChange={(e) => handleInputChange("tags", e.target.value)}
-              placeholder="tâm lý, kỹ năng, kinh doanh (phân cách bằng dấu phẩy)"
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              placeholder="tâm lý, kỹ năng, kinh doanh..."
+              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />
           </div>
 
@@ -146,7 +160,7 @@ export default function CreatePostModal({ onClose }) {
                 <RiBookLine size={16} />
                 Thông tin tặng sách
               </h4>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-white mb-2">
@@ -155,10 +169,12 @@ export default function CreatePostModal({ onClose }) {
                   <input
                     type="text"
                     value={formData.bookTitle}
-                    onChange={(e) => handleInputChange("bookTitle", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("bookTitle", e.target.value)
+                    }
                     placeholder="Nhập tên sách..."
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                    required={postType === "giveaway"}
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    required
                   />
                 </div>
 
@@ -166,13 +182,23 @@ export default function CreatePostModal({ onClose }) {
                   <label className="block text-sm font-medium text-white mb-2">
                     Ảnh bìa sách
                   </label>
-                  <input
-                    type="url"
-                    value={formData.bookCover}
-                    onChange={(e) => handleInputChange("bookCover", e.target.value)}
-                    placeholder="https://example.com/book-cover.jpg"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                  />
+                  <label className="flex items-center gap-2 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:border-orange-500 hover:text-white cursor-pointer">
+                    <RiImageLine size={18} />
+                    <span>Tải ảnh lên</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleFileChange("bookCover", e.target.files[0])
+                      }
+                    />
+                  </label>
+                  {formData.bookCover && (
+                    <p className="text-xs text-slate-400 mt-2">
+                      Đã chọn: {formData.bookCover.name}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -183,14 +209,15 @@ export default function CreatePostModal({ onClose }) {
                     <input
                       type="number"
                       value={formData.quantity}
-                      onChange={(e) => handleInputChange("quantity", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("quantity", e.target.value)
+                      }
                       placeholder="5"
                       min="1"
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                      required={postType === "giveaway"}
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      required
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-white mb-2">
                       Hạn đăng ký *
@@ -198,9 +225,11 @@ export default function CreatePostModal({ onClose }) {
                     <input
                       type="date"
                       value={formData.deadline}
-                      onChange={(e) => handleInputChange("deadline", e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                      required={postType === "giveaway"}
+                      onChange={(e) =>
+                        handleInputChange("deadline", e.target.value)
+                      }
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                      required
                     />
                   </div>
                 </div>
@@ -208,7 +237,7 @@ export default function CreatePostModal({ onClose }) {
             </div>
           )}
 
-          {/* Form Actions */}
+          {/* Actions */}
           <div className="flex justify-end gap-4 pt-6 border-t border-slate-700">
             <button
               type="button"

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function NewReleases() {
-  const newBooks = [
+  const allBooks = [
     {
       id: 1,
       title: "The Atlas Six",
@@ -9,8 +9,9 @@ export default function NewReleases() {
       releaseDate: "2024-01-15",
       category: "Fantasy",
       duration: "12h 45m",
-      description: "Six young magicians are chosen to compete for a place in an ancient society.",
-      image: "https://via.placeholder.com/120x160/667EEA/FFFFFF?text=New+1",
+      description:
+        "Six young magicians are chosen to compete for a place in an ancient society.",
+      image: "https://picsum.photos/id/1011/200/300",
       isNew: true,
     },
     {
@@ -20,8 +21,8 @@ export default function NewReleases() {
       releaseDate: "2024-01-12",
       category: "Science Fiction",
       duration: "8h 20m",
-      description: "An artificial friend observes the world with increasing fascination.",
-      image: "https://via.placeholder.com/120x160/F093FB/FFFFFF?text=New+2",
+      description: "An artificial friend observes the world with fascination.",
+      image: "https://picsum.photos/id/1025/200/300",
       isNew: true,
     },
     {
@@ -31,8 +32,9 @@ export default function NewReleases() {
       releaseDate: "2024-01-10",
       category: "Philosophy",
       duration: "6h 15m",
-      description: "Between life and death there is a library with infinite possibilities.",
-      image: "https://via.placeholder.com/120x160/4ECDC4/FFFFFF?text=New+3",
+      description:
+        "Between life and death there is a library with infinite possibilities.",
+      image: "https://picsum.photos/id/1035/200/300",
       isNew: true,
     },
     {
@@ -43,7 +45,7 @@ export default function NewReleases() {
       category: "Fantasy Romance",
       duration: "17h 30m",
       description: "A woman cursed to be forgotten by everyone she meets.",
-      image: "https://via.placeholder.com/120x160/A8E6CF/000000?text=New+4",
+      image: "https://picsum.photos/id/1041/200/300",
       isNew: false,
     },
     {
@@ -54,10 +56,24 @@ export default function NewReleases() {
       category: "Science Fiction",
       duration: "16h 10m",
       description: "A lone astronaut must save humanity from extinction.",
-      image: "https://via.placeholder.com/120x160/FFB6C1/000000?text=New+5",
+      image: "https://picsum.photos/id/1056/200/300",
+      isNew: false,
+    },
+    {
+      id: 6,
+      title: "Dune",
+      author: "Frank Herbert",
+      releaseDate: "2023-12-25",
+      category: "Science Fiction",
+      duration: "21h 10m",
+      description:
+        "The classic tale of politics, power, and sandworms on Arrakis.",
+      image: "https://picsum.photos/id/1062/200/300",
       isNew: false,
     },
   ];
+
+  const [visibleCount, setVisibleCount] = useState(3);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -83,33 +99,27 @@ export default function NewReleases() {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={2}
-        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 
-        002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 
-        2 0 002 2z"
+        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 
+        0 002-2V7a2 2 0 00-2-2H5a2 
+        2 0 00-2 2v12a2 2 0 002 2z"
       />
     </svg>
   );
 
   const NewIcon = ({ className }) => (
-    <svg
-      className={className}
-      fill="currentColor"
-      viewBox="0 0 20 20"
-    >
-      <path d="M10 2a8 8 0 100 16 8 8 0 
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path
+        d="M10 2a8 8 0 100 16 8 8 0 
       000-16zm3.707 9.293l-4-4a1 1 0 
       00-1.414 1.414L11.586 12H9a1 1 0 
       100 2h5a1 1 0 001-1v-5a1 1 0 
-      10-2 0v2.586z" />
+      10-2 0v2.586z"
+      />
     </svg>
   );
 
   const PlayIcon = ({ className }) => (
-    <svg
-      className={className}
-      fill="currentColor"
-      viewBox="0 0 20 20"
-    >
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
       <path d="M6 4l12 6-12 6V4z" />
     </svg>
   );
@@ -133,6 +143,8 @@ export default function NewReleases() {
     </svg>
   );
 
+  const visibleBooks = allBooks.slice(0, visibleCount);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -145,7 +157,7 @@ export default function NewReleases() {
 
       {/* Featured New Releases */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {newBooks.slice(0, 3).map((book) => (
+        {visibleBooks.slice(0, 3).map((book) => (
           <div
             key={book.id}
             className="bg-gradient-to-b from-gray-700 to-gray-800 rounded-xl p-4 relative"
@@ -171,9 +183,9 @@ export default function NewReleases() {
                 <CalendarIcon className="w-4 h-4 mr-1" />
                 <span>{formatDate(book.releaseDate)}</span>
               </div>
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
+              <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
                 <PlayIcon className="w-5 h-5 mr-2" />
-                Nghe ngay
+                Xem chi tiết
               </button>
             </div>
           </div>
@@ -182,7 +194,7 @@ export default function NewReleases() {
 
       {/* Complete List */}
       <div className="space-y-4">
-        {newBooks.map((book) => (
+        {visibleBooks.map((book) => (
           <div
             key={book.id}
             className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors"
@@ -206,15 +218,17 @@ export default function NewReleases() {
               <div className="flex-grow">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="font-semibold text-white mb-1">{book.title}</h3>
+                    <h3 className="font-semibold text-white mb-1">
+                      {book.title}
+                    </h3>
                     <p className="text-gray-400 text-sm">{book.author}</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button className="p-2 text-gray-400 hover:text-white transition-colors">
                       <HeartIcon className="w-5 h-5" />
                     </button>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-colors">
-                      <PlayIcon className="w-5 h-5" />
+                    <button className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg transition-colors text-sm">
+                      Xem chi tiết
                     </button>
                   </div>
                 </div>
@@ -242,11 +256,16 @@ export default function NewReleases() {
       </div>
 
       {/* Load More */}
-      <div className="text-center mt-6">
-        <button className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
-          Xem thêm sách mới
-        </button>
-      </div>
+      {visibleCount < allBooks.length && (
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setVisibleCount((prev) => prev + 3)}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Xem thêm sách mới
+          </button>
+        </div>
+      )}
     </div>
   );
 }

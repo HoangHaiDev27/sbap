@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function TrendingBooks() {
-  const trendingBooks = [
+  const allTrendingBooks = [
     {
       id: 1,
       title: "Fourth Wing",
@@ -10,7 +10,7 @@ export default function TrendingBooks() {
       trendScore: 95,
       growth: "+245%",
       listens: 5600,
-      image: "https://via.placeholder.com/120x160/E17055/FFFFFF?text=Book+1",
+      image: "https://picsum.photos/120/160?random=1",
       isHot: true,
     },
     {
@@ -21,7 +21,7 @@ export default function TrendingBooks() {
       trendScore: 88,
       growth: "+189%",
       listens: 4200,
-      image: "https://via.placeholder.com/120x160/6C5CE7/FFFFFF?text=Book+2",
+      image: "https://picsum.photos/120/160?random=2",
       isHot: true,
     },
     {
@@ -32,10 +32,45 @@ export default function TrendingBooks() {
       trendScore: 82,
       growth: "+156%",
       listens: 3800,
-      image: "https://via.placeholder.com/120x160/A29BFE/FFFFFF?text=Book+3",
+      image: "https://picsum.photos/120/160?random=3",
+      isHot: false,
+    },
+    {
+      id: 4,
+      title: "Dune",
+      author: "Frank Herbert",
+      category: "Sci-Fi",
+      trendScore: 90,
+      growth: "+201%",
+      listens: 6100,
+      image: "https://picsum.photos/120/160?random=4",
+      isHot: true,
+    },
+    {
+      id: 5,
+      title: "Project Hail Mary",
+      author: "Andy Weir",
+      category: "Sci-Fi",
+      trendScore: 85,
+      growth: "+167%",
+      listens: 4500,
+      image: "https://picsum.photos/120/160?random=5",
+      isHot: false,
+    },
+    {
+      id: 6,
+      title: "The Silent Patient",
+      author: "Alex Michaelides",
+      category: "Thriller",
+      trendScore: 78,
+      growth: "+132%",
+      listens: 3900,
+      image: "https://picsum.photos/120/160?random=6",
       isHot: false,
     },
   ];
+
+  const [visibleCount, setVisibleCount] = useState(3);
 
   const getScoreColor = (score) => {
     if (score >= 90) return "text-red-400";
@@ -44,7 +79,6 @@ export default function TrendingBooks() {
     return "text-green-400";
   };
 
-  // SVG thay cho react-icons
   const FireIcon = ({ className = "w-4 h-4" }) => (
     <svg className={className} fill="currentColor" viewBox="0 0 24 24">
       <path d="M12 2C10 5 6 7 6 13c0 4 3 8 6 8s6-4 6-8c0-6-4-8-6-11z" />
@@ -56,12 +90,24 @@ export default function TrendingBooks() {
     </svg>
   );
   const HeartIcon = ({ className = "w-5 h-5" }) => (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/>
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z" />
     </svg>
   );
   const TrendingIcon = ({ className = "w-4 h-4" }) => (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
       <path d="M3 17l6-6 4 4 8-8" />
     </svg>
   );
@@ -78,7 +124,7 @@ export default function TrendingBooks() {
 
       {/* Danh sách */}
       <div className="space-y-3">
-        {trendingBooks.map((book, index) => (
+        {allTrendingBooks.slice(0, visibleCount).map((book, index) => (
           <div
             key={book.id}
             className="bg-gray-700 rounded-lg p-4 flex items-center space-x-4 hover:bg-gray-600 transition-colors"
@@ -119,10 +165,16 @@ export default function TrendingBooks() {
 
             {/* Score */}
             <div className="text-center">
-              <div className={`text-2xl font-bold ${getScoreColor(book.trendScore)}`}>
+              <div
+                className={`text-2xl font-bold ${getScoreColor(
+                  book.trendScore
+                )}`}
+              >
                 {book.trendScore}°
               </div>
-              <div className="text-green-400 text-sm font-medium">{book.growth}</div>
+              <div className="text-green-400 text-sm font-medium">
+                {book.growth}
+              </div>
             </div>
 
             {/* Actions */}
@@ -137,6 +189,18 @@ export default function TrendingBooks() {
           </div>
         ))}
       </div>
+
+      {/* Xem thêm */}
+      {visibleCount < allTrendingBooks.length && (
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setVisibleCount((prev) => prev + 3)}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Xem thêm
+          </button>
+        </div>
+      )}
     </div>
   );
 }
