@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function PopularBooks() {
+  const navigate = useNavigate();
+
   const popularBooks = [
     {
       id: 1,
@@ -12,6 +15,7 @@ export default function PopularBooks() {
       duration: "4h 30m",
       image: "https://picsum.photos/120/160?random=1",
       trend: "up",
+      liked: false,
     },
     {
       id: 2,
@@ -23,6 +27,7 @@ export default function PopularBooks() {
       duration: "5h 15m",
       image: "https://picsum.photos/120/160?random=2",
       trend: "up",
+      liked: false,
     },
     {
       id: 3,
@@ -34,6 +39,7 @@ export default function PopularBooks() {
       duration: "15h 20m",
       image: "https://picsum.photos/120/160?random=3",
       trend: "down",
+      liked: false,
     },
     {
       id: 4,
@@ -45,6 +51,7 @@ export default function PopularBooks() {
       duration: "20h 45m",
       image: "https://picsum.photos/120/160?random=4",
       trend: "same",
+      liked: false,
     },
     {
       id: 5,
@@ -56,6 +63,7 @@ export default function PopularBooks() {
       duration: "5h 50m",
       image: "https://picsum.photos/120/160?random=5",
       trend: "up",
+      liked: false,
     },
     {
       id: 6,
@@ -67,6 +75,7 @@ export default function PopularBooks() {
       duration: "7h 30m",
       image: "https://picsum.photos/120/160?random=6",
       trend: "up",
+      liked: false,
     },
     {
       id: 7,
@@ -78,10 +87,20 @@ export default function PopularBooks() {
       duration: "6h 40m",
       image: "https://picsum.photos/120/160?random=7",
       trend: "down",
+      liked: false,
     },
   ];
 
+  const [books, setBooks] = useState(popularBooks);
   const [visibleCount, setVisibleCount] = useState(3);
+
+  const toggleLike = (id) => {
+    setBooks((prev) =>
+      prev.map((book) =>
+        book.id === id ? { ...book, liked: !book.liked } : book
+      )
+    );
+  };
 
   const getRankColor = (rank) => {
     switch (rank) {
@@ -112,7 +131,7 @@ export default function PopularBooks() {
       <h2 className="text-xl font-bold mb-4">Top sách được nghe nhiều nhất</h2>
 
       <div className="space-y-4">
-        {popularBooks.slice(0, visibleCount).map((book) => (
+        {books.slice(0, visibleCount).map((book) => (
           <div
             key={book.id}
             className="bg-gray-700 rounded-lg p-4 flex items-center space-x-4 hover:bg-gray-600 transition-colors"
@@ -160,10 +179,14 @@ export default function PopularBooks() {
 
             {/* Actions */}
             <div className="flex items-center space-x-2">
-              <button className="p-2 text-gray-400 hover:text-white transition-colors">
+              {/* Heart button */}
+              <button
+                onClick={() => toggleLike(book.id)}
+                className="p-2 transition-colors"
+              >
                 <svg
                   className="w-5 h-5"
-                  fill="none"
+                  fill={book.liked ? "red" : "none"}
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -178,7 +201,12 @@ export default function PopularBooks() {
                   />
                 </svg>
               </button>
-              <button className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors">
+
+              {/* Play button */}
+              <button
+                onClick={() => navigate(`/bookdetails/${book.id}`)}
+                className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -193,7 +221,7 @@ export default function PopularBooks() {
       </div>
 
       {/* Load More */}
-      {visibleCount < popularBooks.length && (
+      {visibleCount < books.length && (
         <div className="text-center mt-6">
           <button
             onClick={() => setVisibleCount((prev) => prev + 2)}

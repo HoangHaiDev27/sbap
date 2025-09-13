@@ -33,7 +33,7 @@ export default function AuthenticationManager({ defaultTab }) {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
-      <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-xl">
+      <div className="w-full max-w-md bg-gray-800 px-8 rounded-2xl shadow-xl">
         {renderTabContent()}
       </div>
     </div>

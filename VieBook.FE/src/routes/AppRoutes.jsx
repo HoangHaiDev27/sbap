@@ -103,8 +103,8 @@ function AppRoutes() {
 
       <Route path="/change-password" element={<ChangePassword />} />
       {/* Routes cho authentication */}
-       <Route path="/auth" element={<AuthenticationPage />} />
-        <Route path="/auth/change-password" element={<AuthenticationManager defaultTab="change" />} />
+      <Route path="/auth" element={<AuthenticationPage />} />
+      <Route path="/auth/change-password" element={<AuthenticationManager defaultTab="change" />} />
     </Routes>
   );
 }

@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function NewReleases() {
+  const navigate = useNavigate();
+
   const allBooks = [
     {
       id: 1,
@@ -13,6 +16,7 @@ export default function NewReleases() {
         "Six young magicians are chosen to compete for a place in an ancient society.",
       image: "https://picsum.photos/id/1011/200/300",
       isNew: true,
+      liked: false,
     },
     {
       id: 2,
@@ -24,6 +28,7 @@ export default function NewReleases() {
       description: "An artificial friend observes the world with fascination.",
       image: "https://picsum.photos/id/1025/200/300",
       isNew: true,
+      liked: false,
     },
     {
       id: 3,
@@ -36,6 +41,7 @@ export default function NewReleases() {
         "Between life and death there is a library with infinite possibilities.",
       image: "https://picsum.photos/id/1035/200/300",
       isNew: true,
+      liked: false,
     },
     {
       id: 4,
@@ -47,6 +53,7 @@ export default function NewReleases() {
       description: "A woman cursed to be forgotten by everyone she meets.",
       image: "https://picsum.photos/id/1041/200/300",
       isNew: false,
+      liked: false,
     },
     {
       id: 5,
@@ -58,6 +65,7 @@ export default function NewReleases() {
       description: "A lone astronaut must save humanity from extinction.",
       image: "https://picsum.photos/id/1056/200/300",
       isNew: false,
+      liked: false,
     },
     {
       id: 6,
@@ -70,9 +78,11 @@ export default function NewReleases() {
         "The classic tale of politics, power, and sandworms on Arrakis.",
       image: "https://picsum.photos/id/1062/200/300",
       isNew: false,
+      liked: false,
     },
   ];
 
+  const [books, setBooks] = useState(allBooks);
   const [visibleCount, setVisibleCount] = useState(3);
 
   const formatDate = (dateString) => {
@@ -87,14 +97,14 @@ export default function NewReleases() {
     return date.toLocaleDateString("vi-VN");
   };
 
-  // SVG Icons
+  const toggleLike = (id) => {
+    setBooks((prev) =>
+      prev.map((book) => (book.id === id ? { ...book, liked: !book.liked } : book))
+    );
+  };
+
   const CalendarIcon = ({ className }) => (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -124,17 +134,17 @@ export default function NewReleases() {
     </svg>
   );
 
-  const HeartIcon = ({ className }) => (
+  const HeartIcon = ({ filled, className }) => (
     <svg
       className={className}
-      fill="none"
+      fill={filled ? "red" : "none"}
       stroke="currentColor"
       viewBox="0 0 24 24"
+      strokeWidth={2}
     >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth={2}
         d="M4.318 6.318a4.5 4.5 0 
         016.364 0L12 7.636l1.318-1.318a4.5 
         4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 
@@ -143,7 +153,7 @@ export default function NewReleases() {
     </svg>
   );
 
-  const visibleBooks = allBooks.slice(0, visibleCount);
+  const visibleBooks = books.slice(0, visibleCount);
 
   return (
     <div>
@@ -183,7 +193,10 @@ export default function NewReleases() {
                 <CalendarIcon className="w-4 h-4 mr-1" />
                 <span>{formatDate(book.releaseDate)}</span>
               </div>
-              <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center">
+              <button
+                onClick={() => navigate(`/bookdetails/${book.id}`)}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+              >
                 <PlayIcon className="w-5 h-5 mr-2" />
                 Xem chi tiết
               </button>
@@ -218,16 +231,22 @@ export default function NewReleases() {
               <div className="flex-grow">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="font-semibold text-white mb-1">
-                      {book.title}
-                    </h3>
+                    <h3 className="font-semibold text-white mb-1">{book.title}</h3>
                     <p className="text-gray-400 text-sm">{book.author}</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="p-2 text-gray-400 hover:text-white transition-colors">
-                      <HeartIcon className="w-5 h-5" />
+                    {/* Heart button */}
+                    <button
+                      onClick={() => toggleLike(book.id)}
+                      className="p-2 transition-colors"
+                    >
+                      <HeartIcon filled={book.liked} className="w-5 h-5" />
                     </button>
-                    <button className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg transition-colors text-sm">
+                    {/* Navigate button */}
+                    <button
+                      onClick={() => navigate(`/bookdetails/${book.id}`)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg transition-colors text-sm"
+                    >
                       Xem chi tiết
                     </button>
                   </div>
@@ -239,9 +258,7 @@ export default function NewReleases() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 text-xs text-gray-400">
-                    <span className="bg-gray-600 px-2 py-1 rounded">
-                      {book.category}
-                    </span>
+                    <span className="bg-gray-600 px-2 py-1 rounded">{book.category}</span>
                     <span>{book.duration}</span>
                     <div className="flex items-center">
                       <CalendarIcon className="w-4 h-4 mr-1" />
@@ -256,7 +273,7 @@ export default function NewReleases() {
       </div>
 
       {/* Load More */}
-      {visibleCount < allBooks.length && (
+      {visibleCount < books.length && (
         <div className="text-center mt-6">
           <button
             onClick={() => setVisibleCount((prev) => prev + 3)}
