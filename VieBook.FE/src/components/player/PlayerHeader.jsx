@@ -19,13 +19,13 @@ export default function PlayerHeader({ book, bookId, isFullscreen, toggleFullscr
       </div>
 
       <div className="flex items-center space-x-2">
-        <button
+        {/* <button
           onClick={toggleTranscript}
           className="p-2 rounded-lg hover:bg-gray-700"
           title="Bản ghi âm"
         >
           <RiFileTextLine className="w-5 h-5" />
-        </button>
+        </button> */}
 
         <button
           onClick={toggleFullscreen}

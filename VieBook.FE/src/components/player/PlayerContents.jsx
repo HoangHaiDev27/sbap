@@ -167,7 +167,7 @@ export default function PlayerContents({
               <RiMoonLine /> <span>{sleepTimer > 0 ? `${sleepTimer}m` : "Hẹn giờ"}</span>
             </button>
             {showSleepTimer && (
-              <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 rounded-lg p-2 shadow-lg">
+              <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 rounded-lg p-2 shadow-lg w-32">
                 {[5, 10, 15, 30].map((minutes) => (
                   <button
                     key={minutes}

@@ -51,7 +51,7 @@ function App() {
       />
 
       {/* Main layout */}
-      <div className="flex flex-col flex-1 bg-gray-900 text-white lg:ml-64">
+      <div className="flex flex-col flex-1 bg-gray-900 text-white lg:ml-64 overflow-x-hidden">
         {/* Header */}
         <HeaderManager
           role={role}

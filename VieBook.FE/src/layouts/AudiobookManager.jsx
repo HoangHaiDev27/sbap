@@ -11,7 +11,7 @@ export default function AudiobookManager() {
     <div className="min-h-screen bg-gray-900 text-white">
       <main className="flex-1 p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Sách nói và truyện nói</h1>
+          <h1 className="text-3xl font-bold mb-2">Sách nói</h1>
           <p className="text-gray-400">
             Thưởng thức hàng nghìn sách nói chất lượng cao với giọng đọc chuyên nghiệp
           </p>

@@ -5,12 +5,11 @@ import AuthorSection from "../components/home/AuthorSection";
 
 export default function HomeManager() {
   return (
-    <div className="bg-gray-900 min-h-screen text-white">
-      {/* Hero Section */}
+    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="flex-1">
       <HeroSection />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-        {/* Gợi ý cho người mới bắt đầu */}
+      <div className="px-6 py-8 space-y-12">
         <BookCarousel
           title="Gợi ý cho người mới bắt đầu"
           books={[
@@ -30,14 +29,28 @@ export default function HomeManager() {
               author: "Tác giả 2",
               category: "Lịch sử",
             },
+            {
+              id: "3",
+              title: "Truyện Ngắn Thạch Lam 1",
+              image:
+                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/1935/webp_791488618ba8b70aa2082505031c3e1f922eba1d.webp",
+              author: "Thạch Lam",
+              category: "Văn học",
+            },
           ]}
         />
 
-        {/* Sách nói chất lượng */}
         <BookCarousel
           title="Sách nói chất lượng"
-          hasCategories
-          categories={["Tất cả", "Tâm linh", "Kinh tế", "Chính trị", "Lịch sử"]}
+          hasCategories={true}
+          categories={[
+            "Tất cả",
+            "Tâm linh",
+            "Kinh tế",
+            "Chính trị",
+            "Lịch sử",
+            "Tâm lý học",
+          ]}
           books={[
             {
               id: "6",
@@ -47,13 +60,20 @@ export default function HomeManager() {
               author: "Tác giả 6",
               category: "Lãnh đạo",
             },
+            {
+              id: "7",
+              title: "Từng Bước Nở Hoa Sen",
+              image:
+                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/429056/webp_f3ccdd27d2000e3f.webp",
+              author: "Ka Nguyễn",
+              category: "Tâm linh",
+            },
           ]}
         />
 
-        {/* Truyện nói hấp dẫn */}
         <BookCarousel
           title="Truyện nói hấp dẫn"
-          hasCategories
+          hasCategories={true}
           categories={[
             "Tất cả",
             "Việt Nam Danh Tác",
@@ -70,45 +90,20 @@ export default function HomeManager() {
               author: "Hồ Biểu Chánh",
               category: "Danh tác",
             },
+            {
+              id: "11",
+              title: "Là Đánh Mất Hay Chưa Từng Có",
+              image:
+                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/416826/webp_e7ba222503aa0b79.webp",
+              author: "Tác giả 11",
+              category: "Ngôn tình",
+            },
           ]}
         />
 
-        {/* Podcast đặc sắc */}
-        {/* <BookCarousel
-          title="Podcast đặc sắc"
-          hasCategories
-          categories={[
-            "Tất cả",
-            "Văn hóa",
-            "Giải trí",
-            "Kiến thức",
-            "Pháp thoại",
-          ]}
-          books={[
-            {
-              id: "13",
-              title: "English For Office",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/429154/webp_f268c4174fef177a.webp",
-              author: "Tác giả 13",
-              category: "Học ngoại ngữ",
-            },
-            {
-              id: "14",
-              title: "Thông Deep",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/432998/webp_a22041ed2d9c6de8.webp",
-              author: "Tác giả 14",
-              category: "Văn hóa",
-            },
-          ]}
-        /> */}
-
-        {/* Tác giả nổi bật */}
-        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <AuthorSection />
-        </div>
+        <AuthorSection />
       </div>
+    </div>
     </div>
   );
 }

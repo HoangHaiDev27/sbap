@@ -5,15 +5,15 @@ export default function BookCarousel({ title, books, hasCategories, categories }
   const [activeCategory, setActiveCategory] = useState(0);
 
   return (
-    <div className="space-y-6 bg-gray-900 p-6 rounded-xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">{title}</h2>
         <Link
-          to="/audiobooks"
-          className="text-blue-400 hover:text-blue-300 text-sm cursor-pointer whitespace-nowrap flex items-center"
+          to="/books"
+          className="text-blue-400 hover:text-blue-300 text-sm cursor-pointer whitespace-nowrap"
         >
-          Xem thêm <span className="ml-1">➔</span>
+          Xem thêm <i className="ri-arrow-right-line ml-1"></i>
         </Link>
       </div>
 
@@ -36,7 +36,7 @@ export default function BookCarousel({ title, books, hasCategories, categories }
         </div>
       )}
 
-      {/* Books */}
+      {/* Book list */}
       <div className="flex space-x-4 overflow-x-auto pb-4">
         {books.map((book) => (
           <Link
@@ -44,7 +44,7 @@ export default function BookCarousel({ title, books, hasCategories, categories }
             to={`/bookdetails/${book.id}`}
             className="flex-shrink-0 cursor-pointer group"
           >
-            <div className="min-w-[10rem] w-40">
+            <div className="w-40">
               <div className="relative mb-3">
                 <img
                   src={book.image}
