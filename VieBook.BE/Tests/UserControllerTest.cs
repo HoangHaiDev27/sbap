@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using DTOs;
+using BusinessObject.Dtos;
 using Xunit;
 
 namespace Tests

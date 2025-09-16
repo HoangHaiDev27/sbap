@@ -1,12 +1,14 @@
 using BusinessObject;
 using DataAccess;
-using DTOs;
+using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Repositories;
-using Services;
+using Repositories.Interfaces;
+using Repositories.Implementations;
+using Services.Interfaces;
+using Services.Implementations;
 
 namespace Tests
 {

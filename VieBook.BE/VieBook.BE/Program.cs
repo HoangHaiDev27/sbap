@@ -1,9 +1,11 @@
 using BusinessObject;
 using DataAccess;
-using DTOs;
+using BusinessObject.Dtos;
 using Microsoft.EntityFrameworkCore;
-using Repositories;
-using Services;
+using Repositories.Interfaces;
+using Repositories.Implementations;
+using Services.Interfaces;
+using Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 

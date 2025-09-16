@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using BusinessObject;
-using DTOs;
+using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Repositories;
-using Services;
+using BusinessObject.Models;
+using Services.Interfaces;
 
 namespace VieBook.BE.Controllers
 {
