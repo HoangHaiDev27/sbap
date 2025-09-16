@@ -56,7 +56,7 @@ const StaffBooksPage = () => {
     };
 
     return (
-        <div className="pt-24 p-6 bg-gray-50 text-gray-900 min-h-screen">
+        <div className="pt-30 p-6 bg-gray-50 text-gray-900 min-h-screen">
             {/* Page Title */}
             <div className="mb-6">
                 <h2 className="text-3xl font-bold text-dark-700">Quản lý sách</h2>
@@ -107,113 +107,115 @@ const StaffBooksPage = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="min-w-full border border-gray-200 rounded-xl bg-white shadow-sm">
-                    <thead className="bg-gray-100 text-left text-gray-700">
-                        <tr>
-                            <th className="p-3 w-16 text-center">STT</th>
-                            <th className="p-3">Sách</th>
-                            <th className="p-3">Chủ sách</th>
-                            <th className="p-3">Thể loại</th>
-                            <th className="p-3">Lượt xem/nghe</th>
-                            <th className="p-3">Đánh giá</th>
-                            <th className="p-3">Trạng thái</th>
-                            <th className="p-3">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody className="text-gray-900">
-                        {paginatedBooks.map((b, idx) => (
-                            <tr key={b.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                <td className="p-3 w-16 text-center">{startIndex + idx + 1}</td>
-                                <td className="p-3">
-                                    <div className="flex items-center gap-3">
-                                        <img
-                                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv"
-                                            alt={b.title}
-                                            className="w-12 h-16 object-cover rounded"
-                                        />
-                                        <div>
-                                            <p className="font-semibold text-gray-800">{b.title}</p>
-                                            <p className="text-sm text-gray-500">{b.author}</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full border border-gray-200 rounded-xl bg-white shadow-sm">
+                        <thead className="bg-gray-100 text-left text-gray-700">
+                            <tr>
+                                <th className="p-3 w-16 text-center">STT</th>
+                                <th className="p-3">Sách</th>
+                                <th className="p-3">Chủ sách</th>
+                                <th className="p-3">Thể loại</th>
+                                <th className="p-3">Lượt xem/nghe</th>
+                                <th className="p-3">Đánh giá</th>
+                                <th className="p-3">Trạng thái</th>
+                                <th className="p-3">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-gray-900">
+                            {paginatedBooks.map((b, idx) => (
+                                <tr key={b.id} className="border-b border-gray-200 hover:bg-gray-50">
+                                    <td className="p-3 w-16 text-center">{startIndex + idx + 1}</td>
+                                    <td className="p-3">
+                                        <div className="flex items-center gap-3">
+                                            <img
+                                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv"
+                                                alt={b.title}
+                                                className="w-12 h-16 object-cover rounded"
+                                            />
+                                            <div>
+                                                <p className="font-semibold text-gray-800">{b.title}</p>
+                                                <p className="text-sm text-gray-500">{b.author}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="p-3">{b.owner}</td>
-                                <td className="p-3">{b.category}</td>
-                                <td className="p-3">{b.views}</td>
-                                <td className="p-3">⭐ {b.rating}</td>
-                                <td className="p-3">
-                                    <span
-                                        className={`px-2 py-1 text-sm rounded-full ${
-                                            b.status === "Hiển thị"
+                                    </td>
+                                    <td className="p-3">{b.owner}</td>
+                                    <td className="p-3">{b.category}</td>
+                                    <td className="p-3">{b.views}</td>
+                                    <td className="p-3">⭐ {b.rating}</td>
+                                    <td className="p-3">
+                                        <span
+                                            className={`px-2 py-1 text-sm rounded-full ${b.status === "Hiển thị"
                                                 ? "bg-green-100 text-green-700"
                                                 : "bg-gray-200 text-gray-700"
-                                        }`}
-                                    >
-                                        {b.status}
-                                    </span>
-                                </td>
-                                <td className="p-3">
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setSelectedBook(b)}
-                                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
-                                            title="Xem"
+                                                }`}
                                         >
-                                            <i className="ri-eye-line text-lg"></i>
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                (window.location.href = `/staff/feedback?bookId=${b.id}`)
-                                            }
-                                            className="p-2 hover:bg-purple-50 rounded-lg text-purple-600"
-                                            title="Nhận xét"
-                                        >
-                                            <i className="ri-message-2-line text-lg"></i>
-                                        </button>
+                                            {b.status}
+                                        </span>
+                                    </td>
+                                    <td className="p-3">
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setSelectedBook(b)}
+                                                className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                                                title="Xem"
+                                            >
+                                                <i className="ri-eye-line text-lg"></i>
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    (window.location.href = `/staff/feedback?bookId=${b.id}`)
+                                                }
+                                                className="p-2 hover:bg-purple-50 rounded-lg text-purple-600"
+                                                title="Nhận xét"
+                                            >
+                                                <i className="ri-message-2-line text-lg"></i>
+                                            </button>
 
-                                        <button
-                                            onClick={() => setConfirmBook(b)}
-                                            className="p-2 hover:bg-orange-50 rounded-lg text-orange-600"
-                                            title="Ẩn/Hiện"
-                                        >
-                                            <i className="ri-eye-off-line text-lg"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                            <button
+                                                onClick={() => setConfirmBook(b)}
+                                                className="p-2 hover:bg-orange-50 rounded-lg text-orange-600"
+                                                title="Ẩn/Hiện"
+                                            >
+                                                <i className="ri-eye-off-line text-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
 
-                        {filteredBooks.length === 0 && (
-                            <tr>
-                                <td colSpan={8} className="p-6 text-center text-gray-500">
-                                    Không có dữ liệu phù hợp.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center items-center gap-2 mt-6">
-                <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 border rounded-lg bg-white shadow-sm disabled:opacity-50"
-                >
-                    Trước
-                </button>
-                <span className="px-3 py-1">
-                    Trang {currentPage} / {totalPages}
-                </span>
-                <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 border rounded-lg bg-white shadow-sm disabled:opacity-50"
-                >
-                    Sau
-                </button>
+                            {filteredBooks.length === 0 && (
+                                <tr>
+                                    <td colSpan={8} className="p-6 text-center text-gray-500">
+                                        Không có dữ liệu phù hợp.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    {/* Pagination */}
+                    <div className="flex justify-between items-center px-6 py-4 border-t">
+                        <p className="text-sm text-gray-600">
+                            Trang {currentPage}/{totalPages}
+                        </p>
+                        <div className="space-x-2">
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                            >
+                                Trước
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                            >
+                                Sau
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Popup chi tiết sách */}

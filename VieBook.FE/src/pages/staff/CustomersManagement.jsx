@@ -61,7 +61,7 @@ export default function CustomersManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-25">
+    <div className="min-h-screen bg-gray-50 p-6 pt-30">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Quản lý khách hàng</h2>
       <p className="text-gray-600 mb-6">Quản lý người dùng sử dụng nền tảng</p>
 

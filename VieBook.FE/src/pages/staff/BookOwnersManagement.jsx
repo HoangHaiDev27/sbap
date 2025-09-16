@@ -97,7 +97,7 @@ export default function BookOwnersManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-20">
+    <div className="min-h-screen bg-gray-50 p-6 pt-30">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">
         Quản lý Book Owner
       </h2>
