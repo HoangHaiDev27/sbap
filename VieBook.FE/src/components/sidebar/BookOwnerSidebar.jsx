@@ -35,7 +35,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
       )}
 
       <aside
-        className={`fixed top-0 left-0 w-64 h-screen bg-[#1E293B] text-white shadow-lg z-50 transform transition-transform duration-300 
+        className={`fixed top-0 left-0 w-64 h-screen bg-[#1f2937] text-white shadow-lg z-50 transform transition-transform duration-300 
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         {/* Logo */}

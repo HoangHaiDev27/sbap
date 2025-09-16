@@ -116,12 +116,13 @@ export default function BookTable({ books }) {
                   >
                     <RiBookOpenLine className="text-white text-lg" />
                   </Link>
-                  <button
+                  <Link
+                    to={`/owner/books/${book.id}/audio`}
                     className="p-2 bg-purple-500 rounded hover:bg-purple-600 transition"
                     title="Audio"
                   >
                     <RiSoundModuleLine className="text-white text-lg" />
-                  </button>
+                  </Link>
                   <button
                     className="p-2 bg-red-500 rounded hover:bg-red-600 transition"
                     title="Xóa"
@@ -143,8 +144,8 @@ export default function BookTable({ books }) {
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
             className={`px-3 py-1 rounded text-sm ${currentPage === 1
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
           >
             Trước
@@ -164,8 +165,8 @@ export default function BookTable({ books }) {
                 key={page}
                 onClick={() => setCurrentPage(page)}
                 className={`px-3 py-1 rounded text-sm ${currentPage === page
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  ? "bg-orange-500 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}
               >
                 {page}
@@ -178,8 +179,8 @@ export default function BookTable({ books }) {
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
             className={`px-3 py-1 rounded text-sm ${currentPage === totalPages
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
           >
             Sau
