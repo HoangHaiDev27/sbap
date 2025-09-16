@@ -2,18 +2,10 @@ import React, { useState } from "react";
 import {
     RiSearchLine,
     RiAddLine,
-    RiFireLine,
     RiBookLine,
     RiGiftLine,
     RiStarLine,
-    RiTimeLine,
-    RiBarChartLine,     // ✅ thay cho RiTrendingUpLine
-    RiBookOpenLine,
-    RiUserLine,
-    RiMoneyDollarBoxLine,
-    RiHistoryLine,
-    RiPieChartLine,     // ✅ thay cho RiFundsBoxLine
-    RiLightbulbLine,
+    RiCloseLine,
     RiBrainLine,
 } from "react-icons/ri";
 
@@ -21,17 +13,20 @@ import PostList from "../components/forum/PostList";
 import PopularTopics from "../components/forum/PopularTopics";
 import ActiveUsers from "../components/forum/ActiveUsers";
 import CreatePostModal from "../components/forum/CreatePostModal";
-import bg from "../assets/forum-bg.png"; // Đảm bảo bạn có ảnh nền phù hợp
+import bg from "../assets/forum-bg.png"; // ảnh nền
+
 export default function ForumManager() {
     const [activeTab, setActiveTab] = useState("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
+    // ✅ thêm tab Đã ẩn
     const tabs = [
         { id: "all", label: "Tất cả", icon: <RiBookLine /> },
         { id: "discuss", label: "Thảo luận", icon: <RiBrainLine /> },
         { id: "gift", label: "Tặng sách", icon: <RiGiftLine /> },
         { id: "registered", label: "Đã đăng ký", icon: <RiStarLine /> },
+        { id: "hidden", label: "Đã ẩn", icon: <RiCloseLine /> },
     ];
 
     const popularTopics = [
@@ -56,12 +51,9 @@ export default function ForumManager() {
             {/* Header */}
             <div className="relative bg-slate-900">
                 {/* Background image */}
-              
                 <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{
-                    backgroundImage: `url(${bg})`,
-                }}
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${bg})` }}
                 />
                 {/* Overlay tối */}
                 <div className="absolute inset-0 bg-black/60" />
@@ -76,7 +68,10 @@ export default function ForumManager() {
                         {/* Search + Button */}
                         <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
                             <div className="relative flex-1 max-w-md">
-                                <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-300" size={20} />
+                                <RiSearchLine
+                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-300"
+                                    size={20}
+                                />
                                 <input
                                     type="text"
                                     placeholder="Tìm kiếm bài viết theo tiêu đề..."
@@ -97,7 +92,6 @@ export default function ForumManager() {
                 </div>
             </div>
 
-
             {/* Navigation Tabs */}
             <div className="sticky top-0 bg-slate-800 border-b border-slate-700 z-10">
                 <div className="max-w-7xl mx-auto px-6">
@@ -106,10 +100,11 @@ export default function ForumManager() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${activeTab === tab.id
+                                className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                                    activeTab === tab.id
                                         ? "border-orange-500 text-orange-500"
                                         : "border-transparent text-slate-400 hover:text-white"
-                                    }`}
+                                }`}
                             >
                                 <span>{tab.icon}</span>
                                 <span>{tab.label}</span>
