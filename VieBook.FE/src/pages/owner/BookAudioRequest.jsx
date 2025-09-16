@@ -12,11 +12,21 @@ export default function BookAudioRequest() {
 
   // Demo chương sách
   const chapters = [
-    { id: 1, title: "Chương 1: Khởi đầu cuộc hành trình", words: 2500, duration: 14 },
-    { id: 2, title: "Chương 2: Gặp gỡ những người bạn mới", words: 3200, duration: 18 },
-    { id: 3, title: "Chương 3: Thách thức đầu tiên", words: 7800, duration: 36 },
-    { id: 4, title: "Chương 4: Phát hiện điều bí ẩn", words: 3500, duration: 20 },
-  ];
+  { id: 1, title: "Chương 1: Khởi đầu cuộc hành trình", words: 2500, duration: 14 },
+  { id: 2, title: "Chương 2: Gặp gỡ những người bạn mới", words: 3200, duration: 18 },
+  { id: 3, title: "Chương 3: Thách thức đầu tiên", words: 7800, duration: 36 },
+  { id: 4, title: "Chương 4: Phát hiện điều bí ẩn", words: 3500, duration: 20 },
+  { id: 5, title: "Chương 5: Bước vào khu rừng tối", words: 4200, duration: 22 },
+  { id: 6, title: "Chương 6: Đêm của những tiếng thì thầm", words: 5000, duration: 27 },
+  { id: 7, title: "Chương 7: Ký ức bị lãng quên", words: 3100, duration: 17 },
+  { id: 8, title: "Chương 8: Đồng minh trong bóng tối", words: 4600, duration: 24 },
+  { id: 9, title: "Chương 9: Trận chiến nơi vách núi", words: 7200, duration: 34 },
+  { id: 10, title: "Chương 10: Bí mật trong ngôi đền cổ", words: 5400, duration: 28 },
+  { id: 11, title: "Chương 11: Kẻ phản bội lộ diện", words: 6100, duration: 31 },
+  { id: 12, title: "Chương 12: Hành trình vượt sa mạc lửa", words: 6800, duration: 33 },
+  { id: 13, title: "Chương 13: Ánh sáng nơi tận cùng", words: 3900, duration: 21 },
+  { id: 14, title: "Chương 14: Đối mặt định mệnh", words: 8000, duration: 38 },
+];
 
   // Demo queue
   const queue = [
