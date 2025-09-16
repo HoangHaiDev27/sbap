@@ -47,8 +47,6 @@ public partial class VieBookContext : DbContext
 
     public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
-    public virtual DbSet<Payment> Payments { get; set; }
-
     public virtual DbSet<PaymentRequest> PaymentRequests { get; set; }
 
     public virtual DbSet<Plan> Plans { get; set; }
@@ -77,6 +75,8 @@ public partial class VieBookContext : DbContext
 
     public virtual DbSet<UserProfile> UserProfiles { get; set; }
 
+    public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
+
     public virtual DbSet<Wishlist> Wishlists { get; set; }
     private string GetConnectionString()
     {
@@ -94,21 +94,21 @@ public partial class VieBookContext : DbContext
 
     }
 
-    //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    //        => optionsBuilder.UseSqlServer("Data Source = LAPTOP-N5QMVHEE; Database=VieBook;User Id = sa; Password=26052018;TrustServerCertificate=true;Trusted_Connection=SSPI;Encrypt=false;");
+    //     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    //         => optionsBuilder.UseSqlServer("Server=localhost;Database=VieBook;User Id=SA;Password=YourStrong!Passw0rd;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Book>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C207BE322307");
+            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C2072C8A15DA");
 
             entity.HasIndex(e => e.OwnerId, "IX_Books_Owner");
 
             entity.HasIndex(e => e.Status, "IX_Books_Status");
 
-            entity.HasIndex(e => e.Isbn, "UQ__Books__447D36EA59BF933B").IsUnique();
+            entity.HasIndex(e => e.Isbn, "UQ__Books__447D36EAF100CDCE").IsUnique();
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.Isbn)
@@ -126,7 +126,7 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Owner).WithMany(p => p.Books)
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Books__OwnerId__5441852A");
+                .HasConstraintName("FK__Books__OwnerId__4222D4EF");
 
             entity.HasMany(d => d.Categories).WithMany(p => p.Books)
                 .UsingEntity<Dictionary<string, object>>(
@@ -134,11 +134,11 @@ public partial class VieBookContext : DbContext
                     r => r.HasOne<Category>().WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__BookCateg__Categ__59FA5E80"),
+                        .HasConstraintName("FK__BookCateg__Categ__47DBAE45"),
                     l => l.HasOne<Book>().WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__BookCateg__BookI__59063A47"),
+                        .HasConstraintName("FK__BookCateg__BookI__46E78A0C"),
                     j =>
                     {
                         j.HasKey("BookId", "CategoryId");
@@ -148,7 +148,7 @@ public partial class VieBookContext : DbContext
 
         modelBuilder.Entity<BookApproval>(entity =>
         {
-            entity.HasKey(e => e.ApprovalId).HasName("PK__BookAppr__328477F48A5D390B");
+            entity.HasKey(e => e.ApprovalId).HasName("PK__BookAppr__328477F44CBF3B8F");
 
             entity.Property(e => e.Action)
                 .HasMaxLength(20)
@@ -159,17 +159,17 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Book).WithMany(p => p.BookApprovals)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookAppro__BookI__619B8048");
+                .HasConstraintName("FK__BookAppro__BookI__4F7CD00D");
 
             entity.HasOne(d => d.Staff).WithMany(p => p.BookApprovals)
                 .HasForeignKey(d => d.StaffId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookAppro__Staff__628FA481");
+                .HasConstraintName("FK__BookAppro__Staff__5070F446");
         });
 
         modelBuilder.Entity<BookClaim>(entity =>
         {
-            entity.HasKey(e => e.ClaimId).HasName("PK__BookClai__EF2E139BCD4868FC");
+            entity.HasKey(e => e.ClaimId).HasName("PK__BookClai__EF2E139B49BFBA30");
 
             entity.HasIndex(e => new { e.CustomerId, e.CreatedAt }, "IX_BookClaims_Customer").IsDescending(false, true);
 
@@ -184,25 +184,25 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.BookOffer).WithMany(p => p.BookClaims)
                 .HasForeignKey(d => d.BookOfferId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookClaim__BookO__4F47C5E3");
+                .HasConstraintName("FK__BookClaim__BookO__40F9A68C");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.BookClaimCustomers)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookClaim__Custo__503BEA1C");
+                .HasConstraintName("FK__BookClaim__Custo__41EDCAC5");
 
             entity.HasOne(d => d.ProcessedByNavigation).WithMany(p => p.BookClaimProcessedByNavigations)
                 .HasForeignKey(d => d.ProcessedBy)
-                .HasConstraintName("FK__BookClaim__Proce__5224328E");
+                .HasConstraintName("FK__BookClaim__Proce__43D61337");
         });
 
         modelBuilder.Entity<BookOffer>(entity =>
         {
-            entity.HasKey(e => e.BookOfferId).HasName("PK__BookOffe__7FC9564693F5516C");
+            entity.HasKey(e => e.BookOfferId).HasName("PK__BookOffe__7FC9564669C36573");
 
             entity.HasIndex(e => e.OwnerId, "IX_BookOffers_Owner");
 
-            entity.HasIndex(e => e.PostId, "UQ__BookOffe__AA126019638A198A").IsUnique();
+            entity.HasIndex(e => e.PostId, "UQ__BookOffe__AA1260192A51DB3B").IsUnique();
 
             entity.Property(e => e.AccessType)
                 .HasMaxLength(10)
@@ -217,22 +217,22 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Book).WithMany(p => p.BookOffers)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookOffer__BookI__4A8310C6");
+                .HasConstraintName("FK__BookOffer__BookI__3C34F16F");
 
             entity.HasOne(d => d.Owner).WithMany(p => p.BookOffers)
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookOffer__Owner__498EEC8D");
+                .HasConstraintName("FK__BookOffer__Owner__3B40CD36");
 
             entity.HasOne(d => d.Post).WithOne(p => p.BookOffer)
                 .HasForeignKey<BookOffer>(d => d.PostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookOffer__PostI__489AC854");
+                .HasConstraintName("FK__BookOffer__PostI__3A4CA8FD");
         });
 
         modelBuilder.Entity<BookReview>(entity =>
         {
-            entity.HasKey(e => e.ReviewId).HasName("PK__BookRevi__74BC79CEC7E1E36E");
+            entity.HasKey(e => e.ReviewId).HasName("PK__BookRevi__74BC79CE2DB45E11");
 
             entity.HasIndex(e => e.BookId, "IX_BookReviews_Book");
 
@@ -244,17 +244,17 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Book).WithMany(p => p.BookReviews)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookRevie__BookI__07C12930");
+                .HasConstraintName("FK__BookRevie__BookI__797309D9");
 
             entity.HasOne(d => d.User).WithMany(p => p.BookReviews)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BookRevie__UserI__08B54D69");
+                .HasConstraintName("FK__BookRevie__UserI__7A672E12");
         });
 
         modelBuilder.Entity<Bookmark>(entity =>
         {
-            entity.HasKey(e => e.BookmarkId).HasName("PK__Bookmark__541A3B71EA069E31");
+            entity.HasKey(e => e.BookmarkId).HasName("PK__Bookmark__541A3B715B666287");
 
             entity.HasIndex(e => new { e.UserId, e.BookId }, "IX_Bookmarks_UserBook");
 
@@ -263,25 +263,25 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Book).WithMany(p => p.Bookmarks)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookmarks__BookI__01142BA1");
+                .HasConstraintName("FK__Bookmarks__BookI__72C60C4A");
 
             entity.HasOne(d => d.ChapterListen).WithMany(p => p.BookmarkChapterListens)
                 .HasForeignKey(d => d.ChapterListenId)
-                .HasConstraintName("FK__Bookmarks__Chapt__02FC7413");
+                .HasConstraintName("FK__Bookmarks__Chapt__74AE54BC");
 
             entity.HasOne(d => d.ChapterRead).WithMany(p => p.BookmarkChapterReads)
                 .HasForeignKey(d => d.ChapterReadId)
-                .HasConstraintName("FK__Bookmarks__Chapt__02084FDA");
+                .HasConstraintName("FK__Bookmarks__Chapt__73BA3083");
 
             entity.HasOne(d => d.User).WithMany(p => p.Bookmarks)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookmarks__UserI__00200768");
+                .HasConstraintName("FK__Bookmarks__UserI__71D1E811");
         });
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A0BF8F29DD7");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A0B856ED40E");
 
             entity.HasIndex(e => new { e.Name, e.Type }, "UQ_Categories_NameType").IsUnique();
 
@@ -293,12 +293,12 @@ public partial class VieBookContext : DbContext
 
             entity.HasOne(d => d.Parent).WithMany(p => p.InverseParent)
                 .HasForeignKey(d => d.ParentId)
-                .HasConstraintName("FK__Categorie__Paren__4F7CD00D");
+                .HasConstraintName("FK__Categorie__Paren__3D5E1FD2");
         });
 
         modelBuilder.Entity<Chapter>(entity =>
         {
-            entity.HasKey(e => e.ChapterId).HasName("PK__Chapters__0893A36AA68599DA");
+            entity.HasKey(e => e.ChapterId).HasName("PK__Chapters__0893A36A8742B26E");
 
             entity.HasIndex(e => e.BookId, "IX_Chapters_Book");
 
@@ -316,19 +316,19 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Book).WithMany(p => p.Chapters)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Chapters__BookId__5CD6CB2B");
+                .HasConstraintName("FK__Chapters__BookId__4AB81AF0");
         });
 
         modelBuilder.Entity<ChatConversation>(entity =>
         {
-            entity.HasKey(e => e.ConversationId).HasName("PK__ChatConv__C050D877974DC9F1");
+            entity.HasKey(e => e.ConversationId).HasName("PK__ChatConv__C050D87740B7279A");
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
         });
 
         modelBuilder.Entity<ChatMessage>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__ChatMess__C87C0C9C58EF05E3");
+            entity.HasKey(e => e.MessageId).HasName("PK__ChatMess__C87C0C9C6B67382D");
 
             entity.HasIndex(e => new { e.ConversationId, e.SentAt }, "IX_ChatMessages_ConvTime").IsDescending(false, true);
 
@@ -340,12 +340,12 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Conversation).WithMany(p => p.ChatMessages)
                 .HasForeignKey(d => d.ConversationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ChatMessa__Conve__18EBB532");
+                .HasConstraintName("FK__ChatMessa__Conve__0A9D95DB");
 
             entity.HasOne(d => d.Sender).WithMany(p => p.ChatMessages)
                 .HasForeignKey(d => d.SenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ChatMessa__Sende__19DFD96B");
+                .HasConstraintName("FK__ChatMessa__Sende__0B91BA14");
         });
 
         modelBuilder.Entity<ChatParticipant>(entity =>
@@ -360,17 +360,17 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Conversation).WithMany(p => p.ChatParticipants)
                 .HasForeignKey(d => d.ConversationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ChatParti__Conve__14270015");
+                .HasConstraintName("FK__ChatParti__Conve__05D8E0BE");
 
             entity.HasOne(d => d.User).WithMany(p => p.ChatParticipants)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ChatParti__UserI__151B244E");
+                .HasConstraintName("FK__ChatParti__UserI__06CD04F7");
         });
 
         modelBuilder.Entity<ExternalLogin>(entity =>
         {
-            entity.HasKey(e => e.ExternalLoginId).HasName("PK__External__A8FDB3AE2340700F");
+            entity.HasKey(e => e.ExternalLoginId).HasName("PK__External__A8FDB3AE7A5DD408");
 
             entity.HasIndex(e => new { e.Provider, e.ProviderKey }, "UQ_ExternalLogin").IsUnique();
 
@@ -384,12 +384,12 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.ExternalLogins)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ExternalL__UserI__46E78A0C");
+                .HasConstraintName("FK__ExternalL__UserI__34C8D9D1");
         });
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E1204F694C9");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E124D9B8989");
 
             entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAt }, "IX_Notifications_User").IsDescending(false, false, true);
 
@@ -403,18 +403,18 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Notificat__UserI__1DB06A4F");
+                .HasConstraintName("FK__Notificat__UserI__0F624AF8");
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__57ED0681718D40C1");
+            entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__57ED0681D5C319A7");
 
             entity.HasIndex(e => e.ChapterId, "IX_OrderItems_Chapter");
 
             entity.HasIndex(e => new { e.CustomerId, e.PaidAt }, "IX_OrderItems_Customer");
 
-            entity.Property(e => e.CashReceived).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CashSpent).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.OrderType)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -423,17 +423,17 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Chapter).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.ChapterId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__OrderItem__Chapt__6EF57B66");
+                .HasConstraintName("FK__OrderItem__Chapt__5CD6CB2B");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__OrderItem__Custo__6E01572D");
+                .HasConstraintName("FK__OrderItem__Custo__5BE2A6F2");
         });
 
         modelBuilder.Entity<PasswordResetToken>(entity =>
         {
-            entity.HasKey(e => e.TokenId).HasName("PK__Password__658FEEEAEC65421B");
+            entity.HasKey(e => e.TokenId).HasName("PK__Password__658FEEEA128C122B");
 
             entity.Property(e => e.TokenId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
@@ -442,66 +442,33 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.PasswordResetTokens)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PasswordR__UserI__4AB81AF0");
-        });
-
-        modelBuilder.Entity<Payment>(entity =>
-        {
-            entity.HasKey(e => e.PaymentId).HasName("PK__Payments__9B556A386894593F");
-
-            entity.HasIndex(e => new { e.Provider, e.TransactionId }, "UQ_Payments").IsUnique();
-
-            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.Provider)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.TransactionId)
-                .HasMaxLength(200)
-                .IsUnicode(false);
-
-            entity.HasOne(d => d.OrderItem).WithMany(p => p.Payments)
-                .HasForeignKey(d => d.OrderItemId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Payments__OrderI__72C60C4A");
+                .HasConstraintName("FK__PasswordR__UserI__38996AB5");
         });
 
         modelBuilder.Entity<PaymentRequest>(entity =>
         {
-            entity.HasKey(e => e.PaymentRequestId).HasName("PK__PaymentR__9738488E3EC14972");
+            entity.HasKey(e => e.PaymentRequestId).HasName("PK__PaymentR__973848EEB4AB3741");
 
-            entity.ToTable("PaymentRequest");
+            entity.HasIndex(e => new { e.Status, e.RequestDate }, "IX_PaymentRequests_Status_Date").IsDescending(false, true);
 
-            entity.HasIndex(e => e.OrderItemId, "IX_PaymentRequest_OrderItem");
+            entity.HasIndex(e => new { e.UserId, e.Status, e.RequestDate }, "IX_PaymentRequests_User_Status").IsDescending(false, false, true);
 
-            entity.HasIndex(e => new { e.Status, e.RequestDate }, "IX_PaymentRequest_Status_Date").IsDescending(false, true);
-
-            entity.HasIndex(e => new { e.UserId, e.Status, e.RequestDate }, "IX_PaymentRequest_User_Status").IsDescending(false, false, true);
-
-            entity.Property(e => e.PaymentRequestId).HasColumnName("PaymentRequestID");
-            entity.Property(e => e.Money).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.OrderItemId).HasColumnName("OrderItemID");
             entity.Property(e => e.RequestDate).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.RequestedCoin).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-
-            entity.HasOne(d => d.OrderItem).WithMany(p => p.PaymentRequests)
-                .HasForeignKey(d => d.OrderItemId)
-                .HasConstraintName("FK__PaymentRe__Order__778AC167");
+                .IsUnicode(false)
+                .HasDefaultValue("Pending");
 
             entity.HasOne(d => d.User).WithMany(p => p.PaymentRequests)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PaymentRe__UserI__75A278F5");
+                .HasConstraintName("FK__PaymentRe__UserI__66603565");
         });
 
         modelBuilder.Entity<Plan>(entity =>
         {
-            entity.HasKey(e => e.PlanId).HasName("PK__Plans__755C22B77D2993F0");
+            entity.HasKey(e => e.PlanId).HasName("PK__Plans__755C22B7A64943D7");
 
             entity.HasIndex(e => new { e.ForRole, e.Status }, "IX_Plans_ForRoleStatus");
 
@@ -525,7 +492,7 @@ public partial class VieBookContext : DbContext
 
         modelBuilder.Entity<Post>(entity =>
         {
-            entity.HasKey(e => e.PostId).HasName("PK__Posts__AA1260182E33C187");
+            entity.HasKey(e => e.PostId).HasName("PK__Posts__AA126018FCA497A7");
 
             entity.HasIndex(e => new { e.AuthorId, e.CreatedAt }, "IX_Posts_AuthorTime").IsDescending(false, true);
 
@@ -542,11 +509,11 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Author).WithMany(p => p.PostAuthors)
                 .HasForeignKey(d => d.AuthorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Posts__AuthorId__2CF2ADDF");
+                .HasConstraintName("FK__Posts__AuthorId__1EA48E88");
 
             entity.HasOne(d => d.DeletedByNavigation).WithMany(p => p.PostDeletedByNavigations)
                 .HasForeignKey(d => d.DeletedBy)
-                .HasConstraintName("FK__Posts__DeletedBy__30C33EC3");
+                .HasConstraintName("FK__Posts__DeletedBy__22751F6C");
 
             entity.HasMany(d => d.Books).WithMany(p => p.Posts)
                 .UsingEntity<Dictionary<string, object>>(
@@ -554,11 +521,11 @@ public partial class VieBookContext : DbContext
                     r => r.HasOne<Book>().WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__PostBooks__BookI__395884C4"),
+                        .HasConstraintName("FK__PostBooks__BookI__2B0A656D"),
                     l => l.HasOne<Post>().WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__PostBooks__PostI__3864608B"),
+                        .HasConstraintName("FK__PostBooks__PostI__2A164134"),
                     j =>
                     {
                         j.HasKey("PostId", "BookId");
@@ -568,7 +535,7 @@ public partial class VieBookContext : DbContext
 
         modelBuilder.Entity<PostAttachment>(entity =>
         {
-            entity.HasKey(e => e.AttachmentId).HasName("PK__PostAtta__442C64BE56C14397");
+            entity.HasKey(e => e.AttachmentId).HasName("PK__PostAtta__442C64BE1FE64856");
 
             entity.HasIndex(e => new { e.PostId, e.SortOrder }, "IX_PostAttachments_Post");
 
@@ -584,12 +551,12 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Post).WithMany(p => p.PostAttachments)
                 .HasForeignKey(d => d.PostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PostAttac__PostI__339FAB6E");
+                .HasConstraintName("FK__PostAttac__PostI__25518C17");
         });
 
         modelBuilder.Entity<PostComment>(entity =>
         {
-            entity.HasKey(e => e.CommentId).HasName("PK__PostComm__C3B4DFCA299A1F29");
+            entity.HasKey(e => e.CommentId).HasName("PK__PostComm__C3B4DFCA21D06A37");
 
             entity.HasIndex(e => e.ParentCommentId, "IX_PostComments_Parent");
 
@@ -599,21 +566,21 @@ public partial class VieBookContext : DbContext
 
             entity.HasOne(d => d.DeletedByNavigation).WithMany(p => p.PostCommentDeletedByNavigations)
                 .HasForeignKey(d => d.DeletedBy)
-                .HasConstraintName("FK__PostComme__Delet__44CA3770");
+                .HasConstraintName("FK__PostComme__Delet__367C1819");
 
             entity.HasOne(d => d.ParentComment).WithMany(p => p.InverseParentComment)
                 .HasForeignKey(d => d.ParentCommentId)
-                .HasConstraintName("FK__PostComme__Paren__41EDCAC5");
+                .HasConstraintName("FK__PostComme__Paren__339FAB6E");
 
             entity.HasOne(d => d.Post).WithMany(p => p.PostComments)
                 .HasForeignKey(d => d.PostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PostComme__PostI__40F9A68C");
+                .HasConstraintName("FK__PostComme__PostI__32AB8735");
 
             entity.HasOne(d => d.User).WithMany(p => p.PostCommentUsers)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PostComme__UserI__42E1EEFE");
+                .HasConstraintName("FK__PostComme__UserI__3493CFA7");
         });
 
         modelBuilder.Entity<PostReaction>(entity =>
@@ -630,17 +597,17 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Post).WithMany(p => p.PostReactions)
                 .HasForeignKey(d => d.PostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PostReact__PostI__3C34F16F");
+                .HasConstraintName("FK__PostReact__PostI__2DE6D218");
 
             entity.HasOne(d => d.User).WithMany(p => p.PostReactions)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PostReact__UserI__3D2915A8");
+                .HasConstraintName("FK__PostReact__UserI__2EDAF651");
         });
 
         modelBuilder.Entity<Promotion>(entity =>
         {
-            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42FCF399C5A60");
+            entity.HasKey(e => e.PromotionId).HasName("PK__Promotio__52C42FCF56F2FF21");
 
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.DiscountType)
@@ -653,7 +620,7 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Owner).WithMany(p => p.Promotions)
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Promotion__Owner__66603565");
+                .HasConstraintName("FK__Promotion__Owner__5441852A");
 
             entity.HasMany(d => d.Books).WithMany(p => p.Promotions)
                 .UsingEntity<Dictionary<string, object>>(
@@ -661,11 +628,11 @@ public partial class VieBookContext : DbContext
                     r => r.HasOne<Book>().WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__Promotion__BookI__6B24EA82"),
+                        .HasConstraintName("FK__Promotion__BookI__59063A47"),
                     l => l.HasOne<Promotion>().WithMany()
                         .HasForeignKey("PromotionId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__Promotion__Promo__6A30C649"),
+                        .HasConstraintName("FK__Promotion__Promo__5812160E"),
                     j =>
                     {
                         j.HasKey("PromotionId", "BookId");
@@ -675,7 +642,7 @@ public partial class VieBookContext : DbContext
 
         modelBuilder.Entity<ReadingSchedule>(entity =>
         {
-            entity.HasKey(e => e.ScheduleId).HasName("PK__ReadingS__9C8A5B49720EF326");
+            entity.HasKey(e => e.ScheduleId).HasName("PK__ReadingS__9C8A5B495D72173E");
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -683,19 +650,19 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Book).WithMany(p => p.ReadingSchedules)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ReadingSc__BookI__236943A5");
+                .HasConstraintName("FK__ReadingSc__BookI__151B244E");
 
             entity.HasOne(d => d.User).WithMany(p => p.ReadingSchedules)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ReadingSc__UserI__22751F6C");
+                .HasConstraintName("FK__ReadingSc__UserI__14270015");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Roles__8AFACE1AFAD0659B");
+            entity.HasKey(e => e.RoleId).HasName("PK__Roles__8AFACE1A3E40C715");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Roles__8A2B61602F3AA55E").IsUnique();
+            entity.HasIndex(e => e.RoleName, "UQ__Roles__8A2B616004E7B066").IsUnique();
 
             entity.Property(e => e.RoleName)
                 .HasMaxLength(50)
@@ -704,7 +671,7 @@ public partial class VieBookContext : DbContext
 
         modelBuilder.Entity<Subscription>(entity =>
         {
-            entity.HasKey(e => e.SubscriptionId).HasName("PK__Subscrip__9A2B249DE848F946");
+            entity.HasKey(e => e.SubscriptionId).HasName("PK__Subscrip__9A2B249D9088D343");
 
             entity.HasIndex(e => new { e.PlanId, e.Status }, "IX_Subscriptions_PlanStatus");
 
@@ -719,19 +686,19 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Plan).WithMany(p => p.Subscriptions)
                 .HasForeignKey(d => d.PlanId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Subscript__PlanI__59C55456");
+                .HasConstraintName("FK__Subscript__PlanI__4B7734FF");
 
             entity.HasOne(d => d.User).WithMany(p => p.Subscriptions)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Subscript__UserI__58D1301D");
+                .HasConstraintName("FK__Subscript__UserI__4A8310C6");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C12B59440");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4CDEBDE7F4");
 
-            entity.HasIndex(e => e.Email, "UQ__Users__A9D105346C4F7054").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Users__A9D10534916CF6EB").IsUnique();
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.Email)
@@ -740,6 +707,7 @@ public partial class VieBookContext : DbContext
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.Wallet).HasColumnType("decimal(18, 2)");
 
             entity.HasMany(d => d.Roles).WithMany(p => p.Users)
                 .UsingEntity<Dictionary<string, object>>(
@@ -747,11 +715,11 @@ public partial class VieBookContext : DbContext
                     r => r.HasOne<Role>().WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__UserRoles__RoleI__4316F928"),
+                        .HasConstraintName("FK__UserRoles__RoleI__30F848ED"),
                     l => l.HasOne<User>().WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__UserRoles__UserI__4222D4EF"),
+                        .HasConstraintName("FK__UserRoles__UserI__300424B4"),
                     j =>
                     {
                         j.HasKey("UserId", "RoleId");
@@ -761,7 +729,7 @@ public partial class VieBookContext : DbContext
 
         modelBuilder.Entity<UserFeedback>(entity =>
         {
-            entity.HasKey(e => e.FeedbackId).HasName("PK__UserFeed__6A4BEDD65621C88C");
+            entity.HasKey(e => e.FeedbackId).HasName("PK__UserFeed__6A4BEDD67E11093D");
 
             entity.Property(e => e.Content).HasMaxLength(2000);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
@@ -771,11 +739,11 @@ public partial class VieBookContext : DbContext
 
             entity.HasOne(d => d.DeletedByNavigation).WithMany(p => p.UserFeedbackDeletedByNavigations)
                 .HasForeignKey(d => d.DeletedBy)
-                .HasConstraintName("FK__UserFeedb__Delet__0E6E26BF");
+                .HasConstraintName("FK__UserFeedb__Delet__00200768");
 
             entity.HasOne(d => d.FromUser).WithMany(p => p.UserFeedbackFromUsers)
                 .HasForeignKey(d => d.FromUserId)
-                .HasConstraintName("FK__UserFeedb__FromU__0C85DE4D");
+                .HasConstraintName("FK__UserFeedb__FromU__7E37BEF6");
         });
 
         modelBuilder.Entity<UserFollow>(entity =>
@@ -789,17 +757,17 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Followed).WithMany(p => p.UserFollowFolloweds)
                 .HasForeignKey(d => d.FollowedId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserFollo__Follo__29221CFB");
+                .HasConstraintName("FK__UserFollo__Follo__1AD3FDA4");
 
             entity.HasOne(d => d.Follower).WithMany(p => p.UserFollowFollowers)
                 .HasForeignKey(d => d.FollowerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserFollo__Follo__282DF8C2");
+                .HasConstraintName("FK__UserFollo__Follo__19DFD96B");
         });
 
         modelBuilder.Entity<UserProfile>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__UserProf__1788CC4C48BE6728");
+            entity.HasKey(e => e.UserId).HasName("PK__UserProf__1788CC4C9289A796");
 
             entity.Property(e => e.UserId).ValueGeneratedNever();
             entity.Property(e => e.AvatarUrl)
@@ -818,12 +786,39 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.User).WithOne(p => p.UserProfile)
                 .HasForeignKey<UserProfile>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserProfi__UserI__3E52440B");
+                .HasConstraintName("FK__UserProfi__UserI__2C3393D0");
+        });
+
+        modelBuilder.Entity<WalletTransaction>(entity =>
+        {
+            entity.HasKey(e => e.WalletTransactionId).HasName("PK__WalletTr__7184AEEF5C7F39AA");
+
+            entity.HasIndex(e => new { e.UserId, e.Status, e.CreatedAt }, "IX_WalletTransactions_User_Status").IsDescending(false, false, true);
+
+            entity.HasIndex(e => new { e.Provider, e.TransactionId }, "UQ_WalletTransactions").IsUnique();
+
+            entity.Property(e => e.AmountCoin).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.AmountMoney).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Provider)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.TransactionId)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.User).WithMany(p => p.WalletTransactions)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__WalletTra__UserI__619B8048");
         });
 
         modelBuilder.Entity<Wishlist>(entity =>
         {
-            entity.HasKey(e => e.WishlistId).HasName("PK__Wishlist__233189EBF5C92374");
+            entity.HasKey(e => e.WishlistId).HasName("PK__Wishlist__233189EB1572DE5F");
 
             entity.HasIndex(e => new { e.UserId, e.BookId }, "UQ_Wishlists_UserBook").IsUnique();
 
@@ -832,12 +827,12 @@ public partial class VieBookContext : DbContext
             entity.HasOne(d => d.Book).WithMany(p => p.Wishlists)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Wishlists__BookI__7C4F7684");
+                .HasConstraintName("FK__Wishlists__BookI__6E01572D");
 
             entity.HasOne(d => d.User).WithMany(p => p.Wishlists)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Wishlists__UserI__7B5B524B");
+                .HasConstraintName("FK__Wishlists__UserI__6D0D32F4");
         });
 
         OnModelCreatingPartial(modelBuilder);
