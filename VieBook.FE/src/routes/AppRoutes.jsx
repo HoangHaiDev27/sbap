@@ -45,6 +45,7 @@ import PlayerPage from "../pages/PlayerPage";
 import ListeningPage from "../pages/ListeningPage";
 import ChangePassword from "../components/auth/ChangePassword"; // kiểm tra đúng đường dẫn
 import AuthenticationManager from "../layouts/AuthenticationManager";
+import RechargePage from "../pages/RechargePage";
 
 function AppRoutes() {
   return (
@@ -83,6 +84,7 @@ function AppRoutes() {
       {/* Staff routes */}
 
       <Route path="/customer" element={<CustomerPage />} />
+      <Route path="/recharge" element={<RechargePage />} />
 
       {/* Routes cho book owner */}
       <Route path="/owner/dashboard" element={<Dashboard />} />
