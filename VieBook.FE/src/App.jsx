@@ -8,7 +8,7 @@ import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
 function App() {
   const location = useLocation();
-  const [role, setRole] = useState("owner");
+  const [role, setRole] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const noLayoutRoutes = ["/auth"];
   const hideLayout = noLayoutRoutes.includes(location.pathname);
