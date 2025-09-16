@@ -41,7 +41,7 @@ export default function OrderDetail() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Chi tiết đơn hàng #{order.id}</h1>
         <Link
-          to="/owner/orders"
+          to="/owner/sales-history"
           className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition text-sm"
         >
           ← Quay lại danh sách

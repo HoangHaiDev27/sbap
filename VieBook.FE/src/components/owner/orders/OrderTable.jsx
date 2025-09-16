@@ -5,7 +5,7 @@ export default function OrderTable({ orders }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const pageSize = 5;
+  const pageSize = 4;
 
   const filtered = orders.filter((o) => {
     const matchSearch =
@@ -79,13 +79,12 @@ export default function OrderTable({ orders }) {
 
               <td className="p-3">
                 <span
-                  className={`px-2 py-1 rounded text-xs ${
-                    o.status === "Hoàn thành"
+                  className={`px-2 py-1 rounded text-xs ${o.status === "Hoàn thành"
                       ? "bg-green-600"
                       : o.status === "Đang chờ"
-                      ? "bg-yellow-600"
-                      : "bg-red-600"
-                  }`}
+                        ? "bg-yellow-600"
+                        : "bg-red-600"
+                    }`}
                 >
                   {o.status}
                 </span>
@@ -108,33 +107,47 @@ export default function OrderTable({ orders }) {
       </table>
 
       {/* Pagination */}
-      <div className="flex justify-end mt-4 space-x-2">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
-        >
-          Trước
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 space-x-2">
+          {/* Nút Trước */}
           <button
-            key={i}
-            onClick={() => setPage(i + 1)}
-            className={`px-3 py-1 rounded ${
-              page === i + 1 ? "bg-blue-500 text-white" : "bg-gray-700 text-white"
-            }`}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className={`px-3 py-1 rounded text-sm ${page === 1
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
           >
-            {i + 1}
+            Trước
           </button>
-        ))}
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage(page + 1)}
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
-        >
-          Sau
-        </button>
-      </div>
+
+          {/* Các số trang */}
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`px-3 py-1 rounded text-sm ${page === i + 1
+                  ? "bg-orange-500 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          {/* Nút Sau */}
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className={`px-3 py-1 rounded text-sm ${page === totalPages
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+          >
+            Sau
+          </button>
+        </div>
+      )}
     </div>
   );
 }

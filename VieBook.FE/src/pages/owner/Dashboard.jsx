@@ -36,7 +36,7 @@ export default function OwnerDashboard() {
     },
     {
       label: "Lượt xem",
-      value: "12.5K",
+      value: "12.500",
       icon: <RiEyeLine size={28} />,
       color: "bg-purple-500",
     },

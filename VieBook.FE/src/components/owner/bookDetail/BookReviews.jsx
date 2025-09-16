@@ -50,7 +50,7 @@ export default function BookReviews({ bookId }) {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Đánh giá từ người đọc</h2>
         <p className="text-sm text-gray-400">
-          {allReviews.length} đánh giá • 87% tích cực
+          {allReviews.length} đánh giá
         </p>
       </div>
 
@@ -133,21 +133,47 @@ export default function BookReviews({ bookId }) {
       ))}
 
       {/* Pagination */}
-      <div className="flex justify-end gap-2 pt-4">
-        {Array.from({ length: totalPages }).map((_, i) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 pt-4">
+          {/* Nút Trước */}
           <button
-            key={i}
-            onClick={() => setCurrentPage(i + 1)}
-            className={`px-3 py-1 rounded border text-sm ${
-              currentPage === i + 1
-                ? "bg-orange-500 text-white border-orange-500"
-                : "bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700"
-            }`}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 rounded text-sm ${currentPage === 1
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
           >
-            {i + 1}
+            Trước
           </button>
-        ))}
-      </div>
+
+          {/* Các số trang */}
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 py-1 rounded text-sm ${currentPage === i + 1
+                  ? "bg-orange-500 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          {/* Nút Sau */}
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1 rounded text-sm ${currentPage === totalPages
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+          >
+            Sau
+          </button>
+        </div>
+      )}
     </div>
   );
 }

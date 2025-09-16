@@ -140,33 +140,47 @@ export default function OwnerReviews() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center mt-6 space-x-2">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
-        >
-          Trước
-        </button>
-        {[...Array(totalPages)].map((_, i) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6 space-x-2">
+          {/* Nút Trước */}
           <button
-            key={i}
-            onClick={() => setPage(i + 1)}
-            className={`px-3 py-1 rounded ${
-              page === i + 1 ? "bg-blue-500" : "bg-gray-700"
-            }`}
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+            className={`px-3 py-1 rounded text-sm ${page === 1
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
           >
-            {i + 1}
+            Trước
           </button>
-        ))}
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage(page + 1)}
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
-        >
-          Sau
-        </button>
-      </div>
+
+          {/* Các số trang */}
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`px-3 py-1 rounded text-sm ${page === i + 1
+                  ? "bg-orange-500 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          {/* Nút Sau */}
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(page + 1)}
+            className={`px-3 py-1 rounded text-sm ${page === totalPages
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+          >
+            Sau
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -104,9 +104,8 @@ export default function PromotionTable() {
           {currentData.map((promo, i) => (
             <tr
               key={i}
-              className={`border-b border-slate-600 ${
-                i % 2 === 0 ? "bg-slate-800" : "bg-slate-700"
-              } hover:bg-slate-600 transition`}
+              className={`border-b border-slate-600 ${i % 2 === 0 ? "bg-slate-800" : "bg-slate-700"
+                } hover:bg-slate-600 transition`}
             >
               <td className="p-3">
                 <p className="font-semibold">{promo.name}</p>
@@ -137,37 +136,47 @@ export default function PromotionTable() {
       </table>
 
       {/* Phân trang */}
-      <div className="flex justify-end items-center gap-2 p-4">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50 text-sm"
-        >
-          ←
-        </button>
-
-        {Array.from({ length: totalPages }).map((_, i) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 p-4">
+          {/* Nút Trước */}
           <button
-            key={i}
-            onClick={() => setPage(i + 1)}
-            className={`px-3 py-1 rounded text-sm ${
-              page === i + 1
-                ? "bg-orange-500 text-white"
-                : "bg-gray-700 text-white"
-            }`}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className={`px-3 py-1 rounded text-sm ${page === 1
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
           >
-            {i + 1}
+            Trước
           </button>
-        ))}
 
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50 text-sm"
-        >
-          →
-        </button>
-      </div>
+          {/* Các số trang */}
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`px-3 py-1 rounded text-sm ${page === i + 1
+                  ? "bg-orange-500 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          {/* Nút Sau */}
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className={`px-3 py-1 rounded text-sm ${page === totalPages
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+          >
+            Sau
+          </button>
+        </div>
+      )}
     </div>
   );
 }
