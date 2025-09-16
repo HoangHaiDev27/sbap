@@ -1,16 +1,39 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import HomePageImage1 from "../../assets/HomePageImage1.jpg";
+import HomePageImage2 from "../../assets/HomePageImage2.jpg";
 
 export default function HeroSection() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = [HomePageImage1, HomePageImage2];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000); // 5 giây
+
+    return () => clearInterval(interval);
+  }, [images.length]);
+
   return (
-    <div
-      className="relative min-h-[600px] flex items-center"
-      style={{
-        backgroundImage:
-          "url(https://readdy.ai/api/search-image?query=modern%20digital%20reading%20platform%20with%20floating%20books%20and%20tablets%20in%20a%20minimalist%20blue%20gradient%20background%2C%20soft%20lighting%2C%20technology%20concept%2C%20clean%20design%20aesthetic&width=1200&height=600&seq=hero1&orientation=landscape)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
+    <div className="relative min-h-[600px] flex items-center overflow-hidden">
+      {/* Background images with transition */}
+      <div className="absolute inset-0">
+        {images.map((image, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentImageIndex ? "opacity-100" : "opacity-0"
+            }`}
+            style={{
+              backgroundImage: `url(${image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+        ))}
+      </div>
       {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-transparent"></div>
 

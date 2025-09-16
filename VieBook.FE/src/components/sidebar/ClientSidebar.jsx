@@ -30,9 +30,6 @@ export default function ClientSidebar({ isOpen, onClose }) {
       href: "/listening",
     },
     { id: "forum", label: "Diễn đàn sách", icon: RiChat3Line, href: "/forum" },
-  ];
-
-  const categoryItems = [
     {
       id: "audiobook",
       label: "Sách nói",
@@ -72,40 +69,19 @@ export default function ClientSidebar({ isOpen, onClose }) {
         </Link>
       </div>
 
-      {/* menu chính */}
+      {/* menu */}
       <nav className="px-4">
-        <ul className="space-y-1">
+        <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.id}>
               <Link
                 to={item.href}
                 className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
                   pathname === item.href || activeMenu === item.id
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
-                onClick={() => setActiveMenu(item.id)}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                <span className="text-sm">{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <hr className="my-6 border-gray-700" />
-
-        {/* danh mục */}
-        <ul className="space-y-1">
-          {categoryItems.map((item) => (
-            <li key={item.id}>
-              <Link
-                to={item.href}
-                className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
-                  pathname === item.href
                     ? "bg-orange-600 text-white"
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
                 }`}
+                onClick={() => setActiveMenu(item.id)}
               >
                 <item.icon className="w-5 h-5 mr-3" />
                 <span className="text-sm">{item.label}</span>
