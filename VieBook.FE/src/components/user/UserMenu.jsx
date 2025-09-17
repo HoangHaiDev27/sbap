@@ -69,13 +69,13 @@ export default function UserMenu() {
           >
             Thông tin tài khoản
           </Link>
-          <Link
+          {/* <Link
             to="/change-password"
             className="block px-4 py-2 hover:bg-slate-700 transition-colors"
             onClick={() => setOpen(false)}
           >
             Đổi mật khẩu
-          </Link>
+          </Link> */}
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white transition-colors"

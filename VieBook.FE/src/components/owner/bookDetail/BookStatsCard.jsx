@@ -3,9 +3,9 @@ import { RiShoppingCartLine, RiMoneyDollarCircleLine, RiStarLine, RiEyeLine } fr
 export default function BookStatsCard() {
   const stats = [
     { icon: RiShoppingCartLine, label: "Lượt mua", value: "156" },
-    { icon: RiMoneyDollarCircleLine, label: "Doanh thu", value: "18.7M VND" },
+    { icon: RiMoneyDollarCircleLine, label: "Doanh thu", value: "18.700.000" },
     { icon: RiStarLine, label: "Đánh giá TB", value: "4.8/5" },
-    { icon: RiEyeLine, label: "Lượt đọc", value: "2.3K" },
+    { icon: RiEyeLine, label: "Lượt đọc", value: "2.300" },
   ];
 
   return (
