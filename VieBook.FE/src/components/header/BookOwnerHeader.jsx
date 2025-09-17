@@ -38,9 +38,8 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
         {/* Ô tìm kiếm */}
         <div className="hidden lg:flex flex-1 max-w-xl mx-6">
           <div
-            className={`relative flex items-center bg-gray-600 rounded-lg transition-all w-full ${
-              isSearchFocused ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`relative flex items-center bg-gray-600 rounded-lg transition-all w-full ${isSearchFocused ? "ring-2 ring-blue-500" : ""
+              }`}
           >
             <RiSearchLine className="text-gray-300 ml-3" />
             <input
@@ -102,13 +101,13 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg overflow-hidden z-50">
                 <Link
-                  to="/owner/profile"
+                  to="/owner/profile/overview"
                   className="block px-4 py-2 text-sm hover:bg-slate-600"
                 >
                   Hồ sơ của tôi
                 </Link>
                 <Link
-                  to="/owner/settings"
+                  to="/owner/profile/settings/personal"
                   className="block px-4 py-2 text-sm hover:bg-slate-600"
                 >
                   Cài đặt
