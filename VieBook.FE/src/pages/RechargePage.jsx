@@ -1,40 +1,52 @@
-import React, { useState } from "react";
+import React from "react";
 import { RiArrowLeftLine, RiCoinLine } from "react-icons/ri";
 import { Link } from "react-router-dom";
+import PaymentModal from "../components/payment/PaymentModal";
+import { usePayment } from "../hooks/usePayment";
+import { usePaymentModal } from "../hooks/usePaymentModal";
+import { useRechargeForm } from "../hooks/useRechargeForm";
 
 export default function RechargePage() {
-  const [selectedAmount, setSelectedAmount] = useState(null);
-  const [customAmount, setCustomAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("banking");
+  // Custom hooks
+  const { isLoading, processPayment } = usePayment();
+  const { 
+    showPaymentModal, 
+    paymentStatus, 
+    paymentMessage, 
+    paymentAmount, 
+    handleCloseModal 
+  } = usePaymentModal();
+  const {
+    selectedAmount,
+    customAmount,
+    paymentMethod,
+    presetAmounts,
+    suggestions,
+    showSuggestions,
+    handleAmountSelect,
+    handleCustomAmount,
+    handleSuggestionSelect,
+    handleInputFocus,
+    handleInputBlur,
+    getCurrentAmount,
+    getTotalCoins,
+    getBonusCoins,
+    isFormValid
+  } = useRechargeForm();
 
-  const presetAmounts = [
-    { amount: 50000, coins: 50, bonus: 2 },
-    { amount: 100000, coins: 100, bonus: 5 },
-    { amount: 200000, coins: 200, bonus: 10 },
-    { amount: 500000, coins: 500, bonus: 20 },
-    { amount: 1000000, coins: 1000, bonus: 30 },
-  ];
-
-  const handleAmountSelect = (amount) => {
-    setSelectedAmount(amount);
-    setCustomAmount("");
-  };
-
-  const handleCustomAmount = (e) => {
-    const value = e.target.value;
-    setCustomAmount(value);
-    setSelectedAmount(null);
-  };
-
-  const handleRecharge = () => {
-    const amount = selectedAmount || parseInt(customAmount);
-    if (!amount || amount < 10000) {
+  const handleRecharge = async () => {
+    const amount = getCurrentAmount();
+    
+    if (!isFormValid()) {
       alert("Số tiền nạp tối thiểu là 10,000 VNĐ");
       return;
     }
-    
-    // Giả lập nạp tiền
-    alert(`Đang xử lý nạp ${amount.toLocaleString()} VNĐ...`);
+
+    try {
+      await processPayment(amount);
+    } catch (error) {
+      alert(error.message || "Có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -94,24 +106,46 @@ export default function RechargePage() {
           </div>
 
           {/* Nhập số tiền tùy chỉnh */}
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium mb-2">
               Hoặc nhập số tiền tùy chỉnh
             </label>
             <div className="flex space-x-2">
-              <input
-                type="number"
-                value={customAmount}
-                onChange={handleCustomAmount}
-                placeholder="Nhập số tiền (VNĐ)"
-                className="flex-1 bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="number"
+                  value={customAmount}
+                  onChange={handleCustomAmount}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  placeholder="Nhập số tiền (VNĐ)"
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                
+                {/* Suggestion Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10">
+                    <div className="p-2">
+                      <p className="text-xs text-gray-400 mb-2">Gợi ý số tiền:</p>
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionSelect(suggestion.value)}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+                        >
+                          {suggestion.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <span className="px-4 py-2 bg-gray-600 rounded-lg text-gray-300">
                 VNĐ
               </span>
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Tối thiểu 10,000 VNĐ
+              Tối thiểu 10,000 VNĐ • Nhập số để xem gợi ý
             </p>
           </div>
         </div>
@@ -140,32 +174,27 @@ export default function RechargePage() {
             <div className="flex justify-between">
               <span>Số tiền nạp:</span>
               <span className="font-bold">
-                {(selectedAmount || parseInt(customAmount) || 0).toLocaleString()} VNĐ
+                {getCurrentAmount().toLocaleString()} VNĐ
               </span>
             </div>
             <div className="flex justify-between">
               <span>Số xu cơ bản:</span>
               <span className="font-bold text-yellow-400">
-                {((selectedAmount || parseInt(customAmount) || 0) / 1000).toLocaleString()} xu
+                {(getCurrentAmount() / 1000).toLocaleString()} xu
               </span>
             </div>
-            {selectedAmount && presetAmounts.find(item => item.amount === selectedAmount)?.bonus > 0 && (
+            {getBonusCoins() > 0 && (
               <div className="flex justify-between text-green-400">
                 <span>Xu thưởng:</span>
                 <span className="font-bold">
-                  +{presetAmounts.find(item => item.amount === selectedAmount)?.bonus} xu
+                  +{getBonusCoins()} xu
                 </span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold">
               <span>Tổng xu nhận được:</span>
               <span className="text-yellow-400">
-                {(() => {
-                  const amount = selectedAmount || parseInt(customAmount) || 0;
-                  const baseCoins = amount / 1000;
-                  const bonus = selectedAmount ? presetAmounts.find(item => item.amount === selectedAmount)?.bonus || 0 : 0;
-                  return (baseCoins + bonus).toLocaleString();
-                })()} xu
+                {getTotalCoins().toLocaleString()} xu
               </span>
             </div>
             <div className="flex justify-between text-green-400">
@@ -176,7 +205,7 @@ export default function RechargePage() {
             <div className="flex justify-between text-lg font-bold">
               <span>Tổng cộng:</span>
               <span className="text-orange-500">
-                {(selectedAmount || parseInt(customAmount) || 0).toLocaleString()} VNĐ
+                {getCurrentAmount().toLocaleString()} VNĐ
               </span>
             </div>
           </div>
@@ -185,11 +214,20 @@ export default function RechargePage() {
       {/* Nút nạp tiền */}
       <button
         onClick={handleRecharge}
-        disabled={!selectedAmount && !customAmount}
+        disabled={!isFormValid() || isLoading}
         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition-colors"
       >
-        Nạp tiền ngay
+        {isLoading ? "Đang tạo link thanh toán..." : "Nạp tiền ngay"}
       </button>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={handleCloseModal}
+        status={paymentStatus}
+        message={paymentMessage}
+        amount={paymentAmount}
+      />
     </div>
   );
 }
