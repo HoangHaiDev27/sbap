@@ -25,7 +25,7 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
   }, []);
 
   return (
-    <header className="bg-slate-800 text-white sticky top-0 z-40 border-b border-gray-700">
+    <header className="bg-[#1f2937] text-white sticky top-0 z-40 border-b border-gray-700">
       <div className="flex items-center justify-between px-4 py-3">
         {/* Nút menu mobile */}
         <button
