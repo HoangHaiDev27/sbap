@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 
 const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
+  const [showQR, setShowQR] = useState(false);
+
   if (!withdraw) return null;
 
   return (
@@ -83,8 +85,14 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
           </p>
         </div>
 
-        {/* Action buttons */}
+        {/* Nút hiển thị QR + Action buttons */}
         <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={() => setShowQR(!showQR)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+          >
+            <i className="ri-qr-code-line"></i> Mã QR
+          </button>
           <button
             onClick={() => onApprove(withdraw.id)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
@@ -98,6 +106,18 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
             <i className="ri-close-line"></i> Từ chối
           </button>
         </div>
+
+        {/* Hiển thị mã QR bên dưới nếu được bật */}
+        {showQR && (
+          <div className="mt-6 flex justify-center">
+            {/* Thay đường dẫn src bằng hình QR thật */}
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=withdraw-id"
+              alt="QR code"
+              className="w-48 h-48"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
