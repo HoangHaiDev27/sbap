@@ -17,6 +17,8 @@ public partial class User
 
     public DateTime? LastLoginAt { get; set; }
 
+    public decimal Wallet { get; set; }
+
     public virtual ICollection<BookApproval> BookApprovals { get; set; } = new List<BookApproval>();
 
     public virtual ICollection<BookClaim> BookClaimCustomers { get; set; } = new List<BookClaim>();
@@ -70,6 +72,8 @@ public partial class User
     public virtual ICollection<UserFollow> UserFollowFollowers { get; set; } = new List<UserFollow>();
 
     public virtual UserProfile? UserProfile { get; set; }
+
+    public virtual ICollection<WalletTransaction> WalletTransactions { get; set; } = new List<WalletTransaction>();
 
     public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 

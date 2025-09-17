@@ -13,7 +13,7 @@ public partial class OrderItem
 
     public decimal UnitPrice { get; set; }
 
-    public decimal CashReceived { get; set; }
+    public decimal CashSpent { get; set; }
 
     public DateTime? PaidAt { get; set; }
 
@@ -22,8 +22,4 @@ public partial class OrderItem
     public virtual Chapter Chapter { get; set; } = null!;
 
     public virtual User Customer { get; set; } = null!;
-
-    public virtual ICollection<PaymentRequest> PaymentRequests { get; set; } = new List<PaymentRequest>();
-
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }
