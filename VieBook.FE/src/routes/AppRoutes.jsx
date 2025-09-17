@@ -31,6 +31,7 @@ import BookDetailOwnerPage from "../pages/owner/BookDetailPage";
 import BookEditForm from "../pages/owner/BookEditForm";
 import BookAudioRequest from "../pages/owner/BookAudioRequest";
 import ProfilePage from "../pages/owner/ProfilePage";
+import WithdrawPage from "../pages/owner/WithdrawPage";
 
 import AuthenticationPage from "../pages/AuthenticationPage";
 import VipPackagesPage from "../pages/VipPackagesPage";
@@ -106,6 +107,7 @@ function AppRoutes() {
       <Route path="/owner/books/:bookId/edit" element={<BookEditForm />} />
       <Route path="/owner/books/:id/audio" element={<BookAudioRequest />} />
       <Route path="/owner/profile/overview" element={<ProfilePage />} />
+      <Route path="/owner/withdraw" element={<WithdrawPage />} />
 
       <Route path="/change-password" element={<ChangePassword />} />
       {/* Routes cho authentication */}

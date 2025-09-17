@@ -1,13 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { RiMenuLine, RiSearchLine, RiNotification3Line } from "react-icons/ri";
+import {
+  RiMenuLine,
+  RiSearchLine,
+  RiNotification3Line,
+} from "react-icons/ri";
 
 export default function BookOwnerHeader({ onToggleSidebar }) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Đóng dropdown khi click ra ngoài
+  // giả sử số dư lấy từ API
+  const [balance] = useState(1250000); // VND
+  const coins = Math.floor(balance / 1000); // 1000 = 1 coin
+
   const notifRef = useRef(null);
   const userRef = useRef(null);
 
@@ -38,8 +45,9 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
         {/* Ô tìm kiếm */}
         <div className="hidden lg:flex flex-1 max-w-xl mx-6">
           <div
-            className={`relative flex items-center bg-gray-600 rounded-lg transition-all w-full ${isSearchFocused ? "ring-2 ring-blue-500" : ""
-              }`}
+            className={`relative flex items-center bg-gray-600 rounded-lg transition-all w-full ${
+              isSearchFocused ? "ring-2 ring-blue-500" : ""
+            }`}
           >
             <RiSearchLine className="text-gray-300 ml-3" />
             <input
@@ -99,7 +107,17 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-slate-700 rounded-lg shadow-lg overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-slate-700 rounded-lg shadow-lg overflow-hidden z-50">
+                <div className="px-4 py-3 border-b border-gray-600">
+                  <div className="text-sm text-gray-300">Số dư của bạn</div>
+                  <div className="text-lg font-bold text-green-400">
+                    {coins} Coin
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    (~ {balance.toLocaleString("vi-VN")} đ)
+                  </div>
+                </div>
+
                 <Link
                   to="/owner/profile/overview"
                   className="block px-4 py-2 text-sm hover:bg-slate-600"
@@ -111,6 +129,12 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
                   className="block px-4 py-2 text-sm hover:bg-slate-600"
                 >
                   Cài đặt
+                </Link>
+                <Link
+                  to="/owner/withdraw"
+                  className="block px-4 py-2 text-sm text-green-400 hover:bg-slate-600"
+                >
+                  💵 Yêu cầu rút tiền
                 </Link>
                 <button className="w-full text-left px-4 py-2 text-sm hover:bg-slate-600">
                   Đăng xuất
