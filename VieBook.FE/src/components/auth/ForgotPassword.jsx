@@ -44,11 +44,16 @@ export default function ForgotPassword({ setActiveTab }) {
         return (
           <div className="w-full max-w-md mx-auto">
             {/* Logo */}
-            <img
-                src={logo}
-                alt="VieBook Logo"
-                className="w-20 h-20 mx-auto "
-            />
+             <div className="p-6 flex justify-center">
+                    <a href="/" className="flex items-center space-x-3">
+                      <img
+                        src={logo}
+                        alt="Logo"
+                        className="h-[1.5em] w-auto scale-300"
+                      />
+                      <span className="text-2xl font-bold text-orange-500">VieBook</span>
+                    </a>
+                  </div>
 
             {/* Progress Steps */}
             <div className="flex items-center justify-center mb-8">
@@ -154,14 +159,16 @@ export default function ForgotPassword({ setActiveTab }) {
         return (
           <div className="w-full max-w-md mx-auto">
             {/* Logo */}
-            <div className="text-center mb-4">
-              <img
-                src={logo}
-                alt="VieBook Logo"
-                className="w-20 h-20 mx-auto "
-                />
-              <p className="text-gray-400 text-sm">Xác thực mã</p>
-            </div>
+            <div className="p-6 flex justify-center">
+                   <a href="/" className="flex items-center space-x-3">
+                     <img
+                       src={logo}
+                       alt="Logo"
+                       className="h-[1.5em] w-auto scale-300"
+                     />
+                     <span className="text-2xl font-bold text-orange-500">VieBook</span>
+                   </a>
+                 </div>
 
             {/* Progress Steps */}
             <div className="flex items-center justify-center mb-4">
@@ -282,14 +289,17 @@ export default function ForgotPassword({ setActiveTab }) {
         return (
           <div className="w-full max-w-md mx-auto">
             {/* Logo */}
-            <div className="text-center mb-4">
-              <img
-                src={logo}
-                alt="VieBook Logo"
-                className="w-20 h-20 mx-auto "
+            <div className="p-6 flex justify-center">
+              <a href="/" className="flex items-center space-x-3">
+                <img
+                  src={logo}
+                  alt="Logo"
+                  className="h-[1.5em] w-auto scale-300"
                 />
-              <p className="text-gray-400 text-sm">Đặt mật khẩu mới</p>
+                <span className="text-2xl font-bold text-orange-500">VieBook</span>
+              </a>
             </div>
+
 
             {/* Progress Steps */}
             <div className="flex items-center justify-center mb-4">

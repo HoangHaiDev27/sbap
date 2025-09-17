@@ -17,14 +17,17 @@ export default function Login({ setActiveTab }) {
   return (
     <div className="w-full max-w-md mx-auto ">
       {/* Logo */}
-      <div className="text-center mb-4">
-        <img
-          src={logo}
-          alt="VieBook Logo"
-          className="w-20 h-20 mx-auto"
-        />
-        <p className="text-gray-400 text-sm">Chào mừng bạn trở lại</p>
+      <div className="p-6 flex justify-center">
+        <a href="/" className="flex items-center space-x-3">
+          <img
+            src={logo}
+            alt="Logo"
+            className="h-[1.5em] w-auto scale-300"
+          />
+          <span className="text-2xl font-bold text-orange-500">VieBook</span>
+        </a>
       </div>
+
 
       {/* Form Title */}
       <h2 className="text-2xl font-semibold text-center text-white mb-4">
