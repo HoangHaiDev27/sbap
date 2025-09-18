@@ -86,6 +86,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));
+builder.Services.AddSingleton<JwtService>();
 
 builder.Services.AddControllers();
 //CORS

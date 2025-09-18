@@ -34,6 +34,38 @@ namespace Services.Implementations
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
+        public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
+        {
+            var user = await _authRepo.GetByEmailAsync(request.Email);
+            if (user == null || user.PasswordHash == null)
+                throw new Exception("Email hoặc mật khẩu không đúng");
+
+            var storedHash = Encoding.UTF8.GetString(user.PasswordHash);
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, storedHash))
+                throw new Exception("Email hoặc mật khẩu không đúng");
+
+            var jwtService = new JwtService(_config);
+            var token = jwtService.GenerateToken(user.UserId.ToString(), user.Email);
+
+            user.LastLoginAt = DateTime.UtcNow;
+            await _authRepo.UpdateAsync(user);
+
+            var userDto = new UserDTO
+            {
+                UserId = user.UserId,
+                Email = user.Email,
+                Status = user.Status,
+                CreatedAt = user.CreatedAt,
+                LastLoginAt = user.LastLoginAt,
+                Wallet = user.Wallet
+            };
+
+            return new LoginResponseDto
+            {
+                Token = token,
+                User = userDto
+            };
+        }
         public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
             var user = await _authRepo.GetByEmailAsync(request.Email);

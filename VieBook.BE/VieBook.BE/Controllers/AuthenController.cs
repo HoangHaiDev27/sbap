@@ -9,6 +9,20 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     public AuthController(IAuthService authService) => _authService = authService;
 
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+    {
+        try
+        {
+            var res = await _authService.LoginAsync(request);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
     {
