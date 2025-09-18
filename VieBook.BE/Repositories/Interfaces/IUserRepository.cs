@@ -16,5 +16,6 @@ namespace Repositories.Interfaces
         Task UpdateAsync(User user);
         Task DeleteAsync(User user);
         Task<User?> GetByEmailAsync(string email);
+        Task UpdateWalletBalanceAsync(int userId, decimal amount);
     }
 }

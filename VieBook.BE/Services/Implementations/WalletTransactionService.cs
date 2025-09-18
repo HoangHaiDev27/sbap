@@ -8,30 +8,39 @@ namespace Services.Implementations
     public class WalletTransactionService : IWalletTransactionService
     {
         private readonly IWalletTransactionRepository _walletTransactionRepository;
+        private readonly IUserRepository _userRepository;
 
-        public WalletTransactionService(IWalletTransactionRepository walletTransactionRepository)
+        public WalletTransactionService(IWalletTransactionRepository walletTransactionRepository, IUserRepository userRepository)
         {
             _walletTransactionRepository = walletTransactionRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<WalletTransaction> ProcessPaymentAsync(PayOSWebhookDTO webhookData)
         {
             // Kiểm tra xem transaction đã tồn tại chưa
             var existingTransaction = await _walletTransactionRepository.GetByTransactionIdAsync(webhookData.TransactionId ?? "");
-            
+
             if (existingTransaction != null)
             {
                 // Cập nhật transaction hiện tại
                 existingTransaction.Status = webhookData.Status;
                 existingTransaction.AmountMoney = webhookData.AmountMoney;
                 existingTransaction.AmountCoin = webhookData.AmountCoin;
+
+                // Nếu status là thành công và chưa cập nhật wallet, thì cập nhật wallet
+                if (webhookData.Status == "Succeeded" && existingTransaction.Status != "Succeeded")
+                {
+                    await _userRepository.UpdateWalletBalanceAsync(existingTransaction.UserId, webhookData.AmountCoin);
+                }
+
                 return await _walletTransactionRepository.UpdateAsync(existingTransaction);
             }
 
             // Tạo transaction mới
             var walletTransaction = new WalletTransaction
             {
-                UserId = webhookData.UserId ?? 1, // Default user ID, có thể lấy từ session hoặc token
+                UserId = webhookData.UserId ?? 4, // Default user ID, có thể lấy từ session hoặc token
                 Provider = "PayOS",
                 TransactionId = webhookData.TransactionId ?? webhookData.OrderCode.ToString(),
                 AmountMoney = webhookData.AmountMoney,
@@ -39,6 +48,12 @@ namespace Services.Implementations
                 Status = webhookData.Status,
                 CreatedAt = DateTime.UtcNow
             };
+
+            // Nếu thanh toán thành công, cập nhật wallet balance
+            if (webhookData.Status == "Succeeded")
+            {
+                await _userRepository.UpdateWalletBalanceAsync(walletTransaction.UserId, webhookData.AmountCoin);
+            }
 
             return await _walletTransactionRepository.CreateAsync(walletTransaction);
         }

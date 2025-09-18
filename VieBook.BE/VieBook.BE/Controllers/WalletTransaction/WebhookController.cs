@@ -127,7 +127,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
                         Status = MapPayOSStatusToDatabaseStatus("PAID"), // Map PayOS status sang database status
                         TransactionId = orderCode.ToString(), // Sử dụng orderCode làm transactionId
                         PaymentMethod = "PayOS",
-                        UserId = 1 // Default user ID
+                        UserId = 4 // Default user ID
                     };
 
                     // Xử lý thanh toán

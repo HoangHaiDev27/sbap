@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { RiUserLine, RiAddLine, RiCoinLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
+import { useCoinsStore } from "../../hooks/stores/coinStore";
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
   
-  // Giả lập số đồng xu hiện tại
-  const [coins, setCoins] = useState(1250);
+
 
   // Đóng menu khi click ra ngoài
   useEffect(() => {
@@ -26,6 +26,8 @@ export default function UserMenu() {
     localStorage.removeItem("token");
     navigate("/auth/login");
   };
+  // Lấy số đồng xu hiện tại
+  const coins = useCoinsStore((state) => state.coins);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -48,7 +50,7 @@ export default function UserMenu() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <RiCoinLine className="text-yellow-400 w-5 h-5" />
-                <span className="text-sm font-medium text-yellow-400">{coins.toLocaleString()} xu</span>
+                <span className="text-sm font-medium text-yellow-400">{coins} xu</span>
               </div>
               <button 
                 onClick={() => {
