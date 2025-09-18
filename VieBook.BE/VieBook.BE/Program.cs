@@ -7,6 +7,10 @@ using Repositories.Implementations;
 using Services.Interfaces;
 using Services.Implementations;
 using Net.payOS;
+using DataAccess.DAO;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using VieBook.BE.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,21 +33,58 @@ PayOS payOS = new PayOS(configuration[ApiConfiguration.PayOS.CLIENT_ID_KEY] ?? t
                     configuration[ApiConfiguration.PayOS.CHECKSUM_KEY] ?? throw new Exception("Cannot find PAYOS_CHECKSUM_KEY"));
 //Add PayOS
 builder.Services.AddSingleton(payOS);
+// Add JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("Jwt");
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+    };
+});
+
+builder.Services.AddAuthorization();
+
+
 //Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 //Add DAO
 builder.Services.AddScoped<UserDAO>();
-
+builder.Services.AddScoped<AuthenDAO>();
+builder.Services.AddScoped<PasswordResetTokenDAO>();
+builder.Services.AddScoped<AuthenDAO>();
+builder.Services.AddScoped<PasswordResetTokenDAO>();
 
 //Add Repo
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
+builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
+builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWalletTransactionService, WalletTransactionService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));
@@ -76,7 +117,8 @@ if (app.Environment.IsDevelopment())
 }
 app.UseCors(ApiConfiguration.Cors.POLICY_NAME);
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
