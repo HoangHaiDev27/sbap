@@ -9,11 +9,13 @@ namespace Services.Implementations
     {
         private readonly IWalletTransactionRepository _walletTransactionRepository;
         private readonly IUserRepository _userRepository;
+        private readonly INotificationService _notificationService;
 
-        public WalletTransactionService(IWalletTransactionRepository walletTransactionRepository, IUserRepository userRepository)
+        public WalletTransactionService(IWalletTransactionRepository walletTransactionRepository, IUserRepository userRepository, INotificationService notificationService)
         {
             _walletTransactionRepository = walletTransactionRepository;
             _userRepository = userRepository;
+            _notificationService = notificationService;
         }
 
         public async Task<WalletTransaction> ProcessPaymentAsync(PayOSWebhookDTO webhookData)
@@ -32,6 +34,8 @@ namespace Services.Implementations
                 if (webhookData.Status == "Succeeded" && existingTransaction.Status != "Succeeded")
                 {
                     await _userRepository.UpdateWalletBalanceAsync(existingTransaction.UserId, webhookData.AmountCoin);
+                    // Tạo notification cho thanh toán thành công
+                    await _notificationService.CreateWalletRechargeNotificationAsync(existingTransaction.UserId, webhookData.AmountCoin);
                 }
 
                 return await _walletTransactionRepository.UpdateAsync(existingTransaction);
@@ -53,6 +57,8 @@ namespace Services.Implementations
             if (webhookData.Status == "Succeeded")
             {
                 await _userRepository.UpdateWalletBalanceAsync(walletTransaction.UserId, webhookData.AmountCoin);
+                // Tạo notification cho thanh toán thành công
+                await _notificationService.CreateWalletRechargeNotificationAsync(walletTransaction.UserId, webhookData.AmountCoin);
             }
 
             return await _walletTransactionRepository.CreateAsync(walletTransaction);

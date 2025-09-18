@@ -38,10 +38,12 @@ builder.Services.AddScoped<UserDAO>();
 //Add Repo
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWalletTransactionService, WalletTransactionService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));
