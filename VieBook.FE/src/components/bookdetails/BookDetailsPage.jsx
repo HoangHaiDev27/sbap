@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import RelatedBooks from "./RelatedBook";
 import { getBookDetail } from "../../api/bookApi";
+import RelatedBooks from "./RelatedBook";
 import {
   RiArrowRightSLine,
   RiBookOpenLine,
@@ -14,7 +14,7 @@ import {
   RiStarLine,
 } from "react-icons/ri";
 
-export default function BookDetailsPage() {
+export default function BookDetailPage() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -33,7 +33,7 @@ export default function BookDetailsPage() {
         const data = await getBookDetail(id);
         setBookDetail(data);
       } catch (err) {
-        console.error("❌ Error loading book detail:", err);
+        console.error("Lỗi khi fetch BookDetail:", err);
       } finally {
         setLoading(false);
       }
@@ -42,58 +42,37 @@ export default function BookDetailsPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        Đang tải...
-      </div>
-    );
+    return <div className="text-center text-white p-6">Đang tải...</div>;
   }
 
   if (!bookDetail) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        Không tìm thấy sách
-      </div>
-    );
+    return <div className="text-center text-red-500 p-6">Không tìm thấy sách.</div>;
   }
 
-  const { book, chapters } = bookDetail;
-
-  // fake reviews (vì BE chưa có reviews)
-  const reviews = [
-    {
-      id: 1,
-      user: "Nguyễn Văn A",
-      rating: 5,
-      date: "15/12/2023",
-      content: "Cuốn sách tuyệt vời! Đã thay đổi cách tôi giao tiếp với mọi người.",
-    },
-    {
-      id: 2,
-      user: "Trần Thị B",
-      rating: 4,
-      date: "10/12/2023",
-      content: "Nội dung hay, dễ hiểu. Giọng đọc của người kể chuyện rất hay.",
-    },
-  ];
+  const { title, description, coverUrl, isbn, language, totalView, createdAt, ownerName, categories, chapters, reviews } =
+    bookDetail;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       {/* Breadcrumb */}
       <nav className="flex items-center space-x-2 text-sm text-gray-400 mb-6">
-        <Link to="/" className="hover:text-white">Trang chủ</Link>
+        <Link to="/" className="hover:text-white">
+          Trang chủ
+        </Link>
         <RiArrowRightSLine />
-        <Link to="/audiobooks" className="hover:text-white">Sách</Link>
+        <Link to="/audiobooks" className="hover:text-white">
+          Sách
+        </Link>
         <RiArrowRightSLine />
-        <span className="text-white">{book.title}</span>
+        <span className="text-white">{title}</span>
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cột trái */}
         <div className="lg:col-span-1">
           <img
-            src={book.coverUrl}
-            alt={book.title}
+            src={coverUrl}
+            alt={title}
             className="w-full max-w-sm mx-auto rounded-lg shadow-2xl mb-6"
           />
 
@@ -101,13 +80,13 @@ export default function BookDetailsPage() {
           <div className="space-y-4">
             <div className="flex space-x-2">
               <Link
-                to={`/reader/${book.bookId}`}
+                to={`/reader/${id}`}
                 className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <RiBookOpenLine /> Đọc ngay
               </Link>
               <Link
-                to={`/player/${book.bookId}`}
+                to={`/player/${id}`}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <RiPlayCircleLine /> Nghe
@@ -143,44 +122,54 @@ export default function BookDetailsPage() {
 
         {/* Cột phải */}
         <div className="lg:col-span-2">
-          <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
-          <p className="text-gray-300 mb-4">bởi {book.ownerName}</p>
+          <h1 className="text-3xl font-bold mb-2">{title}</h1>
+          <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
+
+          {/* Rating */}
+          <div className="flex items-center space-x-2 mb-4">
+            <span className="text-white font-medium">
+              {reviews && reviews.length > 0
+                ? (
+                    reviews.reduce((sum, r) => sum + r.rating, 0) /
+                    reviews.length
+                  ).toFixed(1)
+                : "Chưa có"}
+            </span>
+            <RiStarFill className="text-yellow-400" />
+            <span className="text-gray-400 text-sm">
+              ({reviews?.length || 0} đánh giá)
+            </span>
+          </div>
 
           {/* Tabs */}
           <div className="border-b border-gray-700 mb-6 flex space-x-6">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`pb-2 ${activeTab === "overview"
-                ? "border-b-2 border-orange-500 text-orange-400"
-                : "text-gray-400"
-                }`}
+              className={`pb-2 ${
+                activeTab === "overview"
+                  ? "border-b-2 border-orange-500 text-orange-400"
+                  : "text-gray-400"
+              }`}
             >
               Tổng quan
             </button>
             <button
               onClick={() => setActiveTab("details")}
-              className={`pb-2 ${activeTab === "details"
-                ? "border-b-2 border-orange-500 text-orange-400"
-                : "text-gray-400"
-                }`}
+              className={`pb-2 ${
+                activeTab === "details"
+                  ? "border-b-2 border-orange-500 text-orange-400"
+                  : "text-gray-400"
+              }`}
             >
               Chi tiết
             </button>
             <button
-              onClick={() => setActiveTab("chapters")}
-              className={`pb-2 ${activeTab === "chapters"
-                ? "border-b-2 border-orange-500 text-orange-400"
-                : "text-gray-400"
-                }`}
-            >
-              Chương
-            </button>
-            <button
               onClick={() => setActiveTab("reviews")}
-              className={`pb-2 ${activeTab === "reviews"
-                ? "border-b-2 border-orange-500 text-orange-400"
-                : "text-gray-400"
-                }`}
+              className={`pb-2 ${
+                activeTab === "reviews"
+                  ? "border-b-2 border-orange-500 text-orange-400"
+                  : "text-gray-400"
+              }`}
             >
               Đánh giá
             </button>
@@ -189,75 +178,48 @@ export default function BookDetailsPage() {
           {/* Nội dung Tab */}
           {activeTab === "overview" && (
             <div>
-              <p className="text-gray-300 mb-4">
-                {showFullDescription
-                  ? book.description
-                  : (book.description || "").slice(0, 200) + "..."}
-              </p>
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="text-orange-400"
-              >
-                {showFullDescription ? "Thu gọn" : "Xem thêm"}
-              </button>
+              <p className="text-gray-300 mb-4">{description}</p>
+              <div className="mt-4">
+                <h3 className="font-semibold mb-2">Chương</h3>
+                <ul className="list-disc list-inside text-gray-300">
+                  {chapters?.map((ch) => (
+                    <li key={ch.chapterId}>
+                      {ch.chapterTitle} ({Math.round(ch.durationSec / 60)} phút)
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
 
           {activeTab === "details" && (
             <ul className="text-gray-300 space-y-2">
-              <li>Ngôn ngữ: {book.language}</li>
-              <li>ISBN: {book.isbn}</li>
-              <li>Lượt xem: {book.totalView}</li>
-              <li>Ngày tạo: {new Date(book.createdAt).toLocaleDateString()}</li>
-              <li>Thể loại: {book.categories.join(", ")}</li>
+              <li>ISBN: {isbn}</li>
+              <li>Ngôn ngữ: {language}</li>
+              <li>Lượt xem: {totalView}</li>
+              <li>Ngày tạo: {new Date(createdAt).toLocaleDateString()}</li>
+              <li>Thể loại: {categories?.join(", ")}</li>
             </ul>
-          )}
-
-          {activeTab === "chapters" && (
-            <div className="space-y-4">
-              {chapters.length === 0 ? (
-                <p className="text-gray-400">Chưa có chương nào.</p>
-              ) : (
-                chapters.map((ch) => (
-                  <div key={ch.chapterId} className="bg-gray-800 rounded-lg p-4">
-                    <h3 className="font-medium text-lg">{ch.chapterTitle}</h3>
-                    <p className="text-gray-400 text-sm">
-                      {Math.floor((ch.durationSec || 0) / 60)} phút - {ch.chapterView} lượt xem
-                    </p>
-                    <div className="flex gap-3 mt-2">
-                      {ch.chapterSoftUrl && (
-                        <a
-                          href={ch.chapterSoftUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-orange-400 hover:underline"
-                        >
-                          📖 Đọc
-                        </a>
-                      )}
-                      {ch.chapterAudioUrl && (
-                        <a
-                          href={ch.chapterAudioUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-400 hover:underline"
-                        >
-                          🎧 Nghe
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
           )}
 
           {activeTab === "reviews" && (
             <div className="space-y-6">
-              {reviews.map((review) => (
-                <div key={review.id} className="bg-gray-800 rounded-lg p-6">
-                  <h4 className="font-medium">{review.user}</h4>
-                  <div className="flex">
+              {reviews?.map((review) => (
+                <div key={review.reviewId} className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={review.avatarUrl}
+                      alt={review.userName}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div>
+                      <h4 className="font-medium">{review.userName}</h4>
+                      <span className="text-gray-400 text-sm">
+                        {new Date(review.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex mt-2">
                     {[...Array(5)].map((_, i) =>
                       i < review.rating ? (
                         <RiStarFill key={i} className="text-yellow-400" />
@@ -266,7 +228,7 @@ export default function BookDetailsPage() {
                       )
                     )}
                   </div>
-                  <p className="text-gray-300 mt-2">{review.content}</p>
+                  <p className="text-gray-300 mt-2">{review.comment}</p>
                 </div>
               ))}
             </div>
@@ -276,18 +238,20 @@ export default function BookDetailsPage() {
 
       {/* Related Books */}
       <div className="mt-12">
-        <RelatedBooks currentBookId={book.bookId} category={book.categories[0]} />
+        <RelatedBooks currentBookId={id} category={categories?.[0]} />
       </div>
 
       {/* Report Modal */}
       {showReportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Overlay mờ */}
           <div
             className="fixed inset-0 bg-black/30"
             onClick={() => setShowReportModal(false)}
           ></div>
 
-          <div className="relative bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-xl z-10">
+          {/* Popup */}
+          <div className="relative bg-gray-800 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl z-10">
             <h2 className="text-lg font-bold mb-4">Báo cáo sách</h2>
             <textarea
               value={reportText}
@@ -304,9 +268,11 @@ export default function BookDetailsPage() {
               </button>
               <button
                 onClick={() => {
-                  alert(`📨 Đã gửi báo cáo: ${reportText}`);
-                  setReportText("");
-                  setShowReportModal(false);
+                  if (reportText.trim()) {
+                    alert(`📨 Đã gửi báo cáo: ${reportText}`);
+                    setReportText("");
+                    setShowReportModal(false);
+                  }
                 }}
                 className="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500"
               >

@@ -18,12 +18,15 @@ namespace DataAccess.DAO
 
         public async Task<Book?> GetBookDetailAsync(int id)
         {
-            return await _context.Books
-                .Include(b => b.Owner)
-                    .ThenInclude(u => u.UserProfile)
-                .Include(b => b.Categories)
-                .Include(b => b.Chapters)
-                .FirstOrDefaultAsync(b => b.BookId == id);
+            var book = await _context.Books
+                            .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
+                            .Include(b => b.Categories)
+                            .Include(b => b.Chapters)
+                            .Include(b => b.BookReviews)
+                                .ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
+                            .FirstOrDefaultAsync(b => b.BookId == id);
+
+            return book;
         }
 
     }

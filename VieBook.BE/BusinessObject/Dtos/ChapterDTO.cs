@@ -13,8 +13,8 @@ namespace BusinessObject.Dtos
         public int ChapterView { get; set; }
         public string? ChapterSoftUrl { get; set; }
         public string? ChapterAudioUrl { get; set; }
-        public int? DurationSec { get; set; }
-        public decimal? PriceAudio { get; set; }
+        public int DurationSec { get; set; }
+        public decimal PriceAudio { get; set; }
         public DateTime UploadedAt { get; set; }
     }
 }
