@@ -9,7 +9,9 @@ namespace DataAccess.DAO
         public AuthenDAO(VieBookContext context) => _context = context;
 
         public async Task<User?> GetByEmailAsync(string email) =>
-            await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Email == email);
 
         public async Task<User?> GetByIdAsync(int id) =>
             await _context.Users.FindAsync(id);

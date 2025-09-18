@@ -53,7 +53,7 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
     };
 });
-
+// CORS policy registration (single source of truth)
 builder.Services.AddAuthorization();
 
 
@@ -92,15 +92,25 @@ builder.Services.AddControllers();
 //CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(ApiConfiguration.Cors.POLICY_NAME,
-        policy =>
+    options.AddPolicy(ApiConfiguration.Cors.POLICY_NAME, policy =>
+    {
+        if (builder.Environment.IsDevelopment())
         {
-            policy.WithOrigins(ApiConfiguration.Cors.ALLOWED_ORIGINS)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials() // Nếu cần gửi cookie/token
-                  .SetIsOriginAllowedToAllowWildcardSubdomains(); // Cho phép subdomain
-        });
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            policy
+                .WithOrigins(ApiConfiguration.Cors.ALLOWED_ORIGINS)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowedToAllowWildcardSubdomains();
+        }
+    });
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -114,12 +124,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+// Apply CORS early
 app.UseCors(ApiConfiguration.Cors.POLICY_NAME);
-app.UseHttpsRedirection();
-app.UseAuthentication();
+// Only force HTTPS in non-development to avoid local 307 redirects
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

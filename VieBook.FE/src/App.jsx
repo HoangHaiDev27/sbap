@@ -7,6 +7,7 @@ import PlayerManager from "./layouts/PlayerManager";
 import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
 import { useCoinsStore } from "./hooks/stores/coinStore";
+import { getRole, getUserId } from "./api/authApi";
 function App() {
   const location = useLocation();
   const [role, setRole] = useState("");
@@ -15,8 +16,18 @@ function App() {
   const hideLayout = noLayoutRoutes.includes(location.pathname);
   const fetchCoins = useCoinsStore((state) => state.fetchCoins);
   useEffect(() => {
-    const userId = 4; // ví dụ user hiện tại
-    fetchCoins(userId);
+    const userId = getUserId();
+    if (userId) {
+      fetchCoins(userId);
+    }
+    const r = getRole();
+    if (r) setRole(String(r).toLowerCase());
+    const onAuthChanged = (e) => {
+      const { role: newRole } = e.detail || {};
+      if (newRole) setRole(String(newRole).toLowerCase());
+    };
+    window.addEventListener("auth:changed", onAuthChanged);
+    return () => window.removeEventListener("auth:changed", onAuthChanged);
   }, [fetchCoins]);
   if (hideLayout) {
     //  Chỉ render nội dung route, không layout

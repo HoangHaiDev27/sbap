@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../../api/authApi";
 import { RiMenuLine } from "react-icons/ri";
 
 export default function AdminHeader({ onToggleSidebar }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
+  const navigate = useNavigate();
 
   // Tự động đóng menu nếu click ra ngoài
   useEffect(() => {
@@ -86,13 +88,13 @@ export default function AdminHeader({ onToggleSidebar }) {
                 Cài đặt
               </a>
               <hr className="my-1" />
-              <a
-                href="#"
-                className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+              <button
+                onClick={async () => { await logout(); navigate('/auth'); }}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
               >
                 <i className="ri-logout-box-line mr-2" />
                 Đăng xuất
-              </a>
+              </button>
             </div>
           )}
         </div>

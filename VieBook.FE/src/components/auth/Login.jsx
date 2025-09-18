@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { RiHomeLine } from "react-icons/ri";
+import { login as loginRequest } from "../../api/authApi";
 export default function Login({ setActiveTab }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,9 +10,27 @@ export default function Login({ setActiveTab }) {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login:", { email, password, rememberMe });
+    try {
+      const res = await loginRequest(email, password);
+      // toast success
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Đăng nhập thành công" } }));
+      // redirect based on role from response
+      const roles = (res?.roles || res?.Roles || []).map((r) => String(r || '').toLowerCase());
+      if (roles.includes('admin')) {
+        navigate('/admin');
+      } else if (roles.includes('staff')) {
+        navigate('/staff');
+      } else if (roles.includes('owner')) {
+        navigate('/owner/dashboard');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      console.warn("[Login] error", err);
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Đăng nhập thất bại" } }));
+    }
   };
 
   return (

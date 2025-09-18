@@ -63,7 +63,8 @@ namespace Services.Implementations
             return new LoginResponseDto
             {
                 Token = token,
-                User = userDto
+                User = userDto,
+                Roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>()
             };
         }
         public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto request)
@@ -115,6 +116,12 @@ namespace Services.Implementations
             return "Success";
         }
 
+
+        public Task LogoutAsync(int userId)
+        {
+            // Stateless JWT: client discards token. Reserved for future blacklist/revocation if needed.
+            return Task.CompletedTask;
+        }
 
     }
 }

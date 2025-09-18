@@ -16,6 +16,7 @@ namespace BusinessObject.Dtos
     {
         public string Token { get; set; } = string.Empty;
         public UserDTO User { get; set; } = new UserDTO();
+        public List<string> Roles { get; set; } = new List<string>();
     }
 
 }

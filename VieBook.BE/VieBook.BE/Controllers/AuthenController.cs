@@ -1,5 +1,6 @@
 using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Services.Interfaces;
 
 [ApiController]
@@ -44,5 +45,16 @@ public class AuthController : ControllerBase
         var result = await _authService.ResetPasswordAsync(request);
         if (result != "Success") return BadRequest(new { message = result });
         return Ok(new { message = "Password reset successful" });
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+            ?? User.FindFirst("sub")?.Value;
+        if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
+        await _authService.LogoutAsync(int.Parse(userIdClaim));
+        return Ok(new { message = "Logged out" });
     }
 }
