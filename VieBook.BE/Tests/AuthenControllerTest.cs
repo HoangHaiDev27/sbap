@@ -64,5 +64,38 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Pro
     //     Assert.NotNull(json);
     //     Assert.Equal("Password reset successful", json["message"]);
     // }
+    [Fact]
+    public async Task Login_ReturnsToken_WhenCredentialsValid()
+    {
+        var req = new
+        {
+            Email = "alice@viebook.local",
+            Password = "OldPass123"
+        };
+
+        var res = await _client.PostAsJsonAsync("/api/auth/login", req);
+        res.EnsureSuccessStatusCode();
+
+        var json = await res.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+        Assert.NotNull(json);
+        Assert.True(json.ContainsKey("token") || json.ContainsKey("accessToken"));
+    }
+
+    [Fact]
+    public async Task Login_ReturnsUnauthorized_WhenPasswordInvalid()
+    {
+        // Arrange
+        var req = new
+        {
+            Email = "alice@viebook.local",
+            Password = "WrongPass!"
+        };
+
+        // Act
+        var res = await _client.PostAsJsonAsync("/api/auth/login", req);
+
+        // Assert
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, res.StatusCode);
+    }
 
 }

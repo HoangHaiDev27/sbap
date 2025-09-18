@@ -1,10 +1,13 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { RiMenuLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { logout } from '../../api/authApi';
 
 export default function StaffHeader({ onToggleSidebar }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
+  const navigate = useNavigate();
 
   // Click outside để đóng dropdown
   useEffect(() => {
@@ -67,7 +70,7 @@ export default function StaffHeader({ onToggleSidebar }) {
                 <span className="text-gray-800">Cài đặt</span>
               </button>
               <hr className="my-1" />
-              <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 cursor-pointer">
+              <button onClick={async ()=>{ await logout(); navigate('/auth'); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 cursor-pointer">
                 <i className="ri-logout-box-line mr-2"></i>
                 Đăng xuất
               </button>

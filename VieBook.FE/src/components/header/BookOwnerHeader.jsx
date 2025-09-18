@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../../api/authApi";
 import {
   RiMenuLine,
   RiSearchLine,
@@ -7,6 +8,7 @@ import {
 } from "react-icons/ri";
 
 export default function BookOwnerHeader({ onToggleSidebar }) {
+  const navigate = useNavigate();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -136,7 +138,7 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
                 >
                   💵 Yêu cầu rút tiền
                 </Link>
-                <button className="w-full text-left px-4 py-2 text-sm hover:bg-slate-600">
+                <button onClick={async ()=>{ await logout(); navigate('/auth'); }} className="w-full text-left px-4 py-2 text-sm hover:bg-slate-600 text-red-400">
                   Đăng xuất
                 </button>
               </div>

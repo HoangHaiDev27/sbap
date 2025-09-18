@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { RiUserLine, RiAddLine, RiCoinLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
+import { logout } from "../../api/authApi";
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
@@ -22,9 +23,9 @@ export default function UserMenu() {
   }, []);
 
   // Xử lý đăng xuất
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/auth/login");
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth");
   };
   // Lấy số đồng xu hiện tại
   const coins = useCoinsStore((state) => state.coins);
