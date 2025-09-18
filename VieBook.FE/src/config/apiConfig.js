@@ -5,18 +5,20 @@ const API_BASE_URL = "http://localhost:5757";
 export const API_ENDPOINTS = {
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
+  BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/${id}`,
+
   // Auth endpoints
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
   },
-  
+
   // Payment endpoints
   PAYMENT: {
     CREATE_LINK: `${API_BASE_URL}/create-payment-link`,
     VERIFY: `${API_BASE_URL}/api/webhook/verify-payment`,
   },
-  
+
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
