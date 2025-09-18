@@ -11,10 +11,6 @@ using DataAccess.DAO;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using DataAccess.DAO;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using VieBook.BE.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
