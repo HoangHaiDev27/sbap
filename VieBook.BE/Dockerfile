@@ -12,7 +12,6 @@ WORKDIR /src
 COPY VieBook.BE/VieBook.BE/VieBook.BE.csproj VieBook.BE/
 COPY VieBook.BE/BusinessObject/BusinessObject.csproj VieBook.BE/BusinessObject/
 COPY VieBook.BE/DataAccess/DataAccess.csproj VieBook.BE/DataAccess/
-COPY VieBook.BE/DTOs/DTOs.csproj VieBook.BE/DTOs/
 COPY VieBook.BE/Repositories/Repositories.csproj VieBook.BE/Repositories/
 COPY VieBook.BE/Services/Services.csproj VieBook.BE/Services/
 

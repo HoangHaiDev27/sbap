@@ -23,7 +23,8 @@ CREATE TABLE dbo.Users (
   PasswordHash VARBINARY(MAX) NULL,
   Status       VARCHAR(20) NOT NULL,              -- KHÔNG đặt CHECK/DEFAULT theo yêu cầu
   CreatedAt    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-  LastLoginAt  DATETIME2 NULL
+  LastLoginAt  DATETIME2 NULL,
+  Wallet       DECIMAL(18,2) NOT NULL DEFAULT(0)
 );
 
 CREATE TABLE dbo.UserProfiles (
@@ -148,53 +149,70 @@ CREATE TABLE dbo.PromotionApplications (
 -- =========================================================
 -- OrderItems / Payments (không dùng Orders)
 -- =========================================================
+-- Bảng OrderItems: ghi nhận việc mua chương bằng xu
 CREATE TABLE dbo.OrderItems (
-  OrderItemId   BIGINT IDENTITY(1,1) PRIMARY KEY,
-  CustomerId    INT NOT NULL REFERENCES dbo.Users(UserId),
-  ChapterId     INT NOT NULL REFERENCES dbo.Chapters(ChapterId),
-  UnitPrice     DECIMAL(18,2) NOT NULL,
-  CashReceived  DECIMAL(18,2) NOT NULL,
-  PaidAt        DATETIME2 NULL
+    OrderItemId   BIGINT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId    INT NOT NULL REFERENCES dbo.Users(UserId),
+    ChapterId     INT NOT NULL REFERENCES dbo.Chapters(ChapterId),
+    UnitPrice     DECIMAL(18,2) NOT NULL, -- giá chương tại thời điểm mua (xu)
+    CashSpent     DECIMAL(18,2) NOT NULL, -- số xu user đã trả
+    PaidAt        DATETIME2 NULL,
+    OrderType     VARCHAR(20) NULL        -- ví dụ: BuyChapter, BuyBundle
 );
 ALTER TABLE dbo.OrderItems
-ADD OrderType VARCHAR(20) NULL;
+ADD CONSTRAINT CK_OrderItems_OrderType
+CHECK (OrderType IN ('BuyChapter', 'Refund'));
 
+
+-- Index để tra cứu nhanh
 CREATE INDEX IX_OrderItems_Customer ON dbo.OrderItems(CustomerId, PaidAt);
 CREATE INDEX IX_OrderItems_Chapter  ON dbo.OrderItems(ChapterId);
 
-CREATE TABLE dbo.Payments (
-  PaymentId      BIGINT IDENTITY(1,1) PRIMARY KEY,
-  OrderItemId    BIGINT NOT NULL REFERENCES dbo.OrderItems(OrderItemId),
-  Provider       VARCHAR(50) NOT NULL,           -- VNPay/PayOS/Stripe...
-  TransactionId  VARCHAR(200) NOT NULL,
-  Amount         DECIMAL(18,2) NOT NULL,
-  Status         VARCHAR(20) NOT NULL,           -- Pending/Succeeded/Failed...
-  PaidAt         DATETIME2 NULL,
-  CONSTRAINT UQ_Payments UNIQUE(Provider, TransactionId)
+
+-- Bảng WalletTransactions: ghi nhận nạp xu từ tiền thật
+CREATE TABLE dbo.WalletTransactions (
+    WalletTransactionId BIGINT IDENTITY(1,1) PRIMARY KEY,
+    UserId        INT NOT NULL REFERENCES dbo.Users(UserId),
+    Provider      VARCHAR(50) NOT NULL,         -- VNPay/MoMo/PayPal
+    TransactionId VARCHAR(200) NOT NULL,        -- mã giao dịch từ provider
+    AmountMoney   DECIMAL(18,2) NOT NULL,       -- số tiền thật (VNĐ/USD)
+    AmountCoin    DECIMAL(18,2) NOT NULL,       -- số xu quy đổi
+    Status        VARCHAR(20) NOT NULL,         -- Pending/Succeeded/Failed
+    CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT UQ_WalletTransactions UNIQUE (Provider, TransactionId)
 );
+ALTER TABLE dbo.WalletTransactions
+ADD CONSTRAINT CK_WalletTransactions_Status
+CHECK (Status IN ('Pending', 'Succeeded', 'Failed', 'Cancelled'));
 
-CREATE TABLE dbo.PaymentRequest (
-        PaymentRequestID BIGINT IDENTITY(1,1) PRIMARY KEY,  -- id bảng
-        UserID           INT    NOT NULL                     -- id user muốn rút
-                           REFERENCES dbo.Users(UserId),
-        [Money]          DECIMAL(18,2) NOT NULL,             -- Số tiền muốn rút
-        Status           VARCHAR(20) NOT NULL,               -- trạng thái (không CHECK/DEFAULT)
-        RequestDate      DATETIME2 NOT NULL                  -- ngày yêu cầu rút
-                           DEFAULT SYSUTCDATETIME(),
-        AcceptDate       DATETIME2 NULL,                     -- ngày được duyệt
-        OrderItemID      BIGINT NULL                         -- null khi chưa success
-                           REFERENCES dbo.OrderItems(OrderItemId)
-    );
 
-    -- Index gợi ý để tra cứu nhanh
-    CREATE INDEX IX_PaymentRequest_User_Status
-        ON dbo.PaymentRequest (UserID, Status, RequestDate DESC);
+-- Index gợi ý cho tra cứu
+CREATE INDEX IX_WalletTransactions_User_Status
+    ON dbo.WalletTransactions (UserId, Status, CreatedAt DESC);
 
-    CREATE INDEX IX_PaymentRequest_Status_Date
-        ON dbo.PaymentRequest (Status, RequestDate DESC);
 
-    CREATE INDEX IX_PaymentRequest_OrderItem
-        ON dbo.PaymentRequest (OrderItemID);
+-- Bảng PaymentRequests: tác giả yêu cầu rút tiền
+CREATE TABLE dbo.PaymentRequests (
+    PaymentRequestId BIGINT IDENTITY(1,1) PRIMARY KEY,
+    UserId        INT NOT NULL REFERENCES dbo.Users(UserId),
+    RequestedCoin DECIMAL(18,2) NOT NULL,       -- số xu muốn rút
+    Status        VARCHAR(20) NOT NULL 
+                   DEFAULT 'Pending',           -- Pending/Accepted/Rejected
+    RequestDate   DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    AcceptDate    DATETIME2 NULL
+);
+ALTER TABLE dbo.PaymentRequests
+ADD CONSTRAINT CK_PaymentRequests_Status
+CHECK (Status IN ('Pending', 'Processing', 'Succeeded', 'Rejected'));
+
+
+-- Index gợi ý
+CREATE INDEX IX_PaymentRequests_User_Status
+    ON dbo.PaymentRequests (UserId, Status, RequestDate DESC);
+
+CREATE INDEX IX_PaymentRequests_Status_Date
+    ON dbo.PaymentRequests (Status, RequestDate DESC);
+
 -- =========================================================
 -- User Interactions
 -- =========================================================
@@ -541,28 +559,26 @@ SELECT TOP 1 PromotionId, @Book2Id FROM dbo.Promotions ORDER BY PromotionId DESC
 
 
 /* =========================================================
-   OrderItems / Payments / PaymentRequest
+   Ví dụ dữ liệu demo cho WalletTransactions / OrderItems / PaymentRequests
    ========================================================= */
--- Alice mua 2 chương (OrderType='mua')
-INSERT INTO dbo.OrderItems(CustomerId, ChapterId, UnitPrice, CashReceived, PaidAt, OrderType)
-VALUES
-  (@AliceId, @B1C1, 12000, 12000, SYSUTCDATETIME(), 'mua'),
-  (@AliceId, @B2C1, 15000, 15000, SYSUTCDATETIME(), 'mua');
 
-DECLARE @OI1 BIGINT = (SELECT MIN(OrderItemId) FROM dbo.OrderItems WHERE CustomerId=@AliceId);
-DECLARE @OI2 BIGINT = (SELECT MAX(OrderItemId) FROM dbo.OrderItems WHERE CustomerId=@AliceId);
-
--- Payments thành công cho 2 order items
-INSERT INTO dbo.Payments(OrderItemId, Provider, TransactionId, Amount, Status, PaidAt)
+-- 1. Alice nạp xu qua VNPay (Succeeded)
+INSERT INTO dbo.WalletTransactions(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
 VALUES
-  (@OI1, 'VNPay', 'TXN-A-0001', 12000, 'Succeeded', SYSUTCDATETIME()),
-  (@OI2, 'VNPay', 'TXN-A-0002', 15000, 'Succeeded', SYSUTCDATETIME());
+  (@AliceId, 'VNPay', 'TXN-A-0001', 20000, 20000, 'Succeeded', SYSUTCDATETIME());
 
--- Yêu cầu rút tiền của Owner (1 pending, 1 approved có OrderItemID tham chiếu @OI1 làm ví dụ)
-INSERT INTO dbo.PaymentRequest(UserID, [Money], Status, RequestDate, AcceptDate, OrderItemID)
+-- 2. Alice dùng xu để mua 2 chương
+INSERT INTO dbo.OrderItems(CustomerId, ChapterId, UnitPrice, CashSpent, PaidAt, OrderType)
 VALUES
-  (@OwnerId, 100000, 'Pending',  SYSUTCDATETIME(), NULL, NULL),
-  (@OwnerId,  50000, 'Approved', DATEADD(DAY,-1,SYSUTCDATETIME()), SYSUTCDATETIME(), @OI1);
+  (@AliceId, @B1C1, 12000, 12000, SYSUTCDATETIME(), 'BuyChapter'),
+  (@AliceId, @B2C1, 15000, 15000, SYSUTCDATETIME(), 'BuyChapter');
+
+-- 3. Chủ sách (Owner) yêu cầu rút xu
+INSERT INTO dbo.PaymentRequests(UserId, RequestedCoin, Status, RequestDate, AcceptDate)
+VALUES
+  (@OwnerId, 100000, 'Pending', SYSUTCDATETIME(), NULL),
+  (@OwnerId,  50000, 'Succeeded', DATEADD(DAY,-1,SYSUTCDATETIME()), SYSUTCDATETIME());
+
 
 
 

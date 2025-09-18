@@ -13,20 +13,23 @@ import {
   RiCloseLine,
 } from "react-icons/ri";
 
-export default function PostList({ activeTab, searchQuery }) {
+export default function PostList({ activeTab = "all", searchQuery = "" }) {
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [selectedPost, setSelectedPost] = useState(null);
   const [quickComments, setQuickComments] = useState({});
   const [hiddenPosts, setHiddenPosts] = useState([]); // lưu post ẩn
   const [reportPost, setReportPost] = useState(null); // lưu post đang report
   const [reportText, setReportText] = useState("");
+  const [dropdownPost, setDropdownPost] = useState(null);
+  const [modalCommentText, setModalCommentText] = useState("");
+  const [modalReplyTexts, setModalReplyTexts] = useState({});
+  const [openReplyBox, setOpenReplyBox] = useState({});
 
   const samplePosts = [
     {
       id: 1,
       type: "discussion",
-      title:
-        'Tặng 5 cuốn "Atomic Habits" - Thay đổi tí hon, hiệu quả bất ngờ?',
+      title: 'Tặng 5 cuốn "Atomic Habits" - Thay đổi tí hon, hiệu quả bất ngờ?',
       content:
         'Mình có 5 cuốn "Atomic Habits" muốn tặng cho những bạn thật sự quan tâm đến việc thay đổi thói quen...',
       author: { name: "Minh Phương", role: "Chủ sách", timeAgo: "2 ngày trước" },
@@ -72,13 +75,14 @@ export default function PostList({ activeTab, searchQuery }) {
   ];
 
   const [posts, setPosts] = useState(samplePosts);
-  const [dropdownPost, setDropdownPost] = useState(null);
 
   const filteredPosts = posts.filter((post) => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchQuery.toLowerCase());
-
+      normalizedQuery.length === 0 ||
+      post.title.toLowerCase().includes(normalizedQuery) ||
+      post.content.toLowerCase().includes(normalizedQuery) ||
+      post.tags?.some((t) => t.toLowerCase().includes(normalizedQuery));
     switch (activeTab) {
       case "discuss":
         return post.type === "discussion" && matchesSearch;
@@ -87,7 +91,7 @@ export default function PostList({ activeTab, searchQuery }) {
       case "registered":
         return post.isRegistered && matchesSearch;
       case "hidden":
-        return hiddenPosts.includes(post.id);
+        return hiddenPosts.includes(post.id) && matchesSearch;
       default:
         return matchesSearch && !hiddenPosts.includes(post.id);
     }
@@ -132,6 +136,10 @@ export default function PostList({ activeTab, searchQuery }) {
     setDropdownPost(null);
   };
 
+  const handleUnhidePost = (id) => {
+    setHiddenPosts((prev) => prev.filter((pid) => pid !== id));
+  };
+
   const handleDeletePost = (id) => {
     setPosts((prev) => prev.filter((p) => p.id !== id));
     setDropdownPost(null);
@@ -140,6 +148,50 @@ export default function PostList({ activeTab, searchQuery }) {
   const handleReport = (post) => {
     setReportPost(post);
     setDropdownPost(null);
+  };
+
+  const handleAddModalComment = () => {
+    const text = modalCommentText.trim();
+    if (!selectedPost || text.length === 0) return;
+    setPosts((prev) => {
+      const updated = prev.map((p) =>
+        p.id === selectedPost.id
+          ? {
+              ...p,
+              comments: [
+                ...p.comments,
+                { id: Date.now(), author: "Bạn", text, replies: [] },
+              ],
+              stats: { ...p.stats, comments: p.stats.comments + 1 },
+            }
+          : p
+      );
+      const newSelected = updated.find((p) => p.id === selectedPost.id);
+      setSelectedPost(newSelected || null);
+      return updated;
+    });
+    setModalCommentText("");
+  };
+
+  const handleAddReply = (commentId) => {
+    if (!selectedPost) return;
+    const replyText = (modalReplyTexts[commentId] || "").trim();
+    if (replyText.length === 0) return;
+    setPosts((prev) => {
+      const updated = prev.map((p) => {
+        if (p.id !== selectedPost.id) return p;
+        const updatedComments = p.comments.map((c) =>
+          c.id === commentId
+            ? { ...c, replies: [...(c.replies || []), { id: Date.now(), author: "Bạn", text: replyText }] }
+            : c
+        );
+        return { ...p, comments: updatedComments };
+      });
+      const newSelected = updated.find((p) => p.id === selectedPost.id);
+      setSelectedPost(newSelected || null);
+      return updated;
+    });
+    setModalReplyTexts((prev) => ({ ...prev, [commentId]: "" }));
   };
 
   const getPostTypeIcon = (type) => {
@@ -166,6 +218,8 @@ export default function PostList({ activeTab, searchQuery }) {
 
   return (
     <div className="space-y-6">
+
+      {/* Post List */}
       {filteredPosts.map((post) => (
         <div
           key={post.id}
@@ -190,42 +244,47 @@ export default function PostList({ activeTab, searchQuery }) {
                 </div>
               </div>
             </div>
+
             <div className="flex items-center gap-2 relative">
               <div className="flex items-center gap-1 text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">
                 {getPostTypeIcon(post.type)}
                 <span>{getPostTypeLabel(post.type)}</span>
               </div>
-              <button
-                className="text-slate-400 hover:text-white p-1"
-                onClick={() =>
-                  setDropdownPost(dropdownPost === post.id ? null : post.id)
-                }
-              >
-                <RiMoreLine size={18} />
-              </button>
+              {activeTab !== "hidden" && (
+                <>
+                  <button
+                    className="text-slate-400 hover:text-white p-1"
+                    onClick={() =>
+                      setDropdownPost(dropdownPost === post.id ? null : post.id)
+                    }
+                  >
+                    <RiMoreLine size={18} />
+                  </button>
 
-              {/* Dropdown */}
-              {dropdownPost === post.id && (
-                <div className="absolute right-0 top-6 bg-slate-700 rounded shadow-md w-40 z-10">
-                  <button
-                    onClick={() => handleDeletePost(post.id)}
-                    className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
-                  >
-                    Xóa
-                  </button>
-                  <button
-                    onClick={() => handleHidePost(post.id)}
-                    className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
-                  >
-                    Ẩn
-                  </button>
-                  <button
-                    onClick={() => handleReport(post)}
-                    className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
-                  >
-                    Báo cáo
-                  </button>
-                </div>
+                  {/* Dropdown */}
+                  {dropdownPost === post.id && (
+                    <div className="absolute right-0 top-6 bg-slate-700 rounded shadow-md w-40 z-10">
+                      <button
+                        onClick={() => handleDeletePost(post.id)}
+                        className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
+                      >
+                        Xóa
+                      </button>
+                      <button
+                        onClick={() => handleHidePost(post.id)}
+                        className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
+                      >
+                        Ẩn
+                      </button>
+                      <button
+                        onClick={() => handleReport(post)}
+                        className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white"
+                      >
+                        Báo cáo
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -237,6 +296,16 @@ export default function PostList({ activeTab, searchQuery }) {
             </h2>
             <p className="text-slate-300 leading-relaxed">{post.content}</p>
           </div>
+
+          {/* Unhide button in hidden tab */}
+          {activeTab === "hidden" && (
+            <button
+              onClick={() => handleUnhidePost(post.id)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white mb-4"
+            >
+              Khôi phục
+            </button>
+          )}
 
           {/* Book Info */}
           {post.book && (
@@ -376,20 +445,61 @@ export default function PostList({ activeTab, searchQuery }) {
                 <div key={cmt.id} className="bg-slate-700 p-3 rounded">
                   <p className="text-white font-medium">{cmt.author}</p>
                   <p className="text-slate-300">{cmt.text}</p>
+                  <div className="mt-2">
+                    <button
+                      className="text-xs text-slate-300 hover:text-white underline"
+                      onClick={() =>
+                        setOpenReplyBox((prev) => ({ ...prev, [cmt.id]: !prev[cmt.id] }))
+                      }
+                    >
+                      Reply
+                    </button>
+                  </div>
                   {cmt.replies?.length > 0 && (
                     <div className="pl-4 mt-2 space-y-2 border-l border-slate-600">
                       {cmt.replies.map((rep) => (
                         <div key={rep.id}>
-                          <p className="text-sm text-white font-medium">
-                            {rep.author}
-                          </p>
+                          <p className="text-sm text-white font-medium">{rep.author}</p>
                           <p className="text-sm text-slate-300">{rep.text}</p>
                         </div>
                       ))}
                     </div>
                   )}
+                  {openReplyBox[cmt.id] && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        value={modalReplyTexts[cmt.id] || ""}
+                        onChange={(e) =>
+                          setModalReplyTexts((prev) => ({ ...prev, [cmt.id]: e.target.value }))
+                        }
+                        placeholder="Trả lời bình luận..."
+                        className="flex-1 bg-slate-600 text-white rounded px-3 py-2 outline-none"
+                      />
+                      <button
+                        onClick={() => handleAddReply(cmt.id)}
+                        className="bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded text-white text-sm"
+                      >
+                        Trả lời
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
+            </div>
+
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                value={modalCommentText}
+                onChange={(e) => setModalCommentText(e.target.value)}
+                placeholder="Viết bình luận mới..."
+                className="flex-1 bg-slate-700 text-white rounded px-3 py-2 outline-none"
+              />
+              <button
+                onClick={handleAddModalComment}
+                className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-white"
+              >
+                Gửi bình luận
+              </button>
             </div>
           </div>
         </div>
@@ -412,27 +522,19 @@ export default function PostList({ activeTab, searchQuery }) {
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
               className="w-full bg-slate-700 text-white rounded p-2 mb-4"
+              rows="4"
               placeholder="Nhập lý do báo cáo..."
-              rows={4}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setReportPost(null)}
-                className="px-4 py-2 bg-slate-600 rounded text-white"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => {
-                  alert("Đã gửi báo cáo: " + reportText);
-                  setReportPost(null);
-                  setReportText("");
-                }}
-                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded text-white"
-              >
-                Gửi
-              </button>
-            </div>
+            ></textarea>
+            <button
+              onClick={() => {
+                alert("Báo cáo đã được gửi!");
+                setReportPost(null);
+                setReportText("");
+              }}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white"
+            >
+              Gửi báo cáo
+            </button>
           </div>
         </div>
       )}

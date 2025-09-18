@@ -72,32 +72,9 @@ export default function PendingBooksManagement() {
     setShowModal(false);
   };
 
-  // 🔹 logic phân trang giống CustomerManagement
-  const getPageNumbers = () => {
-    const delta = 2; // hiển thị số trang xung quanh currentPage
-    const range = [];
-    for (
-      let i = Math.max(2, currentPage - delta);
-      i <= Math.min(totalPages - 1, currentPage + delta);
-      i++
-    ) {
-      range.push(i);
-    }
-
-    if (currentPage - delta > 2) {
-      range.unshift("...");
-    }
-    if (currentPage + delta < totalPages - 1) {
-      range.push("...");
-    }
-    range.unshift(1);
-    if (totalPages > 1) range.push(totalPages);
-    return range;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="pt-16">
+      <main className="pt-24">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Duyệt sách mới</h2>
 
@@ -169,9 +146,8 @@ export default function PendingBooksManagement() {
                       <td className="px-4 py-2 text-gray-700">{book.owner}</td>
                       <td className="px-4 py-2">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            categoryColors[book.category] || 'bg-gray-100 text-gray-800'
-                          }`}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${categoryColors[book.category] || 'bg-gray-100 text-gray-800'
+                            }`}
                         >
                           {book.category}
                         </span>
@@ -179,19 +155,18 @@ export default function PendingBooksManagement() {
                       <td className="px-4 py-2 text-gray-700">{book.submitDate}</td>
                       <td className="px-4 py-2">
                         <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            book.status === 'pending'
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${book.status === 'pending'
                               ? 'bg-yellow-100 text-yellow-800'
                               : book.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
                         >
                           {book.status === 'pending'
                             ? 'Chờ duyệt'
                             : book.status === 'approved'
-                            ? 'Đã duyệt'
-                            : 'Từ chối'}
+                              ? 'Đã duyệt'
+                              : 'Từ chối'}
                         </span>
                       </td>
                       <td className="px-4 py-2 flex space-x-2">
@@ -232,28 +207,28 @@ export default function PendingBooksManagement() {
               )}
             </div>
             {/* Pagination */}
-        <div className="flex justify-between items-center px-6 py-4 border-t">
-          <p className="text-sm text-gray-600">
-            Trang {currentPage}/{totalPages}
-          </p>
-          <div className="space-x-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
-            >
-              Trước
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
-            >
-              Sau
-            </button>
+            <div className="flex justify-between items-center px-6 py-4 border-t">
+              <p className="text-sm text-gray-600">
+                Trang {currentPage}/{totalPages}
+              </p>
+              <div className="space-x-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                >
+                  Trước
+                </button>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-          </div>  
         </div>
       </main>
 

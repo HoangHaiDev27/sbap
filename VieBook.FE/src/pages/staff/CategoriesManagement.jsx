@@ -72,7 +72,7 @@ export default function CategoriesManagement() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="pt-20">
+      <main className="pt-24">
         <div className="p-6">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Quản lý Thể loại Sách</h2>

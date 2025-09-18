@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import FeedbackDetailModal from "../../components/staff/feedback/FeedbackDetailModal";
 import FeedbackDeleteModal from "../../components/staff/feedback/FeedbackDeleteModal";
 
-
 export default function FeedbackManagement() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -18,7 +17,11 @@ export default function FeedbackManagement() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [feedbackToDelete, setFeedbackToDelete] = useState(null);
 
+  // pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
+  // sample avatar
   const frogImg =
     "https://drawcartoonstyle.com/wp-content/uploads/2022/07/10-Add-cute-blush-spots-to-the-frog-to-make-it-a-cute-chibi-frog.jpg";
 
@@ -100,20 +103,37 @@ export default function FeedbackManagement() {
   }, [bookIdParam]);
 
   const filteredFeedbacks = feedbacks.filter((feedback) => {
+    const q = searchTerm.trim().toLowerCase();
     const matchesSearch =
-      feedback.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.content.toLowerCase().includes(searchTerm.toLowerCase());
+      !q ||
+      feedback.user.toLowerCase().includes(q) ||
+      feedback.title.toLowerCase().includes(q) ||
+      feedback.content.toLowerCase().includes(q);
     const matchesType = typeFilter === "all" || feedback.type === typeFilter;
     const matchesBook =
       !bookFilter ||
-      (feedback.bookId != null &&
-        String(feedback.bookId) === String(bookFilter));
-
+      (feedback.bookId != null && String(feedback.bookId) === String(bookFilter));
     return matchesSearch && matchesType && matchesBook;
   });
 
+  // --- pagination derived values (AFTER filteredFeedbacks exist) ---
   const total = filteredFeedbacks.length;
+  const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const pagedFeedbacks = filteredFeedbacks.slice(startIndex, startIndex + itemsPerPage);
+
+  // if filters/search change, go back to page 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, typeFilter, bookFilter]);
+
+  // if currentPage becomes larger than totalPages (after filtering), clamp it
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const compliments = filteredFeedbacks.filter((f) => f.type === "compliment").length;
   const suggestions = filteredFeedbacks.filter((f) => f.type === "suggestion").length;
   const bugs = filteredFeedbacks.filter((f) => f.type === "bug_report").length;
@@ -133,15 +153,26 @@ export default function FeedbackManagement() {
     setDeleteModalOpen(true);
   };
 
+  // confirmDelete emulates deleting — adjust for real API later
   const confirmDelete = (id) => {
     console.log("Deleting feedback:", id);
     setDeleteModalOpen(false);
     setFeedbackToDelete(null);
   };
 
-
+  // called to mark reviewed
   const handleMarkAsReviewed = (id) => {
     console.log("Marking feedback as reviewed:", id);
+  };
+
+  // if Detail modal wants to delete directly -> open delete modal from there
+  const handleDeleteFromDetail = (id) => {
+    const target = filteredFeedbacks.find((f) => f.id === id);
+    if (target) {
+      setFeedbackToDelete(target);
+      setShowModal(false);
+      setDeleteModalOpen(true);
+    }
   };
 
   const getTypeText = (type) => {
@@ -206,7 +237,7 @@ export default function FeedbackManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-25">
+    <div className="min-h-screen bg-gray-50 p-6 pt-[30px]">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Quản lý Feedback</h2>
       <p className="text-gray-600 mb-6">Xem và quản lý phản hồi từ người dùng</p>
 
@@ -268,10 +299,10 @@ export default function FeedbackManagement() {
           </div>
         </div>
 
-        {/* Danh sách feedback */}
+        {/* Danh sách feedback (hiển thị theo trang) */}
         <div className="divide-y divide-gray-200">
-          {filteredFeedbacks.length > 0 ? (
-            filteredFeedbacks.map((feedback) => (
+          {pagedFeedbacks.length > 0 ? (
+            pagedFeedbacks.map((feedback) => (
               <div key={feedback.id} className="p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start space-x-4">
                   <img
@@ -317,9 +348,7 @@ export default function FeedbackManagement() {
                     </p>
                     {feedback.bookTitle && (
                       <div className="mb-3">
-                        <span className="text-sm text-gray-600">
-                          Sách liên quan:{" "}
-                        </span>
+                        <span className="text-sm text-gray-600">Sách liên quan: </span>
                         <span className="text-sm font-medium text-blue-600">
                           {feedback.bookTitle}
                         </span>
@@ -349,7 +378,6 @@ export default function FeedbackManagement() {
                       >
                         <i className="ri-delete-bin-line"></i>
                       </button>
-
                     </div>
                   </div>
                 </div>
@@ -359,6 +387,31 @@ export default function FeedbackManagement() {
             <p className="p-6 text-gray-500 text-center">Không có feedback nào</p>
           )}
         </div>
+
+        {/* Pagination */}
+        {total > 0 && (
+          <div className="flex justify-between items-center px-6 py-4 border-t">
+            <p className="text-sm text-gray-600">
+              Trang {currentPage}/{totalPages}
+            </p>
+            <div className="space-x-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+              >
+                Trước
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Popup chi tiết */}
@@ -367,7 +420,7 @@ export default function FeedbackManagement() {
           feedback={selectedFeedback}
           onClose={() => setShowModal(false)}
           onMarkAsReviewed={handleMarkAsReviewed}
-          onDelete={handleDelete}
+          onDelete={handleDeleteFromDetail} // use the handler defined above
           getTypeText={getTypeText}
           getTypeColor={getTypeColor}
           getTypeIcon={getTypeIcon}
@@ -379,11 +432,10 @@ export default function FeedbackManagement() {
       {deleteModalOpen && feedbackToDelete && (
         <FeedbackDeleteModal
           feedback={feedbackToDelete}
-          onConfirm={confirmDelete}
+          onConfirm={() => confirmDelete(feedbackToDelete.id)}
           onCancel={() => setDeleteModalOpen(false)}
         />
       )}
-
     </div>
   );
 }
