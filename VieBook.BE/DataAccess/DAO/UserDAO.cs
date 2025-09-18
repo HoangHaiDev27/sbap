@@ -39,5 +39,15 @@ namespace DataAccess
         }
 
         public async Task<User?> GetByEmailAsync(string email) => await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        public async Task UpdateWalletBalanceAsync(int userId, decimal amount)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.Wallet += amount;
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

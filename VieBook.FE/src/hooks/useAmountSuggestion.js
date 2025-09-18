@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 export const useAmountSuggestion = (inputValue) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -64,6 +64,15 @@ export const useAmountSuggestion = (inputValue) => {
       setShowSuggestions(false);
     }, 200);
   };
+
+  // Tự động hiển thị gợi ý khi có suggestions
+  useEffect(() => {
+    if (suggestions.length > 0) {
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [suggestions]);
 
   const handleSuggestionClick = (value) => {
     setShowSuggestions(false);

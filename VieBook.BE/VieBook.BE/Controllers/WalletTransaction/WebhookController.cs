@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Net.payOS;
 using Net.payOS.Types;
 using Services.Interfaces;
+using VieBook.BE.Configuration;
 
 namespace VieBook.BE.Controllers.WalletTransaction
 {
@@ -86,7 +87,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
         public IActionResult PaymentSuccess([FromQuery] int? orderCode, [FromQuery] int? amount)
         {
             // Redirect về frontend với parameters
-            var frontendUrl = $"http://localhost:3008/recharge?status=success&amount={amount}&orderCode={orderCode}";
+            var frontendUrl = ApiConfiguration.FrontendUrls.RechargePage("success", amount, orderCode);
             return Redirect(frontendUrl);
         }
 
@@ -94,7 +95,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
         public IActionResult PaymentCancel([FromQuery] int? orderCode, [FromQuery] int? amount)
         {
             // Redirect về frontend với parameters
-            var frontendUrl = $"http://localhost:3008/recharge?status=cancel&amount={amount}&orderCode={orderCode}";
+            var frontendUrl = ApiConfiguration.FrontendUrls.RechargePage("cancel", amount, orderCode);
             return Redirect(frontendUrl);
         }
 
@@ -102,7 +103,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
         public IActionResult HandlePayOSRedirect([FromQuery] string? status, [FromQuery] int? amount, [FromQuery] int? orderCode)
         {
             // Handle PayOS redirect với bất kỳ parameters nào
-            var frontendUrl = $"http://localhost:3008/recharge?status={status}&amount={amount}&orderCode={orderCode}";
+            var frontendUrl = ApiConfiguration.FrontendUrls.RechargePage(status ?? "", amount, orderCode);
             return Redirect(frontendUrl);
         }
 
@@ -127,7 +128,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
                         Status = MapPayOSStatusToDatabaseStatus("PAID"), // Map PayOS status sang database status
                         TransactionId = orderCode.ToString(), // Sử dụng orderCode làm transactionId
                         PaymentMethod = "PayOS",
-                        UserId = 1 // Default user ID
+                        UserId = 4 // Default user ID
                     };
 
                     // Xử lý thanh toán

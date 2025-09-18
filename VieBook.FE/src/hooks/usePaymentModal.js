@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { verifyPayment } from "../api/paymentApi";
+import { useCoinsStore } from "./stores/coinStore";
 
 export const usePaymentModal = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -52,7 +53,7 @@ export const usePaymentModal = () => {
       }
     }
   }, []);
-
+  const addCoins = useCoinsStore((state) => state.addCoins);
   const verifyPaymentWithPayOS = async (orderCode, status, amount) => {
     try {
       // Normalize status - PayOS có thể trả về PAID, CANCELLED, cancel, success, etc.
@@ -66,6 +67,9 @@ export const usePaymentModal = () => {
           setPaymentStatus('success');
           setPaymentMessage('Giao dịch đã được xử lý thành công. Số xu đã được cộng vào tài khoản của bạn.');
           setPaymentAmount(response.data.amount || parseInt(amount) || 0);
+          // Chuyển đổi từ VNĐ sang xu (1 VNĐ = 1 xu)
+          const coinAmount = (response.data.amount || parseInt(amount) || 0) / 1000;
+          addCoins(coinAmount);
         } else {
           setPaymentStatus('error');
           setPaymentMessage('Giao dịch chưa được xác nhận. Vui lòng thử lại sau.');

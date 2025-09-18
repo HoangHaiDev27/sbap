@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SidebarManager from "./layouts/SidebarManager";
 import HeaderManager from "./layouts/HeaderManager";
 import Footer from "./components/Footer";
@@ -6,13 +6,18 @@ import ReaderManager from "./layouts/ReaderManager";
 import PlayerManager from "./layouts/PlayerManager";
 import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
+import { useCoinsStore } from "./hooks/stores/coinStore";
 function App() {
   const location = useLocation();
   const [role, setRole] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const noLayoutRoutes = ["/auth"];
   const hideLayout = noLayoutRoutes.includes(location.pathname);
-
+  const fetchCoins = useCoinsStore((state) => state.fetchCoins);
+  useEffect(() => {
+    const userId = 4; // ví dụ user hiện tại
+    fetchCoins(userId);
+  }, [fetchCoins]);
   if (hideLayout) {
     //  Chỉ render nội dung route, không layout
     return <AppRoutes />;
