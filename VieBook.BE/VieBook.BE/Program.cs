@@ -11,6 +11,10 @@ using DataAccess.DAO;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using DataAccess.DAO;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using VieBook.BE.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,10 +59,34 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+// Add JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("Jwt");
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+    };
+});
+
+builder.Services.AddAuthorization();
 //Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 //Add DAO
 builder.Services.AddScoped<UserDAO>();
+builder.Services.AddScoped<AuthenDAO>();
+builder.Services.AddScoped<PasswordResetTokenDAO>();
 builder.Services.AddScoped<AuthenDAO>();
 builder.Services.AddScoped<PasswordResetTokenDAO>();
 
@@ -67,10 +95,15 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
+builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWalletTransactionService, WalletTransactionService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
@@ -106,6 +139,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseCors(ApiConfiguration.Cors.POLICY_NAME);
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthentication();
 app.UseAuthorization();
 
