@@ -7,6 +7,7 @@ using Repositories.Implementations;
 using Services.Interfaces;
 using Services.Implementations;
 using Net.payOS;
+using VieBook.BE.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,18 +15,18 @@ var builder = WebApplication.CreateBuilder(args);
 if (builder.Environment.EnvironmentName == "Testing")
 {
     builder.Services.AddDbContext<VieBookContext>(options =>
-        options.UseInMemoryDatabase("TestDb"));
+        options.UseInMemoryDatabase(ApiConfiguration.Database.TEST_DATABASE_NAME));
 }
 else
 {
     builder.Services.AddDbContext<VieBookContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseSqlServer(builder.Configuration.GetConnectionString(ApiConfiguration.Database.CONNECTION_STRING_KEY)));
 }
 IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
 
-PayOS payOS = new PayOS(configuration["PayOS:PAYOS_CLIENT_ID"] ?? throw new Exception("Cannot find PayOS_CLIENT_ID"),
-                    configuration["PayOS:PAYOS_API_KEY"] ?? throw new Exception("Cannot find PAYOS_API_KEY"),
-                    configuration["PayOS:PAYOS_CHECKSUM_KEY"] ?? throw new Exception("Cannot find PAYOS_CHECKSUM_KEY"));
+PayOS payOS = new PayOS(configuration[ApiConfiguration.PayOS.CLIENT_ID_KEY] ?? throw new Exception("Cannot find PayOS_CLIENT_ID"),
+                    configuration[ApiConfiguration.PayOS.API_KEY] ?? throw new Exception("Cannot find PAYOS_API_KEY"),
+                    configuration[ApiConfiguration.PayOS.CHECKSUM_KEY] ?? throw new Exception("Cannot find PAYOS_CHECKSUM_KEY"));
 //Add PayOS
 builder.Services.AddSingleton(payOS);
 //Add HttpContextAccessor
@@ -49,10 +50,10 @@ builder.Services.AddControllers();
 //CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
+    options.AddPolicy(ApiConfiguration.Cors.POLICY_NAME,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3008") // 👈 Thay URL frontend tại đây
+            policy.WithOrigins(ApiConfiguration.Cors.ALLOWED_ORIGINS)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials() // Nếu cần gửi cookie/token
@@ -71,7 +72,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors("AllowFrontend");
+app.UseCors(ApiConfiguration.Cors.POLICY_NAME);
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
