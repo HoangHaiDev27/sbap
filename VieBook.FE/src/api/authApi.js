@@ -20,7 +20,7 @@ export function setAuth(token, user, roles) {
     window.dispatchEvent(
       new CustomEvent("auth:changed", { detail: { token, user, role } })
     );
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export function clearAuth() {
@@ -67,7 +67,7 @@ export async function logout() {
     window.dispatchEvent(
       new CustomEvent("app:toast", { detail: { type: "success", message: "Đã đăng xuất" } })
     );
-  } catch {}
+  } catch { /* empty */ }
 }
 
 export async function authFetch(input, init = {}) {
@@ -118,5 +118,73 @@ export async function changePassword(currentPassword, newPassword) {
   const data = await res.json();
   return data;
 }
+
+export async function register(fullName, email, password) {
+  const res = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fullName, email, password }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || "Đăng ký thất bại");
+  }
+  return res.json();
+}
+
+export async function forgotPassword(email) {
+  try {
+    const res = await fetch(API_ENDPOINTS.AUTH.FORGOT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Gửi OTP thất bại");
+
+    return { success: true, message: data.message };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// ==== Verify OTP ====
+export async function verifyOtp(email, otp) {
+  try {
+    const res = await fetch(API_ENDPOINTS.AUTH.VERIFY_OTP, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Xác thực OTP thất bại");
+
+    return { success: true, message: data.message };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// ==== Reset Password ====
+export async function resetPassword(email, newPassword) {
+  try {
+    const res = await fetch(API_ENDPOINTS.AUTH.RESET, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, newPassword }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Đặt lại mật khẩu thất bại");
+
+    return { success: true, message: data.message };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
 
 

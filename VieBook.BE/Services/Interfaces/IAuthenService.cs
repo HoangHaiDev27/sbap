@@ -1,4 +1,7 @@
 using BusinessObject.Dtos;
+using BusinessObject.Models;
+using Services.Implementations;
+using System.Text;
 
 namespace Services.Interfaces
 {
@@ -9,5 +12,8 @@ namespace Services.Interfaces
         Task<string> ResetPasswordAsync(ResetPasswordRequestDto request);
         Task<string> ChangePasswordAsync(int userId, ChangePasswordRequestDto request);
         Task LogoutAsync(int userId);
+        Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request);
+        Task<string> VerifyEmailAsync(string token);
+        Task<string> VerifyOtpAsync(VerifyOtpRequestDto request);
     }
 }

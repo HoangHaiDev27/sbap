@@ -82,6 +82,7 @@ CREATE TABLE dbo.Books (
   OwnerId     INT NOT NULL REFERENCES dbo.Users(UserId),
   Title       NVARCHAR(300) NOT NULL,
   Description NVARCHAR(MAX) NULL,
+  CoverUrl    VARCHAR(1000) NULL,
   ISBN        VARCHAR(20) NULL UNIQUE,
   Language    VARCHAR(20) NULL,
   Status      VARCHAR(20) NOT NULL,              -- KHÔNG đặt CHECK/DEFAULT
@@ -512,10 +513,11 @@ VALUES
    Books & Chapters
    ========================================================= */
 -- Books by Owner
-INSERT INTO dbo.Books(OwnerId, Title, Description, ISBN, Language, Status, TotalView)
+INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView)
 VALUES
-  (@OwnerId, N'The Art of Reading', N'Guide to effective reading habits.', '9780000000011', 'EN', 'Approved', 120),
-  (@OwnerId, N'C# for Beginners',   N'Introductory C# programming.',       '9780000000028', 'EN', 'Approved', 85);
+  (@OwnerId, N'The Art of Reading', N'Guide to effective reading habits.', 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1524369581i/39105249.jpg', '9780000000011', 'EN', 'Approved', 120),
+  (@OwnerId, N'C# for Beginners',   N'Introductory C# programming.',       'https://m.media-amazon.com/images/I/71KX3DYaCiL._UF894,1000_QL80_.jpg', '9780000000028', 'EN', 'Approved', 85);
+
 
 DECLARE @Book1Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'The Art of Reading');
 DECLARE @Book2Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'C# for Beginners');
@@ -742,3 +744,13 @@ SELECT p.PostId, p.PostType, p.Visibility,
        (SELECT COUNT(*) FROM dbo.PostReactions pr WHERE pr.PostId=p.PostId) AS Reactions
 FROM dbo.Posts p
 ORDER BY p.PostId DESC;
+
+-- Insert thêm data for users
+INSERT INTO [dbo].[Users] (Email, PasswordHash, Status, CreatedAt, Wallet)
+VALUES (
+    'huonggntt14@gmail.com',
+    HASHBYTES('SHA2_256', '123456'),  
+    'Active',
+    GETDATE(),
+    0
+);

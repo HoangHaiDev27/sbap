@@ -30,6 +30,19 @@ namespace VieBook.BE.Configuration
 
             // Test endpoints
             public const string TEST_REDIRECT = "/api/webhook/test-redirect";
+
+            // Notification endpoints
+            public const string NOTIFICATIONS = "/api/notification";
+            public const string NOTIFICATION_BY_ID = "/api/notification/{id}";
+            public const string USER_NOTIFICATIONS = "/api/notification/user/{userId}";
+            public const string USER_UNREAD_NOTIFICATIONS = "/api/notification/user/{userId}/unread";
+            public const string USER_NOTIFICATIONS_BY_TYPE = "/api/notification/user/{userId}/type/{type}";
+            public const string USER_RECENT_NOTIFICATIONS = "/api/notification/user/{userId}/recent";
+            public const string USER_UNREAD_COUNT = "/api/notification/user/{userId}/unread-count";
+            public const string NOTIFICATION_MARK_READ = "/api/notification/{id}/mark-read";
+            public const string USER_MARK_ALL_READ = "/api/notification/user/{userId}/mark-all-read";
+            public const string NOTIFICATION_BULK = "/api/notification/bulk";
+            public const string NOTIFICATION_TYPES = "/api/notification/types";
         }
 
         // Frontend URLs with parameters

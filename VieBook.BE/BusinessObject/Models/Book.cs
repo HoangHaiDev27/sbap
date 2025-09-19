@@ -12,6 +12,7 @@ public partial class Book
     public string Title { get; set; } = null!;
 
     public string? Description { get; set; }
+    public string? CoverUrl { get; set; }
 
     public string? Isbn { get; set; }
 

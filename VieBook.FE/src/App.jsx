@@ -13,7 +13,7 @@ function App() {
   const location = useLocation();
   const [role, setRole] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const noLayoutRoutes = ["/auth"];
+  const noLayoutRoutes = ["/auth","/auth/verify-email"];
   const hideLayout = noLayoutRoutes.includes(location.pathname);
   const fetchCoins = useCoinsStore((state) => state.fetchCoins);
   useEffect(() => {

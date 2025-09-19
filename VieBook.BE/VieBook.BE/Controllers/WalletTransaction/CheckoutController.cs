@@ -7,6 +7,7 @@ using BusinessObject.PayOs;
 using Microsoft.AspNetCore.Mvc;
 using Net.payOS;
 using Net.payOS.Types;
+using VieBook.BE.Configuration;
 
 namespace VieBook.BE.Controllers.WalletTransaction
 {
@@ -39,13 +40,17 @@ namespace VieBook.BE.Controllers.WalletTransaction
                 // Tạo description ngắn gọn (tối đa 25 ký tự)
                 var description = $"Nap xu U1 {request.Amount}";
 
+                // Sử dụng ApiConfiguration để tạo URLs
+                var cancelUrl = ApiConfiguration.FrontendUrls.RechargePage("cancel", request.Amount, orderCode);
+                var successUrl = ApiConfiguration.FrontendUrls.RechargePage("success", request.Amount, orderCode);
+
                 PaymentData paymentData = new PaymentData(
                     orderCode,
                     request.Amount,
                     description,
                     items,
-                    "http://localhost:3008/recharge?status=cancel&amount=" + request.Amount + "&orderCode=" + orderCode,
-                    "http://localhost:3008/recharge?status=success&amount=" + request.Amount + "&orderCode=" + orderCode
+                    cancelUrl,
+                    successUrl
                 );
                 CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
                 return Ok(new Response(0, "success", createPayment));

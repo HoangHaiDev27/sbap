@@ -1,0 +1,31 @@
+﻿using AutoMapper;
+using BusinessObject.Dtos;
+using Repositories.Interfaces;
+using Services.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Services.Implementations
+{
+    public class BookService : IBookService
+    {
+        private readonly IBookRepository _bookRepo;
+        private readonly IMapper _mapper;
+
+        public BookService(IBookRepository bookRepo, IMapper mapper)
+        {
+            _bookRepo = bookRepo;
+            _mapper = mapper;
+        }
+
+        public async Task<BookDetailDTO?> GetBookDetailAsync(int id)
+        {
+            var book = await _bookRepo.GetBookDetailAsync(id);
+            if (book == null) return null;
+            return _mapper.Map<BookDetailDTO>(book);
+        }
+    }
+}

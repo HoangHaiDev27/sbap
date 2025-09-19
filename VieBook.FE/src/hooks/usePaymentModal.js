@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { verifyPayment } from "../api/paymentApi";
 import { useCoinsStore } from "./stores/coinStore";
+import { useNotificationStore } from "./stores/notificationStore";
 
 export const usePaymentModal = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -54,6 +55,7 @@ export const usePaymentModal = () => {
     }
   }, []);
   const addCoins = useCoinsStore((state) => state.addCoins);
+  const { addNotification, fetchUnreadCount } = useNotificationStore();
   const verifyPaymentWithPayOS = async (orderCode, status, amount) => {
     try {
       // Normalize status - PayOS có thể trả về PAID, CANCELLED, cancel, success, etc.
@@ -70,6 +72,24 @@ export const usePaymentModal = () => {
           // Chuyển đổi từ VNĐ sang xu (1 VNĐ = 1 xu)
           const coinAmount = (response.data.amount || parseInt(amount) || 0) / 1000;
           addCoins(coinAmount);
+          
+          // Thêm notification cho thanh toán thành công
+          const now = new Date();
+          const notification = {
+            notificationId: Date.now(), // Temporary ID
+            userId: 4,
+            type: "WALLET_RECHARGE",
+            title: "Nạp tiền thành công",
+            body: `Bạn đã nạp thành công ${coinAmount.toLocaleString()} xu vào ví. Số dư hiện tại đã được cập nhật.`,
+            isRead: false,
+            createdAt: now.toISOString(),
+            userName: "User",
+            userEmail: "user@example.com"
+          };
+          addNotification(notification);
+          
+          // Cập nhật unread count
+          fetchUnreadCount(4);
         } else {
           setPaymentStatus('error');
           setPaymentMessage('Giao dịch chưa được xác nhận. Vui lòng thử lại sau.');
