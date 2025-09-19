@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
   BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/${id}`,
+  READ_BOOKS: `${API_BASE_URL}/api/books/read`,
 
   // Auth endpoints
   AUTH: {
