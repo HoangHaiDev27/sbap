@@ -8,5 +8,6 @@ namespace Services.Interfaces
         Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto request);
         Task<string> ResetPasswordAsync(ResetPasswordRequestDto request);
         Task LogoutAsync(int userId);
+        Task<string> VerifyOtpAsync(VerifyOtpRequestDto request);
     }
 }

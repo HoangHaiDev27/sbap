@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Services.Implementations
 {
@@ -69,10 +70,14 @@ namespace Services.Implementations
         }
         public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
+            if (!Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                return "Invalid email format";
+
             var user = await _authRepo.GetByEmailAsync(request.Email);
             if (user == null)
-                throw new Exception("Email not found");
+                return "Email not found";
 
+            // generate otp
             var otp = GenerateOtp(6);
             var otpHash = BCrypt.Net.BCrypt.HashPassword(otp);
 
@@ -88,13 +93,42 @@ namespace Services.Implementations
             await _tokenRepo.AddAsync(token);
 
             await _emailService.SendEmailAsync(user.Email, "Mã xác thực quên mật khẩu",
-                $"Mã xác thực của bạn là: <b>{otp}</b>. Mã sẽ hết hạn sau 10 phút.");
+                $"Mã OTP của bạn là: <b>{otp}</b>. Mã sẽ hết hạn sau 10 phút.");
 
-            return otp; // hoặc JWT/Token nếu bạn muốn trả token
+            return "OTP đã được gửi đến email của bạn";
         }
 
-
         public async Task<string> ResetPasswordAsync(ResetPasswordRequestDto request)
+        {
+            var user = await _authRepo.GetByEmailAsync(request.Email);
+            if (user == null) return "Email not found";
+
+            // Regex check password (>=6 ký tự, có ít nhất 1 chữ và 1 số)
+            var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$");
+            if (!passwordRegex.IsMatch(request.NewPassword))
+                return "Password phải có ít nhất 6 ký tự, gồm chữ và số";
+
+            // Hash mật khẩu mới
+            user.PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(request.NewPassword));
+
+            await _authRepo.UpdateAsync(user);
+
+            // Đánh dấu token đã dùng (nếu muốn strict)
+            var token = await _tokenRepo.GetLatestValidForUserAsync(user.UserId);
+            if (token != null)
+            {
+                token.UsedAt = DateTime.UtcNow;
+                await _tokenRepo.UpdateAsync(token);
+            }
+
+            return "Password reset successful";
+        }
+        public Task LogoutAsync(int userId)
+        {
+            // Stateless JWT: client discards token. Reserved for future blacklist/revocation if needed.
+            return Task.CompletedTask;
+        }
+        public async Task<string> VerifyOtpAsync(VerifyOtpRequestDto request)
         {
             var user = await _authRepo.GetByEmailAsync(request.Email);
             if (user == null) return "Email not found";
@@ -103,25 +137,11 @@ namespace Services.Implementations
             if (token == null || token.ExpiresAt < DateTime.UtcNow || token.UsedAt != null)
                 return "OTP không hợp lệ hoặc đã hết hạn";
 
-            var otpHash = System.Text.Encoding.UTF8.GetString(token.TokenHash);
+            var otpHash = Encoding.UTF8.GetString(token.TokenHash);
             if (!BCrypt.Net.BCrypt.Verify(request.Otp, otpHash))
                 return "OTP không đúng";
 
-            user.PasswordHash = System.Text.Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(request.NewPassword));
-            await _authRepo.UpdateAsync(user);
-
-            token.UsedAt = DateTime.UtcNow;
-            await _tokenRepo.UpdateAsync(token);
-
-            return "Success";
+            return "OTP hợp lệ";
         }
-
-
-        public Task LogoutAsync(int userId)
-        {
-            // Stateless JWT: client discards token. Reserved for future blacklist/revocation if needed.
-            return Task.CompletedTask;
-        }
-
     }
 }
