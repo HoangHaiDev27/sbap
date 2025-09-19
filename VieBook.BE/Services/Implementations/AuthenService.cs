@@ -149,13 +149,6 @@ namespace Services.Implementations
             return "OTP hợp lệ";
         }
 
-
-        public Task LogoutAsync(int userId)
-        {
-            // Stateless JWT: client discards token. Reserved for future blacklist/revocation if needed.
-            return Task.CompletedTask;
-        }
-
         public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
         {
             var existing = await _authRepo.GetByEmailAsync(request.Email);
