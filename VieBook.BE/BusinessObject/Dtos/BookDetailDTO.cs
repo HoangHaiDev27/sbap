@@ -20,5 +20,6 @@ namespace BusinessObject.Dtos
         public List<string> Categories { get; set; } = new();
         public List<ChapterDTO> Chapters { get; set; } = new();
         public List<BookReviewDTO> Reviews { get; set; } = new();
+        public decimal TotalPrice { get; set; }
     }
 }

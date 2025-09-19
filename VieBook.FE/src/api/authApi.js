@@ -87,6 +87,20 @@ export function getUserId() {
   return user.userId || user.UserId || user.id || user.Id || null;
 }
 
+export async function register(fullName, email, password) {
+  const res = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fullName, email, password }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || "Đăng ký thất bại");
+  }
+  return res.json();
+}
+
 export async function forgotPassword(email) {
   try {
     const res = await fetch(API_ENDPOINTS.AUTH.FORGOT, {

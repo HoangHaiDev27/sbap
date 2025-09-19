@@ -1,6 +1,7 @@
 using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Services.Implementations;
 using Services.Interfaces;
 using System.Text.RegularExpressions;
 
@@ -75,4 +76,25 @@ public class AuthController : ControllerBase
         await _authService.LogoutAsync(int.Parse(userIdClaim));
         return Ok(new { message = "Logged out" });
     }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+    {
+        try
+        {
+            var res = await _authService.RegisterAsync(request);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+    {
+        var result = await (_authService as AuthService)!.VerifyEmailAsync(token);
+        return Ok(new { message = result });
+    }
+
 }
