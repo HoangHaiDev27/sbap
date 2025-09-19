@@ -11,6 +11,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
+    REGISTER: `${API_BASE_URL}/api/auth/register`,
+    VERIFY_EMAIL: `${API_BASE_URL}/api/auth/verify-email`,
   },
 
   // Payment endpoints
