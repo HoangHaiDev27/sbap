@@ -744,3 +744,13 @@ SELECT p.PostId, p.PostType, p.Visibility,
        (SELECT COUNT(*) FROM dbo.PostReactions pr WHERE pr.PostId=p.PostId) AS Reactions
 FROM dbo.Posts p
 ORDER BY p.PostId DESC;
+
+-- Insert thêm data for users
+INSERT INTO [dbo].[Users] (Email, PasswordHash, Status, CreatedAt, Wallet)
+VALUES (
+    'huonggntt14@gmail.com',
+    HASHBYTES('SHA2_256', '123456'),  
+    'Active',
+    GETDATE(),
+    0
+);

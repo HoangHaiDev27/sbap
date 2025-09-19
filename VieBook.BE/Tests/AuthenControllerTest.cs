@@ -38,14 +38,23 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Pro
     }
 
     [Fact]
-    public async Task ForgotPassword_ReturnsToken_WhenUserExists()
+    public async Task ForgotPassword_ReturnsMessage_WhenUserExists()
     {
+        // Arrange
         var req = new { Email = "alice@viebook.local" };
+
+        // Act
         var res = await _client.PostAsJsonAsync("/api/auth/forgot-password", req);
+
+        // Assert
         res.EnsureSuccessStatusCode();
         var json = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        Assert.True(json != null && json.ContainsKey("resetToken"));
+
+        Assert.NotNull(json);
+        Assert.True(json.ContainsKey("message"));
+        Assert.False(string.IsNullOrEmpty(json["message"]));
     }
+
     // [Fact]
     // public async Task ResetPassword_ReturnsSuccess_WhenOtpValid()
     // {
