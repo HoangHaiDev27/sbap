@@ -13,5 +13,6 @@ namespace Services.Interfaces
         Task LogoutAsync(int userId);
         Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request);
         Task<string> VerifyEmailAsync(string token);
+        Task<string> VerifyOtpAsync(VerifyOtpRequestDto request);
     }
 }

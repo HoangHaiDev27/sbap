@@ -13,6 +13,9 @@ export const API_ENDPOINTS = {
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
     REGISTER: `${API_BASE_URL}/api/auth/register`,
     VERIFY_EMAIL: `${API_BASE_URL}/api/auth/verify-email`,
+    FORGOT: `${API_BASE_URL}/api/auth/forgot-password`,
+    RESET: `${API_BASE_URL}/api/auth/reset-password`,
+    VERIFY_OTP: `${API_BASE_URL}/api/auth/verify-otp`,
   },
 
   // Payment endpoints
