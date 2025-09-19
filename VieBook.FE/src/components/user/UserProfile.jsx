@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { changePassword} from "../../api/authApi";
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -9,6 +10,15 @@ export default function UserProfile() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // State cho form đổi mật khẩu
+  const [changePasswordData, setChangePasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [changePasswordError, setChangePasswordError] = useState("");
 
   const [formData, setFormData] = useState({
     fullName: "Nguyễn Văn An",
@@ -37,19 +47,87 @@ export default function UserProfile() {
     setIsEditing(false);
   };
 
+  const handleChangePasswordInput = (e) => {
+    const { name, value } = e.target;
+    setChangePasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (changePasswordError) {
+      setChangePasswordError("");
+    }
+  };
+
+  const handleChangePassword = async () => {
+    // Validation
+    if (!changePasswordData.currentPassword || !changePasswordData.newPassword || !changePasswordData.confirmPassword) {
+      setChangePasswordError("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
+    if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
+      setChangePasswordError("Mật khẩu mới và xác nhận mật khẩu không khớp");
+      return;
+    }
+
+    if (changePasswordData.newPassword.length < 6) {
+      setChangePasswordError("Mật khẩu mới phải có ít nhất 6 ký tự");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setChangePasswordError("");
+
+    try {
+      await changePassword(changePasswordData.currentPassword, changePasswordData.newPassword);
+      
+      // Reset form and close modal
+      setChangePasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+      setShowChangePasswordModal(false);
+      
+      // Show success message
+      window.dispatchEvent(
+        new CustomEvent("app:toast", { 
+          detail: { type: "success", message: "Đổi mật khẩu thành công" } 
+        })
+      );
+    } catch (error) {
+      setChangePasswordError(error.message || "Đổi mật khẩu thất bại");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleCloseChangePasswordModal = () => {
+    setShowChangePasswordModal(false);
+    setChangePasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
+    });
+    setChangePasswordError("");
+  };
+
   return (
     <div className="bg-gray-800 rounded-xl p-6 text-white relative">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h2 className="text-xl font-semibold">Thông tin cá nhân</h2>
         {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
-          >
-            <i className="ri-edit-line mr-2"></i>
-            Chỉnh sửa
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+            >
+              <i className="ri-edit-line mr-2"></i>
+              Chỉnh sửa
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:space-x-2">
             <button
@@ -133,20 +211,32 @@ export default function UserProfile() {
               🔒 Đổi mật khẩu
             </h2>
 
+            {/* Error message */}
+            {changePasswordError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
+                {changePasswordError}
+              </div>
+            )}
+
             {/* Mật khẩu hiện tại */}
             <div className="relative mb-4">
               <i className="ri-lock-password-line absolute left-3 top-2.5 text-gray-400"></i>
               <input
                 type={showCurrent ? "text" : "password"}
+                name="currentPassword"
+                value={changePasswordData.currentPassword}
+                onChange={handleChangePasswordInput}
                 placeholder="Mật khẩu hiện tại"
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-gray-700 text-white 
                            focus:outline-none focus:ring-2 focus:ring-orange-500 
                            transition-colors hover:bg-gray-600"
+                disabled={isChangingPassword}
               />
               <button
                 type="button"
                 onClick={() => setShowCurrent(!showCurrent)}
                 className="absolute right-3 top-2.5 text-gray-400 hover:text-white"
+                disabled={isChangingPassword}
               >
                 <i className={showCurrent ? "ri-eye-off-line" : "ri-eye-line"}></i>
               </button>
@@ -157,15 +247,20 @@ export default function UserProfile() {
               <i className="ri-lock-password-line absolute left-3 top-2.5 text-gray-400"></i>
               <input
                 type={showNew ? "text" : "password"}
+                name="newPassword"
+                value={changePasswordData.newPassword}
+                onChange={handleChangePasswordInput}
                 placeholder="Mật khẩu mới"
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-gray-700 text-white 
                            focus:outline-none focus:ring-2 focus:ring-orange-500 
                            transition-colors hover:bg-gray-600"
+                disabled={isChangingPassword}
               />
               <button
                 type="button"
                 onClick={() => setShowNew(!showNew)}
                 className="absolute right-3 top-2.5 text-gray-400 hover:text-white"
+                disabled={isChangingPassword}
               >
                 <i className={showNew ? "ri-eye-off-line" : "ri-eye-line"}></i>
               </button>
@@ -176,15 +271,20 @@ export default function UserProfile() {
               <i className="ri-lock-password-line absolute left-3 top-2.5 text-gray-400"></i>
               <input
                 type={showConfirm ? "text" : "password"}
+                name="confirmPassword"
+                value={changePasswordData.confirmPassword}
+                onChange={handleChangePasswordInput}
                 placeholder="Xác nhận mật khẩu mới"
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-gray-700 text-white 
                            focus:outline-none focus:ring-2 focus:ring-orange-500 
                            transition-colors hover:bg-gray-600"
+                disabled={isChangingPassword}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-3 top-2.5 text-gray-400 hover:text-white"
+                disabled={isChangingPassword}
               >
                 <i className={showConfirm ? "ri-eye-off-line" : "ri-eye-line"}></i>
               </button>
@@ -193,17 +293,27 @@ export default function UserProfile() {
             {/* Nút hành động */}
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setShowChangePasswordModal(false)}
+                onClick={handleCloseChangePasswordModal}
                 className="bg-gray-600 hover:bg-gray-700 px-5 py-2 rounded-lg text-white 
-                           transition transform hover:scale-105"
+                           transition transform hover:scale-105 disabled:opacity-50"
+                disabled={isChangingPassword}
               >
                 Hủy
               </button>
               <button
+                onClick={handleChangePassword}
+                disabled={isChangingPassword}
                 className="bg-orange-500 hover:bg-orange-600 px-5 py-2 rounded-lg text-white font-medium
-                           transition transform hover:scale-105 shadow-md"
+                           transition transform hover:scale-105 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Lưu
+                {isChangingPassword ? (
+                  <>
+                    <i className="ri-loader-4-line animate-spin mr-2"></i>
+                    Đang xử lý...
+                  </>
+                ) : (
+                  "Lưu"
+                )}
               </button>
             </div>
           </div>

@@ -117,6 +117,28 @@ namespace Services.Implementations
         }
 
 
+        public async Task<string> ChangePasswordAsync(int userId, ChangePasswordRequestDto request)
+        {
+            var user = await _authRepo.GetByIdAsync(userId);
+            if (user == null)
+                throw new Exception("Người dùng không tồn tại");
+
+            // Kiểm tra mật khẩu hiện tại
+            if (user.PasswordHash == null)
+                throw new Exception("Mật khẩu hiện tại không đúng");
+
+            var storedHash = Encoding.UTF8.GetString(user.PasswordHash);
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, storedHash))
+                throw new Exception("Mật khẩu hiện tại không đúng");
+
+            // Cập nhật mật khẩu mới
+            var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.PasswordHash = Encoding.UTF8.GetBytes(newPasswordHash);
+            await _authRepo.UpdateAsync(user);
+
+            return "Success";
+        }
+
         public Task LogoutAsync(int userId)
         {
             // Stateless JWT: client discards token. Reserved for future blacklist/revocation if needed.

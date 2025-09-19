@@ -19,4 +19,10 @@ namespace BusinessObject.Dtos
         public List<string> Roles { get; set; } = new List<string>();
     }
 
+    public class ChangePasswordRequestDto
+    {
+        public string CurrentPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+    }
+
 }

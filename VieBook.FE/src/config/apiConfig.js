@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
+    CHANGE_PASSWORD: `${API_BASE_URL}/api/auth/change-password`,
   },
   
   // Payment endpoints

@@ -87,4 +87,36 @@ export function getUserId() {
   return user.userId || user.UserId || user.id || user.Id || null;
 }
 
+export async function changePassword(currentPassword, newPassword) {
+  const token = getToken();
+  
+  // Debug: Check if token exists
+  if (!token) {
+    throw new Error("Không tìm thấy token. Vui lòng đăng nhập lại.");
+  }
+  
+  console.log("Change password - Token exists:", !!token);
+  console.log("Change password - Token length:", token.length);
+  
+  const res = await authFetch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      currentPassword, 
+      newPassword 
+    }),
+  });
+  
+  console.log("Change password - Response status:", res.status);
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    console.error("Change password error:", err);
+    throw new Error(err.message || "Đổi mật khẩu thất bại");
+  }
+  
+  const data = await res.json();
+  return data;
+}
+
 
