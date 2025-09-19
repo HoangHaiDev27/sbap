@@ -39,7 +39,9 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Chapters,
                     opt => opt.MapFrom(src => src.Chapters))
                 .ForMember(dest => dest.Reviews,
-                    opt => opt.MapFrom(src => src.BookReviews));
+                    opt => opt.MapFrom(src => src.BookReviews))
+                .ForMember(dest => dest.TotalPrice,
+        opt => opt.MapFrom(src => src.Chapters.Sum(ch => ch.PriceAudio ?? 0)));
 
             // Map từ RegisterRequestDto sang User
             CreateMap<RegisterRequestDto, User>()
