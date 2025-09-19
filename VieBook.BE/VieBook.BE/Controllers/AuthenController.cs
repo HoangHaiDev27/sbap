@@ -1,7 +1,9 @@
 using BusinessObject.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Services.Implementations;
 using Services.Interfaces;
+using System.Text.RegularExpressions;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -24,27 +26,44 @@ public class AuthController : ControllerBase
         }
     }
 
+    // Step 1: Nhập email
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
     {
-        try
-        {
-            var jwt = await _authService.ForgotPasswordAsync(request);
-            // Dev: trả token để test; production: trả 200 và gửi email
-            return Ok(new { resetToken = jwt });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _authService.ForgotPasswordAsync(request);
+
+        if (result == "Invalid email format")
+            return BadRequest(new { message = result });
+
+        if (result == "Email not found")
+            return NotFound(new { message = result });
+
+        return Ok(new { message = result });
     }
 
+
+    // Step 2: Verify OTP
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequestDto request)
+    {
+        var result = await _authService.VerifyOtpAsync(request);
+
+        if (result != "OTP hợp lệ")
+            return BadRequest(new { message = result });
+
+        return Ok(new { message = result });
+    }
+
+    // Step 3: Reset password
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
     {
         var result = await _authService.ResetPasswordAsync(request);
-        if (result != "Success") return BadRequest(new { message = result });
-        return Ok(new { message = "Password reset successful" });
+
+        if (result != "Password reset successful")
+            return BadRequest(new { message = result });
+
+        return Ok(new { message = result });
     }
 
     [Authorize]
@@ -57,4 +76,25 @@ public class AuthController : ControllerBase
         await _authService.LogoutAsync(int.Parse(userIdClaim));
         return Ok(new { message = "Logged out" });
     }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+    {
+        try
+        {
+            var res = await _authService.RegisterAsync(request);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+    {
+        var result = await (_authService as AuthService)!.VerifyEmailAsync(token);
+        return Ok(new { message = result });
+    }
+
 }

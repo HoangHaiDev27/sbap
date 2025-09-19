@@ -748,3 +748,12 @@ ORDER BY p.PostId DESC;
 -- Add author to table Books
 ALTER TABLE Books
 ADD Author NVARCHAR(255) NULL;
+-- Insert thêm data for users
+INSERT INTO [dbo].[Users] (Email, PasswordHash, Status, CreatedAt, Wallet)
+VALUES (
+    'huonggntt14@gmail.com',
+    HASHBYTES('SHA2_256', '123456'),  
+    'Active',
+    GETDATE(),
+    0
+);

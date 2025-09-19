@@ -49,7 +49,7 @@ export default function BookDetailPage() {
     return <div className="text-center text-red-500 p-6">Không tìm thấy sách.</div>;
   }
 
-  const { title, description, coverUrl, isbn, language, totalView, createdAt, ownerName, categories, chapters, reviews } =
+  const { title, description, coverUrl, isbn, language, totalView, createdAt, ownerName, categories, chapters, reviews, totalPrice} =
     bookDetail;
 
   return (
@@ -124,6 +124,7 @@ export default function BookDetailPage() {
         <div className="lg:col-span-2">
           <h1 className="text-3xl font-bold mb-2">{title}</h1>
           <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
+          <p className="text-gray-300 mb-4">Giá: {totalPrice.toLocaleString()} VNĐ</p>
 
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-4">
