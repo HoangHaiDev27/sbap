@@ -25,6 +25,7 @@ public partial class Book
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+    public string? Author { get; set; }
 
     public virtual ICollection<BookApproval> BookApprovals { get; set; } = new List<BookApproval>();
 

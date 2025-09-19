@@ -1,125 +1,85 @@
 import { RiAddLine } from "react-icons/ri";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import BookFilters from "../../components/owner/book/BookFilters";
 import BookTable from "../../components/owner/book/BookTable";
-import { Link } from "react-router-dom";
+import { getUserId } from "../../api/authApi";
+
+// 🔗 base URL
+const API_BASE_URL = "https://localhost:7058";
 
 export default function OwnerBooks() {
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("Tất cả");
+  const [status, setStatus] = useState("Tất cả");
+  const [sort, setSort] = useState("newest");
+  const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const books = [
-  {
-    id: 1,
-    title: "Triết học cuộc sống",
-    author: "Nguyễn Văn A",
-    category: "Triết học",
-    price: "150,000 VND",
-    sold: 45,
-    rating: 4.8,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 2,
-    title: "Kỹ năng giao tiếp",
-    author: "Trần Thị B",
-    category: "Kỹ năng sống",
-    price: "120,000 VND",
-    sold: 38,
-    rating: 4.6,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 3,
-    title: "Hành trình phiêu lưu",
-    author: "Lê Văn C",
-    category: "Phiêu lưu",
-    price: "80,000 VND",
-    sold: 72,
-    rating: 4.9,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 4,
-    title: "Đầu tư chứng khoán",
-    author: "Phạm Thị D",
-    category: "Tài chính",
-    price: "200,000 VND",
-    sold: 29,
-    rating: 4.4,
-    status: "Tạm dừng",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 5,
-    title: "Tình yêu học trò",
-    author: "Hoàng Văn E",
-    category: "Tình cảm",
-    price: "60,000 VND",
-    sold: 156,
-    rating: 4.7,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 6,
-    title: "Tư duy phản biện",
-    author: "Ngô Thị F",
-    category: "Phát triển bản thân",
-    price: "110,000 VND",
-    sold: 64,
-    rating: 4.5,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 7,
-    title: "Lập trình căn bản",
-    author: "Trịnh Văn G",
-    category: "Công nghệ",
-    price: "175,000 VND",
-    sold: 41,
-    rating: 4.3,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 8,
-    title: "Lãnh đạo theo phong cách mới",
-    author: "Lý Thị H",
-    category: "Kinh doanh",
-    price: "190,000 VND",
-    sold: 50,
-    rating: 4.6,
-    status: "Tạm dừng",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 9,
-    title: "Ẩm thực bốn phương",
-    author: "Mai Văn I",
-    category: "Ẩm thực",
-    price: "95,000 VND",
-    sold: 80,
-    rating: 4.9,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-  {
-    id: 10,
-    title: "Thế giới động vật",
-    author: "Bùi Thị J",
-    category: "Khoa học",
-    price: "130,000 VND",
-    sold: 33,
-    rating: 4.2,
-    status: "Đang bán",
-    cover: "https://salt.tikicdn.com/cache/w1200/ts/product/8f/92/84/e9969cda8595166e3b9378db0fb96556.jpg",
-  },
-];
+  const fetchBooksAndCategories = async () => {
+    try {
+      setLoading(true);
+      const ownerId = getUserId();
+      if (!ownerId) {
+        setBooks([]);
+        setCategories([]);
+        return;
+      }
 
+      const [booksRes, categoriesRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/books/owner/${ownerId}`),
+        fetch(`${API_BASE_URL}/api/categories`),
+      ]);
+
+      if (!booksRes.ok) throw new Error("Không thể tải sách");
+      if (!categoriesRes.ok) throw new Error("Không thể tải categories");
+
+      const booksData = await booksRes.json();
+      const categoriesData = await categoriesRes.json();
+
+      setBooks(Array.isArray(booksData) ? booksData : []);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (err) {
+      console.error("Lỗi khi load dữ liệu:", err);
+      setBooks([]);
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBooksAndCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Filtering + Sorting
+  const filteredBooks = books
+    .filter((b) => {
+      const matchSearch =
+        !search ||
+        (b.title && b.title.toLowerCase().includes(search.toLowerCase())) ||
+        (b.author && b.author.toLowerCase().includes(search.toLowerCase()));
+
+      const matchCategory =
+        category === "Tất cả" ||
+        !category ||
+        (b.categoryIds && b.categoryIds.includes(Number(category)));
+
+      const matchStatus = status === "Tất cả" || !status || b.status === status;
+
+      return matchSearch && matchCategory && matchStatus;
+    })
+    .sort((a, b) => {
+      if (sort === "newest") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+      if (sort === "oldest") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      return 0;
+    });
 
   return (
     <div className="p-6 text-white">
@@ -129,6 +89,7 @@ export default function OwnerBooks() {
           <h1 className="text-2xl font-bold">Quản lý Sách</h1>
           <p className="text-gray-400">Quản lý toàn bộ sách của bạn</p>
         </div>
+
         <Link
           to="/owner/books/new"
           className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
@@ -137,12 +98,29 @@ export default function OwnerBooks() {
         </Link>
       </div>
 
-      {/* Bộ lọc */}
-      <BookFilters search={search} setSearch={setSearch} />
+      {/* Filters */}
+      <BookFilters
+        search={search}
+        setSearch={setSearch}
+        category={category}
+        setCategory={setCategory}
+        status={status}
+        setStatus={setStatus}
+        sort={sort}
+        setSort={setSort}
+      />
 
-      {/* Bảng sách */}
+      {/* Table */}
       <div className="bg-slate-800 p-4 rounded-lg shadow-lg">
-        <BookTable books={books} />
+        {loading ? (
+          <p className="text-gray-400">Đang tải sách...</p>
+        ) : (
+          <BookTable
+            books={filteredBooks}
+            categories={categories}
+            onBookDeleted={fetchBooksAndCategories}
+          />
+        )}
       </div>
     </div>
   );

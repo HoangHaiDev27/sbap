@@ -66,6 +66,7 @@ builder.Services.AddScoped<PasswordResetTokenDAO>();
 builder.Services.AddScoped<AuthenDAO>();
 builder.Services.AddScoped<PasswordResetTokenDAO>();
 builder.Services.AddScoped<BookDao>();
+builder.Services.AddScoped<CategoryDAO>();
 
 //Add Repo
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -76,6 +77,7 @@ builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepo
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -87,7 +89,7 @@ builder.Services.AddScoped<IBookService, BookService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 
 //Add automapper

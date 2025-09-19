@@ -39,9 +39,21 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Chapters,
                     opt => opt.MapFrom(src => src.Chapters))
                 .ForMember(dest => dest.Reviews,
-                    opt => opt.MapFrom(src => src.BookReviews));
+                    opt => opt.MapFrom(src => src.BookReviews))
+                .ForMember(dest => dest.Status,
+                    opt => opt.MapFrom(src => src.Status));
+            // Book → BookDTO
+            CreateMap<Book, BookDTO>()
+                .ForMember(dest => dest.OwnerName,
+                    opt => opt.MapFrom(src => src.Owner.UserProfile.FullName))
+                .ForMember(dest => dest.CategoryIds,
+                     opt => opt.MapFrom(src => src.Categories.Select(c => c.CategoryId).ToList()));
 
+            CreateMap<BookDTO, Book>()
+                .ForMember(dest => dest.Categories, opt => opt.Ignore());
 
+            // Category → CategoryDTO
+            CreateMap<Category, CategoryDTO>().ReverseMap();
         }
 
     }

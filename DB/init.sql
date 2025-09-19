@@ -744,3 +744,7 @@ SELECT p.PostId, p.PostType, p.Visibility,
        (SELECT COUNT(*) FROM dbo.PostReactions pr WHERE pr.PostId=p.PostId) AS Reactions
 FROM dbo.Posts p
 ORDER BY p.PostId DESC;
+
+-- Add author to table Books
+ALTER TABLE Books
+ADD Author NVARCHAR(255) NULL;
