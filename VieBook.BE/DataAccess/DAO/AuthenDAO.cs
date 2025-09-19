@@ -22,6 +22,17 @@ namespace DataAccess.DAO
             await _context.SaveChangesAsync();
         }
 
+        public async Task<User> CreateAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
+        }
+        public async Task<Role?> GetRoleByIdAsync(int roleId)
+        {
+            return await _context.Roles.FindAsync(roleId);
+        }
+
         // nếu cần thêm Create/Delete...
     }
 }

@@ -41,6 +41,18 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Reviews,
                     opt => opt.MapFrom(src => src.BookReviews));
 
+            // Map từ RegisterRequestDto sang User
+            CreateMap<RegisterRequestDto, User>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
+                {
+                    FullName = src.FullName
+                }))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Pending"))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.Roles, opt => opt.Ignore()) // sẽ gán ở Service
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // hash trong Service
+
 
         }
 

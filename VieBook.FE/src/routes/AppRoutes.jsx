@@ -49,6 +49,7 @@ import ListeningPage from "../pages/ListeningPage";
 import ChangePassword from "../components/auth/ChangePassword"; // kiểm tra đúng đường dẫn
 import AuthenticationManager from "../layouts/AuthenticationManager";
 import RechargePage from "../pages/RechargePage";
+import VerifyEmail from "../pages/VerifyEmail";
 
 function AppRoutes() {
   return (
@@ -113,6 +114,7 @@ function AppRoutes() {
       {/* Routes cho authentication */}
       <Route path="/auth" element={<AuthenticationPage />} />
       <Route path="/auth/change-password" element={<AuthenticationManager defaultTab="change" />} />
+      <Route path="/auth/verify-email" element={<VerifyEmail />} />
     </Routes>
   );
 }
