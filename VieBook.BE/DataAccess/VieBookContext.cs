@@ -122,6 +122,9 @@ public partial class VieBookContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.Title).HasMaxLength(300);
+            entity.Property(e => e.CoverUrl)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Owner).WithMany(p => p.Books)
                 .HasForeignKey(d => d.OwnerId)
