@@ -50,8 +50,12 @@ namespace BusinessObject.Dtos
                     opt => opt.MapFrom(src => src.Owner.UserProfile.FullName))
                 .ForMember(dest => dest.CategoryIds,
                     opt => opt.MapFrom(src => src.Categories.Select(c => c.CategoryId).ToList()))
-                ;
-
+                .ForMember(dest => dest.TotalPrice,
+                    opt => opt.MapFrom(src => src.Chapters.Sum(c => c.PriceAudio ?? 0)))
+                .ForMember(dest => dest.Rating,
+                    opt => opt.MapFrom(src => src.BookReviews.Any()
+                        ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
+                        : 0));
 
             // Map từ RegisterRequestDto sang User
             CreateMap<RegisterRequestDto, User>()

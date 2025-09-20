@@ -1,7 +1,6 @@
 import { RiSearchLine } from "react-icons/ri";
 import { useEffect, useState } from "react";
-
-const API_BASE_URL = "https://localhost:7058";
+import { getCategories } from "../../../api/ownerBookApi";
 
 export default function BookFilters({
   search,
@@ -11,16 +10,14 @@ export default function BookFilters({
   status,
   setStatus,
   sort,
-  setSort, // 📌 thêm prop sort
+  setSort,
 }) {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/categories`);
-        if (!res.ok) throw new Error("Failed to fetch categories");
-        const data = await res.json();
+        const data = await getCategories();
         setCategories(data);
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -31,7 +28,7 @@ export default function BookFilters({
 
   return (
     <div className="bg-slate-800 p-4 rounded-lg mb-6 flex flex-col md:flex-row md:items-center md:space-x-4 space-y-3 md:space-y-0 shadow-lg">
-      {/* 🔍 Tìm kiếm */}
+      {/*  Tìm kiếm */}
       <div className="relative flex-1">
         <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -43,7 +40,7 @@ export default function BookFilters({
         />
       </div>
 
-      {/* ✅ Thể loại */}
+      {/*  Thể loại */}
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
@@ -57,7 +54,7 @@ export default function BookFilters({
         ))}
       </select>
 
-      {/* ✅ Trạng thái */}
+      {/*  Trạng thái */}
       <select
         value={status}
         onChange={(e) => setStatus(e.target.value)}
@@ -69,7 +66,7 @@ export default function BookFilters({
         <option value="InActive">Tạm dừng</option>
       </select>
 
-      {/* ✅ Sắp xếp theo ngày tạo */}
+      {/*  Sắp xếp theo ngày tạo */}
       <select
         value={sort}
         onChange={(e) => setSort(e.target.value)}

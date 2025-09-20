@@ -19,11 +19,8 @@ namespace Repositories.Interfaces
         Task RemoveCategoriesByBookIdAsync(int bookId);
         Task<bool> IsIsbnExistsAsync(string isbn);
         Task<List<Book>> GetBooksByOwnerId(int ownerId);
+        Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
+        Task<List<Book>> GetReadBooksAsync();
+
     }
-        public interface IBookRepository
-        {
-                Task<Book?> GetBookDetailAsync(int id);
-                Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
-                Task<List<Book>> GetReadBooksAsync();
-        }
 }

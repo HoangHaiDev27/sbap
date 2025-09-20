@@ -19,6 +19,9 @@ namespace BusinessObject.Dtos
         public string? Author { get; set; }
         public int OwnerId { get; set; }
         public string Status { get; set; } = null!;
+        // TotalPrice và Rating
+        public decimal TotalPrice { get; set; }
+        public double Rating { get; set; }
         // Author info
         public string? OwnerName { get; set; }
 

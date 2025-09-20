@@ -114,6 +114,7 @@ namespace VieBook.BE.Controllers
             }
 
             return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
+        }
         // GET: api/readbooks
         [HttpGet("read")]
         public async Task<ActionResult<List<BookResponseDTO>>> GetReadBooks()

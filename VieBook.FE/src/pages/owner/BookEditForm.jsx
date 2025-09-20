@@ -1,8 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { getBookById, getCategories, updateBook } from "../../api/ownerBookApi";
 
-// base url
-const API_BASE_URL = "https://localhost:7058";
 
 export default function BookEditForm() {
   const { bookId } = useParams();
@@ -12,15 +11,15 @@ export default function BookEditForm() {
     title: "",
     author: "",
     isbn: "",
-    language: "", 
+    language: "",
     description: "",
     categoryIds: [],
     status: "Active",
   });
 
   const [coverUrl, setCoverUrl] = useState("");
-  const [allCategories, setAllCategories] = useState([]); 
-  const [preview, setPreview] = useState(null); 
+  const [allCategories, setAllCategories] = useState([]);
+  const [preview, setPreview] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -28,16 +27,10 @@ export default function BookEditForm() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [bookRes, catsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/books/${bookId}`),
-          fetch(`${API_BASE_URL}/api/categories`),
+        const [bookData, catsData] = await Promise.all([
+          getBookById(bookId),
+          getCategories(),
         ]);
-
-        if (!bookRes.ok) throw new Error("Không thể tải dữ liệu sách");
-        if (!catsRes.ok) throw new Error("Không thể tải danh sách thể loại");
-
-        const bookData = await bookRes.json();
-        const catsData = await catsRes.json();
 
         const normalizedCats = catsData.map((c) => ({
           categoryId: c.categoryId ?? c.id ?? c.CategoryId ?? null,
@@ -126,17 +119,7 @@ export default function BookEditForm() {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/books/${bookId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        console.error("Update failed:", res.status, text);
-        throw new Error(`Update failed: ${res.status} ${text}`);
-      }
+      await updateBook(bookId, payload);
 
       // thành công
       alert("Cập nhật sách thành công!");

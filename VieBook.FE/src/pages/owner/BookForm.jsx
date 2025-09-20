@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getUserId } from "../../api/authApi";
+import { getCategories, createBook } from "../../api/ownerBookApi";
 
-// biến base url
-const API_BASE_URL = "https://localhost:7058";
 
 // Ảnh mặc định tạm thời
 const TEMP_IMAGE_URL =
@@ -30,9 +29,7 @@ export default function BookForm() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/Categories`);
-        if (!res.ok) throw new Error("Không thể lấy dữ liệu categories");
-        const data = await res.json();
+        const data = await getCategories();
         setCategories(data);
       } catch (err) {
         console.error("Lỗi load categories:", err);
@@ -109,14 +106,9 @@ export default function BookForm() {
         author: form.author,
       };
 
-      const res = await fetch(`${API_BASE_URL}/api/Books`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error("Lỗi khi thêm sách!");
+      await createBook(payload);
       alert("Thêm sách thành công!");
+
       navigate("/owner/books");
     } catch (err) {
       console.error("Lỗi thêm sách:", err);

@@ -113,6 +113,8 @@ namespace DataAccess.DAO
         {
             return await _context.Books
                                  .Include(b => b.Categories)
+                                 .Include(b => b.Chapters)
+                                 .Include(b => b.BookReviews)
                                  .Where(b => b.OwnerId == ownerId)
                                  .ToListAsync();
         }

@@ -8,11 +8,14 @@ import {
   RiDeleteBinLine,
   RiSoundModuleLine,
 } from "react-icons/ri";
+import { getCategories } from "../../../api/ownerBookApi";
+
+// biến books url
+const BOOK_API_URL = getCategories();
 
 const ITEMS_PER_PAGE = 5;
-const API_BASE_URL = "https://localhost:7058";
 
-// ✅ Hàm tạo danh sách số trang thông minh với dấu "..."
+// Hàm tạo danh sách số trang thông minh với dấu "..."
 function getPaginationRange(currentPage, totalPages, delta = 1) {
   const range = [];
   const left = Math.max(2, currentPage - delta);
@@ -35,7 +38,7 @@ function getPaginationRange(currentPage, totalPages, delta = 1) {
 
 export default function BookTable({ books, categories, onBookDeleted }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedBook, setSelectedBook] = useState(null); // 📌 sách đang chọn để xóa
+  const [selectedBook, setSelectedBook] = useState(null); // sách đang chọn để xóa
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE);
@@ -68,7 +71,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     );
   };
 
-  // 🔗 Helper: đổi status
+  // Helper: đổi status
   const getStatusBadge = (status) => {
     let colorClass = "bg-gray-600";
     let text = status;
@@ -91,21 +94,21 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     );
   };
 
-  // 📌 Hàm xóa sách (DELETE -> theo id)
+  // Hàm xóa sách (DELETE -> theo id)
   const handleDeleteBook = async () => {
     if (!selectedBook) return;
     try {
       setLoadingDelete(true);
 
-      const res = await fetch(
-        `${API_BASE_URL}/api/books/${selectedBook.bookId}`,
-        { method: "DELETE" }
-      );
+      const res = await fetch(`${BOOK_API_URL}/${selectedBook.bookId}`, {
+        method: "DELETE",
+      });
+
 
       if (!res.ok) throw new Error("Không thể xóa sách");
 
       if (onBookDeleted) {
-        onBookDeleted(selectedBook.bookId); // thông báo cho cha load lại
+        onBookDeleted(selectedBook.bookId); // thông báo cho list load lại
       }
 
       setSelectedBook(null); // đóng popup
@@ -149,7 +152,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                 </div>
               </td>
               <td className="p-3">{getCategoryTags(book.categoryIds)}</td>
-              <td className="p-3">{book.price || 0}</td>
+              <td className="p-3">{book.totalPrice || 0}</td>
               <td className="p-3">{book.sold || 0}</td>
               <td className="p-3 align-middle text-yellow-400">
                 <div className="flex items-center">
@@ -210,11 +213,10 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className={`px-3 py-1 rounded text-sm ${
-              currentPage === 1
+            className={`px-3 py-1 rounded text-sm ${currentPage === 1
                 ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-            }`}
+              }`}
           >
             Trước
           </button>
@@ -232,11 +234,10 @@ export default function BookTable({ books, categories, onBookDeleted }) {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded text-sm ${
-                  currentPage === page
+                className={`px-3 py-1 rounded text-sm ${currentPage === page
                     ? "bg-orange-500 text-white"
                     : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 {page}
               </button>
@@ -247,18 +248,17 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded text-sm ${
-              currentPage === totalPages
+            className={`px-3 py-1 rounded text-sm ${currentPage === totalPages
                 ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-            }`}
+              }`}
           >
             Sau
           </button>
         </div>
       )}
 
-      {/* 📌 Popup xác nhận xóa */}
+      {/* Popup xác nhận xóa */}
       {selectedBook && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
           <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-96">

@@ -5,8 +5,8 @@ import BookFilters from "../../components/owner/book/BookFilters";
 import BookTable from "../../components/owner/book/BookTable";
 import { getUserId } from "../../api/authApi";
 
-// 🔗 base URL
-const API_BASE_URL = "https://localhost:7058";
+import { getBooksByOwner, getCategories } from "../../api/ownerBookApi";
+
 
 export default function OwnerBooks() {
   const [search, setSearch] = useState("");
@@ -27,16 +27,10 @@ export default function OwnerBooks() {
         return;
       }
 
-      const [booksRes, categoriesRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/books/owner/${ownerId}`),
-        fetch(`${API_BASE_URL}/api/categories`),
+      const [booksData, categoriesData] = await Promise.all([
+        getBooksByOwner(ownerId),
+        getCategories(),
       ]);
-
-      if (!booksRes.ok) throw new Error("Không thể tải sách");
-      if (!categoriesRes.ok) throw new Error("Không thể tải categories");
-
-      const booksData = await booksRes.json();
-      const categoriesData = await categoriesRes.json();
 
       setBooks(Array.isArray(booksData) ? booksData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
