@@ -47,6 +47,18 @@ export const API_ENDPOINTS = {
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,
   // ORDERS: `${API_BASE_URL}/api/orders`,
+
+  // Book owner endpoints
+  BOOKS: {
+    GET_ALL_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/books/owner/${ownerId}`,
+    GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+    CREATE: `${API_BASE_URL}/api/books`,
+    UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+    DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+  },
+  CATEGORIES: {
+    GET_ALL: `${API_BASE_URL}/api/categories`,
+  },
 };
 
 // Helper function to get full API URL

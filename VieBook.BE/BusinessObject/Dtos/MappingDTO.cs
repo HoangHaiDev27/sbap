@@ -40,8 +40,22 @@ namespace BusinessObject.Dtos
                     opt => opt.MapFrom(src => src.Chapters))
                 .ForMember(dest => dest.Reviews,
                     opt => opt.MapFrom(src => src.BookReviews))
+                .ForMember(dest => dest.Status,
+                    opt => opt.MapFrom(src => src.Status))
                 .ForMember(dest => dest.TotalPrice,
-        opt => opt.MapFrom(src => src.Chapters.Sum(ch => ch.PriceAudio ?? 0)));
+                    opt => opt.MapFrom(src => src.Chapters.Sum(ch => ch.PriceAudio ?? 0)));
+            // Book → BookDTO
+            CreateMap<Book, BookDTO>()
+                .ForMember(dest => dest.OwnerName,
+                    opt => opt.MapFrom(src => src.Owner.UserProfile.FullName))
+                .ForMember(dest => dest.CategoryIds,
+                    opt => opt.MapFrom(src => src.Categories.Select(c => c.CategoryId).ToList()))
+                .ForMember(dest => dest.TotalPrice,
+                    opt => opt.MapFrom(src => src.Chapters.Sum(c => c.PriceAudio ?? 0)))
+                .ForMember(dest => dest.Rating,
+                    opt => opt.MapFrom(src => src.BookReviews.Any()
+                        ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
+                        : 0));
 
             // Map từ RegisterRequestDto sang User
             CreateMap<RegisterRequestDto, User>()
@@ -55,6 +69,11 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Roles, opt => opt.Ignore()) // sẽ gán ở Service
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // hash trong Service
 
+            CreateMap<BookDTO, Book>()
+                .ForMember(dest => dest.Categories, opt => opt.Ignore());
+
+            // Category → CategoryDTO
+            CreateMap<Category, CategoryDTO>().ReverseMap();
             // Book → BookResponseDTO
             CreateMap<Book, BookResponseDTO>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BookId))
