@@ -25,8 +25,8 @@ namespace VieBook.BE.Controllers
             _mapper = mapper;
         }
         [HttpGet]
-        [Authorize]
-        [RequirePermission(Permissions.ViewUsers)]
+        // [Authorize]
+        // [RequirePermission(Permissions.ViewUsers)]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
             try
