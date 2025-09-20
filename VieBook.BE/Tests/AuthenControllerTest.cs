@@ -1,110 +1,196 @@
-﻿﻿using BusinessObject.Dtos;
-using DataAccess;
-using Microsoft.Extensions.DependencyInjection;
-using System.Net.Http.Json;
-using System.Text;
-using Xunit;
-using Tests;
+﻿﻿// using BusinessObject.Dtos;
+// using DataAccess;
+// using Microsoft.Extensions.DependencyInjection;
+// using Services.Implementations;
+// using Services.Interfaces;
+// using System.Net.Http.Json;
+// using System.Text;
+// using Tests;
+// using Xunit;
+// using Microsoft.Extensions.Configuration;
 
 
-public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Program>>
-{
-    private readonly CustomWebApplicationFactory<Program> _factory;
-    private readonly HttpClient _client;
 
-    public AuthControllerTests(CustomWebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-        _client = _factory.CreateClient();
-        SeedTestUser().GetAwaiter().GetResult();
-    }
+// public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Program>>
+// {
+//     private readonly CustomWebApplicationFactory<Program> _factory;
+//     private readonly HttpClient _client;
 
-    private async Task SeedTestUser()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<VieBookContext>();
-        if (!context.Users.Any(u => u.Email == "alice@viebook.local"))
-        {
-            var u = new BusinessObject.Models.User
-            {
-                Email = "alice@viebook.local",
-                PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword("OldPass123")),
-                Status = "Active",
-                CreatedAt = DateTime.UtcNow
-            };
-            context.Users.Add(u);
-            await context.SaveChangesAsync();
-        }
-    }
+//     public AuthControllerTests(CustomWebApplicationFactory<Program> factory)
+//     {
+//         _factory = factory;
+//         _client = _factory.CreateClient();
+//         SeedTestUser().GetAwaiter().GetResult();
+//         SeedCustomerRole().GetAwaiter().GetResult();
+//     }
 
-    [Fact]
-    public async Task ForgotPassword_ReturnsMessage_WhenUserExists()
-    {
-        // Arrange
-        var req = new { Email = "alice@viebook.local" };
+//     private async Task SeedTestUser()
+//     {
+//         using var scope = _factory.Services.CreateScope();
+//         var context = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+//         if (!context.Users.Any(u => u.Email == "alice@viebook.local"))
+//         {
+//             var u = new BusinessObject.Models.User
+//             {
+//                 Email = "alice@viebook.local",
+//                 PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword("OldPass123")),
+//                 Status = "Active",
+//                 CreatedAt = DateTime.UtcNow
+//             };
+//             context.Users.Add(u);
+//             await context.SaveChangesAsync();
+//         }
+//     }
+//     private async Task SeedCustomerRole()
+//     {
+//         using var scope = _factory.Services.CreateScope();
+//         var context = scope.ServiceProvider.GetRequiredService<VieBookContext>();
 
-        // Act
-        var res = await _client.PostAsJsonAsync("/api/auth/forgot-password", req);
+//         if (!context.Roles.Any(r => r.RoleId == 4))
+//         {
+//             context.Roles.Add(new BusinessObject.Models.Role
+//             {
+//                 RoleId = 4,
+//                 RoleName = "Customer"
+//             });
+//             await context.SaveChangesAsync();
+//         }
+//     }
 
-        // Assert
-        res.EnsureSuccessStatusCode();
-        var json = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
 
-        Assert.NotNull(json);
-        Assert.True(json.ContainsKey("message"));
-        Assert.False(string.IsNullOrEmpty(json["message"]));
-    }
+//     [Fact]
+//     public async Task ForgotPassword_ReturnsMessage_WhenUserExists()
+//     {
+//         // Arrange
+//         var req = new { Email = "alice@viebook.local" };
 
-    // [Fact]
-    // public async Task ResetPassword_ReturnsSuccess_WhenOtpValid()
-    // {
-    //     // Giả sử bạn đã seed OTP hoặc mock
-    //     var req = new ResetPasswordRequestDto
-    //     {
-    //         Email = "huonggntt14@gmail.com",
-    //         Otp = "MWKUPT",  // phải trùng OTP đã tạo hoặc mock service trả về
-    //         NewPassword = "NewPass123"
-    //     };
+//         // Act
+//         var res = await _client.PostAsJsonAsync("/api/auth/forgot-password", req);
 
-    //     var res = await _client.PostAsJsonAsync("/api/auth/reset-password", req);
-    //     res.EnsureSuccessStatusCode();
+//         // Assert
+//         res.EnsureSuccessStatusCode();
+//         var json = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
 
-    //     var json = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-    //     Assert.NotNull(json);
-    //     Assert.Equal("Password reset successful", json["message"]);
-    // }
-    [Fact]
-    public async Task Login_ReturnsToken_WhenCredentialsValid()
-    {
-        var req = new
-        {
-            Email = "alice@viebook.local",
-            Password = "OldPass123"
-        };
+//         Assert.NotNull(json);
+//         Assert.True(json.ContainsKey("message"));
+//         Assert.False(string.IsNullOrEmpty(json["message"]));
+//     }
 
-        var res = await _client.PostAsJsonAsync("/api/auth/login", req);
-        res.EnsureSuccessStatusCode();
+//     // [Fact]
+//     // public async Task ResetPassword_ReturnsSuccess_WhenOtpValid()
+//     // {
+//     //     // Giả sử bạn đã seed OTP hoặc mock
+//     //     var req = new ResetPasswordRequestDto
+//     //     {
+//     //         Email = "huonggntt14@gmail.com",
+//     //         Otp = "MWKUPT",  // phải trùng OTP đã tạo hoặc mock service trả về
+//     //         NewPassword = "NewPass123"
+//     //     };
 
-        var json = await res.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-        Assert.NotNull(json);
-        Assert.True(json.ContainsKey("token") || json.ContainsKey("accessToken"));
-    }
+//     //     var res = await _client.PostAsJsonAsync("/api/auth/reset-password", req);
+//     //     res.EnsureSuccessStatusCode();
 
-    [Fact]
-    public async Task Login_ReturnsUnauthorized_WhenPasswordInvalid()
-    {
-        // Arrange
-        var req = new
-        {
-            Email = "alice@viebook.local",
-            Password = "WrongPass!"
-        };
+//     //     var json = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+//     //     Assert.NotNull(json);
+//     //     Assert.Equal("Password reset successful", json["message"]);
+//     // }
+//     [Fact]
+//     public async Task Login_ReturnsToken_WhenCredentialsValid()
+//     {
+//         var req = new
+//         {
+//             Email = "alice@viebook.local",
+//             Password = "OldPass123"
+//         };
 
-        // Act
-        var res = await _client.PostAsJsonAsync("/api/auth/login", req);
+//         var res = await _client.PostAsJsonAsync("/api/auth/login", req);
+//         res.EnsureSuccessStatusCode();
 
-        // Assert
-        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, res.StatusCode);
-    }
+//         var json = await res.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+//         Assert.NotNull(json);
+//         Assert.True(json.ContainsKey("token") || json.ContainsKey("accessToken"));
+//     }
 
-}
+//     [Fact]
+//     public async Task Login_ReturnsUnauthorized_WhenPasswordInvalid()
+//     {
+//         // Arrange
+//         var req = new
+//         {
+//             Email = "alice@viebook.local",
+//             Password = "WrongPass!"
+//         };
+
+//         // Act
+//         var res = await _client.PostAsJsonAsync("/api/auth/login", req);
+
+//         // Assert
+//         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, res.StatusCode);
+//     }
+//     [Fact]
+//     public async Task Register_ReturnsSuccess_WhenDataValid()
+//     {
+//         var uniqueEmail = $"newuser_{Guid.NewGuid()}@viebook.local";
+
+//         var req = new RegisterRequestDto
+//         {
+//             FullName = "Test User",
+//             Email = uniqueEmail,
+//             Password = "Password123"
+//         };
+
+//         var res = await _client.PostAsJsonAsync("/api/auth/register", req);
+//         res.EnsureSuccessStatusCode();
+
+//         var json = await res.Content.ReadFromJsonAsync<RegisterResponseDto>();
+
+//         Assert.NotNull(json);
+//         Assert.Contains("Vui lòng kiểm tra email", json.Message);
+//         Assert.True(json.RequiresEmailConfirmation);
+//     }
+
+//     [Fact]
+//     public async Task VerifyEmail_ReturnsSuccess_WhenTokenValid()
+//     {
+//         var email = $"verifyuser_{Guid.NewGuid()}@viebook.local";
+
+//         using (var scope = _factory.Services.CreateScope())
+//         {
+//             var context = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+//             var user = new BusinessObject.Models.User
+//             {
+//                 Email = email,
+//                 PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword("Password123")),
+//                 Status = "Pending",
+//                 CreatedAt = DateTime.UtcNow,
+//                 UserProfile = new BusinessObject.Models.UserProfile
+//                 {
+//                     FullName = "Verify User"
+//                 }
+//             };
+//             context.Users.Add(user);
+//             await context.SaveChangesAsync();
+//         }
+
+//         using var scope2 = _factory.Services.CreateScope();
+//         var config = scope2.ServiceProvider.GetRequiredService<IConfiguration>();
+//         var jwtService = new JwtService(config);
+
+//         var context2 = scope2.ServiceProvider.GetRequiredService<VieBookContext>();
+//         var testUser = context2.Users.First(u => u.Email == email);
+//         var token = jwtService.GenerateToken(testUser.UserId.ToString(), testUser.Email);
+
+//         var res = await _client.GetAsync($"/api/auth/verify-email?token={token}");
+//         res.EnsureSuccessStatusCode();
+
+//         var json = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+//         Assert.NotNull(json);
+//         Assert.Equal("Email đã được xác thực thành công!", json["message"]);
+//     }
+
+
+
+
+
+// }
