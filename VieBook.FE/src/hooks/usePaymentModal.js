@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { verifyPayment } from "../api/paymentApi";
 import { useCoinsStore } from "./stores/coinStore";
 import { useNotificationStore } from "./stores/notificationStore";
+import { getUserId } from "../api/authApi";
 
 export const usePaymentModal = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -69,15 +70,24 @@ export const usePaymentModal = () => {
           setPaymentStatus('success');
           setPaymentMessage('Giao dịch đã được xử lý thành công. Số xu đã được cộng vào tài khoản của bạn.');
           setPaymentAmount(response.data.amount || parseInt(amount) || 0);
-          // Chuyển đổi từ VNĐ sang xu (1 VNĐ = 1 xu)
-          const coinAmount = (response.data.amount || parseInt(amount) || 0) / 1000;
-          addCoins(coinAmount);
+          // Fetch lại coins từ server để đảm bảo sync với dữ liệu thực tế
+          const { fetchCoins } = useCoinsStore.getState();
+          const currentUserId = getUserId();
+          if (currentUserId) {
+            fetchCoins(currentUserId);
+          }
           
           // Thêm notification cho thanh toán thành công
           const now = new Date();
+          if (!currentUserId) {
+            console.warn("No user ID available for notification");
+            return;
+          }
+          
+          const coinAmount = (response.data.amount || parseInt(amount) || 0) / 1000;
           const notification = {
             notificationId: Date.now(), // Temporary ID
-            userId: 4,
+            userId: currentUserId,
             type: "WALLET_RECHARGE",
             title: "Nạp tiền thành công",
             body: `Bạn đã nạp thành công ${coinAmount.toLocaleString()} xu vào ví. Số dư hiện tại đã được cập nhật.`,
@@ -89,7 +99,7 @@ export const usePaymentModal = () => {
           addNotification(notification);
           
           // Cập nhật unread count
-          fetchUnreadCount(4);
+          fetchUnreadCount(currentUserId);
         } else {
           setPaymentStatus('error');
           setPaymentMessage('Giao dịch chưa được xác nhận. Vui lòng thử lại sau.');

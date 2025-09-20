@@ -40,5 +40,13 @@ namespace DataAccess.DAO
                 .ToListAsync();
         }
 
+        public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
+        {
+            return await _context.Chapters
+                .Where(c => c.BookId == bookId)
+                .OrderBy(c => c.ChapterId)
+                .ToListAsync();
+        }
+
     }
 }
