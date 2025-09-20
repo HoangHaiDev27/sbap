@@ -10,5 +10,6 @@ namespace Repositories.Interfaces
     public interface IBookRepository
     {
         Task<Book?> GetBookDetailAsync(int id);
+        Task<List<Book>> GetReadBooksAsync();
     }
 }

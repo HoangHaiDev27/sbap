@@ -10,5 +10,6 @@ namespace Services.Interfaces
     public interface IBookService
     {
         Task<BookDetailDTO?> GetBookDetailAsync(int id);
+        Task<List<BookResponseDTO>> GetReadBooksAsync();
     }
 }

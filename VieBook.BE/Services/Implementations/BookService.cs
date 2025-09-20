@@ -27,5 +27,10 @@ namespace Services.Implementations
             if (book == null) return null;
             return _mapper.Map<BookDetailDTO>(book);
         }
+        public async Task<List<BookResponseDTO>> GetReadBooksAsync()
+        {
+            var books = await _bookRepo.GetReadBooksAsync();
+            return _mapper.Map<List<BookResponseDTO>>(books);
+        }
     }
 }
