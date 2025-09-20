@@ -10,6 +10,11 @@ namespace VieBook.BE.Helpers
             if (httpContext?.User?.Identity?.IsAuthenticated != true)
                 return null;
 
+            // Check for test authentication first
+            var testUserIdClaim = httpContext.User.FindFirst("UserId")?.Value;
+            if (!string.IsNullOrEmpty(testUserIdClaim) && int.TryParse(testUserIdClaim, out int testUserId))
+                return testUserId;
+
             var userIdClaim = httpContext.User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
                 ?? httpContext.User.FindFirst("sub")?.Value
                 ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
