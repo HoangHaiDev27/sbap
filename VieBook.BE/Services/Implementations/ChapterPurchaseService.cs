@@ -148,6 +148,10 @@ namespace Services.Implementations
                 // Trừ xu từ ví
                 await _userRepository.UpdateWalletBalanceAsync(userId, -totalCost);
 
+                // Lấy số dư mới sau khi cập nhật
+                var updatedUser = await _userRepository.GetByIdAsync(userId);
+                var remainingBalance = updatedUser?.Wallet ?? 0;
+
                 // Tạo thông báo
                 await _notificationService.CreateChapterPurchaseNotificationAsync(
                     userId,
@@ -163,7 +167,7 @@ namespace Services.Implementations
                     Success = true,
                     Message = $"Successfully purchased {newChaptersToPurchase.Count} chapters",
                     TotalCost = totalCost,
-                    RemainingBalance = user.Wallet - totalCost,
+                    RemainingBalance = remainingBalance,
                     PurchasedItems = purchasedItems
                 };
             }

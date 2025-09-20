@@ -37,8 +37,15 @@ export default function RechargePage() {
   } = useRechargeForm();
   
   // Coin store và user info
-  const { coins } = useCoinsStore();
+  const { coins, fetchCoins } = useCoinsStore();
   const { userId, isAuthenticated } = useCurrentUser();
+  
+  // Fetch coins when component mounts
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      fetchCoins(userId);
+    }
+  }, [isAuthenticated, userId, fetchCoins]);
 
   const handleRecharge = async () => {
     if (!isAuthenticated) {
@@ -79,7 +86,7 @@ export default function RechargePage() {
           <div>
             <p className="text-gray-400 text-sm">Số dư hiện tại</p>
             <p className="text-2xl font-bold text-yellow-400">
-              {isAuthenticated ? `${coins.toLocaleString()} xu` : "Vui lòng đăng nhập"}
+              {isAuthenticated ? `${(coins || 0).toLocaleString()} xu` : "Vui lòng đăng nhập"}
             </p>
           </div>
         </div>
@@ -187,13 +194,13 @@ export default function RechargePage() {
             <div className="flex justify-between">
               <span>Số tiền nạp:</span>
               <span className="font-bold">
-                {getCurrentAmount().toLocaleString()} VNĐ
+                {(getCurrentAmount() || 0).toLocaleString()} VNĐ
               </span>
             </div>
             <div className="flex justify-between">
               <span>Số xu cơ bản:</span>
               <span className="font-bold text-yellow-400">
-                {(getCurrentAmount() / 1000).toLocaleString()} xu
+                {((getCurrentAmount() || 0) / 1000).toLocaleString()} xu
               </span>
             </div>
             {getBonusCoins() > 0 && (
@@ -207,7 +214,7 @@ export default function RechargePage() {
             <div className="flex justify-between text-lg font-bold">
               <span>Tổng xu nhận được:</span>
               <span className="text-yellow-400">
-                {getTotalCoins().toLocaleString()} xu
+                {(getTotalCoins() || 0).toLocaleString()} xu
               </span>
             </div>
             <div className="flex justify-between text-green-400">
@@ -218,7 +225,7 @@ export default function RechargePage() {
             <div className="flex justify-between text-lg font-bold">
               <span>Tổng cộng:</span>
               <span className="text-orange-500">
-                {getCurrentAmount().toLocaleString()} VNĐ
+                {(getCurrentAmount() || 0).toLocaleString()} VNĐ
               </span>
             </div>
           </div>

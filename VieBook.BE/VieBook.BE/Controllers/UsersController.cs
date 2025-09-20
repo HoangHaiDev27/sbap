@@ -3,6 +3,7 @@ using BusinessObject;
 using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using BusinessObject.Models;
 using Services.Interfaces;
 

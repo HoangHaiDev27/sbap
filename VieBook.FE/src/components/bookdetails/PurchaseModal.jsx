@@ -60,9 +60,12 @@ export default function PurchaseModal({
     try {
       // Gọi API mua chapter
       const response = await purchaseChapters(bookId, selectedChapters);
+      console.log("Chapter purchase response:", response);
       
       if (response.error === 0 && response.data.success) {
         // Cập nhật số xu từ response
+        console.log("PurchaseModal - Response data:", response.data);
+        console.log("PurchaseModal - remainingBalance:", response.data.remainingBalance);
         setCoins(response.data.remainingBalance);
         
         // Thêm thông báo
@@ -90,7 +93,7 @@ export default function PurchaseModal({
         
         toast.success(`Mua thành công ${selectedChapters.length} chương với giá ${totalPrice.toLocaleString()} xu!`);
       } else {
-        toast.error(response.message || "Có lỗi xảy ra khi mua chương. Vui lòng thử lại.");
+        toast.error(response.data?.message || response.message || "Có lỗi xảy ra khi mua chương. Vui lòng thử lại.");
       }
       
     } catch (error) {

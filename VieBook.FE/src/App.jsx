@@ -24,8 +24,20 @@ function App() {
     const r = getRole();
     if (r) setRole(String(r).toLowerCase());
     const onAuthChanged = (e) => {
-      const { role: newRole } = e.detail || {};
+      const { role: newRole, user } = e.detail || {};
       if (newRole) setRole(String(newRole).toLowerCase());
+      // Fetch coins when user logs in
+      if (user) {
+        const userId = user.userId || user.UserId || user.id || user.Id;
+        console.log("App - Auth changed, user:", user, "userId:", userId);
+        if (userId) {
+          fetchCoins(userId);
+        }
+      } else {
+        // If user is null (logout), reset coins
+        console.log("App - User logged out, resetting coins");
+        useCoinsStore.getState().setCoins(0);
+      }
     };
     window.addEventListener("auth:changed", onAuthChanged);
     return () => window.removeEventListener("auth:changed", onAuthChanged);
