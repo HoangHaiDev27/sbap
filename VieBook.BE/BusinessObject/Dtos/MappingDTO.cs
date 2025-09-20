@@ -41,15 +41,17 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Reviews,
                     opt => opt.MapFrom(src => src.BookReviews))
                 .ForMember(dest => dest.Status,
-                    opt => opt.MapFrom(src => src.Status));
+                    opt => opt.MapFrom(src => src.Status))
+                .ForMember(dest => dest.TotalPrice,
+                    opt => opt.MapFrom(src => src.Chapters.Sum(ch => ch.PriceAudio ?? 0)));
             // Book → BookDTO
             CreateMap<Book, BookDTO>()
                 .ForMember(dest => dest.OwnerName,
                     opt => opt.MapFrom(src => src.Owner.UserProfile.FullName))
                 .ForMember(dest => dest.CategoryIds,
-                     opt => opt.MapFrom(src => src.Categories.Select(c => c.CategoryId).ToList()));
-                .ForMember(dest => dest.TotalPrice,
-        opt => opt.MapFrom(src => src.Chapters.Sum(ch => ch.PriceAudio ?? 0)));
+                    opt => opt.MapFrom(src => src.Categories.Select(c => c.CategoryId).ToList()))
+                ;
+
 
             // Map từ RegisterRequestDto sang User
             CreateMap<RegisterRequestDto, User>()
