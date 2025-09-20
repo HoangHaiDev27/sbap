@@ -11,7 +11,7 @@ namespace Services.Interfaces
         Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto request);
         Task<string> ResetPasswordAsync(ResetPasswordRequestDto request);
         Task LogoutAsync(int userId);
-        Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request);
+        Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, string frontendUrl);
         Task<string> VerifyEmailAsync(string token);
         Task<string> VerifyOtpAsync(VerifyOtpRequestDto request);
     }

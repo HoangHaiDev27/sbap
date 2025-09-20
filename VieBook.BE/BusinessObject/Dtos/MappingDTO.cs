@@ -84,7 +84,14 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Image,
                 opt => opt.MapFrom(src => src.CoverUrl))
             .ForMember(dest => dest.Description,
-                opt => opt.MapFrom(src => src.Description));
+                opt => opt.MapFrom(src => src.Description))
+            .ForMember(dest => dest.Narrator,
+                opt => opt.MapFrom(src =>
+                    src.Chapters
+                        .Where(c => c.ChapterAudioUrl != null)
+                        .Select(c => c.StorageMeta)
+                        .FirstOrDefault()));
+
         }
 
     }

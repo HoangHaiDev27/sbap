@@ -32,5 +32,18 @@ namespace Services.Implementations
             var books = await _bookRepo.GetReadBooksAsync();
             return _mapper.Map<List<BookResponseDTO>>(books);
         }
+        public async Task<List<BookResponseDTO>> GetAudioBooksAsync()
+        {
+            var books = await _bookRepo.GetAudioBooksAsync();
+            return _mapper.Map<List<BookResponseDTO>>(books);
+        }
+
+        public async Task<BookResponseDTO?> GetAudioBookDetailAsync(int id)
+        {
+            var book = await _bookRepo.GetAudioBookDetailAsync(id);
+            if (book == null) return null;
+            return _mapper.Map<BookResponseDTO>(book);
+        }
+
     }
 }

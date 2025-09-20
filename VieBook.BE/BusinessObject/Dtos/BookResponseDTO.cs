@@ -19,5 +19,6 @@ namespace BusinessObject.Dtos
         public int Chapters { get; set; } // số lượng chương
         public string Image { get; set; } // CoverUrl
         public string Description { get; set; }
+        public string? Narrator { get; set; }
     }
 }
