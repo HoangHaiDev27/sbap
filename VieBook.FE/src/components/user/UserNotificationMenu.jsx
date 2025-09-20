@@ -123,11 +123,25 @@ function UserNotificationMenu() {
 
   const formatTimeAgo = (dateString) => {
     try {
-      const date = new Date(dateString);
+      console.log('Formatting date:', dateString);
+      
+      // Parse date string - handle both UTC and local time
+      let date;
+      if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('UTC')) {
+        // Already has timezone info
+        date = new Date(dateString);
+      } else {
+        // Assume UTC if no timezone info (backend sends UTC)
+        date = new Date(dateString + 'Z');
+      }
+      
+      console.log('Parsed date:', date, 'isValid:', !isNaN(date.getTime()));
+      
       const now = new Date();
       
       // Kiểm tra nếu date không hợp lệ
       if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateString);
         return "Thời gian không xác định";
       }
       
