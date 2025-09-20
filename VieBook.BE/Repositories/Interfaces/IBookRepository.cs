@@ -21,6 +21,7 @@ namespace Repositories.Interfaces
         Task<List<Book>> GetBooksByOwnerId(int ownerId);
         Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
         Task<List<Book>> GetReadBooksAsync();
-
+        Task<List<Book>> GetAudioBooksAsync();
+        Task<Book?> GetAudioBookDetailAsync(int id);
     }
 }

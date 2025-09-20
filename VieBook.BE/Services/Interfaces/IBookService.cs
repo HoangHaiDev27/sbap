@@ -21,5 +21,8 @@ namespace Services.Interfaces
         Task<bool> IsIsbnExistsAsync(string isbn);
         Task<List<Book>> GetBooksByOwnerId(int ownerId);
         Task<List<BookResponseDTO>> GetReadBooksAsync();
+        Task<List<BookResponseDTO>> GetAudioBooksAsync();
+        Task<BookResponseDTO?> GetAudioBookDetailAsync(int id);
+
     }
 }

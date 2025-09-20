@@ -47,6 +47,29 @@ namespace DataAccess.DAO
                 .OrderBy(c => c.ChapterId)
                 .ToListAsync();
         }
+        // lấy sách audio
+        public async Task<List<Book>> GetAudioBooksAsync()
+        {
+            return await _context.Books
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null)) // chỉ sách có audio
+                .ToListAsync();
+        }
+
+        public async Task<Book?> GetAudioBookDetailAsync(int id)
+        {
+            return await _context.Books
+                .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                    .ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
+                .FirstOrDefaultAsync(b => b.BookId == id && b.Chapters.Any(c => c.ChapterAudioUrl != null));
+        }
+
 
         public async Task<List<Book>> GetAllAsync()
         {

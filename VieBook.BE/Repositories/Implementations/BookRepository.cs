@@ -43,5 +43,15 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetReadBooksAsync();
         }
+        public async Task<List<Book>> GetAudioBooksAsync()
+        {
+            return await _bookDao.GetAudioBooksAsync();
+        }
+
+        public async Task<Book?> GetAudioBookDetailAsync(int id)
+        {
+            return await _bookDao.GetAudioBookDetailAsync(id);
+        }
+
     }
 }
