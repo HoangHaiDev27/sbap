@@ -17,6 +17,9 @@ export const API_ENDPOINTS = {
     FORGOT: `${API_BASE_URL}/api/auth/forgot-password`,
     RESET: `${API_BASE_URL}/api/auth/reset-password`,
     VERIFY_OTP: `${API_BASE_URL}/api/auth/verify-otp`,
+    GOOGLE_LOGIN: `${API_BASE_URL}/api/auth/google-login`,
+    REFRESH_TOKEN: `${API_BASE_URL}/api/auth/refresh-token`,
+    REVOKE_TOKEN: `${API_BASE_URL}/api/auth/revoke-token`,
   },
 
   // Payment endpoints

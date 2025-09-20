@@ -31,9 +31,14 @@ function App() {
     return () => window.removeEventListener("auth:changed", onAuthChanged);
   }, [fetchCoins]);
   if (hideLayout) {
-    //  Chỉ render nội dung route, không layout
-    return <AppRoutes />;
+    return (
+      <>
+        <AppRoutes />
+        <Toast />   {/* ✅ luôn render toast */}
+      </>
+    );
   }
+
   // Kiểm tra layout đặc biệt
   const isReaderPage = location.pathname.startsWith("/reader");
   const isPlayerPage = location.pathname.startsWith("/player");

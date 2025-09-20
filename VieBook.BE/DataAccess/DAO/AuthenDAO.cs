@@ -33,6 +33,12 @@ namespace DataAccess.DAO
             return await _context.Roles.FindAsync(roleId);
         }
 
+        public async Task<ExternalLogin?> GetExternalLoginByProviderAndKeyAsync(string provider, string providerKey)
+        {
+            return await _context.ExternalLogins
+                .FirstOrDefaultAsync(el => el.Provider == provider && el.ProviderKey == providerKey);
+        }
+
         // nếu cần thêm Create/Delete...
     }
 }

@@ -8,8 +8,9 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-export function setAuth(token, user, roles) {
+export function setAuth(token, user, roles, refreshToken = null) {
   if (token) localStorage.setItem(TOKEN_KEY, token);
+  if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
   if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
   let role = Array.isArray(roles) && roles.length ? String(roles[0]).toLowerCase() : undefined;
   // Map backend role names to UI header roles
@@ -18,13 +19,14 @@ export function setAuth(token, user, roles) {
   if (role) localStorage.setItem(ROLE_KEY, role);
   try {
     window.dispatchEvent(
-      new CustomEvent("auth:changed", { detail: { token, user, role } })
+      new CustomEvent("auth:changed", { detail: { token, user, role, refreshToken } })
     );
   } catch { /* empty */ }
 }
 
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("refreshToken");
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(ROLE_KEY);
 }
@@ -50,14 +52,30 @@ export async function login(email, password) {
   }
   const data = await res.json();
   const token = data.token || data.Token || data?.Token;
+  const refreshToken = data.refreshToken || data.RefreshToken || data?.RefreshToken;
   const user = data.user || data.User || data?.User;
   const roles = data.roles || data.Roles || [];
-  setAuth(token, user, roles);
+  setAuth(token, user, roles, refreshToken);
   return data;
 }
 
 export async function logout() {
-  // Client-side logout only to avoid 401 noise when token expired/missing
+  const refreshToken = getRefreshToken();
+  
+  // Try to revoke refresh token on server
+  if (refreshToken) {
+    try {
+      await fetch(API_ENDPOINTS.AUTH.REVOKE_TOKEN, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+    } catch (error) {
+      console.error("Failed to revoke token:", error);
+    }
+  }
+  
+  // Clear auth data
   clearAuth();
   try {
     // Notify UI to switch to guest immediately
@@ -70,11 +88,67 @@ export async function logout() {
   } catch { /* empty */ }
 }
 
+export async function refreshToken() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error("Không tìm thấy refresh token");
+  }
+
+  try {
+    const res = await fetch(API_ENDPOINTS.AUTH.REFRESH_TOKEN, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(err.message || "Refresh token thất bại");
+    }
+
+    const data = await res.json();
+    const newToken = data.token || data.Token;
+    const newRefreshToken = data.refreshToken || data.RefreshToken;
+
+    // Update tokens in localStorage
+    if (newToken) localStorage.setItem(TOKEN_KEY, newToken);
+    if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+
+    return { token: newToken, refreshToken: newRefreshToken };
+  } catch (error) {
+    // If refresh fails, clear auth and redirect to login
+    clearAuth();
+    window.dispatchEvent(
+      new CustomEvent("auth:changed", { detail: { token: null, user: null, role: "" } })
+    );
+    throw error;
+  }
+}
+
 export async function authFetch(input, init = {}) {
   const token = getToken();
   const headers = new Headers(init.headers || {});
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  return fetch(input, { ...init, headers });
+  
+  let response = await fetch(input, { ...init, headers });
+  
+  // If token expired, try to refresh
+  if (response.status === 401 && getRefreshToken()) {
+    try {
+      await refreshToken();
+      // Retry the original request with new token
+      const newToken = getToken();
+      if (newToken) {
+        headers.set("Authorization", `Bearer ${newToken}`);
+        response = await fetch(input, { ...init, headers });
+      }
+    } catch (error) {
+      // Refresh failed, let the 401 response through
+      console.error("Token refresh failed:", error);
+    }
+  }
+  
+  return response;
 }
 
 export function getRole() {
@@ -85,6 +159,10 @@ export function getUserId() {
   const user = getCurrentUser();
   if (!user) return null;
   return user.userId || user.UserId || user.id || user.Id || null;
+}
+
+export function getRefreshToken() {
+  return localStorage.getItem("refreshToken");
 }
 
 export async function changePassword(currentPassword, newPassword) {
@@ -185,6 +263,29 @@ export async function resetPassword(email, newPassword) {
     return { success: false, message: err.message };
   }
 }
+
+// ==== Google Login ====
+export async function googleLogin(idToken) {
+  const res = await fetch(API_ENDPOINTS.AUTH.GOOGLE_LOGIN, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || "Đăng nhập Google thất bại");
+  }
+  
+  const data = await res.json();
+  const token = data.token || data.Token || data?.Token;
+  const refreshToken = data.refreshToken || data.RefreshToken || data?.RefreshToken;
+  const user = data.user || data.User || data?.User;
+  const roles = data.roles || data.Roles || [];
+  setAuth(token, user, roles, refreshToken);
+  return data;
+}
+
 
 
 

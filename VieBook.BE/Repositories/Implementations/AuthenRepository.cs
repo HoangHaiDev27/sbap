@@ -15,6 +15,7 @@ namespace Repositories.Implementations
         public Task UpdateAsync(User user) => _authDAO.UpdateAsync(user);
         public Task<User> CreateAsync(User user) => _authDAO.CreateAsync(user);
         public Task<Role?> GetRoleByIdAsync(int roleId) => _authDAO.GetRoleByIdAsync(roleId);
+        public Task<ExternalLogin?> GetExternalLoginByProviderAndKeyAsync(string provider, string providerKey) => _authDAO.GetExternalLoginByProviderAndKeyAsync(provider, providerKey);
 
     }
 }

@@ -9,5 +9,6 @@ namespace Repositories.Interfaces
         Task UpdateAsync(User user);
         Task<User> CreateAsync(User user);
         Task<Role?> GetRoleByIdAsync(int roleId);
+        Task<ExternalLogin?> GetExternalLoginByProviderAndKeyAsync(string provider, string providerKey);
     }
 }

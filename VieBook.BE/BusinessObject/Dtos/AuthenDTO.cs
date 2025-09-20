@@ -15,6 +15,7 @@ namespace BusinessObject.Dtos
     public class LoginResponseDto
     {
         public string Token { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
         public UserDTO User { get; set; } = new UserDTO();
         public List<string> Roles { get; set; } = new List<string>();
     }
@@ -24,5 +25,14 @@ namespace BusinessObject.Dtos
         public string CurrentPassword { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
     }
+    public class RefreshTokenRequestDto
+    {
+        public string RefreshToken { get; set; } = string.Empty;
+    }
 
+    public class RefreshTokenResponseDto
+    {
+        public string Token { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+    }
 }

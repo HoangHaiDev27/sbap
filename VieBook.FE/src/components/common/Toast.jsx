@@ -5,6 +5,7 @@ export default function Toast() {
 
   useEffect(() => {
     const handler = (e) => {
+      console.log("Toast received:", e.detail);
       setToast(e.detail);
       setTimeout(() => setToast(null), 3000);
     };

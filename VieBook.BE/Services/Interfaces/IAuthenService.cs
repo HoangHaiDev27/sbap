@@ -15,5 +15,7 @@ namespace Services.Interfaces
         Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request);
         Task<string> VerifyEmailAsync(string token);
         Task<string> VerifyOtpAsync(VerifyOtpRequestDto request);
+        Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request);
+        Task RevokeTokenAsync(string token, string reason = "Revoked");
     }
 }

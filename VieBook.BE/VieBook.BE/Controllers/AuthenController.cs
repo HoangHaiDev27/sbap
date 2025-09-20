@@ -11,7 +11,12 @@ using System.Text.RegularExpressions;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    public AuthController(IAuthService authService) => _authService = authService;
+    private readonly IGoogleAuthService _googleAuthService;
+    public AuthController(IAuthService authService, IGoogleAuthService googleAuthService) 
+    {
+        _authService = authService;
+        _googleAuthService = googleAuthService;
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
@@ -141,6 +146,48 @@ public class AuthController : ControllerBase
     {
         var result = await (_authService as AuthService)!.VerifyEmailAsync(token);
         return Ok(new { message = result });
+    }
+
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
+    {
+        try
+        {
+            var res = await _googleAuthService.GoogleLoginAsync(request);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+    {
+        try
+        {
+            var result = await _authService.RefreshTokenAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("revoke-token")]
+    public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequestDto request)
+    {
+        try
+        {
+            await _authService.RevokeTokenAsync(request.RefreshToken);
+            return Ok(new { message = "Token đã được thu hồi" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
 }

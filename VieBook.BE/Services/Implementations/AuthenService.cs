@@ -20,15 +20,17 @@ namespace Services.Implementations
         private readonly IAuthenRepository _authRepo;
         private readonly IEmailService _emailService;
         private readonly IPasswordResetTokenRepository _tokenRepo;
+        private readonly IRefreshTokenRepository _refreshTokenRepo;
         private readonly IConfiguration _config;
         private readonly JwtService _jwtService;
         private readonly IMapper _mapper;
 
-        public AuthService(IAuthenRepository authRepo, IEmailService emailService, IPasswordResetTokenRepository tokenRepo, IConfiguration config, JwtService jwtService, IMapper mapper)
+        public AuthService(IAuthenRepository authRepo, IEmailService emailService, IPasswordResetTokenRepository tokenRepo, IRefreshTokenRepository refreshTokenRepo, IConfiguration config, JwtService jwtService, IMapper mapper)
         {
             _authRepo = authRepo;
             _emailService = emailService;
             _tokenRepo = tokenRepo;
+            _refreshTokenRepo = refreshTokenRepo;
             _config = config;
             _jwtService = jwtService;
             _mapper = mapper;
@@ -51,7 +53,30 @@ namespace Services.Implementations
                 throw new Exception("Email hoặc mật khẩu không đúng");
 
             var jwtService = new JwtService(_config);
-            var token = jwtService.GenerateToken(user.UserId.ToString(), user.Email);
+            var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
+            var token = jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
+            var refreshToken = jwtService.GenerateRefreshToken();
+
+            try
+            {
+                // Create and save refresh token
+                var refreshTokenEntity = new RefreshToken
+                {
+                    UserId = user.UserId,
+                    TokenHash = refreshToken,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7), // 7 days
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var savedRefreshToken = await _refreshTokenRepo.AddAsync(refreshTokenEntity);
+                // Get the plain token back from repository
+                refreshToken = savedRefreshToken.TokenHash;
+            }
+            catch (Exception ex)
+            {
+                // Continue without refresh token for now
+                refreshToken = string.Empty;
+            }
 
             user.LastLoginAt = DateTime.UtcNow;
             await _authRepo.UpdateAsync(user);
@@ -69,6 +94,7 @@ namespace Services.Implementations
             return new LoginResponseDto
             {
                 Token = token,
+                RefreshToken = refreshToken,
                 User = userDto,
                 Roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>()
             };
@@ -128,10 +154,10 @@ namespace Services.Implementations
 
             return "Password reset successful";
         }
-        public Task LogoutAsync(int userId)
+        public async Task LogoutAsync(int userId)
         {
-            // Stateless JWT: client discards token. Reserved for future blacklist/revocation if needed.
-            return Task.CompletedTask;
+            // Revoke all active refresh tokens for the user
+            await _refreshTokenRepo.RevokeAllForUserAsync(userId, "Logout");
         }
         public async Task<string> VerifyOtpAsync(VerifyOtpRequestDto request)
         {
@@ -172,7 +198,8 @@ namespace Services.Implementations
             await _authRepo.CreateAsync(user);
 
             // Sinh token xác thực email
-            var token = _jwtService.GenerateToken(user.UserId.ToString(), user.Email);
+            var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
+            var token = _jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
             var verifyUrl = $"http://localhost:5173/auth/verify-email?token={token}";
 
             await _emailService.SendEmailAsync(user.Email, "Xác thực tài khoản VieBook",
@@ -224,6 +251,60 @@ namespace Services.Implementations
             await _authRepo.UpdateAsync(user);
 
             return "Success";
+        }
+
+        public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
+        {
+            var refreshToken = await _refreshTokenRepo.GetByTokenAsync(request.RefreshToken);
+            
+            if (refreshToken == null || !refreshToken.IsActive)
+                throw new Exception("Refresh token không hợp lệ");
+
+            var user = await _authRepo.GetByIdAsync(refreshToken.UserId);
+            if (user == null)
+                throw new Exception("Người dùng không tồn tại");
+
+            // Generate new tokens
+            var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
+            var newToken = _jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
+            var newRefreshToken = _jwtService.GenerateRefreshToken();
+
+            // Revoke old refresh token
+            refreshToken.RevokedAt = DateTime.UtcNow;
+            refreshToken.ReplacedByToken = newRefreshToken;
+            refreshToken.ReasonRevoked = "Replaced";
+            await _refreshTokenRepo.UpdateAsync(refreshToken);
+
+            // Create new refresh token
+            var newRefreshTokenEntity = new RefreshToken
+            {
+                UserId = user.UserId,
+                TokenHash = newRefreshToken,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var savedNewRefreshToken = await _refreshTokenRepo.AddAsync(newRefreshTokenEntity);
+            // Get the plain token back from repository
+            newRefreshToken = savedNewRefreshToken.TokenHash;
+
+            return new RefreshTokenResponseDto
+            {
+                Token = newToken,
+                RefreshToken = newRefreshToken
+            };
+        }
+
+        public async Task RevokeTokenAsync(string token, string reason = "Revoked")
+        {
+            var refreshToken = await _refreshTokenRepo.GetByTokenAsync(token);
+            
+            if (refreshToken != null && refreshToken.IsActive)
+            {
+                refreshToken.RevokedAt = DateTime.UtcNow;
+                refreshToken.ReasonRevoked = reason;
+                await _refreshTokenRepo.UpdateAsync(refreshToken);
+            }
         }
 
     }
