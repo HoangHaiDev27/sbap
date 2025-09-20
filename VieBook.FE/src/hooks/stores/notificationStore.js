@@ -4,10 +4,11 @@ import {
   getUnreadNotifications, 
   getUnreadCount, 
   getRecentNotifications,
-  markAsRead,
-  markAllAsRead,
+  markAsRead as markAsReadApi,
+  markAllAsRead as markAllAsReadApi,
   deleteNotification
 } from "../../api/notificationApi";
+import { getUserId } from "../../api/authApi";
 
 export const useNotificationStore = create((set, get) => ({
   // State
@@ -16,7 +17,7 @@ export const useNotificationStore = create((set, get) => ({
   unreadCount: 0,
   isLoading: false,
   error: null,
-  userId: 4, // Default user ID
+  userId: null, // Will be set dynamically
 
   // Actions
   setUserId: (userId) => set({ userId }),
@@ -91,7 +92,7 @@ export const useNotificationStore = create((set, get) => ({
   // Mark notification as read
   markAsRead: async (notificationId) => {
     try {
-      const response = await markAsRead(notificationId);
+      const response = await markAsReadApi(notificationId);
       if (response.error === 0) {
         // Update local state
         set((state) => ({
@@ -116,7 +117,7 @@ export const useNotificationStore = create((set, get) => ({
     const targetUserId = userId || get().userId;
     
     try {
-      const response = await markAllAsRead(targetUserId);
+      const response = await markAllAsReadApi(targetUserId);
       if (response.error === 0) {
         set((state) => ({
           notifications: state.notifications.map(notification => ({
@@ -166,15 +167,20 @@ export const useNotificationStore = create((set, get) => ({
 
   // Initialize notifications for user
   initializeNotifications: async (userId = null) => {
-    const targetUserId = userId || get().userId;
-    console.log("Initializing notifications for user:", targetUserId);
-    set({ userId: targetUserId });
+    const currentUserId = userId || getUserId();
+    if (!currentUserId) {
+      console.warn("No user ID available for notification initialization");
+      return;
+    }
+    
+    console.log("Initializing notifications for user:", currentUserId);
+    set({ userId: currentUserId });
     
     // Fetch all data in parallel
     await Promise.all([
-      get().fetchNotifications(targetUserId),
-      get().fetchUnreadNotifications(targetUserId),
-      get().fetchUnreadCount(targetUserId)
+      get().fetchNotifications(currentUserId),
+      get().fetchUnreadNotifications(currentUserId),
+      get().fetchUnreadCount(currentUserId)
     ]);
     
     console.log("Initialization complete. Current unread count:", get().unreadCount);

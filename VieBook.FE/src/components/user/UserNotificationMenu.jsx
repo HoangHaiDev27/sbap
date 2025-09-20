@@ -17,12 +17,14 @@ import {
   RiNotificationLine
 } from "react-icons/ri";
 import { useNotificationStore } from "../../hooks/stores/notificationStore";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 function UserNotificationMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const notifRef = useRef(null);
 
+  const { userId, isAuthenticated } = useCurrentUser();
   const {
     notifications,
     unreadCount,
@@ -30,30 +32,36 @@ function UserNotificationMenu() {
     error,
     fetchNotifications,
     fetchUnreadCount,
+    markAsRead,
     markAllAsRead,
     initializeNotifications
   } = useNotificationStore();
 
-  // Initialize notifications for user ID 4
+  // Initialize notifications for current user
   useEffect(() => {
-    console.log("Initializing notifications for user 4");
+    if (!isAuthenticated || !userId) {
+      console.log("User not authenticated, skipping notification initialization");
+      return;
+    }
+
+    console.log("Initializing notifications for user", userId);
     
     // Add a small delay to ensure component is fully mounted
     const timer = setTimeout(() => {
-      initializeNotifications(4);
+      initializeNotifications(userId);
     }, 100);
     
     // Set up polling for unread count every 30 seconds
     const interval = setInterval(() => {
       console.log("Polling unread count...");
-      fetchUnreadCount(4);
+      fetchUnreadCount(userId);
     }, 30000);
 
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, [initializeNotifications, fetchUnreadCount]);
+  }, [userId, isAuthenticated, initializeNotifications, fetchUnreadCount]);
 
   // Debug unreadCount changes
   useEffect(() => {
@@ -73,18 +81,14 @@ function UserNotificationMenu() {
 
   // Fetch notifications when dropdown opens
   useEffect(() => {
-    if (isOpen) {
-      fetchNotifications(4);
+    if (isOpen && userId) {
+      fetchNotifications(userId);
       setShowAll(false); // Reset showAll when opening
     }
-  }, [isOpen, fetchNotifications]);
+  }, [isOpen, fetchNotifications, userId]);
 
-  // Auto mark as read when closing menu
-  useEffect(() => {
-    if (!isOpen && unreadCount > 0) {
-      markAllAsRead(4);
-    }
-  }, [isOpen, unreadCount, markAllAsRead]);
+  // Không tự động đánh dấu đã đọc khi đóng menu
+  // User phải click vào từng thông báo để đánh dấu đã đọc
 
   const getNotificationIcon = (type) => {
     const iconClass = "w-5 h-5 text-blue-400";
@@ -158,6 +162,20 @@ function UserNotificationMenu() {
     setShowAll(false);
   };
 
+  // Xử lý click vào thông báo để đánh dấu đã đọc
+  const handleNotificationClick = async (notification) => {
+    if (!notification.isRead) {
+      await markAsRead(notification.notificationId);
+    }
+  };
+
+  // Xử lý đánh dấu tất cả đã đọc
+  const handleMarkAllAsRead = async () => {
+    if (unreadCount > 0 && userId) {
+      await markAllAsRead(userId);
+    }
+  };
+
   // Get notifications to display based on showAll state
   const getDisplayNotifications = () => {
     if (showAll) {
@@ -188,8 +206,16 @@ function UserNotificationMenu() {
       {/* Dropdown */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-slate-800 text-white rounded-lg shadow-lg overflow-hidden z-50">
-          <div className="p-3 border-b border-slate-600 font-semibold">
+          <div className="p-3 border-b border-slate-600 font-semibold flex items-center justify-between">
             <span>Thông báo {unreadCount > 0 && `(${unreadCount})`}</span>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllAsRead}
+                className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded hover:bg-slate-700 transition-colors"
+              >
+                Đánh dấu tất cả đã đọc
+              </button>
+            )}
           </div>
           
           <div className="max-h-80 overflow-y-auto">
@@ -213,9 +239,10 @@ function UserNotificationMenu() {
                   {displayNotifications.map((notification) => (
                     <li
                       key={notification.notificationId}
-                      className={`px-4 py-3 hover:bg-slate-700 transition-colors ${
+                      className={`px-4 py-3 hover:bg-slate-700 transition-colors cursor-pointer ${
                         !notification.isRead ? "bg-blue-900/20 border-l-4 border-l-blue-500" : ""
                       }`}
+                      onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0 mt-0.5">
@@ -225,6 +252,9 @@ function UserNotificationMenu() {
                           <div className="flex items-center justify-between">
                             <h4 className="text-sm font-medium text-white truncate">
                               {notification.title}
+                              {!notification.isRead && (
+                                <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full inline-block"></span>
+                              )}
                             </h4>
                             <span className="text-xs text-gray-400">
                               {formatTimeAgo(notification.createdAt)}

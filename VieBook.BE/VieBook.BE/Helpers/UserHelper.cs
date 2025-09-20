@@ -1,0 +1,32 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+
+namespace VieBook.BE.Helpers
+{
+    public static class UserHelper
+    {
+        public static int? GetCurrentUserId(HttpContext httpContext)
+        {
+            if (httpContext?.User?.Identity?.IsAuthenticated != true)
+                return null;
+
+            var userIdClaim = httpContext.User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                ?? httpContext.User.FindFirst("sub")?.Value
+                ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                return null;
+
+            return userId;
+        }
+
+        public static string? GetCurrentUserEmail(HttpContext httpContext)
+        {
+            if (httpContext?.User?.Identity?.IsAuthenticated != true)
+                return null;
+
+            return httpContext.User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email)?.Value
+                ?? httpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+        }
+    }
+}

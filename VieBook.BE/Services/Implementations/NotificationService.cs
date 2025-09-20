@@ -142,6 +142,18 @@ namespace Services.Implementations
             return await CreateAsync(createDto);
         }
 
+        public async Task<NotificationResponseDTO> CreateChapterPurchaseNotificationAsync(int userId, int bookId, int chapterCount, decimal totalCost)
+        {
+            var createDto = new CreateNotificationDTO
+            {
+                UserId = userId,
+                Type = NotificationTypes.BOOK_PURCHASE,
+                Title = "Mua chương thành công",
+                Body = $"Bạn đã mua thành công {chapterCount} chương với tổng chi phí {totalCost:N0} xu. Các chương đã được thêm vào thư viện của bạn."
+            };
+            return await CreateAsync(createDto);
+        }
+
         public async Task<NotificationResponseDTO> CreateBookApprovalNotificationAsync(int userId, string bookTitle, bool approved)
         {
             var createDto = new CreateNotificationDTO

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getBookDetail } from "../../api/bookApi";
 import RelatedBooks from "./RelatedBook";
+import PurchaseModal from "./PurchaseModal";
+import toast from "react-hot-toast";
 import {
   RiArrowRightSLine,
   RiBookOpenLine,
@@ -19,6 +21,7 @@ export default function BookDetailPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [reportText, setReportText] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -93,7 +96,10 @@ export default function BookDetailPage() {
               </Link>
             </div>
 
-            <button className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+            <button 
+              onClick={() => setShowPurchaseModal(true)}
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            >
               <RiShoppingCartLine /> Mua ngay
             </button>
 
@@ -270,7 +276,7 @@ export default function BookDetailPage() {
               <button
                 onClick={() => {
                   if (reportText.trim()) {
-                    alert(`📨 Đã gửi báo cáo: ${reportText}`);
+                    toast.success(`📨 Đã gửi báo cáo: ${reportText}`);
                     setReportText("");
                     setShowReportModal(false);
                   }
@@ -283,6 +289,19 @@ export default function BookDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Purchase Modal */}
+      <PurchaseModal
+        isOpen={showPurchaseModal}
+        onClose={() => setShowPurchaseModal(false)}
+        bookTitle={title}
+        bookId={id}
+        chapters={chapters}
+        onPurchaseSuccess={(purchasedChapters) => {
+          console.log("Purchased chapters:", purchasedChapters);
+          // Có thể thêm logic xử lý sau khi mua thành công
+        }}
+      />
     </div>
   );
 }

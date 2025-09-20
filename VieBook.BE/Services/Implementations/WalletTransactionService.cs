@@ -44,7 +44,7 @@ namespace Services.Implementations
             // Tạo transaction mới
             var walletTransaction = new WalletTransaction
             {
-                UserId = webhookData.UserId ?? 4, // Default user ID, có thể lấy từ session hoặc token
+                UserId = webhookData.UserId ?? throw new ArgumentException("UserId is required for wallet transaction"),
                 Provider = "PayOS",
                 TransactionId = webhookData.TransactionId ?? webhookData.OrderCode.ToString(),
                 AmountMoney = webhookData.AmountMoney,
