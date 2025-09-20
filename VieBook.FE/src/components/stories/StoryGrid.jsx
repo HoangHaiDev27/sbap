@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   RiHeadphoneLine,
@@ -8,57 +8,100 @@ import {
   RiListCheck,
   RiStarFill,
   RiPlayFill,
+  RiBookOpenLine,
 } from "react-icons/ri";
+import { getAudioBooks } from "../../api/audioBookApi";
 
-const stories = [
-  {
-    id: 1,
-    title: "Chuyện tình cô gái bán hoa",
-    author: "Nguyễn Nhật Ánh",
-    narrator: "Thanh Hương",
-    genre: "Tình cảm",
-    duration: "2h 30m",
-    chapters: 8,
-    rating: 4.8,
-    coverImage:
-      "https://readdy.ai/api/search-image?query=Beautiful%20Vietnamese%20girl%20selling%20flowers%20in%20the%20market%2C%20romantic%20love%20story%20book%20cover%20with%20soft%20lighting%20and%20floral%20background%2C%20gentle%20pastel%20colors%2C%20warm%20atmosphere&width=300&height=400&seq=story1&orientation=portrait",
-  },
-  {
-    id: 2,
-    title: "Kỳ án Sherlock Holmes - Chó săn vùng Baskerville",
-    author: "Arthur Conan Doyle",
-    narrator: "Minh Châu",
-    genre: "Trinh thám",
-    duration: "4h 15m",
-    chapters: 12,
-    rating: 4.9,
-    coverImage:
-      "https://readdy.ai/api/search-image?query=Mysterious%20detective%20story%20with%20Sherlock%20Holmes%20silhouette%2C%20dark%20Victorian%20London%20atmosphere%2C%20foggy%20streets%20and%20vintage%20detective%20elements%2C%20classic%20mystery%20book%20cover%20design&width=300&height=400&seq=story2&orientation=portrait",
-  },
-  {
-    id: 3,
-    title: "Ma Lai ở căn nhà số 13",
-    author: "Lý Hoàng Long",
-    narrator: "Hoàng Anh",
-    genre: "Kinh dị",
-    duration: "3h 45m",
-    chapters: 10,
-    rating: 4.6,
-    coverImage:
-      "https://readdy.ai/api/search-image?query=Scary%20haunted%20house%20number%2013%20in%20dark%20night%2C%20horror%20story%20atmosphere%20with%20mysterious%20shadows%20and%20eerie%20lighting%2C%20Vietnamese%20ghost%20story%20book%20cover%20with%20spooky%20elements&width=300&height=400&seq=story3&orientation=portrait",
-  },
-  // 👉 thêm nhiều story để test
-];
-
-export default function StoryGrid() {
+export default function StoryGrid({
+  selectedCategory,
+  selectedDuration,
+  selectedNarrator,
+  sortBy,
+}) {
+  const [stories, setStories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
+  const itemsPerPage = 6;
 
-  const totalPages = Math.ceil(stories.length / itemsPerPage);
+  useEffect(() => {
+    async function fetchAudioBooks() {
+      try {
+        const data = await getAudioBooks();
+        // lọc bỏ book có category rỗng để không bị option trống
+        setStories(data.filter(b => b.category && b.category.trim() !== ""));
+      } catch (err) {
+        console.error("Failed to fetch audio books", err);
+      }
+    }
+    fetchAudioBooks();
+  }, []);
 
+  // --- Filter ---
+  const filteredStories = stories.filter((story) => {
+    if (
+      selectedCategory &&
+      selectedCategory !== "Tất cả thể loại" &&
+      story.category !== selectedCategory
+    ) return false;
+
+    if (
+      selectedNarrator &&
+      selectedNarrator !== "Tất cả người kể" &&
+      story.narrator !== selectedNarrator
+    ) return false;
+
+    if (selectedDuration && selectedDuration !== "Tất cả thời lượng") {
+      const match = story.duration.match(/(\d+)h/);
+      const hours = match ? parseInt(match[1], 10) : 0;
+
+      switch (selectedDuration) {
+        case "Dưới 1 giờ":
+          if (hours >= 1) return false;
+          break;
+        case "1-3 giờ":
+          if (hours < 1 || hours > 3) return false;
+          break;
+        case "3-6 giờ":
+          if (hours < 3 || hours > 6) return false;
+          break;
+        case "6-10 giờ":
+          if (hours < 6 || hours > 10) return false;
+          break;
+        case "Trên 10 giờ":
+          if (hours <= 10) return false;
+          break;
+      }
+    }
+
+    return true;
+  });
+
+  // --- Sort ---
+  const sortedStories = [...filteredStories];
+  switch (sortBy) {
+    case "Mới nhất":
+      sortedStories.sort((a, b) => b.id - a.id);
+      break;
+    case "Phổ biến nhất":
+      sortedStories.sort((a, b) => b.reviews - a.reviews);
+      break;
+    case "Đánh giá cao":
+      sortedStories.sort((a, b) => b.rating - a.rating);
+      break;
+    case "Thời lượng ngắn":
+      sortedStories.sort(
+        (a, b) =>
+          parseFloat(a.duration) - parseFloat(b.duration)
+      );
+      break;
+    default:
+      break;
+  }
+
+  // --- Pagination ---
+  const totalPages = Math.ceil(sortedStories.length / itemsPerPage);
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentStories = stories.slice(indexOfFirst, indexOfLast);
+  const currentStories = sortedStories.slice(indexOfFirst, indexOfLast);
 
   return (
     <div>
@@ -72,14 +115,14 @@ export default function StoryGrid() {
             <Link to={`/player/${story.id}`}>
               <div className="relative">
                 <img
-                  src={story.coverImage}
+                  src={story.image}
                   alt={story.title}
                   className="w-full h-64 object-cover object-top"
                 />
                 {/* Genre Badge */}
                 <div className="absolute top-3 left-3">
                   <span className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                    {story.genre}
+                    {story.category}
                   </span>
                 </div>
                 {/* Headphone Icon */}
@@ -107,17 +150,15 @@ export default function StoryGrid() {
                 <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2">
                   {story.title}
                 </h3>
-                <p className="text-gray-400 text-sm mb-2">
-                  Tác giả: {story.author}
-                </p>
+                <p className="text-gray-400 text-sm mb-2">Tác giả: {story.author}</p>
                 <p className="text-orange-400 text-sm mb-3">
-                  Người kể: {story.narrator}
+                  Người kể: {story.narrator || "Đang cập nhật"}
                 </p>
                 <div className="flex items-center justify-between">
                   {/* Rating */}
                   <div className="flex items-center text-sm text-gray-400">
                     <RiStarFill className="text-yellow-400 mr-1" />
-                    <span>{story.rating}</span>
+                    <span>{story.rating} ({story.reviews})</span>
                   </div>
                   {/* Play Button */}
                   <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap flex items-center">
@@ -130,9 +171,19 @@ export default function StoryGrid() {
         ))}
       </div>
 
+      {/* Empty */}
+      {filteredStories.length === 0 && (
+        <div className="text-center py-12">
+          <RiBookOpenLine className="text-6xl text-gray-600 mb-4 mx-auto" />
+          <h3 className="text-xl font-semibold text-gray-400 mb-2">
+            Không tìm thấy truyện nói
+          </h3>
+          <p className="text-gray-500">Hãy thử thay đổi bộ lọc của bạn</p>
+        </div>
+      )}
+
       {/* Pagination Controls */}
       <div className="flex justify-center mt-6 space-x-2">
-        {/* Prev */}
         <button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
@@ -145,7 +196,6 @@ export default function StoryGrid() {
           Trang trước
         </button>
 
-        {/* Page Numbers */}
         {Array.from({ length: totalPages }).map((_, index) => (
           <button
             key={index}
@@ -160,11 +210,8 @@ export default function StoryGrid() {
           </button>
         ))}
 
-        {/* Next */}
         <button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
           className={`px-3 py-1 rounded ${
             currentPage === totalPages

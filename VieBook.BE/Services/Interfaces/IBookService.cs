@@ -11,5 +11,8 @@ namespace Services.Interfaces
     {
         Task<BookDetailDTO?> GetBookDetailAsync(int id);
         Task<List<BookResponseDTO>> GetReadBooksAsync();
+        Task<List<BookResponseDTO>> GetAudioBooksAsync();
+        Task<BookResponseDTO?> GetAudioBookDetailAsync(int id);
+
     }
 }

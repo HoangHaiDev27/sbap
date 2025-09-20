@@ -38,5 +38,25 @@ namespace VieBook.BE.Controllers
 
             return Ok(books);
         }
+        // GET: api/books/audio
+        [HttpGet("audio")]
+        public async Task<ActionResult<List<BookResponseDTO>>> GetAudioBooks()
+        {
+            var books = await _bookService.GetAudioBooksAsync();
+            if (books == null || !books.Any())
+                return NotFound("Không có sách audio nào.");
+            return Ok(books);
+        }
+
+        // GET: api/books/audio/{id}
+        [HttpGet("audio/{id}")]
+        public async Task<ActionResult<BookResponseDTO>> GetAudioBookDetail(int id)
+        {
+            var book = await _bookService.GetAudioBookDetailAsync(id);
+            if (book == null)
+                return NotFound();
+            return Ok(book);
+        }
+
     }
 }
