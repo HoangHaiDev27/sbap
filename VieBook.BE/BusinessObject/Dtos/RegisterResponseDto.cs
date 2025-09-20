@@ -8,7 +8,7 @@ namespace BusinessObject.Dtos
 {
     public class RegisterResponseDto
     {
-        public string Message { get; set; } = null!;
-        public bool RequiresEmailConfirmation { get; set; } = true;
+        public string Message { get; set; } = string.Empty;
+        public bool RequiresEmailConfirmation { get; set; }
     }
 }
