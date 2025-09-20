@@ -108,14 +108,22 @@ export default function BookTable({ books, categories, onBookDeleted }) {
         onBookDeleted(selectedBook.bookId);
       }
 
+      window.dispatchEvent(new CustomEvent("app:toast", {
+        detail: { type: "success", message: `Đã xóa sách "${selectedBook.title}" thành công!` }
+      }));
+
       setSelectedBook(null);
     } catch (err) {
       console.error(err);
-      alert("Có lỗi khi xóa sách");
+
+      window.dispatchEvent(new CustomEvent("app:toast", {
+        detail: { type: "error", message: err.message || "Có lỗi khi xóa sách!" }
+      }));
     } finally {
       setLoadingDelete(false);
     }
   };
+
 
 
   return (

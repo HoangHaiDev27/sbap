@@ -1,7 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { getBookById, getCategories, updateBook } from "../../api/ownerBookApi";
-
+import { useState, useEffect, useRef } from "react";
+import { getBookById, getCategories, updateBook, uploadBookImage } from "../../api/ownerBookApi";
 
 export default function BookEditForm() {
   const { bookId } = useParams();
@@ -18,10 +17,33 @@ export default function BookEditForm() {
   });
 
   const [coverUrl, setCoverUrl] = useState("");
+  const [file, setFile] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [preview, setPreview] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [isbnError, setIsbnError] = useState("");
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    if (showCategoryDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showCategoryDropdown]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,6 +85,7 @@ export default function BookEditForm() {
           description: bookData.description ?? "",
           categoryIds: initialCategoryIds,
           status: bookData.status ?? "Active",
+          createdAt: bookData.createdAt ?? null,
         });
 
         setCoverUrl(bookData.coverUrl ?? "");
@@ -79,6 +102,7 @@ export default function BookEditForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
+    if (name === "isbn") setIsbnError("");
   };
 
   const handleCategoryToggle = (id) => {
@@ -93,40 +117,61 @@ export default function BookEditForm() {
     });
   };
 
-  // file select -> chỉ preview (không upload ở đây)
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    setFile(selected);
+    const url = URL.createObjectURL(selected);
     setPreview(url);
   };
 
   // submit PUT
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploading(true);
 
-    // build payload theo DTO backend mong muốn (gồm CategoryIds)
-    const payload = {
-      bookId: Number(bookId),
-      title: form.title,
-      author: form.author,
-      isbn: form.isbn,
-      description: form.description,
-      language: form.language,
-      coverUrl: coverUrl,
-      categoryIds: form.categoryIds,
-      status: form.status,
-    };
+    let finalCoverUrl = coverUrl;
 
     try {
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        finalCoverUrl = await uploadBookImage(formData);
+      }
+
+      const payload = {
+        bookId: Number(bookId),
+        title: form.title,
+        author: form.author,
+        isbn: form.isbn,
+        description: form.description,
+        language: form.language,
+        coverUrl: finalCoverUrl,
+        categoryIds: form.categoryIds,
+        status: "Active",
+        createdAt: form.createdAt,
+      };
+
       await updateBook(bookId, payload);
 
-      // thành công
-      alert("Cập nhật sách thành công!");
+      window.dispatchEvent(new CustomEvent("app:toast", {
+        detail: { type: "success", message: "Cập nhật sách thành công!" }
+      }));
       navigate("/owner/books");
     } catch (err) {
-      console.error("Lỗi cập nhật sách:", err);
-      alert("Có lỗi khi cập nhật sách. Kiểm tra console.");
+      const errorMsg = err?.message || err?.response?.data || "";
+      if (errorMsg.includes("ISBN")) {
+        setIsbnError("Mã ISBN đã tồn tại, vui lòng nhập mã khác.");
+        window.dispatchEvent(new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Mã ISBN đã tồn tại, vui lòng nhập mã khác." }
+        }));
+      } else {
+        window.dispatchEvent(new CustomEvent("app:toast", {
+          detail: { type: "error", message: err.message || "Có lỗi khi cập nhật sách." }
+        }));
+      }
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -171,19 +216,21 @@ export default function BookEditForm() {
 
             {/* isbn */}
             <div>
-              <label className="block mb-2 text-sm font-medium">Mã ISBN</label>
+              <label className="block mb-2 text-sm font-medium">Mã ISBN *</label>
               <input
                 name="isbn"
                 value={form.isbn}
                 onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
+                className={`w-full px-3 py-2 rounded focus:outline-none ${isbnError ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"
+                  }`}
               />
+              {isbnError && <p className="text-red-400 text-sm">{isbnError}</p>}
             </div>
 
             {/* category*/}
             <div>
               <label className="block mb-2 text-sm font-medium">Thể loại *</label>
-              <div className="w-full">
+              <div className="w-full relative" ref={dropdownRef}>
                 <div
                   className="w-full px-3 py-2 rounded bg-gray-700 cursor-pointer"
                   onClick={() => setShowCategoryDropdown((p) => !p)}
@@ -220,15 +267,19 @@ export default function BookEditForm() {
               <label className="block mb-2 text-sm font-medium">Ảnh bìa</label>
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-700">
-                  <img src={preview ?? coverUrl ?? "https://via.placeholder.com/120x160"} alt="cover" className="w-32 h-44 object-cover rounded mb-2" />
+                  <img
+                    src={preview || coverUrl || "https://via.placeholder.com/120x160"}
+                    alt="cover"
+                    className="w-32 h-44 object-cover rounded mb-2"
+                  />
                   <input id="coverInput" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                   <button type="button" onClick={() => document.getElementById("coverInput").click()} className="px-4 py-2 bg-orange-500 rounded hover:bg-orange-600">
-                    Chọn ảnh mới (preview)
+                    Chọn ảnh mới
                   </button>
                 </div>
                 <div className="text-sm text-gray-400">
                   <p>Ảnh hiện tại sẽ được giữ nếu bạn không upload file thực sự lên server.</p>
-                  <p>Nếu muốn lưu ảnh mới, cần upload lên server/cloud rồi cập nhật `coverUrl` (hiện chưa có upload).</p>
+                  <p>Nếu chọn ảnh mới, hệ thống sẽ upload lên Cloudinary khi bạn lưu thay đổi.</p>
                 </div>
               </div>
             </div>
@@ -255,8 +306,13 @@ export default function BookEditForm() {
           </div>
 
           <div className="mt-6 flex justify-end">
-            <button type="submit" className="px-6 py-2 bg-green-500 rounded-lg hover:bg-green-600">
-              Lưu thay đổi
+            <button
+              type="submit"
+              disabled={uploading}
+              className={`px-6 py-2 rounded-lg transition ${uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+                }`}
+            >
+              {uploading ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
           </div>
         </form>

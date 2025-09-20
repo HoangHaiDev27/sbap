@@ -21,9 +21,19 @@ export async function createBook(payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Failed to create book");
+
+  if (!res.ok) {
+    if (res.status === 409) {
+      // BE trả về Conflict ISBN
+      const message = await res.text();
+      throw new Error(message || "ISBN đã tồn tại");
+    }
+    throw new Error("Tạo mới sách thất bại");
+  }
+
   return res.json();
 }
+
 
 // Cập nhật sách
 export async function updateBook(bookId, payload) {
@@ -32,9 +42,23 @@ export async function updateBook(bookId, payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error("Failed to update book");
+
+  if (!res.ok) {
+    let errorMessage = "Cập nhật sách thất bại";
+    try {
+      const data = await res.json();
+      errorMessage = data.message || errorMessage;
+    } catch {
+      if (res.status === 500) {
+        errorMessage = "ISBN đã tồn tại hoặc dữ liệu không hợp lệ.";
+      }
+    }
+    throw new Error(errorMessage);
+  }
+
   return true;
 }
+
 
 
 // Xóa sách
@@ -53,3 +77,12 @@ export async function getCategories() {
   return res.json();
 }
 
+export async function uploadBookImage(formData) {
+  const res = await fetch(API_ENDPOINTS.UPLOADBOOKIMAGE, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error("Upload ảnh thất bại");
+  const data = await res.json();
+  return data.imageUrl;
+}

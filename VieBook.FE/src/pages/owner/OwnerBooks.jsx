@@ -48,7 +48,7 @@ export default function OwnerBooks() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Filtering + Sorting
+  /// Filtering + Sorting
   const filteredBooks = books
     .filter((b) => {
       const matchSearch =
@@ -72,8 +72,12 @@ export default function OwnerBooks() {
       if (sort === "oldest") {
         return new Date(a.createdAt) - new Date(b.createdAt);
       }
+      if (sort === "bestseller") {
+        return (b.sold || 0) - (a.sold || 0);
+      }
       return 0;
     });
+
 
   return (
     <div className="p-6 text-white">
