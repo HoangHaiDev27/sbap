@@ -166,6 +166,173 @@ namespace Tests
                 Assert.False(string.IsNullOrEmpty(b.Duration));
             });
         }
+        [Fact]
+        public async Task GetBooks_ReturnsList()
+        {
+            // Seed
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ctx = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+                if (!ctx.Books.Any(b => b.Title == "Seed Book"))
+                {
+                    ctx.Books.Add(new Book
+                    {
+                        Title = "Seed Book",
+                        Status = "Active",
+                        CreatedAt = DateTime.UtcNow,
+                        Owner = new User
+                        {
+                            Email = "owner@getbooks.com",
+                            Status = "Active",
+                            CreatedAt = DateTime.UtcNow
+                        }
+                    });
+                    ctx.SaveChanges();
+                }
+            }
+
+            var response = await _client.GetAsync("/api/books");
+            response.EnsureSuccessStatusCode();
+
+            var books = await response.Content.ReadFromJsonAsync<List<BookDTO>>();
+            Assert.NotNull(books);
+            Assert.Contains(books!, b => b.Title == "Seed Book");
+        }
+
+        [Fact]
+        public async Task PostBook_CreatesBook()
+        {
+            var dto = new BookDTO
+            {
+                Title = "New Book",
+                Status = "Active",
+                OwnerId = 1,
+                CategoryIds = new List<int>()
+            };
+
+            var response = await _client.PostAsJsonAsync("/api/books", dto);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<bool>();
+            Assert.True(result);
+        }
+
+        //[Fact]
+        //public async Task PutBook_UpdatesBook()
+        //{
+        //    int bookId;
+        //    using (var scope = _serviceProvider.CreateScope())
+        //    {
+        //        var ctx = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+        //        var book = new Book
+        //        {
+        //            Title = "Old Title",
+        //            Status = "Active",
+        //            CreatedAt = DateTime.UtcNow,
+        //            Owner = new User
+        //            {
+        //                Email = "owner@update.com",
+        //                Status = "Active",
+        //                CreatedAt = DateTime.UtcNow
+        //            }
+        //        };
+        //        ctx.Books.Add(book);
+        //        ctx.SaveChanges();
+        //        bookId = book.BookId;
+        //    }
+
+        //    var dto = new BookDTO
+        //    {
+        //        BookId = bookId,
+        //        Title = "Updated Title",
+        //        Status = "Active",
+        //        OwnerId = 1,
+        //        CategoryIds = new List<int>()
+        //    };
+
+        //    var response = await _client.PutAsJsonAsync($"/api/books/{bookId}", dto);
+        //    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        //    using (var scope = _serviceProvider.CreateScope())
+        //    {
+        //        var ctx = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+        //        var updated = ctx.Books.Find(bookId);
+        //        Assert.NotNull(updated);
+        //        Assert.Equal("Updated Title", updated!.Title);
+        //    }
+        //}
+
+        [Fact]
+        public async Task DeleteBook_SetsStatusInActive()
+        {
+            int bookId;
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ctx = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+                var book = new Book
+                {
+                    Title = "To InActive",
+                    Status = "Active",
+                    CreatedAt = DateTime.UtcNow,
+                    Owner = new User
+                    {
+                        Email = "owner@inactive.com",
+                        Status = "Active",
+                        CreatedAt = DateTime.UtcNow
+                    }
+                };
+                ctx.Books.Add(book);
+                ctx.SaveChanges();
+                bookId = book.BookId;
+            }
+
+            var response = await _client.DeleteAsync($"/api/books/{bookId}");
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ctx = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+                var deleted = ctx.Books.Find(bookId);
+                Assert.NotNull(deleted);
+                Assert.Equal("InActive", deleted!.Status);
+            }
+        }
+
+        [Fact]
+        public async Task GetBooksByOwner_ReturnsBooks()
+        {
+            int ownerId;
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var ctx = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+
+                var owner = new User
+                {
+                    Email = "owner@books.com",
+                    Status = "Active",
+                    CreatedAt = DateTime.UtcNow
+                };
+                ctx.Users.Add(owner);
+                ctx.SaveChanges();
+                ownerId = owner.UserId;
+
+                ctx.Books.Add(new Book
+                {
+                    Title = "Owner Book",
+                    Status = "Active",
+                    CreatedAt = DateTime.UtcNow,
+                    OwnerId = ownerId
+                });
+                ctx.SaveChanges();
+            }
+
+            var response = await _client.GetAsync($"/api/books/owner/{ownerId}");
+            response.EnsureSuccessStatusCode();
+
+            var books = await response.Content.ReadFromJsonAsync<List<BookDTO>>();
+            Assert.NotNull(books);
+            Assert.Contains(books!, b => b.Title == "Owner Book");
+        }
 
     }
 }

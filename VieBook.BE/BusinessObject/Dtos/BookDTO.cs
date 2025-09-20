@@ -16,11 +16,16 @@ namespace BusinessObject.Dtos
         public string? Language { get; set; }
         public int TotalView { get; set; }
         public DateTime CreatedAt { get; set; }
-
+        public string? Author { get; set; }
+        public int OwnerId { get; set; }
+        public string Status { get; set; } = null!;
+        // TotalPrice và Rating
+        public decimal TotalPrice { get; set; }
+        public double Rating { get; set; }
         // Author info
         public string? OwnerName { get; set; }
 
         // Categories
-        public List<string> Categories { get; set; } = new();
+        public List<int> CategoryIds { get; set; } = new();
     }
 }
