@@ -32,13 +32,13 @@ export default function ClientSidebar({ isOpen, onClose }) {
     { id: "forum", label: "Diễn đàn sách", icon: RiChat3Line, href: "/forum" },
     {
       id: "audiobook",
-      label: "Sách nói",
+      label: "Sách đọc",
       icon: RiBookOpenLine,
       href: "/audiobooks",
     },
     {
       id: "story",
-      label: "Truyện nói",
+      label: "Sách nói",
       icon: RiBookReadLine,
       href: "/stories",
     },

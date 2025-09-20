@@ -6,6 +6,7 @@ export default function AudiobookManager() {
   const [selectedCategory, setSelectedCategory] = useState("Tất cả");
   const [selectedDuration, setSelectedDuration] = useState("Tất cả");
   const [sortBy, setSortBy] = useState("Phổ biến");
+  const [selectedRating, setSelectedRating] = useState(0);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -13,7 +14,7 @@ export default function AudiobookManager() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Sách nói</h1>
           <p className="text-gray-400">
-            Thưởng thức hàng nghìn sách nói chất lượng cao với giọng đọc chuyên nghiệp
+            Thưởng thức hàng nghìn sách đọc chất lượng cao với giao diện thân thiện
           </p>
         </div>
 
@@ -21,13 +22,15 @@ export default function AudiobookManager() {
           {/* Filters */}
           <div className="w-64 flex-shrink-0">
             <AudiobookFilters
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              selectedDuration={selectedDuration}
-              setSelectedDuration={setSelectedDuration}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-            />
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            selectedDuration={selectedDuration}
+            setSelectedDuration={setSelectedDuration}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            selectedRating={selectedRating}
+            setSelectedRating={setSelectedRating}
+          />
           </div>
 
           {/* Grid */}
@@ -35,6 +38,7 @@ export default function AudiobookManager() {
             <AudiobookGrid
               selectedCategory={selectedCategory}
               selectedDuration={selectedDuration}
+              selectedRating={selectedRating}
               sortBy={sortBy}
             />
           </div>

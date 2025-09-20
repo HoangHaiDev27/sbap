@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 
 namespace Repositories.Interfaces
 {
-    public interface IBookRepository
-    {
-        Task<Book?> GetBookDetailAsync(int id);
-        Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
-    }
+        public interface IBookRepository
+        {
+                Task<Book?> GetBookDetailAsync(int id);
+                Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
+                Task<List<Book>> GetReadBooksAsync();
+        }
 }
