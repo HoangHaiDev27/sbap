@@ -9,6 +9,8 @@ import {
   RiSoundModuleLine,
 } from "react-icons/ri";
 import { getCategories } from "../../../api/ownerBookApi";
+import { deleteBook } from "../../../api/ownerBookApi";
+
 
 // biến books url
 const BOOK_API_URL = getCategories();
@@ -100,18 +102,13 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     try {
       setLoadingDelete(true);
 
-      const res = await fetch(`${BOOK_API_URL}/${selectedBook.bookId}`, {
-        method: "DELETE",
-      });
-
-
-      if (!res.ok) throw new Error("Không thể xóa sách");
+      await deleteBook(selectedBook.bookId);
 
       if (onBookDeleted) {
-        onBookDeleted(selectedBook.bookId); // thông báo cho list load lại
+        onBookDeleted(selectedBook.bookId);
       }
 
-      setSelectedBook(null); // đóng popup
+      setSelectedBook(null);
     } catch (err) {
       console.error(err);
       alert("Có lỗi khi xóa sách");
@@ -119,6 +116,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
       setLoadingDelete(false);
     }
   };
+
 
   return (
     <div className="overflow-x-auto">
@@ -214,8 +212,8 @@ export default function BookTable({ books, categories, onBookDeleted }) {
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
             className={`px-3 py-1 rounded text-sm ${currentPage === 1
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
           >
             Trước
@@ -235,8 +233,8 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                 key={page}
                 onClick={() => setCurrentPage(page)}
                 className={`px-3 py-1 rounded text-sm ${currentPage === page
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  ? "bg-orange-500 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}
               >
                 {page}
@@ -249,8 +247,8 @@ export default function BookTable({ books, categories, onBookDeleted }) {
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
             className={`px-3 py-1 rounded text-sm ${currentPage === totalPages
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
           >
             Sau

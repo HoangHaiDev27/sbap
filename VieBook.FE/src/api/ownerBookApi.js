@@ -33,15 +33,16 @@ export async function updateBook(bookId, payload) {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("Failed to update book");
-  return res.json();
+  return true;
 }
+
 
 // Xóa sách
 export async function deleteBook(bookId) {
   const res = await fetch(API_ENDPOINTS.BOOKS.DELETE(bookId), {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete book");
+  if (!res.ok) throw new Error("Không thể xóa sách");
   return true;
 }
 
