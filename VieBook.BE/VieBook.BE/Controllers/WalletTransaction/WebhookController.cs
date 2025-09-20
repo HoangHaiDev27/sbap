@@ -2,10 +2,12 @@ using BusinessObject.Dtos;
 using BusinessObject.Models;
 using BusinessObject.PayOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Net.payOS;
 using Net.payOS.Types;
 using Services.Interfaces;
 using VieBook.BE.Configuration;
+using VieBook.BE.Helpers;
 
 namespace VieBook.BE.Controllers.WalletTransaction
 {
@@ -112,6 +114,13 @@ namespace VieBook.BE.Controllers.WalletTransaction
         {
             try
             {
+                // Lấy userId từ JWT token
+                var userId = UserHelper.GetCurrentUserId(HttpContext);
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new Response(-1, "User not authenticated", null));
+                }
+
                 // Lấy thông tin payment từ PayOS
                 var paymentInfo = await _payOS.getPaymentLinkInformation(orderCode);
 
@@ -128,7 +137,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
                         Status = MapPayOSStatusToDatabaseStatus("PAID"), // Map PayOS status sang database status
                         TransactionId = orderCode.ToString(), // Sử dụng orderCode làm transactionId
                         PaymentMethod = "PayOS",
-                        UserId = 4 // Default user ID
+                        UserId = userId.Value // Sử dụng userId từ JWT token
                     };
 
                     // Xử lý thanh toán

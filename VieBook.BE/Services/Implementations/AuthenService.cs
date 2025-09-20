@@ -175,7 +175,7 @@ namespace Services.Implementations
             return "OTP hợp lệ";
         }
 
-        public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
+        public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, string frontendUrl)
         {
             var existing = await _authRepo.GetByEmailAsync(request.Email);
             if (existing != null)
@@ -200,7 +200,7 @@ namespace Services.Implementations
             // Sinh token xác thực email
             var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
             var token = _jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
-            var verifyUrl = $"http://localhost:5173/auth/verify-email?token={token}";
+            var verifyUrl = $"{frontendUrl}/auth/verify-email?token={token}";
 
             await _emailService.SendEmailAsync(user.Email, "Xác thực tài khoản VieBook",
                 $"<p>Xin chào {request.FullName},</p>" +

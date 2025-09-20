@@ -6,6 +6,10 @@ export const API_ENDPOINTS = {
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
   BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/${id}`,
+  READ_BOOKS: `${API_BASE_URL}/api/books/read`,
+  AUDIO_BOOKS: `${API_BASE_URL}/api/books/audio`,
+  AUDIO_BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/audio/${id}`,
+
 
   // Auth endpoints
   AUTH: {
@@ -37,9 +41,28 @@ export const API_ENDPOINTS = {
   NOTIFICATION_MARK_READ: (id) => `${API_BASE_URL}/api/notification/${id}/mark-read`,
   USER_MARK_ALL_READ: (userId) => `${API_BASE_URL}/api/notification/user/${userId}/mark-all-read`,
   NOTIFICATION_TYPES: `${API_BASE_URL}/api/notification/types`,
+
+  // Chapter Purchase endpoints
+  CHAPTER_PURCHASE: {
+    PURCHASE: `${API_BASE_URL}/api/chapterpurchase/purchase`,
+    CHECK_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-ownership`,
+    MY_PURCHASES: `${API_BASE_URL}/api/chapterpurchase/my-purchases`,
+  },
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,
   // ORDERS: `${API_BASE_URL}/api/orders`,
+
+  // Book owner endpoints
+  BOOKS: {
+    GET_ALL_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/books/owner/${ownerId}`,
+    GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+    CREATE: `${API_BASE_URL}/api/books`,
+    UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+    DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+  },
+  CATEGORIES: {
+    GET_ALL: `${API_BASE_URL}/api/categories`,
+  },
 };
 
 // Helper function to get full API URL

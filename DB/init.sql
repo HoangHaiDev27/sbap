@@ -759,6 +759,9 @@ SELECT p.PostId, p.PostType, p.Visibility,
 FROM dbo.Posts p
 ORDER BY p.PostId DESC;
 
+-- Add author to table Books
+ALTER TABLE Books
+ADD Author NVARCHAR(255) NULL;
 -- Insert thêm data for users
 INSERT INTO [dbo].[Users] (Email, PasswordHash, Status, CreatedAt, Wallet)
 VALUES (

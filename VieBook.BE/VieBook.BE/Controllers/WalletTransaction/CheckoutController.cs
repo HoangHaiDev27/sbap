@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using BusinessObject.Dtos;
 using BusinessObject.PayOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Net.payOS;
 using Net.payOS.Types;
 using VieBook.BE.Configuration;
+using VieBook.BE.Helpers;
 
 namespace VieBook.BE.Controllers.WalletTransaction
 {
@@ -29,6 +31,13 @@ namespace VieBook.BE.Controllers.WalletTransaction
         {
             try
             {
+                // Lấy userId từ JWT token
+                var userId = UserHelper.GetCurrentUserId(HttpContext);
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new Response(-1, "User not authenticated", null));
+                }
+
                 int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
                 ItemData item = new ItemData("Nạp xu", 1, request.Amount);
                 List<ItemData> items = new List<ItemData> { item };

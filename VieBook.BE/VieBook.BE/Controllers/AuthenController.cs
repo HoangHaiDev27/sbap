@@ -5,6 +5,7 @@ using Services.Interfaces;
 using System.Security.Claims;
 using Services.Implementations;
 using System.Text.RegularExpressions;
+using VieBook.BE.Configuration;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -132,7 +133,8 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var res = await _authService.RegisterAsync(request);
+            var frontendUrl = ApiConfiguration.FRONTEND_URL;
+            var res = await _authService.RegisterAsync(request, frontendUrl);
             return Ok(res);
         }
         catch (Exception ex)

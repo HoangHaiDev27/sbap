@@ -9,6 +9,7 @@ import { useLocation } from "react-router-dom";
 import { useCoinsStore } from "./hooks/stores/coinStore";
 import { getRole, getUserId } from "./api/authApi";
 import Toast from "./components/common/Toast";
+import { Toaster } from "react-hot-toast";
 function App() {
   const location = useLocation();
   const [role, setRole] = useState("");
@@ -24,8 +25,20 @@ function App() {
     const r = getRole();
     if (r) setRole(String(r).toLowerCase());
     const onAuthChanged = (e) => {
-      const { role: newRole } = e.detail || {};
+      const { role: newRole, user } = e.detail || {};
       if (newRole) setRole(String(newRole).toLowerCase());
+      // Fetch coins when user logs in
+      if (user) {
+        const userId = user.userId || user.UserId || user.id || user.Id;
+        console.log("App - Auth changed, user:", user, "userId:", userId);
+        if (userId) {
+          fetchCoins(userId);
+        }
+      } else {
+        // If user is null (logout), reset coins
+        console.log("App - User logged out, resetting coins");
+        useCoinsStore.getState().setCoins(0);
+      }
     };
     window.addEventListener("auth:changed", onAuthChanged);
     return () => window.removeEventListener("auth:changed", onAuthChanged);
@@ -115,7 +128,39 @@ function App() {
         </div>
 
       </div>
-
+      
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            border: '1px solid #374151',
+          },
+          success: {
+            style: {
+              background: '#059669',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#059669',
+            },
+          },
+          error: {
+            style: {
+              background: '#dc2626',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#dc2626',
+            },
+          },
+        }}
+      />
     </div>
 
   );

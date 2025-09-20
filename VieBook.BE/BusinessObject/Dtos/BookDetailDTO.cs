@@ -16,6 +16,8 @@ namespace BusinessObject.Dtos
         public string? Language { get; set; }
         public int TotalView { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? Author { get; set; }
+        public string Status { get; set; } = null!;
         public string OwnerName { get; set; } = string.Empty;
         public List<string> Categories { get; set; } = new();
         public List<ChapterDTO> Chapters { get; set; } = new();

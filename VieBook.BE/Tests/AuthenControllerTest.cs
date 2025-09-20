@@ -1,10 +1,14 @@
 ﻿﻿using BusinessObject.Dtos;
 using DataAccess;
 using Microsoft.Extensions.DependencyInjection;
+using Services.Implementations;
+using Services.Interfaces;
 using System.Net.Http.Json;
 using System.Text;
-using Xunit;
 using Tests;
+using Xunit;
+using Microsoft.Extensions.Configuration;
+
 
 
 public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Program>>
@@ -17,6 +21,7 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Pro
         _factory = factory;
         _client = _factory.CreateClient();
         SeedTestUser().GetAwaiter().GetResult();
+        SeedCustomerRole().GetAwaiter().GetResult();
     }
 
     private async Task SeedTestUser()
@@ -36,6 +41,22 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Pro
             await context.SaveChangesAsync();
         }
     }
+    private async Task SeedCustomerRole()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+
+        if (!context.Roles.Any(r => r.RoleId == 4))
+        {
+            context.Roles.Add(new BusinessObject.Models.Role
+            {
+                RoleId = 4,
+                RoleName = "Customer"
+            });
+            await context.SaveChangesAsync();
+        }
+    }
+
 
     [Fact]
     public async Task ForgotPassword_ReturnsMessage_WhenUserExists()
@@ -106,5 +127,70 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory<Pro
         // Assert
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, res.StatusCode);
     }
+    [Fact]
+    public async Task Register_ReturnsSuccess_WhenDataValid()
+    {
+        var uniqueEmail = $"newuser_{Guid.NewGuid()}@viebook.local";
+
+        var req = new RegisterRequestDto
+        {
+            FullName = "Test User",
+            Email = uniqueEmail,
+            Password = "Password123"
+        };
+
+        var res = await _client.PostAsJsonAsync("/api/auth/register", req);
+        res.EnsureSuccessStatusCode();
+
+        var json = await res.Content.ReadFromJsonAsync<RegisterResponseDto>();
+
+        Assert.NotNull(json);
+        Assert.Contains("Vui lòng kiểm tra email", json.Message);
+        Assert.True(json.RequiresEmailConfirmation);
+    }
+
+    [Fact]
+    public async Task VerifyEmail_ReturnsSuccess_WhenTokenValid()
+    {
+        var email = $"verifyuser_{Guid.NewGuid()}@viebook.local";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+            var user = new BusinessObject.Models.User
+            {
+                Email = email,
+                PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword("Password123")),
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow,
+                UserProfile = new BusinessObject.Models.UserProfile
+                {
+                    FullName = "Verify User"
+                }
+            };
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+        }
+
+        using var scope2 = _factory.Services.CreateScope();
+        var config = scope2.ServiceProvider.GetRequiredService<IConfiguration>();
+        var jwtService = new JwtService(config);
+
+        var context2 = scope2.ServiceProvider.GetRequiredService<VieBookContext>();
+        var testUser = context2.Users.First(u => u.Email == email);
+        var token = jwtService.GenerateToken(testUser.UserId.ToString(), testUser.Email);
+
+        var res = await _client.GetAsync($"/api/auth/verify-email?token={token}");
+        res.EnsureSuccessStatusCode();
+
+        var json = await res.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+        Assert.NotNull(json);
+        Assert.Equal("Email đã được xác thực thành công!", json["message"]);
+    }
+
+
+
+
 
 }
