@@ -1,6 +1,7 @@
 using BusinessObject.Dtos;
 using BusinessObject.PayOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Services.Interfaces;
 
 namespace VieBook.BE.Controllers

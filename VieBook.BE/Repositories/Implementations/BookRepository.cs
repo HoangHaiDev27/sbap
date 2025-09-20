@@ -22,6 +22,11 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetBookDetailAsync(id);
         }
+
+        public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
+        {
+            return await _bookDao.GetChaptersByBookIdAsync(bookId);
+        }
         public async Task<List<Book>> GetReadBooksAsync()
         {
             return await _bookDao.GetReadBooksAsync();

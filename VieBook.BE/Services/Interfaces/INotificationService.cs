@@ -27,6 +27,7 @@ namespace Services.Interfaces
         Task<NotificationResponseDTO> CreatePaymentFailedNotificationAsync(int userId, decimal amount);
         Task<NotificationResponseDTO> CreateWalletRechargeNotificationAsync(int userId, decimal amount);
         Task<NotificationResponseDTO> CreateBookPurchaseNotificationAsync(int userId, string bookTitle);
+        Task<NotificationResponseDTO> CreateChapterPurchaseNotificationAsync(int userId, int bookId, int chapterCount, decimal totalCost);
         Task<NotificationResponseDTO> CreateBookApprovalNotificationAsync(int userId, string bookTitle, bool approved);
         Task<NotificationResponseDTO> CreateNewFollowerNotificationAsync(int userId, string followerName);
         Task<NotificationResponseDTO> CreateSystemAnnouncementNotificationAsync(int userId, string title, string body);

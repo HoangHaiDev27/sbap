@@ -29,6 +29,14 @@ export default function UserMenu() {
   };
   // Lấy số đồng xu hiện tại
   const coins = useCoinsStore((state) => state.coins);
+  
+  // Debug logging
+  console.log("UserMenu - Current coins:", coins);
+  
+  // Theo dõi thay đổi coins
+  useEffect(() => {
+    console.log("UserMenu - Coins changed to:", coins);
+  }, [coins]);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -51,7 +59,7 @@ export default function UserMenu() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <RiCoinLine className="text-yellow-400 w-5 h-5" />
-                <span className="text-sm font-medium text-yellow-400">{coins} xu</span>
+                <span className="text-sm font-medium text-yellow-400">{coins || 0} xu</span>
               </div>
               <button 
                 onClick={() => {
