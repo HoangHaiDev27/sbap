@@ -45,5 +45,10 @@ namespace Services.Implementations
 
         public Task RemoveCategoriesByBookIdAsync(int bookId)
             => _bookRepo.RemoveCategoriesByBookIdAsync(bookId);
+        public async Task<List<BookResponseDTO>> GetReadBooksAsync()
+        {
+            var books = await _bookRepo.GetReadBooksAsync();
+            return _mapper.Map<List<BookResponseDTO>>(books);
+        }
     }
 }

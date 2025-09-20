@@ -20,4 +20,10 @@ namespace Repositories.Interfaces
         Task<bool> IsIsbnExistsAsync(string isbn);
         Task<List<Book>> GetBooksByOwnerId(int ownerId);
     }
+        public interface IBookRepository
+        {
+                Task<Book?> GetBookDetailAsync(int id);
+                Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
+                Task<List<Book>> GetReadBooksAsync();
+        }
 }

@@ -285,7 +285,20 @@ export default function PurchasedBook() {
                     {book.rating}
                   </span>
                   <span>
-                    {new Date(book.purchaseDate).toLocaleDateString("vi-VN")}
+                    {(() => {
+                      try {
+                        const date = new Date(book.purchaseDate);
+                        if (isNaN(date.getTime())) {
+                          return "Ngày không xác định";
+                        }
+                        return date.toLocaleDateString("vi-VN", {
+                          timeZone: 'Asia/Ho_Chi_Minh'
+                        });
+                      } catch (error) {
+                        console.error('Error formatting purchase date:', error, book.purchaseDate);
+                        return "Ngày không xác định";
+                      }
+                    })()}
                   </span>
                 </div>
               </div>

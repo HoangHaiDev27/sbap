@@ -34,5 +34,18 @@ namespace Repositories.Implementations
 
         public Task RemoveCategoriesByBookIdAsync(int bookId)
             => _bookDao.RemoveCategoriesByBookIdAsync(bookId);
+        public async Task<Book?> GetBookDetailAsync(int id)
+        {
+            return await _bookDao.GetBookDetailAsync(id);
+        }
+
+        public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
+        {
+            return await _bookDao.GetChaptersByBookIdAsync(bookId);
+        }
+        public async Task<List<Book>> GetReadBooksAsync()
+        {
+            return await _bookDao.GetReadBooksAsync();
+        }
     }
 }

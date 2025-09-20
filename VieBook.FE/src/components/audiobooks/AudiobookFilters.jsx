@@ -1,5 +1,5 @@
-import React from "react";
-import { RiStarFill, RiStarLine } from "react-icons/ri";
+import React, { useEffect, useState } from "react";
+import { getReadBooks } from "../../api/bookApi";
 
 export default function AudiobookFilters({
   selectedCategory,
@@ -11,21 +11,7 @@ export default function AudiobookFilters({
   selectedRating,
   setSelectedRating,
 }) {
-  const categories = [
-    "Tất cả",
-    "Văn học",
-    "Truyện tranh",
-    "Tiểu thuyết",
-    "Tâm lý học",
-    "Kinh doanh",
-    "Lãng mạn",
-    "Trinh thám",
-    "Khoa học viễn tưởng",
-    "Phiêu lưu",
-    "Lịch sử",
-    "Truyện cổ tích",
-    "Hài hước",
-  ];
+  const [categories, setCategories] = useState(["Tất cả"]);
 
   const durations = [
     "Tất cả",
@@ -48,13 +34,28 @@ export default function AudiobookFilters({
 
   const ratings = [5, 4, 3, 2, 1];
 
+  // --- Lấy danh sách category từ API ---
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const books = await getReadBooks();
+        const uniqueCategories = Array.from(
+          new Set(books.map((b) => b.category))
+        );
+        setCategories(["Tất cả", ...uniqueCategories]);
+      } catch (error) {
+        console.error("Failed to fetch categories", error);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   return (
     <div className="bg-gray-800 rounded-lg p-6 space-y-6">
+      <h2 className="text-xl font-semibold text-white mb-4">Bộ lọc sách nói</h2>
+
       {/* Thể loại */}
       <div>
-        <h2 className="text-xl font-semibold text-white mb-4">
-        Bộ lọc sách nói
-      </h2>
         <h3 className="block text-gray-300 text-sm mb-2">Thể loại</h3>
         <select
           value={selectedCategory}
@@ -112,9 +113,7 @@ export default function AudiobookFilters({
           <option value={0}>Tất cả</option>
           {ratings.map((stars) => (
             <option key={stars} value={stars}>
-              {Array.from({ length: 5 }, (_, i) =>
-                i < stars ? "★" : "☆"
-              ).join("")}{" "}
+              {Array.from({ length: 5 }, (_, i) => (i < stars ? "★" : "☆")).join("")}{" "}
               {stars} sao trở lên
             </option>
           ))}

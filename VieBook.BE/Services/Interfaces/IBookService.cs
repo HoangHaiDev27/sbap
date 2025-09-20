@@ -20,5 +20,6 @@ namespace Services.Interfaces
         Task RemoveCategoriesByBookIdAsync(int bookId);
         Task<bool> IsIsbnExistsAsync(string isbn);
         Task<List<Book>> GetBooksByOwnerId(int ownerId);
+        Task<List<BookResponseDTO>> GetReadBooksAsync();
     }
 }
