@@ -59,12 +59,14 @@ builder.Services.AddAuthorization();
 
 //Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
+
+//Add HttpClient
+builder.Services.AddHttpClient();
 //Add DAO
 builder.Services.AddScoped<UserDAO>();
 builder.Services.AddScoped<AuthenDAO>();
 builder.Services.AddScoped<PasswordResetTokenDAO>();
-builder.Services.AddScoped<AuthenDAO>();
-builder.Services.AddScoped<PasswordResetTokenDAO>();
+builder.Services.AddScoped<RefreshTokenDAO>();
 builder.Services.AddScoped<BookDao>();
 builder.Services.AddScoped<CategoryDAO>();
 
@@ -74,8 +76,7 @@ builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionReposi
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
-builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
-builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
@@ -87,6 +88,8 @@ builder.Services.AddScoped<IChapterPurchaseService, ChapterPurchaseService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -96,6 +99,14 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));
 builder.Services.AddSingleton<JwtService>();
+
+// Add Google Authentication (for server-side verification only)
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["GoogleAuth:ClientId"] ?? throw new Exception("Google ClientId not found");
+        options.ClientSecret = builder.Configuration["GoogleAuth:ClientSecret"] ?? throw new Exception("Google ClientSecret not found");
+    });
 
 builder.Services.AddControllers();
 //CORS
@@ -108,7 +119,8 @@ builder.Services.AddCors(options =>
             policy
                 .AllowAnyOrigin()
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .SetIsOriginAllowed(origin => true);
         }
         else
         {

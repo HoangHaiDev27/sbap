@@ -62,6 +62,20 @@ CREATE TABLE dbo.PasswordResetTokens (
   CreatedAt   DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
+CREATE TABLE dbo.RefreshTokens (
+  TokenId        UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+  UserId         INT NOT NULL REFERENCES dbo.Users(UserId),
+  TokenHash      VARCHAR(255) NOT NULL,
+  ExpiresAt      DATETIME2 NOT NULL,
+  CreatedAt      DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  RevokedAt      DATETIME2 NULL,
+  ReplacedByToken VARCHAR(255) NULL,
+  ReasonRevoked  VARCHAR(500) NULL
+);
+CREATE INDEX IX_RefreshTokens_User ON dbo.RefreshTokens(UserId);
+CREATE INDEX IX_RefreshTokens_TokenHash ON dbo.RefreshTokens(TokenHash);
+CREATE INDEX IX_RefreshTokens_ExpiresAt ON dbo.RefreshTokens(ExpiresAt);
+
 -- =========================================================
 -- Categories
 -- =========================================================

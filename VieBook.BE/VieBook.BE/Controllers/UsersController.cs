@@ -1,11 +1,15 @@
 ﻿using AutoMapper;
 using BusinessObject;
 using BusinessObject.Dtos;
+using BusinessObject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BusinessObject.Models;
 using Services.Interfaces;
+using VieBook.BE.Attributes;
+using VieBook.BE.Constants;
 
 namespace VieBook.BE.Controllers
 {
@@ -21,6 +25,8 @@ namespace VieBook.BE.Controllers
             _mapper = mapper;
         }
         [HttpGet]
+        // [Authorize]
+        // [RequirePermission(Permissions.ViewUsers)]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
             try

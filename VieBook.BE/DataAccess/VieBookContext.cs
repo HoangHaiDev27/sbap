@@ -47,6 +47,8 @@ public partial class VieBookContext : DbContext
 
     public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     public virtual DbSet<PaymentRequest> PaymentRequests { get; set; }
 
     public virtual DbSet<Plan> Plans { get; set; }
@@ -446,6 +448,22 @@ public partial class VieBookContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__PasswordR__UserI__38996AB5");
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.TokenId).HasName("PK__RefreshT__658FEEEA128C122B");
+
+            entity.Property(e => e.TokenId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.TokenHash).HasMaxLength(255);
+            entity.Property(e => e.ReplacedByToken).HasMaxLength(255);
+            entity.Property(e => e.ReasonRevoked).HasMaxLength(500);
+
+            entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__RefreshTo__UserI__39896AB5");
         });
 
         modelBuilder.Entity<PaymentRequest>(entity =>

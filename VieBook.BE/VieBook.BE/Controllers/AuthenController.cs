@@ -1,8 +1,9 @@
 using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Services.Implementations;
 using Services.Interfaces;
+using System.Security.Claims;
+using Services.Implementations;
 using System.Text.RegularExpressions;
 using VieBook.BE.Configuration;
 
@@ -11,7 +12,12 @@ using VieBook.BE.Configuration;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    public AuthController(IAuthService authService) => _authService = authService;
+    private readonly IGoogleAuthService _googleAuthService;
+    public AuthController(IAuthService authService, IGoogleAuthService googleAuthService) 
+    {
+        _authService = authService;
+        _googleAuthService = googleAuthService;
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
@@ -68,6 +74,51 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
+    {
+        try
+        {
+            // Debug: Log all claims
+            var claims = User.Claims.ToList();
+            Console.WriteLine($"Change Password - Claims count: {claims.Count}");
+            foreach (var claim in claims)
+            {
+                Console.WriteLine($"Change Password - Claim: {claim.Type} = {claim.Value}");
+            }
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                             ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                             ?? User.FindFirst("sub")?.Value;
+
+
+            Console.WriteLine($"Change Password - User ID from token: {userIdClaim}");
+            
+            if (string.IsNullOrEmpty(userIdClaim)) 
+            {
+                Console.WriteLine("Change Password - No user ID found in token");
+                return Unauthorized(new { message = "Token không hợp lệ - không tìm thấy user ID" });
+            }
+
+            if (!int.TryParse(userIdClaim, out int userId))
+            {
+                Console.WriteLine($"Change Password - Cannot parse user ID: {userIdClaim}");
+                return Unauthorized(new { message = "User ID không hợp lệ" });
+            }
+
+            Console.WriteLine($"Change Password - Parsed user ID: {userId}");
+            var result = await _authService.ChangePasswordAsync(userId, request);
+            if (result != "Success") return BadRequest(new { message = result });
+            return Ok(new { message = "Mật khẩu đã được thay đổi thành công" });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Change Password - Exception: {ex.Message}");
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -97,6 +148,48 @@ public class AuthController : ControllerBase
     {
         var result = await (_authService as AuthService)!.VerifyEmailAsync(token);
         return Ok(new { message = result });
+    }
+
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
+    {
+        try
+        {
+            var res = await _googleAuthService.GoogleLoginAsync(request);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+    {
+        try
+        {
+            var result = await _authService.RefreshTokenAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("revoke-token")]
+    public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequestDto request)
+    {
+        try
+        {
+            await _authService.RevokeTokenAsync(request.RefreshToken);
+            return Ok(new { message = "Token đã được thu hồi" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
 }
