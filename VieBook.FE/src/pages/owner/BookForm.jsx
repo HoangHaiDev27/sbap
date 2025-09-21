@@ -1,12 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getUserId } from "../../api/authApi";
-import { getCategories, createBook } from "../../api/ownerBookApi";
-
-
-// Ảnh mặc định tạm thời
-const TEMP_IMAGE_URL =
-  "https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/474112AqI/anh-meme-ech-xanh_102045378.jpg";
+import { getCategories, createBook, uploadBookImage } from "../../api/ownerBookApi";
 
 export default function BookForm() {
   const [categories, setCategories] = useState([]);
@@ -17,13 +12,28 @@ export default function BookForm() {
     categoryIds: [],
     language: "",
     description: "",
-    coverUri: TEMP_IMAGE_URL, // mặc định
+    coverUri: "",
   });
   const [errors, setErrors] = useState({});
   const [preview, setPreview] = useState(null);
+  const [file, setFile] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [isbnError, setIsbnError] = useState("");
+  const [uploading, setUploading] = useState(false);
 
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
+
+  // click outside để đóng dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // load categories
   useEffect(() => {
@@ -42,6 +52,7 @@ export default function BookForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "isbn") setIsbnError("");
   };
 
   // chọn/bỏ chọn category
@@ -57,16 +68,16 @@ export default function BookForm() {
     });
   };
 
-  // handle chọn ảnh từ máy
+  // chọn file -> chỉ preview
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      setFile(selected);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
-        setForm((prev) => ({ ...prev, coverUri: TEMP_IMAGE_URL })); // lưu mặc định
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(selected);
     }
   };
 
@@ -75,9 +86,9 @@ export default function BookForm() {
     const errs = {};
     if (!form.title.trim()) errs.title = "Tên sách là bắt buộc";
     if (!form.author.trim()) errs.author = "Tác giả là bắt buộc";
-    if (!form.categoryIds.length)
-      errs.categoryIds = "Phải chọn ít nhất 1 thể loại";
+    if (!form.categoryIds.length) errs.categoryIds = "Phải chọn ít nhất 1 thể loại";
     if (!form.description.trim()) errs.description = "Mô tả là bắt buộc";
+    if (!file) errs.coverUri = "Ảnh bìa là bắt buộc";
     return errs;
   };
 
@@ -90,14 +101,30 @@ export default function BookForm() {
     try {
       const ownerId = getUserId();
       if (!ownerId) {
-        alert("Không tìm thấy user, vui lòng đăng nhập!");
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: {
+              type: "error",
+              message: "Không tìm thấy user, vui lòng đăng nhập!",
+            },
+          })
+        );
         return;
       }
+
+      setUploading(true);
+      let coverUrl = null;
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        coverUrl = await uploadBookImage(formData);
+      }
+      setUploading(false);
 
       const payload = {
         title: form.title,
         description: form.description,
-        coverUrl: form.coverUri || TEMP_IMAGE_URL,
+        coverUrl, // lấy link thực từ Cloudinary
         isbn: form.isbn,
         language: form.language || "Vietnamese",
         ownerId,
@@ -107,14 +134,26 @@ export default function BookForm() {
       };
 
       await createBook(payload);
-      alert("Thêm sách thành công!");
+
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "success", message: "Thêm sách thành công!" },
+        })
+      );
 
       navigate("/owner/books");
     } catch (err) {
-      console.error("Lỗi thêm sách:", err);
-      alert("Không thể thêm sách!");
+      if (err.message.includes("ISBN")) {
+        setIsbnError("Mã ISBN đã tồn tại, vui lòng nhập mã khác.");
+      }
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: err.message || "Không thể thêm sách!" },
+        })
+      );
     }
   };
+
 
   return (
     <div className="p-6 text-white">
@@ -146,9 +185,7 @@ export default function BookForm() {
               placeholder="Nhập tên sách..."
               className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
             />
-            {errors.title && (
-              <p className="text-red-400 text-sm">{errors.title}</p>
-            )}
+            {errors.title && <p className="text-red-400 text-sm">{errors.title}</p>}
           </div>
 
           {/* Tác giả */}
@@ -162,22 +199,21 @@ export default function BookForm() {
               placeholder="Nhập tên tác giả..."
               className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
             />
-            {errors.author && (
-              <p className="text-red-400 text-sm">{errors.author}</p>
-            )}
+            {errors.author && <p className="text-red-400 text-sm">{errors.author}</p>}
           </div>
 
           {/* ISBN */}
           <div>
-            <label className="block mb-2 text-sm font-medium">Mã ISBN</label>
+            <label className="block mb-2 text-sm font-medium">Mã ISBN *</label>
             <input
               type="text"
               name="isbn"
               value={form.isbn}
               onChange={handleChange}
               placeholder="Nhập mã ISBN..."
-              className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
+              className={`w-full px-3 py-2 rounded focus:outline-none ${isbnError ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"}`}
             />
+            {isbnError && <p className="text-red-400 text-sm">{isbnError}</p>}
           </div>
 
           {/* Thể loại */}
@@ -193,7 +229,10 @@ export default function BookForm() {
             </div>
 
             {showCategoryDropdown && (
-              <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-600 rounded-lg max-h-40 overflow-y-auto">
+              <div
+                ref={dropdownRef}
+                className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-600 rounded-lg max-h-40 overflow-y-auto"
+              >
                 {categories.map((c) => (
                   <label
                     key={c.categoryId}
@@ -210,10 +249,7 @@ export default function BookForm() {
                 ))}
               </div>
             )}
-
-            {errors.categoryIds && (
-              <p className="text-red-400 text-sm">{errors.categoryIds}</p>
-            )}
+            {errors.categoryIds && <p className="text-red-400 text-sm">{errors.categoryIds}</p>}
           </div>
         </div>
 
@@ -225,12 +261,12 @@ export default function BookForm() {
             onClick={() => document.getElementById("coverInput").click()}
           >
             <img
-              src={preview || TEMP_IMAGE_URL}
+              src={preview || "https://placehold.co/200x300?text=No+Image"}
               alt="Preview"
               className="w-40 h-56 object-cover rounded"
             />
             <p className="text-gray-400 mt-2">
-              Ảnh sẽ luôn lưu bằng link mặc định
+              Chọn ảnh từ máy, sẽ upload khi lưu
             </p>
             <input
               id="coverInput"
@@ -266,18 +302,18 @@ export default function BookForm() {
             placeholder="Mô tả nội dung sách..."
             className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
           />
-          {errors.description && (
-            <p className="text-red-400 text-sm">{errors.description}</p>
-          )}
+          {errors.description && <p className="text-red-400 text-sm">{errors.description}</p>}
         </div>
 
         {/* Submit */}
         <div className="mt-6 flex justify-end">
           <button
             onClick={handleSubmit}
-            className="px-6 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition"
+            disabled={uploading}
+            className={`px-6 py-2 rounded-lg transition ${uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+              }`}
           >
-            Lưu sách
+            {uploading ? "Đang lưu..." : "Lưu sách"}
           </button>
         </div>
       </div>

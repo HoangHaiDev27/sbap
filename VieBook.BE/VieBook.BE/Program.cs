@@ -95,6 +95,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
+// Cloudinaary service
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("Cloudinary"));
+builder.Services.AddScoped<CloudinaryService>();
+
 
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));
