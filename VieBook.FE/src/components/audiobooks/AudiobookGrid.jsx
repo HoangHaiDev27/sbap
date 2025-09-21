@@ -7,17 +7,18 @@ import {
   RiHeartLine,
   RiHeartFill,
   RiStarFill,
-  RiBookOpenLine
+  RiBookOpenLine,
+  RiCoinLine  
 } from "react-icons/ri";
 import { getReadBooks } from "../../api/bookApi";
 
 export default function AudiobookGrid({
   selectedCategory,
-  selectedDuration,
+  // selectedDuration,
   sortBy,
   selectedRating,
+  viewMode,
 }) {
-  const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
   const [audiobooks, setAudiobooks] = useState([]);
@@ -38,16 +39,16 @@ export default function AudiobookGrid({
   const filteredBooks = audiobooks.filter((book) => {
     if (selectedCategory && selectedCategory !== "Tất cả" && book.category !== selectedCategory) return false;
 
-    if (selectedDuration && selectedDuration !== "Tất cả") {
-      const hours = parseFloat(book.duration.split("h")[0]) || 0;
-      switch (selectedDuration) {
-        case "Dưới 3 giờ": if (hours >= 3) return false; break;
-        case "3-6 giờ": if (hours < 3 || hours > 6) return false; break;
-        case "6-10 giờ": if (hours < 6 || hours > 10) return false; break;
-        case "10-15 giờ": if (hours < 10 || hours > 15) return false; break;
-        case "Trên 15 giờ": if (hours <= 15) return false; break;
-      }
-    }
+    // if (selectedDuration && selectedDuration !== "Tất cả") {
+    //   const hours = parseFloat(book.duration.split("h")[0]) || 0;
+    //   switch (selectedDuration) {
+    //     case "Dưới 3 giờ": if (hours >= 3) return false; break;
+    //     case "3-6 giờ": if (hours < 3 || hours > 6) return false; break;
+    //     case "6-10 giờ": if (hours < 6 || hours > 10) return false; break;
+    //     case "10-15 giờ": if (hours < 10 || hours > 15) return false; break;
+    //     case "Trên 15 giờ": if (hours <= 15) return false; break;
+    //   }
+    // }
 
     if (selectedRating && selectedRating > 0 && book.rating < selectedRating) return false;
 
@@ -59,9 +60,9 @@ export default function AudiobookGrid({
   switch (sortBy) {
     case "Phổ biến": sortedBooks.sort((a,b) => b.reviews - a.reviews); break;
     case "Mới nhất": sortedBooks.sort((a,b) => b.id - a.id); break;
-    case "Đánh giá cao": sortedBooks.sort((a,b) => b.rating - a.rating); break;
-    case "Thời lượng ngắn": sortedBooks.sort((a,b) => parseFloat(a.duration) - parseFloat(b.duration)); break;
-    case "Thời lượng dài": sortedBooks.sort((a,b) => parseFloat(b.duration) - parseFloat(a.duration)); break;
+  //  case "Đánh giá cao": sortedBooks.sort((a,b) => b.rating - a.rating); break;
+    // case "Thời lượng ngắn": sortedBooks.sort((a,b) => parseFloat(a.duration) - parseFloat(b.duration)); break;
+    // case "Thời lượng dài": sortedBooks.sort((a,b) => parseFloat(b.duration) - parseFloat(a.duration)); break;
     case "A-Z": sortedBooks.sort((a,b) => a.title.localeCompare(b.title)); break;
     case "Z-A": sortedBooks.sort((a,b) => b.title.localeCompare(a.title)); break;
   }
@@ -74,7 +75,7 @@ export default function AudiobookGrid({
   return (
     <div>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      {/* <div className="flex justify-end items-center mb-6">
         <p className="text-gray-400">Hiển thị {filteredBooks.length} sách nói</p>
         <div className="flex space-x-2">
           <button onClick={() => setViewMode("grid")} className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-gray-700 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}>
@@ -84,7 +85,7 @@ export default function AudiobookGrid({
             <RiListCheck className="w-5 h-5" />
           </button>
         </div>
-      </div>
+      </div> */}
 
       {/* Grid/List */}
       {viewMode === "grid" ? (
@@ -101,7 +102,7 @@ export default function AudiobookGrid({
       {filteredBooks.length === 0 && (
         <div className="text-center py-12">
           <RiBookOpenLine className="text-6xl text-gray-600 mb-4 mx-auto" />
-          <h3 className="text-xl font-semibold text-gray-400 mb-2">Không tìm thấy sách nói</h3>
+          <h3 className="text-xl font-semibold text-gray-400 mb-2">Không tìm thấy sách đọc</h3>
           <p className="text-gray-500">Hãy thử thay đổi bộ lọc của bạn</p>
         </div>
       )}
@@ -125,12 +126,12 @@ function AudiobookCard({ book }) {
             <span>Đọc</span>
           </span>
         </div>
-        <div className="absolute bottom-3 left-3">
+        {/* <div className="absolute bottom-3 left-3">
           <div className="bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center space-x-1">
             <RiTimeLine className="w-3 h-3" />
             <span>{book.duration}</span>
           </div>
-        </div>
+        </div> */}
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-2">{book.title}</h3>
@@ -147,17 +148,31 @@ function AudiobookCard({ book }) {
 function AudiobookRow({ book }) {
   const [isFavorite, setIsFavorite] = useState(false);
   return (
-    <Link to={`/reader/${book.id}`} className="flex bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group">
-      <img src={book.image} alt={book.title} className="w-32 h-32 object-cover object-top" />
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-1">{book.title}</h3>
-        <p className="text-gray-400 text-sm mb-1">bởi {book.author}</p>
-        <Rating rating={book.rating} reviews={book.reviews} />
-        <div className="mt-auto">
-          <BookFooter isFavorite={isFavorite} setIsFavorite={setIsFavorite} book={book} />
-        </div>
-      </div>
-    </Link>
+    <Link
+  to={`/reader/${book.id}`}
+  className="flex items-center bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
+>
+  <img
+    src={book.image}
+    alt={book.title}
+    className="w-32 h-32 object-cover object-top"
+  />
+  <div className="p-4 flex flex-col flex-1">
+    <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-1">
+      {book.title}
+    </h3>
+    <p className="text-gray-400 text-sm mb-1">bởi {book.author}</p>
+    <Rating rating={book.rating} reviews={book.reviews} />
+    <div className="mt-auto">
+      <BookFooter
+        isFavorite={isFavorite}
+        setIsFavorite={setIsFavorite}
+        book={book}
+      />
+    </div>
+  </div>
+</Link>
+
   );
 }
 
@@ -176,7 +191,10 @@ function BookFooter({ book, isFavorite, setIsFavorite }) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-col">
-        <span className="text-orange-400 font-semibold">{book.price.toLocaleString()}đ</span>
+        <span className="text-orange-400 font-semibold flex items-center space-x-1">
+        <span>{book.price.toLocaleString()}</span>
+        <RiCoinLine className="text-yellow-400 w-5 h-5" />
+      </span>
         <span className="text-xs text-gray-400">{book.chapters} chương</span>
       </div>
       <div className="flex space-x-2">
