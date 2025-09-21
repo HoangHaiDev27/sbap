@@ -14,6 +14,7 @@ import {
   RiStarFill,
   RiHeartFill,
   RiStarLine,
+  RiCoinLine,
 } from "react-icons/ri";
 
 export default function BookDetailPage() {
@@ -52,7 +53,7 @@ export default function BookDetailPage() {
     return <div className="text-center text-red-500 p-6">Không tìm thấy sách.</div>;
   }
 
-  const { title, description, coverUrl, isbn, language, totalView, createdAt, ownerName, categories, chapters, reviews, totalPrice} =
+  const { title, description, coverUrl, isbn, language, totalView, createdAt, ownerName, categories, chapters, reviews, totalPrice } =
     bookDetail;
 
   return (
@@ -96,7 +97,7 @@ export default function BookDetailPage() {
               </Link>
             </div>
 
-            <button 
+            <button
               onClick={() => setShowPurchaseModal(true)}
               className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
@@ -130,16 +131,19 @@ export default function BookDetailPage() {
         <div className="lg:col-span-2">
           <h1 className="text-3xl font-bold mb-2">{title}</h1>
           <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
-          <p className="text-gray-300 mb-4">Giá: {totalPrice.toLocaleString()} VNĐ</p>
+          <p className="text-yellow-400 font-bold text-xl mb-4 flex items-center gap-1">
+            {totalPrice.toLocaleString()}
+            <RiCoinLine className="w-5 h-5" />
+          </p>
 
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-4">
             <span className="text-white font-medium">
               {reviews && reviews.length > 0
                 ? (
-                    reviews.reduce((sum, r) => sum + r.rating, 0) /
-                    reviews.length
-                  ).toFixed(1)
+                  reviews.reduce((sum, r) => sum + r.rating, 0) /
+                  reviews.length
+                ).toFixed(1)
                 : "Chưa có"}
             </span>
             <RiStarFill className="text-yellow-400" />
@@ -152,31 +156,28 @@ export default function BookDetailPage() {
           <div className="border-b border-gray-700 mb-6 flex space-x-6">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`pb-2 ${
-                activeTab === "overview"
-                  ? "border-b-2 border-orange-500 text-orange-400"
-                  : "text-gray-400"
-              }`}
+              className={`pb-2 ${activeTab === "overview"
+                ? "border-b-2 border-orange-500 text-orange-400"
+                : "text-gray-400"
+                }`}
             >
               Tổng quan
             </button>
             <button
               onClick={() => setActiveTab("details")}
-              className={`pb-2 ${
-                activeTab === "details"
-                  ? "border-b-2 border-orange-500 text-orange-400"
-                  : "text-gray-400"
-              }`}
+              className={`pb-2 ${activeTab === "details"
+                ? "border-b-2 border-orange-500 text-orange-400"
+                : "text-gray-400"
+                }`}
             >
               Chi tiết
             </button>
             <button
               onClick={() => setActiveTab("reviews")}
-              className={`pb-2 ${
-                activeTab === "reviews"
-                  ? "border-b-2 border-orange-500 text-orange-400"
-                  : "text-gray-400"
-              }`}
+              className={`pb-2 ${activeTab === "reviews"
+                ? "border-b-2 border-orange-500 text-orange-400"
+                : "text-gray-400"
+                }`}
             >
               Đánh giá
             </button>
@@ -245,8 +246,9 @@ export default function BookDetailPage() {
 
       {/* Related Books */}
       <div className="mt-12">
-        <RelatedBooks currentBookId={id} category={categories?.[0]} />
+        <RelatedBooks currentBookId={id} />
       </div>
+
 
       {/* Report Modal */}
       {showReportModal && (

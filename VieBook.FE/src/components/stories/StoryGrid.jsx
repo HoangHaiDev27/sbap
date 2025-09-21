@@ -9,6 +9,7 @@ import {
   RiStarFill,
   RiPlayFill,
   RiBookOpenLine,
+  RiCoinLine,
 } from "react-icons/ri";
 import { getAudioBooks } from "../../api/audioBookApi";
 
@@ -112,7 +113,7 @@ export default function StoryGrid({
             key={story.id}
             className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors"
           >
-            <Link to={`/player/${story.id}`}>
+            <Link to={`/bookdetails/${story.id}`}>
               <div className="relative">
                 <img
                   src={story.image}
@@ -160,6 +161,11 @@ export default function StoryGrid({
                     <RiStarFill className="text-yellow-400 mr-1" />
                     <span>{story.rating} ({story.reviews})</span>
                   </div>
+                  {/* Price */}
+                  <div className="flex items-center gap-1 text-sm text-yellow-400 font-semibold">
+                    {story.price}
+                    <RiCoinLine className="w-5 h-5" />
+                  </div>
                   {/* Play Button */}
                   <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap flex items-center">
                     <RiPlayFill className="mr-1" /> Nghe
@@ -187,11 +193,10 @@ export default function StoryGrid({
         <button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
-          className={`px-3 py-1 rounded ${
-            currentPage === 1
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gray-700 text-white hover:bg-gray-600"
-          }`}
+          className={`px-3 py-1 rounded ${currentPage === 1
+            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+            : "bg-gray-700 text-white hover:bg-gray-600"
+            }`}
         >
           Trang trước
         </button>
@@ -200,11 +205,10 @@ export default function StoryGrid({
           <button
             key={index}
             onClick={() => setCurrentPage(index + 1)}
-            className={`px-3 py-1 rounded ${
-              currentPage === index + 1
-                ? "bg-orange-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
+            className={`px-3 py-1 rounded ${currentPage === index + 1
+              ? "bg-orange-600 text-white"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
           >
             {index + 1}
           </button>
@@ -213,11 +217,10 @@ export default function StoryGrid({
         <button
           onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
-          className={`px-3 py-1 rounded ${
-            currentPage === totalPages
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gray-700 text-white hover:bg-gray-600"
-          }`}
+          className={`px-3 py-1 rounded ${currentPage === totalPages
+            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+            : "bg-gray-700 text-white hover:bg-gray-600"
+            }`}
         >
           Trang sau
         </button>

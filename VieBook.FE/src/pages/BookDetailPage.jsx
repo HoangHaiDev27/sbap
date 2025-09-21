@@ -9,7 +9,7 @@ export default function BookDetailPage() {
   return (
     <div className="bg-gray-900 min-h-screen text-white">
       {/* Chi tiết sách */}
-      <BookDetailsPage bookId={id} />
+      <BookDetailsPage/>
 
       {/* Grid + Filter (các sách khác hoặc gợi ý)
       <div className="mt-12 px-6">

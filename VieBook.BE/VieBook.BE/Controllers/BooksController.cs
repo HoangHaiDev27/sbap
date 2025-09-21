@@ -145,6 +145,30 @@ namespace VieBook.BE.Controllers
                 return NotFound();
             return Ok(book);
         }
+        [HttpGet("{id}/related")]
+        public async Task<ActionResult<IEnumerable<BookResponseDTO>>> GetRelatedBooks(int id)
+        {
+            var currentBook = await _bookService.GetBookDetailAsync(id);
+            if (currentBook == null)
+                return NotFound("Không tìm thấy sách.");
+
+            // Lấy category đầu tiên (nếu có)
+            var mainCategory = currentBook.Categories.FirstOrDefault();
+            if (string.IsNullOrEmpty(mainCategory))
+                return Ok(new List<BookResponseDTO>()); // không có category thì trả rỗng
+
+            var allBooks = await _bookService.GetAllAsync();
+
+            var relatedBooks = allBooks
+                .Where(b => b.BookId != id &&
+                            b.Categories.Any(c => c.Name == mainCategory)) // so sánh theo tên category
+                .Take(6)
+                .ToList();
+
+            return Ok(_mapper.Map<IEnumerable<BookResponseDTO>>(relatedBooks));
+        }
+
+
 
     }
 }

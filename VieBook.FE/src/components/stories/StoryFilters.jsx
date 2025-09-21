@@ -57,7 +57,7 @@ export default function StoryFilters({
   return (
     <div className="bg-gray-800 p-6 rounded-lg mb-8">
       <h2 className="text-xl font-semibold text-white mb-4">
-        Bộ lọc truyện nói
+        Bộ lọc
       </h2>
 
       {/* Thể loại */}
