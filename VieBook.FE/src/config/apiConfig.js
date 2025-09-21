@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
   READ_BOOKS: `${API_BASE_URL}/api/books/read`,
   AUDIO_BOOKS: `${API_BASE_URL}/api/books/audio`,
   AUDIO_BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/audio/${id}`,
+  RELATED_BOOKS: (id) => `${API_BASE_URL}/api/books/${id}/related`,
 
 
   // Auth endpoints

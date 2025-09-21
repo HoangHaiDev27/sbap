@@ -15,9 +15,9 @@ export default function StoryManager() {
       <main className="flex-1 p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Truyện nói</h1>
+          <h1 className="text-3xl font-bold mb-2">Sách Audio</h1>
           <p className="text-gray-400">
-            Thưởng thức hàng nghìn truyện nói chất lượng cao với giọng đọc chuyên nghiệp
+            Thưởng thức hàng nghìn sách audio chất lượng cao với giọng đọc chuyên nghiệp
           </p>
         </div>
 

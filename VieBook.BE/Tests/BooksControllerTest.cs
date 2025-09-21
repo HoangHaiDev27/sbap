@@ -334,5 +334,79 @@ namespace Tests
             Assert.Contains(books!, b => b.Title == "Owner Book");
         }
 
+        [Fact]
+        public async Task GetRelatedBooks_ReturnsBooks_WhenSameCategoryExists()
+        {
+            int bookId;
+            int relatedBookId;
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<VieBookContext>();
+
+                // Seed category
+                var category = new Category { Name = "Test Genre", Type = "Genre" };
+                context.Categories.Add(category);
+                context.SaveChanges();
+
+                // Seed main book
+                var mainBook = new Book
+                {
+                    Title = "Main Book",
+                    Status = "Active",
+                    CreatedAt = DateTime.UtcNow,
+                    Owner = new User
+                    {
+                        Email = "owner@main.com",
+                        Status = "Active",
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    Categories = new List<Category> { category }
+                };
+                context.Books.Add(mainBook);
+                context.SaveChanges();
+                bookId = mainBook.BookId;
+
+                // Seed related book
+                var relatedBook = new Book
+                {
+                    Title = "Related Book",
+                    Status = "Active",
+                    CreatedAt = DateTime.UtcNow,
+                    Owner = new User
+                    {
+                        Email = "owner@related.com",
+                        Status = "Active",
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    Categories = new List<Category> { category }
+                };
+                context.Books.Add(relatedBook);
+                context.SaveChanges();
+                relatedBookId = relatedBook.BookId;
+            }
+
+            // Act
+            var response = await _client.GetAsync($"/api/books/{bookId}/related");
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var related = await response.Content.ReadFromJsonAsync<List<BookResponseDTO>>();
+
+            Assert.NotNull(related);
+            Assert.Contains(related, b => b.Id == relatedBookId);   // phải có sách liên quan
+            Assert.DoesNotContain(related, b => b.Id == bookId);   // không chứa chính nó
+        }
+
+
+        [Fact]
+        public async Task GetRelatedBooks_Returns404_WhenBookDoesNotExist()
+        {
+            var response = await _client.GetAsync("/api/books/99999/related");
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+
     }
 }

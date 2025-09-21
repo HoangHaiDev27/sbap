@@ -22,3 +22,12 @@ export async function getReadBooks() {
   }
   return res.json();
 }
+// Lấy sách cùng thể loại
+export async function getRelatedBooks(bookId) {
+  const res = await fetch(API_ENDPOINTS.RELATED_BOOKS(bookId), {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch related books");
+  return res.json();
+}
