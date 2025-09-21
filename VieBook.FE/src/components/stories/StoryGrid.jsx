@@ -9,6 +9,7 @@ import {
   RiStarFill,
   RiPlayFill,
   RiBookOpenLine,
+  RiCoinLine,
 } from "react-icons/ri";
 import { getAudioBooks } from "../../api/audioBookApi";
 
@@ -161,8 +162,9 @@ export default function StoryGrid({
                     <span>{story.rating} ({story.reviews})</span>
                   </div>
                   {/* Price */}
-                  <div className="text-sm text-green-400 font-semibold">
-                    {story.price} xu
+                  <div className="flex items-center gap-1 text-sm text-yellow-400 font-semibold">
+                    {story.price}
+                    <RiCoinLine className="w-5 h-5" />
                   </div>
                   {/* Play Button */}
                   <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap flex items-center">
@@ -192,8 +194,8 @@ export default function StoryGrid({
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
           className={`px-3 py-1 rounded ${currentPage === 1
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gray-700 text-white hover:bg-gray-600"
+            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+            : "bg-gray-700 text-white hover:bg-gray-600"
             }`}
         >
           Trang trước
@@ -204,8 +206,8 @@ export default function StoryGrid({
             key={index}
             onClick={() => setCurrentPage(index + 1)}
             className={`px-3 py-1 rounded ${currentPage === index + 1
-                ? "bg-orange-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              ? "bg-orange-600 text-white"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
           >
             {index + 1}
@@ -216,8 +218,8 @@ export default function StoryGrid({
           onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
           className={`px-3 py-1 rounded ${currentPage === totalPages
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gray-700 text-white hover:bg-gray-600"
+            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+            : "bg-gray-700 text-white hover:bg-gray-600"
             }`}
         >
           Trang sau

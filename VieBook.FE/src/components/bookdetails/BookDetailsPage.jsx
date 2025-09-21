@@ -14,6 +14,7 @@ import {
   RiStarFill,
   RiHeartFill,
   RiStarLine,
+  RiCoinLine,
 } from "react-icons/ri";
 
 export default function BookDetailPage() {
@@ -130,8 +131,9 @@ export default function BookDetailPage() {
         <div className="lg:col-span-2">
           <h1 className="text-3xl font-bold mb-2">{title}</h1>
           <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
-          <p className="text-orange-400 font-bold text-xl mb-4">
-            {totalPrice.toLocaleString()} xu
+          <p className="text-yellow-400 font-bold text-xl mb-4 flex items-center gap-1">
+            {totalPrice.toLocaleString()}
+            <RiCoinLine className="w-5 h-5" />
           </p>
 
           {/* Rating */}
