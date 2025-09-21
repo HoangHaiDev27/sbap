@@ -103,7 +103,8 @@ namespace Tests
                         Description = "A test book for reading endpoint",
                         Status = "Published",
                         TotalView = 10,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
+                        Author = "Nguyễn Văn A"
                     };
                     context.Books.Add(book);
                     context.SaveChanges();
@@ -160,7 +161,8 @@ namespace Tests
                 Assert.True(b.Id > 0);
                 Assert.False(string.IsNullOrEmpty(b.Title));
                 Assert.False(string.IsNullOrEmpty(b.Author));
-            //    Assert.False(string.IsNullOrEmpty(b.Category)); 
+                //    Assert.False(string.IsNullOrEmpty(b.Category));
+                Assert.Equal("Nguyễn Văn A", b.Author); 
                 Assert.True(b.Price >= 0);
                 Assert.True(b.Chapters > 0);
                 Assert.False(string.IsNullOrEmpty(b.Duration));
