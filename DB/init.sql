@@ -545,11 +545,11 @@ VALUES
 -- Chapters
 INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
 VALUES
-  (@Book1Id, N'Why Read',             50, 'https://cdn/vb/b1/ch1.pdf', 12, 'https://cdn/vb/b1/ch1.mp3', 600, 12000),
-  (@Book1Id, N'Building a Habit',     40, 'https://cdn/vb/b1/ch2.pdf', 10, 'https://cdn/vb/b1/ch2.mp3', 540, 12000),
-  (@Book1Id, N'Choosing Books',       30, 'https://cdn/vb/b1/ch3.pdf', 11, 'https://cdn/vb/b1/ch3.mp3', 570, 12000),
-  (@Book2Id, N'Hello C#',             45, 'https://cdn/vb/b2/ch1.pdf', 14, 'https://cdn/vb/b2/ch1.mp3', 660, 15000),
-  (@Book2Id, N'Variables & Types',    40, 'https://cdn/vb/b2/ch2.pdf', 16, 'https://cdn/vb/b2/ch2.mp3', 780, 15000);
+  (@Book1Id, N'Why Read',             50, 'https://cdn/vb/b1/ch1.pdf', 12, 'https://cdn/vb/b1/ch1.mp3', 600, 12),
+  (@Book1Id, N'Building a Habit',     40, 'https://cdn/vb/b1/ch2.pdf', 10, 'https://cdn/vb/b1/ch2.mp3', 540, 12),
+  (@Book1Id, N'Choosing Books',       30, 'https://cdn/vb/b1/ch3.pdf', 11, 'https://cdn/vb/b1/ch3.mp3', 570, 12),
+  (@Book2Id, N'Hello C#',             45, 'https://cdn/vb/b2/ch1.pdf', 14, 'https://cdn/vb/b2/ch1.mp3', 660, 15),
+  (@Book2Id, N'Variables & Types',    40, 'https://cdn/vb/b2/ch2.pdf', 16, 'https://cdn/vb/b2/ch2.mp3', 780, 15);
 
 DECLARE @B1C1 INT = (SELECT TOP 1 ChapterId FROM dbo.Chapters WHERE BookId=@Book1Id ORDER BY ChapterId);
 DECLARE @B2C1 INT = (SELECT TOP 1 ChapterId FROM dbo.Chapters WHERE BookId=@Book2Id ORDER BY ChapterId);
