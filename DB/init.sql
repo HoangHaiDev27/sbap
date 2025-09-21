@@ -545,11 +545,11 @@ VALUES
 -- Chapters
 INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
 VALUES
-  (@Book1Id, N'Why Read',             50, 'https://cdn/vb/b1/ch1.pdf', 12, 'https://cdn/vb/b1/ch1.mp3', 600, 12000),
-  (@Book1Id, N'Building a Habit',     40, 'https://cdn/vb/b1/ch2.pdf', 10, 'https://cdn/vb/b1/ch2.mp3', 540, 12000),
-  (@Book1Id, N'Choosing Books',       30, 'https://cdn/vb/b1/ch3.pdf', 11, 'https://cdn/vb/b1/ch3.mp3', 570, 12000),
-  (@Book2Id, N'Hello C#',             45, 'https://cdn/vb/b2/ch1.pdf', 14, 'https://cdn/vb/b2/ch1.mp3', 660, 15000),
-  (@Book2Id, N'Variables & Types',    40, 'https://cdn/vb/b2/ch2.pdf', 16, 'https://cdn/vb/b2/ch2.mp3', 780, 15000);
+  (@Book1Id, N'Why Read',             50, 'https://cdn/vb/b1/ch1.pdf', 12, 'https://cdn/vb/b1/ch1.mp3', 600, 12),
+  (@Book1Id, N'Building a Habit',     40, 'https://cdn/vb/b1/ch2.pdf', 10, 'https://cdn/vb/b1/ch2.mp3', 540, 12),
+  (@Book1Id, N'Choosing Books',       30, 'https://cdn/vb/b1/ch3.pdf', 11, 'https://cdn/vb/b1/ch3.mp3', 570, 12),
+  (@Book2Id, N'Hello C#',             45, 'https://cdn/vb/b2/ch1.pdf', 14, 'https://cdn/vb/b2/ch1.mp3', 660, 15),
+  (@Book2Id, N'Variables & Types',    40, 'https://cdn/vb/b2/ch2.pdf', 16, 'https://cdn/vb/b2/ch2.mp3', 780, 15);
 
 DECLARE @B1C1 INT = (SELECT TOP 1 ChapterId FROM dbo.Chapters WHERE BookId=@Book1Id ORDER BY ChapterId);
 DECLARE @B2C1 INT = (SELECT TOP 1 ChapterId FROM dbo.Chapters WHERE BookId=@Book2Id ORDER BY ChapterId);
@@ -640,6 +640,61 @@ INSERT INTO dbo.ChatMessages(ConversationId, SenderId, MessageText)
 VALUES
   (@ConvId, @AliceId, N'Chào anh, em muốn hỏi về chương 2 của sách ạ.'),
   (@ConvId, @OwnerId, N'Chào em, chương 2 nói kỹ hơn về xây thói quen, em gặp vướng chỗ nào?');
+
+
+/* =========================================================
+   Thêm sách & chapters demo (có audio và không audio)
+   ========================================================= */
+
+-- Thêm 4 sách mới
+INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView)
+VALUES
+  (@OwnerId, N'Learning SQL', N'Practical guide to SQL database queries.', 
+   'https://m.media-amazon.com/images/I/81xkjj+FAfL._UF1000,1000_QL80_.jpg', '9780000000035', 'EN', 'Approved', 60),
+  (@OwnerId, N'Tiếng Việt Thực Hành', N'Bài tập và ví dụ tiếng Việt.', 
+   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpPc3nRmkLl5drpPIsG0j48orbJooj8ZpfrA&s', '9780000000042', 'VN', 'Approved', 40),
+  (@OwnerId, N'The Power of Habit', N'Classic guide to building good habits.', 
+   'https://0.academia-photos.com/attachment_thumbnails/42458634/mini_magick20190217-29727-3ejvf5.png?1550449652', '9780000000059', 'EN', 'Approved', 150),
+  (@OwnerId, N'Mindfulness Everyday', N'Practical exercises for daily mindfulness.', 
+   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkLK8veL1SrE-55ozEKV3659bhvFze7nt0Gw&s', '9780000000066', 'EN', 'Approved', 95);
+
+DECLARE @Book3Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Learning SQL');
+DECLARE @Book4Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tiếng Việt Thực Hành');
+DECLARE @Book5Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'The Power of Habit');
+DECLARE @Book6Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Mindfulness Everyday');
+
+-- Map category cho sách
+INSERT INTO dbo.BookCategories(BookId, CategoryId)
+VALUES
+  (@Book3Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Technology' AND Type='Subject')),
+  (@Book4Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Fiction' AND Type='Genre')),
+  (@Book5Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Self-Help' AND Type='Genre')),
+  (@Book6Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Self-Help' AND Type='Genre'));
+
+-- Chapters cho "Learning SQL" (có audio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+VALUES
+  (@Book3Id, N'Introduction to SQL', 20, 'https://cdn/vb/b3/ch1.pdf', 18, 'https://cdn/vb/b3/ch1.mp3', 800, 20),
+  (@Book3Id, N'Joins and Queries',   15, 'https://cdn/vb/b3/ch2.pdf', 22, 'https://cdn/vb/b3/ch2.mp3', 900, 22);
+
+-- Chapters cho "Tiếng Việt Thực Hành" (không audio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+VALUES
+  (@Book4Id, N'Chính tả và Ngữ pháp', 25, 'https://cdn/vb/b4/ch1.pdf', 30, NULL, NULL, NULL),
+  (@Book4Id, N'Từ vựng nâng cao',     18, 'https://cdn/vb/b4/ch2.pdf', 28, NULL, NULL, NULL);
+
+-- Chapters cho "The Power of Habit" (có audio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+VALUES
+  (@Book5Id, N'Keystone Habits', 60, 'https://cdn/vb/b5/ch1.pdf', 20, 'https://cdn/vb/b5/ch1.mp3', 1000, 25),
+  (@Book5Id, N'Small Wins',      45, 'https://cdn/vb/b5/ch2.pdf', 18, 'https://cdn/vb/b5/ch2.mp3', 880, 22);
+
+-- Chapters cho "Mindfulness Everyday" (không audio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+VALUES
+  (@Book6Id, N'Breathing Awareness', 40, 'https://cdn/vb/b6/ch1.pdf', 15, NULL, NULL, NULL),
+  (@Book6Id, N'Walking Meditation',  35, 'https://cdn/vb/b6/ch2.pdf', 16, NULL, NULL, NULL);
+
 
 -- Notifications
 INSERT INTO dbo.Notifications(UserId, Type, Title, Body)
