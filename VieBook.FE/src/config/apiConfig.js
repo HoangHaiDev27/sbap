@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
   CATEGORIES: {
     GET_ALL: `${API_BASE_URL}/api/categories`,
   },
+  UPLOADBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
 };
 
 // Helper function to get full API URL

@@ -55,7 +55,12 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Rating,
                     opt => opt.MapFrom(src => src.BookReviews.Any()
                         ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
-                        : 0));
+                        : 0))
+                .ForMember(dest => dest.Sold,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .SelectMany(c => c.OrderItems)   
+                        .Count()));                        
+
 
             // Map từ RegisterRequestDto sang User
             CreateMap<RegisterRequestDto, User>()

@@ -4,8 +4,8 @@ import { getReadBooks } from "../../api/bookApi";
 export default function AudiobookFilters({
   selectedCategory,
   setSelectedCategory,
-  selectedDuration,
-  setSelectedDuration,
+ // selectedDuration,
+ // setSelectedDuration,
   sortBy,
   setSortBy,
   selectedRating,
@@ -13,21 +13,21 @@ export default function AudiobookFilters({
 }) {
   const [categories, setCategories] = useState(["Tất cả"]);
 
-  const durations = [
-    "Tất cả",
-    "Dưới 3 giờ",
-    "3-6 giờ",
-    "6-10 giờ",
-    "10-15 giờ",
-    "Trên 15 giờ",
-  ];
+  // const durations = [
+  //   "Tất cả",
+  //   "Dưới 3 giờ",
+  //   "3-6 giờ",
+  //   "6-10 giờ",
+  //   "10-15 giờ",
+  //   "Trên 15 giờ",
+  // ];
 
   const sortOptions = [
     "Phổ biến",
     "Mới nhất",
-    "Đánh giá cao",
-    "Thời lượng ngắn",
-    "Thời lượng dài",
+    //"Đánh giá cao",
+    // "Thời lượng ngắn",
+    // "Thời lượng dài",
     "A-Z",
     "Z-A",
   ];
@@ -52,7 +52,7 @@ export default function AudiobookFilters({
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 space-y-6">
-      <h2 className="text-xl font-semibold text-white mb-4">Bộ lọc sách nói</h2>
+      <h2 className="text-xl font-semibold text-white mb-4">Bộ lọc sách đọc</h2>
 
       {/* Thể loại */}
       <div>
@@ -71,7 +71,7 @@ export default function AudiobookFilters({
       </div>
 
       {/* Thời lượng */}
-      <div>
+      {/* <div>
         <h3 className="block text-gray-300 text-sm mb-2">Thời lượng</h3>
         <select
           value={selectedDuration}
@@ -84,7 +84,7 @@ export default function AudiobookFilters({
             </option>
           ))}
         </select>
-      </div>
+      </div> */}
 
       {/* Sắp xếp */}
       <div>

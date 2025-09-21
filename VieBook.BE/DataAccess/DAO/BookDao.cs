@@ -135,11 +135,15 @@ namespace DataAccess.DAO
         public async Task<List<Book>> GetBooksByOwnerId(int ownerId)
         {
             return await _context.Books
-                                 .Include(b => b.Categories)
-                                 .Include(b => b.Chapters)
-                                 .Include(b => b.BookReviews)
-                                 .Where(b => b.OwnerId == ownerId)
-                                 .ToListAsync();
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                    .ThenInclude(c => c.OrderItems) 
+                .Include(b => b.BookReviews)
+                .Include(b => b.Owner)
+                    .ThenInclude(o => o.UserProfile) 
+                .Where(b => b.OwnerId == ownerId)
+                .ToListAsync();
         }
+
     }
 }

@@ -74,7 +74,7 @@ export default function BookFilters({
       >
         <option value="newest">Mới nhất</option>
         <option value="oldest">Cũ nhất</option>
-        <option value="oldest">Bán chạy</option>
+        <option value="bestseller">Bán chạy</option>
       </select>
     </div>
   );
