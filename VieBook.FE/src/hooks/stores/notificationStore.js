@@ -155,6 +155,7 @@ export const useNotificationStore = create((set, get) => ({
 
   // Add new notification (for real-time updates)
   addNotification: (notification) => {
+    console.log("NotificationStore - Adding notification:", notification);
     set((state) => ({
       notifications: [notification, ...state.notifications],
       unreadNotifications: [notification, ...state.unreadNotifications],

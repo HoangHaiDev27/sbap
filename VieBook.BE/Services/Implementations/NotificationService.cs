@@ -125,7 +125,7 @@ namespace Services.Implementations
                 UserId = userId,
                 Type = NotificationTypes.WALLET_RECHARGE,
                 Title = "Nạp tiền thành công",
-                Body = $"Bạn đã nạp thành công {amount:N0} xu vào ví. Số dư hiện tại đã được cập nhật."
+                Body = $"Bạn đã nạp thành công {amount:N1} xu vào ví. Số dư hiện tại đã được cập nhật."
             };
             return await CreateAsync(createDto);
         }

@@ -37,7 +37,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
                 {
                     OrderCode = (int)webhookDataVerified.orderCode,
                     AmountMoney = webhookDataVerified.amount,
-                    AmountCoin = webhookDataVerified.amount / 1000, // 1 VNĐ = 1 xu
+                    AmountCoin = (decimal)webhookDataVerified.amount / 1000, // 1 VNĐ = 1 xu
                     Description = webhookDataVerified.description,
                     Status = "success", // Mặc định là success nếu webhook được gọi
                     TransactionId = webhookDataVerified.orderCode.ToString(), // Sử dụng orderCode làm transactionId
@@ -132,7 +132,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
                     {
                         OrderCode = orderCode,
                         AmountMoney = paymentInfo.amount,
-                        AmountCoin = paymentInfo.amount / 1000,
+                        AmountCoin = (decimal)paymentInfo.amount / 1000,
                         Description = "Nap xu U1 " + paymentInfo.amount, // Tạo description mới
                         Status = MapPayOSStatusToDatabaseStatus("PAID"), // Map PayOS status sang database status
                         TransactionId = orderCode.ToString(), // Sử dụng orderCode làm transactionId

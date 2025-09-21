@@ -84,18 +84,38 @@ export const usePaymentModal = () => {
             return;
           }
           
-          const coinAmount = (response.data.amount || parseInt(amount) || 0) / 1000;
+          console.log("PaymentModal - Response data:", response.data);
+          console.log("PaymentModal - Amount parameter:", amount);
+          console.log("PaymentModal - Response.data.amount:", response.data.amount);
+          
+          // Kiểm tra xem response.data.amount có phải là số tiền VNĐ hay số xu
+          const rawAmount = response.data.amount || parseInt(amount) || 0;
+          console.log("PaymentModal - Raw amount:", rawAmount);
+          
+          // Nếu amount > 1000 thì có thể là VNĐ, cần chia cho 1000
+          // Nếu amount <= 1000 thì có thể đã là xu rồi
+          const coinAmount = rawAmount > 1000 ? rawAmount / 1000 : rawAmount;
+          console.log("PaymentModal - Calculated coinAmount:", coinAmount);
+          
+          const formattedCoinAmount = parseFloat(coinAmount.toFixed(1)).toLocaleString('vi-VN', { 
+            minimumFractionDigits: 1, 
+            maximumFractionDigits: 1 
+          });
+          console.log("PaymentModal - Formatted coinAmount:", formattedCoinAmount);
           const notification = {
             notificationId: Date.now(), // Temporary ID
             userId: currentUserId,
             type: "WALLET_RECHARGE",
             title: "Nạp tiền thành công",
-            body: `Bạn đã nạp thành công ${coinAmount.toLocaleString()} xu vào ví. Số dư hiện tại đã được cập nhật.`,
+            body: `Bạn đã nạp thành công ${formattedCoinAmount} xu vào ví. Số dư hiện tại đã được cập nhật.`,
             isRead: false,
             createdAt: now.toISOString(),
             userName: "User",
             userEmail: "user@example.com"
           };
+          
+          console.log("PaymentModal - Creating notification:", notification);
+          console.log("PaymentModal - Notification body:", notification.body);
           addNotification(notification);
           
           // Cập nhật unread count

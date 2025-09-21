@@ -31,7 +31,7 @@ export const useCoinsStore = create((set) => ({
       const data = await res.json();
       console.log("CoinStore - Fetched user data:", data);
       const walletAmount = data.wallet || 0;
-      console.log("CoinStore - Setting coins to wallet amount:", walletAmount);
+      console.log("CoinStore - Setting coins to wallet amount:", walletAmount, "type:", typeof walletAmount);
       set({ coins: walletAmount });
     } catch (error) {
       console.error("Error fetching coins:", error);

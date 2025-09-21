@@ -33,6 +33,7 @@ export default function RechargePage() {
     getCurrentAmount,
     getTotalCoins,
     getBonusCoins,
+    formatCoins,
     isFormValid
   } = useRechargeForm();
   
@@ -86,7 +87,7 @@ export default function RechargePage() {
           <div>
             <p className="text-gray-400 text-sm">Số dư hiện tại</p>
             <p className="text-2xl font-bold text-yellow-400">
-              {isAuthenticated ? `${(coins || 0).toLocaleString()} xu` : "Vui lòng đăng nhập"}
+              {coins ? parseFloat(coins.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0} xu
             </p>
           </div>
         </div>
@@ -113,7 +114,7 @@ export default function RechargePage() {
                     {item.amount.toLocaleString()} VNĐ
                   </p>
                   <p className="text-sm text-gray-300">
-                    {item.coins.toLocaleString()} xu
+                    {parseFloat(item.coins.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu
                   </p>
                   {item.bonus > 0 && (
                     <p className="text-xs text-green-400 mt-1">
@@ -200,7 +201,7 @@ export default function RechargePage() {
             <div className="flex justify-between">
               <span>Số xu cơ bản:</span>
               <span className="font-bold text-yellow-400">
-                {((getCurrentAmount() || 0) / 1000).toLocaleString()} xu
+                {formatCoins((getCurrentAmount() || 0) / 1000).toLocaleString()} xu
               </span>
             </div>
             {getBonusCoins() > 0 && (
@@ -214,7 +215,7 @@ export default function RechargePage() {
             <div className="flex justify-between text-lg font-bold">
               <span>Tổng xu nhận được:</span>
               <span className="text-yellow-400">
-                {(getTotalCoins() || 0).toLocaleString()} xu
+                {formatCoins(getTotalCoins() || 0).toLocaleString()} xu
               </span>
             </div>
             <div className="flex justify-between text-green-400">

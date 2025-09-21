@@ -74,7 +74,7 @@ export default function PurchaseModal({
           userId: userId,
           type: "BOOK_PURCHASE",
           title: "Mua chương thành công",
-          body: `Bạn đã mua thành công ${selectedChapters.length} chương của "${bookTitle}". Tổng chi phí: ${totalPrice.toLocaleString()} xu.`,
+          body: `Bạn đã mua thành công ${selectedChapters.length} chương của "${bookTitle}". Tổng chi phí: ${parseFloat(totalPrice.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu.`,
           isRead: false,
           createdAt: new Date().toISOString(),
           userName: "User",
@@ -153,7 +153,7 @@ export default function PurchaseModal({
                 <span className="text-white font-medium">Số dư ví</span>
               </div>
               <span className="text-yellow-400 font-bold text-lg">
-                {coins.toLocaleString()} xu
+                {coins ? parseFloat(coins.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0} xu
               </span>
             </div>
           </div>

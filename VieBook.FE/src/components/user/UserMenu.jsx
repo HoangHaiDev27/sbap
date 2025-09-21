@@ -59,7 +59,9 @@ export default function UserMenu() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <RiCoinLine className="text-yellow-400 w-5 h-5" />
-                <span className="text-sm font-medium text-yellow-400">{coins || 0} xu</span>
+                <span className="text-sm font-medium text-yellow-400">
+                  {coins ? parseFloat(coins.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0} xu
+                </span>
               </div>
               <button 
                 onClick={() => {

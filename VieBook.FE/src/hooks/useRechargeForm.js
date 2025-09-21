@@ -51,6 +51,11 @@ export const useRechargeForm = () => {
     return baseCoins + bonus;
   };
 
+  const formatCoins = (coins) => {
+    // Hiển thị tối đa 1 chữ số thập phân
+    return parseFloat(coins.toFixed(1));
+  };
+
   const getBonusCoins = () => {
     if (!selectedAmount) return 0;
     return presetAmounts.find(item => item.amount === selectedAmount)?.bonus || 0;
@@ -76,6 +81,7 @@ export const useRechargeForm = () => {
     getCurrentAmount,
     getTotalCoins,
     getBonusCoins,
+    formatCoins,
     isFormValid
   };
 };
