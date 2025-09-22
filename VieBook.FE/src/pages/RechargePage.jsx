@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
-import { RiArrowLeftLine, RiCoinLine } from "react-icons/ri";
+import React, { useEffect, useState } from "react";
+import { RiArrowLeftLine, RiCoinLine, RiCheckboxCircleLine, RiCheckboxBlankCircleLine } from "react-icons/ri";
 import { Link } from "react-router-dom";
 import PaymentModal from "../components/payment/PaymentModal";
+import PaymentPolicy from "../components/payment/PaymentPolicy";
 import { usePayment } from "../hooks/usePayment";
 import { usePaymentModal } from "../hooks/usePaymentModal";
 import { useRechargeForm } from "../hooks/useRechargeForm";
@@ -9,6 +10,9 @@ import { useCoinsStore } from "../hooks/stores/coinStore";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 
 export default function RechargePage() {
+  // State cho checkbox đồng ý điều khoản
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  
   // Custom hooks
   const { isLoading, processPayment } = usePayment();
   const { 
@@ -54,6 +58,11 @@ export default function RechargePage() {
       return;
     }
 
+    if (!agreeToTerms) {
+      alert("Vui lòng đồng ý với điều khoản sử dụng trước khi nạp tiền");
+      return;
+    }
+
     const amount = getCurrentAmount();
     
     if (!isFormValid()) {
@@ -66,6 +75,11 @@ export default function RechargePage() {
     } catch (error) {
       alert(error.message || "Có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.");
     }
+  };
+
+  // Kiểm tra tất cả điều kiện để hiển thị button nạp tiền
+  const canProceedWithPayment = () => {
+    return isAuthenticated && isFormValid() && agreeToTerms;
   };
 
   return (
@@ -92,6 +106,10 @@ export default function RechargePage() {
           </div>
         </div>
       </div>
+
+
+      {/* Chính sách nạp tiền */}
+      <PaymentPolicy />
 
       {/* Chọn số tiền */}
       <div className="bg-gray-800 rounded-xl p-6 mb-6">
@@ -232,17 +250,53 @@ export default function RechargePage() {
           </div>
         </div>
 
+      {/* Checkbox đồng ý điều khoản */}
+      <div className={`rounded-xl p-6 mb-6 transition-all duration-300 ${
+        agreeToTerms 
+          ? 'bg-gray-800 border border-green-500/30' 
+          : 'bg-gray-800 border border-orange-500/50'
+      }`}>
+        <div className="flex items-start space-x-3">
+          <button
+            onClick={() => setAgreeToTerms(!agreeToTerms)}
+            className="flex-shrink-0 mt-1 transition-all duration-200 hover:scale-110"
+          >
+            {agreeToTerms ? (
+              <RiCheckboxCircleLine className="w-6 h-6 text-green-400" />
+            ) : (
+              <RiCheckboxBlankCircleLine className="w-6 h-6 text-orange-400" />
+            )}
+          </button>
+          <div className="flex-1">
+            <label className="text-sm text-gray-300 cursor-pointer">
+              Tôi đã đọc và đồng ý với{" "}
+              <span className="text-orange-400 font-semibold">
+                chính sách nạp tiền
+              </span>{" "}
+              và{" "}
+              <span className="text-orange-400 font-semibold">
+                điều khoản sử dụng
+              </span>{" "}
+              của nền tảng. 
+            </label>
+          
+          </div>
+        </div>
+      </div>
+
       {/* Nút nạp tiền */}
       <button
         onClick={handleRecharge}
-        disabled={!isAuthenticated || !isFormValid() || isLoading}
+        disabled={!canProceedWithPayment() || isLoading}
         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition-colors"
       >
         {!isAuthenticated 
           ? "Vui lòng đăng nhập" 
-          : isLoading 
-            ? "Đang tạo link thanh toán..." 
-            : "Nạp tiền ngay"
+          : !agreeToTerms
+            ? "Vui lòng đồng ý với điều khoản sử dụng"
+            : isLoading 
+              ? "Đang tạo link thanh toán..." 
+              : "Nạp tiền ngay"
         }
       </button>
 
