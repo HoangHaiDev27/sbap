@@ -83,9 +83,7 @@ namespace BusinessObject.Dtos
             CreateMap<Book, BookResponseDTO>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BookId))
             .ForMember(dest => dest.Author,
-                opt => opt.MapFrom(src => src.Owner.UserProfile != null
-                    ? src.Owner.UserProfile.FullName
-                    : src.Owner.Email))
+                opt => opt.MapFrom(src => src.Author))
             .ForMember(dest => dest.Category,
                 opt => opt.MapFrom(src => src.Categories.FirstOrDefault() != null
                     ? src.Categories.First().Name
