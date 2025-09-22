@@ -17,18 +17,24 @@ export default function Login({ setActiveTab }) {
       const res = await googleLogin(idToken);
       console.log('Google login response:', res);
       
+      // Hiển thị toast thành công
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Đăng nhập thành công!" } }));
+      
       const roles = (res?.roles || res?.Roles || []).map((r) => String(r || '').toLowerCase());
       console.log('User roles:', roles);
       
-      if (roles.includes('admin')) {
-        navigate('/admin');
-      } else if (roles.includes('staff')) {
-        navigate('/staff');
-      } else if (roles.includes('owner')) {
-        navigate('/owner/dashboard');
-      } else {
-        navigate('/');
-      }
+      // Delay 1.2s trước khi navigate
+      setTimeout(() => {
+        if (roles.includes('admin')) {
+          navigate('/admin');
+        } else if (roles.includes('staff')) {
+          navigate('/staff');
+        } else if (roles.includes('owner')) {
+          navigate('/'); // Owner navigate về home thay vì owner dashboard
+        } else {
+          navigate('/');
+        }
+      }, 1200);
     } catch (err) {
       console.warn("[Google Login] error", err);
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Đăng nhập Google thất bại" } }));
@@ -44,16 +50,24 @@ export default function Login({ setActiveTab }) {
     e.preventDefault();
     try {
       const res = await loginRequest(email, password);
+      
+      // Hiển thị toast thành công
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Đăng nhập thành công!" } }));
+      
       const roles = (res?.roles || res?.Roles || []).map((r) => String(r || '').toLowerCase());
-      if (roles.includes('admin')) {
-        navigate('/admin');
-      } else if (roles.includes('staff')) {
-        navigate('/staff');
-      } else if (roles.includes('owner')) {
-        navigate('/owner/dashboard');
-      } else {
-        navigate('/');
-      }
+      
+      // Delay 1.2s trước khi navigate
+      setTimeout(() => {
+        if (roles.includes('admin')) {
+          navigate('/admin');
+        } else if (roles.includes('staff')) {
+          navigate('/staff');
+        } else if (roles.includes('owner')) {
+          navigate('/'); // Owner navigate về home thay vì owner dashboard
+        } else {
+          navigate('/');
+        }
+      }, 1200);
     } catch (err) {
       console.warn("[Login] error", err);
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Đăng nhập thất bại" } }));
