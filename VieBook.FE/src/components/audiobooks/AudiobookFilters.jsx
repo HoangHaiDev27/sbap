@@ -4,51 +4,54 @@ import { getReadBooks } from "../../api/bookApi";
 export default function AudiobookFilters({
   selectedCategory,
   setSelectedCategory,
- // selectedDuration,
- // setSelectedDuration,
+  selectedAuthor,
+  setSelectedAuthor,
   sortBy,
   setSortBy,
   selectedRating,
   setSelectedRating,
 }) {
   const [categories, setCategories] = useState(["Tất cả"]);
+  const [authors, setAuthors] = useState(["Tất cả"]);
 
-  // const durations = [
-  //   "Tất cả",
-  //   "Dưới 3 giờ",
-  //   "3-6 giờ",
-  //   "6-10 giờ",
-  //   "10-15 giờ",
-  //   "Trên 15 giờ",
-  // ];
-
-  const sortOptions = [
-    "Phổ biến",
-    "Mới nhất",
-    //"Đánh giá cao",
-    // "Thời lượng ngắn",
-    // "Thời lượng dài",
-    "A-Z",
-    "Z-A",
-  ];
-
+  const sortOptions = ["Phổ biến", "Mới nhất", "A-Z", "Z-A"];
   const ratings = [5, 4, 3, 2, 1];
 
-  // --- Lấy danh sách category từ API ---
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchFilters() {
       try {
-        const books = await getReadBooks();
-        const uniqueCategories = Array.from(
-          new Set(books.map((b) => b.category))
-        );
+        const books = await getReadBooks() || [];
+
+        // lấy, trim và loại null/empty
+        const cleanCategories = books
+          .map((b) => (b.category ?? "").toString().trim())
+          .filter((c) => c !== "");
+
+        const uniqueCategories = Array.from(new Set(cleanCategories)).sort((a,b) => a.localeCompare(b, 'vi'));
         setCategories(["Tất cả", ...uniqueCategories]);
+
+        // authors
+        const cleanAuthors = books
+          .map((b) => (b.author ?? "").toString().trim())
+          .filter((a) => a !== "");
+
+        const uniqueAuthors = Array.from(new Set(cleanAuthors)).sort((a,b) => a.localeCompare(b, 'vi'));
+        setAuthors(["Tất cả", ...uniqueAuthors]);
+
+        // nếu selectedAuthor hiện tại không nằm trong danh sách mới -> reset về "Tất cả"
+        if (selectedAuthor && !["Tất cả", ...uniqueAuthors].includes(selectedAuthor)) {
+          // bảo đảm setSelectedAuthor tồn tại
+          if (typeof setSelectedAuthor === "function") {
+            setSelectedAuthor("Tất cả");
+          }
+        }
       } catch (error) {
-        console.error("Failed to fetch categories", error);
+        console.error("Failed to fetch filters", error);
       }
     }
-    fetchCategories();
-  }, []);
+    fetchFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // không thêm setSelectedAuthor vào deps để tránh loop; nếu cần thêm, xử lý khác
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 space-y-6">
@@ -62,29 +65,29 @@ export default function AudiobookFilters({
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
-          {categories.map((category) => (
-            <option key={category} value={category}>
+          {categories.map((category, idx) => (
+            <option key={`${category}-${idx}`} value={category}>
               {category}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Thời lượng */}
-      {/* <div>
-        <h3 className="block text-gray-300 text-sm mb-2">Thời lượng</h3>
+      {/* Tác giả */}
+      <div>
+        <h3 className="block text-gray-300 text-sm mb-2">Tác giả</h3>
         <select
-          value={selectedDuration}
-          onChange={(e) => setSelectedDuration(e.target.value)}
+          value={selectedAuthor}
+          onChange={(e) => setSelectedAuthor(e.target.value)}
           className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
-          {durations.map((duration) => (
-            <option key={duration} value={duration}>
-              {duration}
+          {authors.map((author, idx) => (
+            <option key={`${author}-${idx}`} value={author}>
+              {author}
             </option>
           ))}
         </select>
-      </div> */}
+      </div>
 
       {/* Sắp xếp */}
       <div>
@@ -113,8 +116,7 @@ export default function AudiobookFilters({
           <option value={0}>Tất cả</option>
           {ratings.map((stars) => (
             <option key={stars} value={stars}>
-              {Array.from({ length: 5 }, (_, i) => (i < stars ? "★" : "☆")).join("")}{" "}
-              {stars} sao trở lên
+              {Array.from({ length: 5 }, (_, i) => (i < stars ? "★" : "☆")).join("")} {stars} sao trở lên
             </option>
           ))}
         </select>

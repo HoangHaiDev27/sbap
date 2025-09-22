@@ -9,6 +9,7 @@ export default function AudiobookManager() {
   const [sortBy, setSortBy] = useState("Phổ biến");
   const [selectedRating, setSelectedRating] = useState(0);
   const [viewMode, setViewMode] = useState("grid");
+  const [selectedAuthor, setSelectedAuthor] = useState("Tất cả");
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -50,6 +51,8 @@ export default function AudiobookManager() {
             setSelectedCategory={setSelectedCategory}
             // selectedDuration={selectedDuration}
             // setSelectedDuration={setSelectedDuration}
+            selectedAuthor={selectedAuthor}          // 👈 truyền vào
+            setSelectedAuthor={setSelectedAuthor} 
             sortBy={sortBy}
             setSortBy={setSortBy}
             selectedRating={selectedRating}
@@ -62,6 +65,7 @@ export default function AudiobookManager() {
             <AudiobookGrid
               selectedCategory={selectedCategory}
             //  selectedDuration={selectedDuration}
+              selectedAuthor={selectedAuthor} 
               selectedRating={selectedRating}
               sortBy={sortBy}
               viewMode={viewMode}
