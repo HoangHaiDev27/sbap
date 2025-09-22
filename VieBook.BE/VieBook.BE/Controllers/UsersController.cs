@@ -60,16 +60,43 @@ namespace VieBook.BE.Controllers
         {
             try
             {
+                if (dto == null)
+                {
+                    return BadRequest("User data is required.");
+                }
+
+                // validate email
+                if (string.IsNullOrWhiteSpace(dto.Email))
+                {
+                    return BadRequest("Email is required.");
+                }
+
+                try
+                {
+                    var mail = new System.Net.Mail.MailAddress(dto.Email);
+                    if (mail.Address != dto.Email)
+                    {
+                        return BadRequest("Invalid email format.");
+                    }
+                }
+                catch
+                {
+                    return BadRequest("Invalid email format.");
+                }
+
+                // map and save
                 var user = _mapper.Map<User>(dto);
                 await _userService.AddAsync(user);
+
                 return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, _mapper.Map<UserDTO>(user));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] PostUser: {ex}");
-                throw;
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the user.");
             }
         }
+
 
         // [HttpPut("{id}")]
         // public async Task<IActionResult> Putuser(int id, UserDTO dto)

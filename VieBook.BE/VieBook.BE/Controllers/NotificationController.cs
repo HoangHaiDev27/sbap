@@ -3,6 +3,7 @@ using BusinessObject.PayOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Services.Interfaces;
+using System.Reflection;
 
 namespace VieBook.BE.Controllers
 {
@@ -11,6 +12,13 @@ namespace VieBook.BE.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private static readonly HashSet<string> AllowedNotificationTypes =
+            typeof(NotificationTypes)
+                .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                .Select(f => f.GetValue(null)?.ToString())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
 
         public NotificationController(INotificationService notificationService)
         {
@@ -118,6 +126,27 @@ namespace VieBook.BE.Controllers
         {
             try
             {
+                // Check null payload
+                if (createDto == null)
+                    return BadRequest(new Response(-1, "Invalid payload", null));
+
+                // Validate từng field
+                if (createDto.UserId <= 0)
+                    return BadRequest(new Response(-1, "Invalid UserId", null));
+
+                if (string.IsNullOrWhiteSpace(createDto.Title))
+                    return BadRequest(new Response(-1, "Title is required", null));
+
+                if (string.IsNullOrWhiteSpace(createDto.Body))
+                    return BadRequest(new Response(-1, "Body is required", null));
+
+                if (string.IsNullOrWhiteSpace(createDto.Type))
+                    return BadRequest(new Response(-1, "Type is required", null));
+
+                if (!AllowedNotificationTypes.Contains(createDto.Type))
+                    return BadRequest(new Response(-1, $"Invalid notification type: {createDto.Type}", null));
+
+                // Nếu pass validation → gọi service
                 var notification = await _notificationService.CreateAsync(createDto);
                 return CreatedAtAction(nameof(GetNotification), new { id = notification.NotificationId },
                     new Response(0, "Notification created successfully", notification));
@@ -127,6 +156,8 @@ namespace VieBook.BE.Controllers
                 return BadRequest(new Response(-1, ex.Message, null));
             }
         }
+
+
 
         // PUT: api/notification/{id}
         [HttpPut("{id}")]
@@ -214,6 +245,27 @@ namespace VieBook.BE.Controllers
         {
             try
             {
+                if (createDtos == null || createDtos.Count == 0)
+                    return BadRequest(new Response(-1, "Payload must contain at least one notification", null));
+
+                var errors = new List<object>();
+                for (int i = 0; i < createDtos.Count; i++)
+                {
+                    var dto = createDtos[i];
+                    if (dto == null)
+                    {
+                        errors.Add(new { index = i, error = "Null item" });
+                        continue;
+                    }
+                    if (dto.UserId <= 0) errors.Add(new { index = i, error = "Invalid UserId" });
+                    else if (string.IsNullOrWhiteSpace(dto.Title)) errors.Add(new { index = i, error = "Title is required" });
+                    else if (string.IsNullOrWhiteSpace(dto.Type) || !AllowedNotificationTypes.Contains(dto.Type))
+                        errors.Add(new { index = i, error = $"Invalid type: {dto?.Type}" });
+                }
+
+                if (errors.Any())
+                    return BadRequest(new Response(-1, "Validation errors", errors));
+
                 var notifications = await _notificationService.CreateBulkNotificationsAsync(createDtos);
                 return Ok(new Response(0, "Bulk notifications created successfully", notifications));
             }
@@ -222,6 +274,7 @@ namespace VieBook.BE.Controllers
                 return BadRequest(new Response(-1, ex.Message, null));
             }
         }
+
 
         // GET: api/notification/types
         [HttpGet("types")]
@@ -245,4 +298,5 @@ namespace VieBook.BE.Controllers
             return Ok(new Response(0, "Success", types));
         }
     }
+
 }
