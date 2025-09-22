@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaStar, FaRegStar } from "react-icons/fa";
+import { RiStarFill } from "react-icons/ri";
 import { getRelatedBooks } from "../../api/bookApi";
 
 export default function BookRelated({ currentBookId }) {
@@ -43,21 +43,17 @@ export default function BookRelated({ currentBookId }) {
                   </h3>
                   <p className="text-gray-400 text-sm mb-2">{book.author}</p>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1">
-                      {[...Array(5)].map((_, i) =>
-                        i < Math.floor(book.rating) ? (
-                          <FaStar key={i} className="text-yellow-400 text-xs" />
-                        ) : (
-                          <FaRegStar key={i} className="text-yellow-400 text-xs" />
-                        )
-                      )}
-                      <span className="text-xs text-gray-400">{book.rating.toFixed(1)}</span>
-                    </div>
-                    <span className="text-orange-400 font-semibold text-sm">
-                      {book.price.toLocaleString()} xu
+                  {/* Rating giống AudiobookGrid */}
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RiStarFill className="text-yellow-400 text-sm" />
+                    <span className="text-sm text-gray-400">
+                      {book.rating.toFixed(1)} ({book.reviews})
                     </span>
                   </div>
+
+                  <span className="text-orange-400 font-semibold text-sm">
+                    {book.price.toLocaleString()} xu
+                  </span>
                 </div>
               </Link>
             </div>
