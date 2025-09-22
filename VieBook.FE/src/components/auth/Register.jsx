@@ -15,7 +15,6 @@ export default function Register({ setActiveTab }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [message, setMessage] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -25,29 +24,39 @@ export default function Register({ setActiveTab }) {
     });
   };
 
+  const showToast = (type, message) => {
+    window.dispatchEvent(
+      new CustomEvent("app:toast", { detail: { type, message } })
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setMessage({ type: "error", text: "Mật khẩu xác nhận không khớp!" });
+      showToast("error", "Mật khẩu xác nhận không khớp!");
       return;
     }
     if (!agreeTerms) {
-      setMessage({ type: "error", text: "Vui lòng đồng ý với điều khoản sử dụng!" });
+      showToast("error", "Vui lòng đồng ý với điều khoản sử dụng!");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await register(formData.fullName, formData.email, formData.password);
-      setMessage({
-        type: "success",
-        text: res.message || "Đăng ký thành công! Vui lòng kiểm tra email để xác thực.",
-      });
-      setTimeout(() => setActiveTab("login"), 2000); // tự động chuyển tab login
+      const res = await register(
+        formData.fullName,
+        formData.email,
+        formData.password
+      );
+      showToast(
+        "success",
+        res.message ||
+          "Đăng ký thành công! Vui lòng kiểm tra email để xác thực."
+      );
+      setTimeout(() => setActiveTab("login"), 2000);
     } catch (err) {
-      setMessage({ type: "error", text: err.message || "Đăng ký thất bại!" });
+      showToast("error", err.message || "Đăng ký thất bại!");
     } finally {
       setLoading(false);
     }
@@ -56,9 +65,9 @@ export default function Register({ setActiveTab }) {
   return (
     <div className="w-full max-w-md mx-auto">
       {/* Logo */}
-      <div className="p-6 flex justify-center">
+      <div className="p-4 flex justify-center">
         <a href="/" className="flex items-center space-x-3">
-          <img src={logo} alt="Logo" className="h-[1.8em] w-auto" />
+          <img src={logo} alt="Logo" className="h-[1.8em] w-auto scale-300" />
           <span className="text-2xl font-bold text-orange-500">VieBook</span>
         </a>
       </div>
@@ -70,19 +79,6 @@ export default function Register({ setActiveTab }) {
       <p className="text-center text-gray-400 mb-6 text-sm">
         Nhanh chóng và dễ dàng để bắt đầu trải nghiệm VieBook
       </p>
-
-      {/* Alert message */}
-      {message && (
-        <div
-          className={`mb-4 p-3 rounded-lg text-sm ${
-            message.type === "error"
-              ? "bg-red-500/20 text-red-400 border border-red-500/40"
-              : "bg-green-500/20 text-green-400 border border-green-500/40"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full Name */}
@@ -129,9 +125,30 @@ export default function Register({ setActiveTab }) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-300"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
             >
-              {showPassword ? "🙈" : "👁️"}
+              <svg
+                className="h-5 w-5 text-gray-400 hover:text-gray-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                {showPassword ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                )}
+              </svg>
             </button>
           </div>
         </div>
@@ -154,9 +171,30 @@ export default function Register({ setActiveTab }) {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-300"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
             >
-              {showConfirmPassword ? "🙈" : "👁️"}
+              <svg
+                className="h-5 w-5 text-gray-400 hover:text-gray-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                {showConfirmPassword ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                )}
+              </svg>
             </button>
           </div>
         </div>
@@ -209,7 +247,7 @@ export default function Register({ setActiveTab }) {
       </form>
 
       {/* Back to Homepage */}
-      <div className="text-center my-5">
+      <div className="text-center my-3">
         <button
           onClick={() => navigate("/")}
           className="text-gray-400 hover:text-gray-300 text-sm flex items-center mx-auto"
