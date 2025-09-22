@@ -2,14 +2,16 @@ import React, { useState, useRef, useEffect } from "react";
 import { RiUserLine, RiAddLine, RiCoinLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
-import { logout } from "../../api/authApi";
+import { logout, getRole } from "../../api/authApi";
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
   
-
+  // Lấy role hiện tại
+  const userRole = getRole();
+  const isOwner = userRole && userRole.toLowerCase() === 'owner';
 
   // Đóng menu khi click ra ngoài
   useEffect(() => {
@@ -82,13 +84,16 @@ export default function UserMenu() {
           >
             Thông tin tài khoản
           </Link>
-          {/* <Link
-            to="/change-password"
-            className="block px-4 py-2 hover:bg-slate-700 transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            Đổi mật khẩu
-          </Link> */}
+          {/* Chỉ hiển thị "Cửa hàng của tôi" khi user có role owner */}
+          {isOwner && (
+            <Link
+              to="/owner/dashboard"
+              className="block px-4 py-2 hover:bg-slate-700 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              Cửa hàng của tôi
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white transition-colors"

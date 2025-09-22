@@ -50,6 +50,8 @@ import ChangePassword from "../components/auth/ChangePassword"; // kiểm tra đ
 import AuthenticationManager from "../layouts/AuthenticationManager";
 import RechargePage from "../pages/RechargePage";
 import VerifyEmail from "../pages/VerifyEmail";
+import AccessDenied from "../pages/AccessDenied";
+import ProtectedRoute from "../components/common/ProtectedRoute";
 
 function AppRoutes() {
   return (
@@ -69,13 +71,16 @@ function AppRoutes() {
       <Route path="/reader/:id" element={<ReaderPage />} />
       <Route path="/player/:id" element={<PlayerPage />} />
       {/* Routes cho staff/admin */}
-      {/* Admin routes */}
-      <Route path="/admin" element={<AdminPage />} />
+      {/* Demo: Chỉ cấu hình 1 route admin để demo */}
+      <Route path="/admin" element={
+        <ProtectedRoute allowedRoles={['admin']}>
+          <h1>Admin</h1>
+        </ProtectedRoute>
+      } />
+      
+      {/* Các route khác giữ nguyên không bảo vệ để demo */}
       <Route path="/admin/staff" element={<StaffManagerPage />} />
       <Route path="/admin/profile" element={<AdminProfile />} />
-      {/* Admin routes */}
-      {/* <Route path="/admin" element={<h1>Admin Dashboard</h1>} /> */}
-      {/* Staff routes */}
       <Route path="/staff" element={<StaffPage />} />
       <Route path="/staff/books" element={<StaffBooksPage />} />
       <Route path="/staff/withdrawals" element={<WithdrawApprovalPage />} />
@@ -90,7 +95,6 @@ function AppRoutes() {
       <Route path="/customer" element={<CustomerPage />} />
       <Route path="/recharge" element={<RechargePage />} />
 
-      {/* Routes cho book owner */}
       <Route path="/owner/dashboard" element={<Dashboard />} />
       <Route path="/owner/books" element={<OwnerBooks />} />
       <Route path="/owner/books/new" element={<BookForm />} />
@@ -115,6 +119,9 @@ function AppRoutes() {
       <Route path="/auth" element={<AuthenticationPage />} />
       <Route path="/auth/change-password" element={<AuthenticationManager defaultTab="change" />} />
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
+      
+      {/* Access Denied page */}
+      <Route path="/access-denied" element={<AccessDenied />} />
     </Routes>
   );
 }
