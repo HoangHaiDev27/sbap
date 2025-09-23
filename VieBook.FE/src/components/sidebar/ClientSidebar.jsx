@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useActiveMenu from "../../hooks/useActiveMenu";
 import logo from "../../assets/logo.png";
+import { isBookOwner, switchRole, getCurrentRole } from "../../api/authApi";
 import {
   RiHomeLine,
   RiVipCrownLine,
@@ -10,9 +11,39 @@ import {
   RiChat3Line,
   RiBookOpenLine,
   RiBookReadLine,
+  RiUserLine,
+  RiStoreLine,
 } from "react-icons/ri";
 
 export default function ClientSidebar({ isOpen, onClose }) {
+  const navigate = useNavigate();
+
+  const handleRoleSwitch = () => {
+    // Chuyển đổi giữa customer và owner
+    const currentRole = getCurrentRole();
+    const newRole = currentRole === 'owner' ? 'user' : 'owner';
+    
+    const success = switchRole(newRole);
+    if (success) {
+      // Navigate về trang phù hợp với role mới
+      if (newRole === 'owner') {
+        navigate('/owner/dashboard');
+      } else {
+        navigate('/');
+      }
+    }
+  };
+
+  const getSwitchButtonText = () => {
+    const currentRole = getCurrentRole();
+    return currentRole === 'owner' ? 'Chuyển sang khách hàng' : 'Chuyển sang chủ sách';
+  };
+
+  const getSwitchButtonIcon = () => {
+    const currentRole = getCurrentRole();
+    return currentRole === 'owner' ? <RiUserLine className="w-4 h-4" /> : <RiStoreLine className="w-4 h-4" />;
+  };
+
   const menuItems = [
     { id: "home", label: "Trang chủ", icon: RiHomeLine, href: "/" },
     { id: "vip", label: "Mua gói VIP", icon: RiVipCrownLine, href: "/vip" },
@@ -57,7 +88,7 @@ export default function ClientSidebar({ isOpen, onClose }) {
       ></div>
 
       <aside
-        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg transform transition-transform duration-200 lg:translate-x-0 flex flex-col ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -70,7 +101,7 @@ export default function ClientSidebar({ isOpen, onClose }) {
       </div>
 
       {/* menu */}
-      <nav className="px-4">
+      <nav className="px-4 flex-1">
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.id}>
@@ -90,6 +121,21 @@ export default function ClientSidebar({ isOpen, onClose }) {
           ))}
         </ul>
       </nav>
+
+      {/* Role Switch Button - chỉ hiển thị khi user có role owner - nằm dưới cùng */}
+      {isBookOwner() && (
+        <div className="px-4 pb-4">
+          <div className="border-t border-gray-700 pt-4">
+            <button
+              onClick={handleRoleSwitch}
+              className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
+            >
+              {getSwitchButtonIcon()}
+              <span>{getSwitchButtonText()}</span>
+            </button>
+          </div>
+        </div>
+      )}
       </aside>
     </>
   );
