@@ -43,6 +43,45 @@ namespace Services.Implementations
 
             return null;
         }
+
+        private string ExtractPublicIdFromUrl(string url)
+        {
+            const string marker = "/upload/";
+            var index = url.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (index < 0) return null;
+
+            // lấy phần sau /upload/
+            var afterUpload = url.Substring(index + marker.Length);
+
+            // Bỏ version nếu có (v123456/...)
+            var parts = afterUpload.Split('/');
+            if (parts.Length > 1 && parts[0].StartsWith("v") && parts[0].Length > 1)
+            {
+                afterUpload = string.Join("/", parts.Skip(1));
+            }
+
+            // Bỏ đuôi .jpg / .png...
+            var dotIndex = afterUpload.LastIndexOf('.');
+            if (dotIndex > 0)
+            {
+                afterUpload = afterUpload.Substring(0, dotIndex);
+            }
+
+            return afterUpload;
+        }
+
+        public async Task<bool> DeleteImageAsync(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl)) return false;
+
+            var publicId = ExtractPublicIdFromUrl(imageUrl);
+            if (string.IsNullOrEmpty(publicId)) return false;
+
+            var deletionParams = new DeletionParams(publicId);
+            var result = await _cloudinary.DestroyAsync(deletionParams);
+
+            return result.Result == "ok";
+        }
     }
 
     public class CloudinarySettings
