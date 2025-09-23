@@ -333,6 +333,7 @@ Yêu cầu:
 - VÍ DỤ: BookDTO chỉ có: BookId, Title, Description, CoverUrl, Isbn, Language, TotalView, CreatedAt, Author, OwnerId, Status, TotalPrice, Sold, Rating, OwnerName, CategoryIds - KHÔNG có Price, PublishedDate, TotalPages, BookType
 - VÍ DỤ: UserDTO chỉ có: UserId, Email, Status, CreatedAt, LastLoginAt, Wallet - KHÔNG có FirstName, LastName, Password, Phone, Address
 - VÍ DỤ: CategoryDTO chỉ có: CategoryId, Name, Type, ParentId, IsActive - KHÔNG có CategoryName
+- VÍ DỤ: BookSearchReponseDTO chỉ có: BookId, Title, CoverImageUrl - KHÔNG có Description, Isbn, Language, TotalView, CreatedAt, Author, OwnerId, Status, TotalPrice, Sold, Rating, OwnerName, CategoryIds
 - CHỈ trả về code test methods, KHÔNG bao gồm:
   * Class declaration
   * Using statements

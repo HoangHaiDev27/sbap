@@ -1,4 +1,5 @@
-﻿using BusinessObject.Models;
+﻿using BusinessObject.Dtos;
+using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace DataAccess.DAO
         public async Task<List<Book>> GetReadBooksAsync()
         {
             return await _context.Books
-              //  .Include(b => b.Owner).ThenInclude(u => u.UserProfile) // lấy tác giả
+                //  .Include(b => b.Owner).ThenInclude(u => u.UserProfile) // lấy tác giả
                 .Include(b => b.Categories) // lấy category
                 .Include(b => b.Chapters) // để map Price, Duration, Chapters
                 .Include(b => b.BookReviews) // để map Rating, Reviews
@@ -137,12 +138,29 @@ namespace DataAccess.DAO
             return await _context.Books
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters)
-                    .ThenInclude(c => c.OrderItems) 
+                    .ThenInclude(c => c.OrderItems)
                 .Include(b => b.BookReviews)
                 .Include(b => b.Owner)
-                    .ThenInclude(o => o.UserProfile) 
+                    .ThenInclude(o => o.UserProfile)
                 .Where(b => b.OwnerId == ownerId)
                 .ToListAsync();
+        }
+        // Tìm kiếm sách theo tiêu đề, tác giả, mô tả
+        public async Task<List<BookSearchReponseDTO?>> SearchBooksAsync(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return new List<BookSearchReponseDTO?>();
+            var books = await _context.Books.
+                Where(b => EF.Functions.Like(b.Title, $"%{query}%") ||
+                           (b.Author != null && EF.Functions.Like(b.Author, $"%{query}%")))
+                .Select(b => new BookSearchReponseDTO
+                {
+                    BookId = b.BookId,
+                    Title = b.Title,
+                    CoverImageUrl = b.CoverUrl,
+                }).Take(20) // Giới hạn kết quả trả về
+                .ToListAsync();
+            return books!;
         }
 
     }

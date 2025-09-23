@@ -1,4 +1,5 @@
-﻿using BusinessObject.Models;
+﻿using BusinessObject.Dtos;
+using BusinessObject.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,5 +24,6 @@ namespace Repositories.Interfaces
         Task<List<Book>> GetReadBooksAsync();
         Task<List<Book>> GetAudioBooksAsync();
         Task<Book?> GetAudioBookDetailAsync(int id);
+        Task<List<BookSearchReponseDTO?>> SearchBooksAsync(string query);
     }
 }

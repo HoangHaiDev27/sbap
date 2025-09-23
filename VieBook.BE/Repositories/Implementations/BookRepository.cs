@@ -1,4 +1,5 @@
-﻿using BusinessObject.Models;
+﻿using BusinessObject.Dtos;
+using BusinessObject.Models;
 using DataAccess;
 using DataAccess.DAO;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,9 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetAudioBookDetailAsync(id);
         }
-
+        public async Task<List<BookSearchReponseDTO?>> SearchBooksAsync(string query)
+        {
+            return await _bookDao.SearchBooksAsync(query);
+        }
     }
 }

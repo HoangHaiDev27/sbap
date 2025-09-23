@@ -37,7 +37,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
                 {
                     OrderCode = (int)webhookDataVerified.orderCode,
                     AmountMoney = webhookDataVerified.amount,
-                    AmountCoin = (decimal)webhookDataVerified.amount / 1000, // 1 VNĐ = 1 xu
+                    AmountCoin = CalculateCoinsWithBonus(webhookDataVerified.amount),// Tính số xu với bonus
                     Description = webhookDataVerified.description,
                     Status = "success", // Mặc định là success nếu webhook được gọi
                     TransactionId = webhookDataVerified.orderCode.ToString(), // Sử dụng orderCode làm transactionId
@@ -132,8 +132,8 @@ namespace VieBook.BE.Controllers.WalletTransaction
                     {
                         OrderCode = orderCode,
                         AmountMoney = paymentInfo.amount,
-                        AmountCoin = (decimal)paymentInfo.amount / 1000,
-                        Description = "Nap xu U1 " + paymentInfo.amount, // Tạo description mới
+                        AmountCoin = CalculateCoinsWithBonus(paymentInfo.amount),
+                        Description = "Nap xu : " + paymentInfo.amount, // Tạo description mới
                         Status = MapPayOSStatusToDatabaseStatus("PAID"), // Map PayOS status sang database status
                         TransactionId = orderCode.ToString(), // Sử dụng orderCode làm transactionId
                         PaymentMethod = "PayOS",
@@ -192,5 +192,29 @@ namespace VieBook.BE.Controllers.WalletTransaction
                 _ => "Pending" // Default fallback
             };
         }
+        private decimal CalculateCoinsWithBonus(decimal amount)
+        {
+            var rules = new List<(decimal Amount, decimal Coins, decimal Bonus)>
+    {
+        (50000, 50, 2),
+        (100000, 100, 5),
+        (200000, 200, 10),
+        (500000, 500, 20),
+        (1000000, 1000, 30),
+    };
+
+            // Tìm mốc lớn nhất mà <= amount
+            var rule = rules
+                .Where(r => r.Amount <= amount)
+                .OrderByDescending(r => r.Amount)
+                .FirstOrDefault();
+
+            var baseCoins = amount / 1000;
+            var bonus = rule.Bonus;
+
+            return baseCoins + bonus;
+        }
+
+
     }
 }

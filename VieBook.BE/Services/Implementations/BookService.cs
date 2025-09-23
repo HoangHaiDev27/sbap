@@ -63,5 +63,9 @@ namespace Services.Implementations
             return _mapper.Map<BookResponseDTO>(book);
         }
 
+        public async Task<List<BookSearchReponseDTO?>> SearchBooksAsync(string query)
+        {
+            return await _bookRepo.SearchBooksAsync(query);
+        }
     }
 }

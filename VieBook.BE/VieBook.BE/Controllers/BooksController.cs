@@ -167,8 +167,14 @@ namespace VieBook.BE.Controllers
 
             return Ok(_mapper.Map<IEnumerable<BookResponseDTO>>(relatedBooks));
         }
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<BookSearchReponseDTO>>> SearchBooks([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Ok(new List<BookSearchReponseDTO>());
 
-
-
+            var books = await _bookService.SearchBooksAsync(query);
+            return Ok(books);
+        }
     }
 }

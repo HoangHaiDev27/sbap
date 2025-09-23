@@ -23,6 +23,6 @@ namespace Services.Interfaces
         Task<List<BookResponseDTO>> GetReadBooksAsync();
         Task<List<BookResponseDTO>> GetAudioBooksAsync();
         Task<BookResponseDTO?> GetAudioBookDetailAsync(int id);
-
+        Task<List<BookSearchReponseDTO?>> SearchBooksAsync(string query);
     }
 }
