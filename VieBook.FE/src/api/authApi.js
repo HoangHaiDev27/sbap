@@ -312,10 +312,42 @@ export async function googleLogin(idToken) {
   const data = await res.json();
   const token = data.token || data.Token || data?.Token;
   const refreshToken = data.refreshToken || data.RefreshToken || data?.RefreshToken;
-  const user = data.user || data.User || data?.User;
+  let user = data.user || data.User || data?.User;
   const roles = data.roles || data.Roles || [];
+  
+  // Tự động active account khi login bằng Google
+  if (user) {
+    const userStatus = user?.status || user?.Status || user?.isActive || user?.IsActive;
+    if (userStatus === 'Pending' || userStatus === 'pending' || userStatus === false) {
+      try {
+        await activeAccount(user.email || user.Email);
+        console.log('Account auto-activated for Google login');
+        // Cập nhật user status sau khi active
+        user = { ...user, status: 'Active', Status: 'Active', isActive: true, IsActive: true };
+      } catch (error) {
+        console.warn('Failed to auto-activate account:', error);
+      }
+    }
+  }
+  
   setAuth(token, user, roles, refreshToken);
   return data;
+}
+
+// ==== Active Account ====
+export async function activeAccount(email) {
+  const res = await fetch(API_ENDPOINTS.AUTH.ACTIVE_ACCOUNT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || "Kích hoạt tài khoản thất bại");
+  }
+  
+  return res.json();
 }
 
 // ==== Multiple Roles Management ====

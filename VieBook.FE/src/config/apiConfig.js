@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     GOOGLE_LOGIN: `${API_BASE_URL}/api/auth/google-login`,
     REFRESH_TOKEN: `${API_BASE_URL}/api/auth/refresh-token`,
     REVOKE_TOKEN: `${API_BASE_URL}/api/auth/revoke-token`,
+    ACTIVE_ACCOUNT: `${API_BASE_URL}/api/auth/active-account`,
   },
 
   // Payment endpoints
