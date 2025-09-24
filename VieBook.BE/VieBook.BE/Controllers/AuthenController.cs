@@ -192,4 +192,18 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("active-account")]
+    public async Task<IActionResult> ActiveAccount([FromBody] ActiveAccountRequestDto request)
+    {
+        try
+        {
+            var result = await _authService.ActiveAccountAsync(request.Email);
+            return Ok(new { message = result });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
 }

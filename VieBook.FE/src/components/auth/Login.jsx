@@ -17,6 +17,7 @@ export default function Login({ setActiveTab }) {
       const res = await googleLogin(idToken);
       console.log('Google login response:', res);
       
+      // Google login tự động active account, không cần kiểm tra trạng thái
       // Hiển thị toast thành công
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Đăng nhập thành công!" } }));
       
@@ -50,6 +51,23 @@ export default function Login({ setActiveTab }) {
     e.preventDefault();
     try {
       const res = await loginRequest(email, password);
+      
+      // Kiểm tra trạng thái user
+      const user = res?.user || res?.User || res?.User;
+      const userStatus = user?.status || user?.Status || user?.isActive || user?.IsActive;
+      
+      console.log('User status:', userStatus);
+      
+      // Nếu user chưa active email (status = Pending)
+      if (userStatus === 'Pending' || userStatus === 'pending' || userStatus === false) {
+        window.dispatchEvent(new CustomEvent("app:toast", { 
+          detail: { 
+            type: "error", 
+            message: "Vui lòng bấm vào link xác thực được gửi vào email của bạn." 
+          } 
+        }));
+        return;
+      }
       
       // Hiển thị toast thành công
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Đăng nhập thành công!" } }));

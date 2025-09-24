@@ -49,6 +49,8 @@ namespace Services.Implementations
                 
                 if (existingUser != null)
                 {
+                    Console.WriteLine($"GoogleLoginAsync - Found existing user: {existingUser.Email}, Status: {existingUser.Status}");
+                    
                     // User exists, check if they have Google login linked
                     var externalLogin = existingUser.ExternalLogins?.FirstOrDefault(el => el.Provider == "Google" && el.ProviderKey == googleUser.Id);
                     
@@ -66,9 +68,25 @@ namespace Services.Implementations
                         if (existingUser.ExternalLogins == null)
                             existingUser.ExternalLogins = new List<ExternalLogin>();
                         existingUser.ExternalLogins.Add(newExternalLogin);
-                        
-                        await _authRepo.UpdateAsync(existingUser);
+                        Console.WriteLine($"GoogleLoginAsync - Added Google login to existing user");
                     }
+                    
+                    // Tự động active account khi login bằng Google
+                    Console.WriteLine($"GoogleLoginAsync - Checking status: {existingUser.Status}");
+                    if (existingUser.Status == "Pending" || existingUser.Status == "pending")
+                    {
+                        Console.WriteLine($"GoogleLoginAsync - Status is Pending, changing to Active");
+                        existingUser.Status = "Active";
+                        Console.WriteLine($"GoogleLoginAsync - Auto-activated user {existingUser.Email}, new status: {existingUser.Status}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"GoogleLoginAsync - Status is already {existingUser.Status}, no change needed");
+                    }
+                    
+                    Console.WriteLine($"GoogleLoginAsync - Updating user in database...");
+                    await _authRepo.UpdateAsync(existingUser);
+                    Console.WriteLine($"GoogleLoginAsync - User updated successfully");
                 }
                 else if (orphanedExternalLogin != null)
                 {

@@ -7,7 +7,7 @@ import PlayerManager from "./layouts/PlayerManager";
 import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
 import { useCoinsStore } from "./hooks/stores/coinStore";
-import { getRole, getUserId } from "./api/authApi";
+import { getRole, getUserId, getCurrentRole } from "./api/authApi";
 import Toast from "./components/common/Toast";
 import { Toaster } from "react-hot-toast";
 function App() {
@@ -22,11 +22,19 @@ function App() {
     if (userId) {
       fetchCoins(userId);
     }
-    const r = getRole();
+    const r = getCurrentRole();
     if (r) setRole(String(r).toLowerCase());
     const onAuthChanged = (e) => {
       const { role: newRole, user } = e.detail || {};
-      if (newRole) setRole(String(newRole).toLowerCase());
+      if (newRole) {
+        setRole(String(newRole).toLowerCase());
+      } else {
+        // Nếu không có role trong event, lấy từ localStorage
+        const currentRole = getCurrentRole();
+        if (currentRole) {
+          setRole(String(currentRole).toLowerCase());
+        }
+      }
       // Fetch coins when user logs in
       if (user) {
         const userId = user.userId || user.UserId || user.id || user.Id;
@@ -100,6 +108,7 @@ function App() {
         {/* Footer */}
         <Footer />
         <Toast />
+        
         <div className="flex gap-4 mt-4">
           <button
             onClick={() => setRole("staff")}

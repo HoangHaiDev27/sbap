@@ -72,7 +72,7 @@ namespace Services.Implementations
                 // Get the plain token back from repository
                 refreshToken = savedRefreshToken.TokenHash;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Continue without refresh token for now
                 refreshToken = string.Empty;
@@ -305,6 +305,18 @@ namespace Services.Implementations
                 refreshToken.ReasonRevoked = reason;
                 await _refreshTokenRepo.UpdateAsync(refreshToken);
             }
+        }
+
+        public async Task<string> ActiveAccountAsync(string email)
+        {
+            var user = await _authRepo.GetByEmailAsync(email);
+            if (user == null) 
+                return "Email không tồn tại";
+
+            user.Status = "Active";
+            await _authRepo.UpdateAsync(user);
+
+            return "Tài khoản đã được kích hoạt thành công!";
         }
 
     }

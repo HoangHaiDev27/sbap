@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { getRole } from '../../api/authApi';
+import { getCurrentRole } from '../../api/authApi';
 
 const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => {
   // Nếu không yêu cầu auth, cho phép truy cập
@@ -9,7 +9,7 @@ const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => 
   }
 
   // Kiểm tra xem user đã đăng nhập chưa
-  const userRole = getRole();
+  const userRole = getCurrentRole();
   
   if (!userRole) {
     // Chưa đăng nhập, redirect về trang login
