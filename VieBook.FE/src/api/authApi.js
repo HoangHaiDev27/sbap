@@ -3,6 +3,8 @@ import { API_ENDPOINTS } from "../config/apiConfig";
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
 const ROLE_KEY = "auth_role";
+const ROLES_KEY = "auth_roles";
+const CURRENT_ROLE_KEY = "current_role";
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -12,14 +14,42 @@ export function setAuth(token, user, roles, refreshToken = null) {
   if (token) localStorage.setItem(TOKEN_KEY, token);
   if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
   if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
-  let role = Array.isArray(roles) && roles.length ? String(roles[0]).toLowerCase() : undefined;
-  // Map backend role names to UI header roles
-  const roleMap = { customer: "user" };
-  if (role && roleMap[role]) role = roleMap[role];
-  if (role) localStorage.setItem(ROLE_KEY, role);
+  
+  // Lưu tất cả roles
+  if (roles && Array.isArray(roles)) {
+    const normalizedRoles = roles.map(r => String(r).toLowerCase());
+    localStorage.setItem(ROLES_KEY, JSON.stringify(normalizedRoles));
+    
+    // Ưu tiên role user trước, sau đó mới đến các role khác
+    const rolePriority = ['user', 'customer', 'owner', 'staff', 'admin'];
+    let selectedRole = null;
+    
+    // Tìm role theo thứ tự ưu tiên
+    for (const priorityRole of rolePriority) {
+      if (normalizedRoles.includes(priorityRole)) {
+        selectedRole = priorityRole;
+        break;
+      }
+    }
+    
+    // Nếu không tìm thấy role ưu tiên, lấy role đầu tiên
+    if (!selectedRole && normalizedRoles.length > 0) {
+      selectedRole = normalizedRoles[0];
+    }
+    
+    // Map backend role names to UI header roles
+    const roleMap = { customer: "user" };
+    if (selectedRole && roleMap[selectedRole]) selectedRole = roleMap[selectedRole];
+    
+    if (selectedRole) {
+      localStorage.setItem(ROLE_KEY, selectedRole);
+      localStorage.setItem(CURRENT_ROLE_KEY, selectedRole);
+    }
+  }
+  
   try {
     window.dispatchEvent(
-      new CustomEvent("auth:changed", { detail: { token, user, role, refreshToken } })
+      new CustomEvent("auth:changed", { detail: { token, user, role: getCurrentRole(), refreshToken } })
     );
   } catch { /* empty */ }
 }
@@ -29,6 +59,8 @@ export function clearAuth() {
   localStorage.removeItem("refreshToken");
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem(ROLES_KEY);
+  localStorage.removeItem(CURRENT_ROLE_KEY);
 }
 
 export function getCurrentUser() {
@@ -280,12 +312,125 @@ export async function googleLogin(idToken) {
   const data = await res.json();
   const token = data.token || data.Token || data?.Token;
   const refreshToken = data.refreshToken || data.RefreshToken || data?.RefreshToken;
-  const user = data.user || data.User || data?.User;
+  let user = data.user || data.User || data?.User;
   const roles = data.roles || data.Roles || [];
+  
+  // Tự động active account khi login bằng Google
+  if (user) {
+    const userStatus = user?.status || user?.Status || user?.isActive || user?.IsActive;
+    if (userStatus === 'Pending' || userStatus === 'pending' || userStatus === false) {
+      try {
+        await activeAccount(user.email || user.Email);
+        console.log('Account auto-activated for Google login');
+        // Cập nhật user status sau khi active
+        user = { ...user, status: 'Active', Status: 'Active', isActive: true, IsActive: true };
+      } catch (error) {
+        console.warn('Failed to auto-activate account:', error);
+      }
+    }
+  }
+  
   setAuth(token, user, roles, refreshToken);
   return data;
 }
 
+// ==== Active Account ====
+export async function activeAccount(email) {
+  const res = await fetch(API_ENDPOINTS.AUTH.ACTIVE_ACCOUNT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || "Kích hoạt tài khoản thất bại");
+  }
+  
+  return res.json();
+}
 
+// ==== Multiple Roles Management ====
 
+// Lấy tất cả roles của user
+export function getAllRoles() {
+  const raw = localStorage.getItem(ROLES_KEY);
+  try {
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
+// Lấy role hiện tại đang active
+export function getCurrentRole() {
+  return localStorage.getItem(CURRENT_ROLE_KEY) || localStorage.getItem(ROLE_KEY) || '';
+}
+
+// Kiểm tra user có role cụ thể không
+export function hasRole(role) {
+  const roles = getAllRoles();
+  return roles.includes(role.toLowerCase());
+}
+
+// Kiểm tra user có role book owner không
+export function isBookOwner() {
+  return hasRole('owner');
+}
+
+// Chuyển đổi role
+export function switchRole(newRole) {
+  const roles = getAllRoles();
+  const normalizedNewRole = newRole.toLowerCase();
+  
+  // Nếu role mới có trong danh sách roles của user
+  if (roles.includes(normalizedNewRole)) {
+    localStorage.setItem(CURRENT_ROLE_KEY, normalizedNewRole);
+    localStorage.setItem(ROLE_KEY, normalizedNewRole);
+    
+    // Dispatch event để UI cập nhật
+    try {
+      window.dispatchEvent(
+        new CustomEvent("auth:changed", { 
+          detail: { 
+            token: getToken(), 
+            user: getCurrentUser(), 
+            role: normalizedNewRole,
+            refreshToken: getRefreshToken()
+          } 
+        })
+      );
+    } catch { /* empty */ }
+    
+    return true;
+  }
+  
+  // Nếu không tìm thấy role trong danh sách, vẫn cho phép chuyển đổi
+  // (để hỗ trợ chuyển đổi giữa owner và user)
+  console.log('Role not found in user roles, but allowing switch for owner/user toggle');
+  localStorage.setItem(CURRENT_ROLE_KEY, normalizedNewRole);
+  localStorage.setItem(ROLE_KEY, normalizedNewRole);
+  
+  // Dispatch event để UI cập nhật
+  try {
+    window.dispatchEvent(
+      new CustomEvent("auth:changed", { 
+        detail: { 
+          token: getToken(), 
+          user: getCurrentUser(), 
+          role: normalizedNewRole,
+          refreshToken: getRefreshToken()
+        } 
+      })
+    );
+  } catch { /* empty */ }
+  
+  return true;
+}
+
+// Lấy danh sách roles có thể chuyển đổi (loại trừ role hiện tại)
+export function getAvailableRoles() {
+  const allRoles = getAllRoles();
+  const currentRole = getCurrentRole();
+  return allRoles.filter(role => role !== currentRole);
+}

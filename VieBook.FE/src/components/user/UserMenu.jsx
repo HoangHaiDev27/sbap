@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { RiUserLine, RiAddLine, RiCoinLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
-import { logout, getRole } from "../../api/authApi";
+import { logout, getCurrentRole } from "../../api/authApi";
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
@@ -10,7 +10,7 @@ export default function UserMenu() {
   const navigate = useNavigate();
   
   // Lấy role hiện tại
-  const userRole = getRole();
+  const userRole = getCurrentRole();
   const isOwner = userRole && userRole.toLowerCase() === 'owner';
 
   // Đóng menu khi click ra ngoài

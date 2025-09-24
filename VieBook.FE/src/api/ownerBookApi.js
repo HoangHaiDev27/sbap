@@ -76,7 +76,7 @@ export async function getCategories() {
   if (!res.ok) throw new Error("Failed to fetch categories");
   return res.json();
 }
-
+// up ảnh lên cloudiary
 export async function uploadBookImage(formData) {
   const res = await fetch(API_ENDPOINTS.UPLOADBOOKIMAGE, {
     method: "POST",
@@ -85,4 +85,18 @@ export async function uploadBookImage(formData) {
   if (!res.ok) throw new Error("Upload ảnh thất bại");
   const data = await res.json();
   return data.imageUrl;
+}
+// xóa ảnh trên Cloudinary
+export async function removeOldBookImage(imageUrl) {
+  const res = await fetch(
+    `${API_ENDPOINTS.REMOVEOLDBOOKIMAGE}?imageUrl=${encodeURIComponent(imageUrl)}`,
+    {
+      method: "DELETE",
+    }
+  );
+  if (!res.ok) {
+    throw new Error("Xóa ảnh thất bại");
+  }
+  const data = await res.json();
+  return data.message;
 }

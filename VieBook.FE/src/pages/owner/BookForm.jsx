@@ -10,7 +10,6 @@ export default function BookForm() {
     author: "",
     isbn: "",
     categoryIds: [],
-    language: "",
     description: "",
     coverUri: "",
   });
@@ -126,7 +125,7 @@ export default function BookForm() {
         description: form.description,
         coverUrl, // lấy link thực từ Cloudinary
         isbn: form.isbn,
-        language: form.language || "Vietnamese",
+        language: null,
         ownerId,
         categoryIds: form.categoryIds,
         status: "Active",
@@ -276,19 +275,6 @@ export default function BookForm() {
               className="hidden"
             />
           </div>
-        </div>
-
-        {/* Ngôn ngữ */}
-        <div className="mt-6">
-          <label className="block mb-2 text-sm font-medium">Ngôn ngữ</label>
-          <input
-            type="text"
-            name="language"
-            value={form.language}
-            onChange={handleChange}
-            placeholder="Ví dụ: Vietnamese, English..."
-            className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
-          />
         </div>
 
         {/* Mô tả */}

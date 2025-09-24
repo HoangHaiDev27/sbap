@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useActiveMenu from "../../hooks/useActiveMenu";
 import logo from "../../assets/logo.png";
+import { switchRole, getCurrentRole } from "../../api/authApi";
 import {
   RiDashboardLine,
   RiBook2Line,
@@ -9,9 +10,24 @@ import {
   RiArticleLine,
   RiMessage3Line,
   RiFeedbackLine,
+  RiUserLine,
 } from "react-icons/ri";
 
 export default function BookOwnerSidebar({ isOpen, onClose }) {
+  const navigate = useNavigate();
+
+  const handleRoleSwitch = () => {
+    // Chuyển từ owner sang user
+    console.log('Switching from owner to user');
+    const success = switchRole('user');
+    console.log('Switch result:', success);
+    if (success) {
+      navigate('/');
+    } else {
+      console.error('Failed to switch role');
+    }
+  };
+
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: RiDashboardLine, href: "/owner/dashboard" },
     { id: "books", label: "Quản lý Sách", icon: RiBook2Line, href: "/owner/books" },
@@ -36,7 +52,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
 
       <aside
         className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white shadow-lg z-50 transform transition-transform duration-300 
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 flex flex-col`}
       >
         {/* Logo */}
         <div className="p-6">
@@ -51,7 +67,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
         </div>
 
         {/* Menu chính */}
-        <nav className="px-4">
+        <nav className="px-4 flex-1">
           <ul className="space-y-1">
             {menuItems.map((item) => (
               <li key={item.id}>
@@ -74,6 +90,19 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
             ))}
           </ul>
         </nav>
+
+        {/* Role Switch Button - chuyển về khách hàng - nằm dưới cùng */}
+        <div className="px-4 pb-4">
+          <div className="border-t border-gray-700 pt-4">
+            <button
+              onClick={handleRoleSwitch}
+              className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
+            >
+              <RiUserLine className="w-4 h-4" />
+              <span>Chuyển sang khách hàng</span>
+            </button>
+          </div>
+        </div>
       </aside>
     </>
   );

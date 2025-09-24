@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     GOOGLE_LOGIN: `${API_BASE_URL}/api/auth/google-login`,
     REFRESH_TOKEN: `${API_BASE_URL}/api/auth/refresh-token`,
     REVOKE_TOKEN: `${API_BASE_URL}/api/auth/revoke-token`,
+    ACTIVE_ACCOUNT: `${API_BASE_URL}/api/auth/active-account`,
   },
 
   // Payment endpoints
@@ -65,6 +66,7 @@ export const API_ENDPOINTS = {
     GET_ALL: `${API_BASE_URL}/api/categories`,
   },
   UPLOADBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
+  REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
 };
 
 // Helper function to get full API URL
