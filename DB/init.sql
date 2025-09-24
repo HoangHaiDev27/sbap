@@ -463,7 +463,7 @@ INSERT INTO dbo.Users(Email, PasswordHash, Status)
 VALUES
   ('admin@viebook.local',  NULL, 'Active'),
   ('staff@viebook.local',  NULL, 'Active'),
-  ('owner@viebook.local',  NULL, 'Active'),
+  ('owner@viebook.local',  0x2432612431312464386C38775047464648614A766F4A504157414574754841427933766143634D584E4A573058732E6A665075356D53587930717761, 'Active'),
   ('alice@viebook.local',  NULL, 'Active'),
   ('bob@viebook.local',    NULL, 'Active');
 

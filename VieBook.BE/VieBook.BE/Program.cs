@@ -69,6 +69,7 @@ builder.Services.AddScoped<PasswordResetTokenDAO>();
 builder.Services.AddScoped<RefreshTokenDAO>();
 builder.Services.AddScoped<BookDao>();
 builder.Services.AddScoped<CategoryDAO>();
+builder.Services.AddScoped<PromotionDAO>();
 
 //Add Repo
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -79,6 +80,7 @@ builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepo
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -94,6 +96,7 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IPromotionService, PromotionService>();
 
 // Cloudinaary service
 builder.Services.Configure<CloudinarySettings>(
