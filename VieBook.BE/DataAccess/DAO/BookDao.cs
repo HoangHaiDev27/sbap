@@ -157,6 +157,7 @@ namespace DataAccess.DAO
                 {
                     BookId = b.BookId,
                     Title = b.Title,
+                    Author = b.Author,
                     CoverImageUrl = b.CoverUrl,
                 }).Take(20) // Giới hạn kết quả trả về
                 .ToListAsync();
