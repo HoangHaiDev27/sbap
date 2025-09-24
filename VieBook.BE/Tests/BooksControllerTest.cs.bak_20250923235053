@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using BusinessObject.Models;
 using BusinessObject.Dtos;
@@ -162,7 +162,7 @@ namespace Tests
                 Assert.False(string.IsNullOrEmpty(b.Title));
                 Assert.False(string.IsNullOrEmpty(b.Author));
                 //    Assert.False(string.IsNullOrEmpty(b.Category));
-                Assert.Equal("Nguyễn Văn A", b.Author);
+                Assert.Equal("Nguyễn Văn A", b.Author); 
                 Assert.True(b.Price >= 0);
                 Assert.True(b.Chapters > 0);
                 Assert.False(string.IsNullOrEmpty(b.Duration));
@@ -408,78 +408,6 @@ namespace Tests
 
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
-
-
-        [Fact]
-        public async Task PutBook_WithInvalidId_ReturnsBadRequest()
-        {
-            var id = 1;
-            var bookDto = new BookDTO { BookId = 2 };
-
-            var response = await _client.PutAsJsonAsync($"/api/books/{id}", bookDto);
-
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
-
-        // [Fact]
-        // public async Task PutBook_WithNonExistingId_ReturnsNotFound()
-        // {
-        //     var id = 999999;
-        //     var bookDto = new BookDTO { BookId = id };
-
-        //     var response = await _client.PutAsJsonAsync($"/api/books/{id}", bookDto);
-
-        //     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        // }
-
-        // [Fact]
-        // public async Task GetAudioBooks_ReturnsOk()
-        // {
-
-        //     var response = await _client.GetAsync("/api/books/audio");
-
-        //     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // }
-
-        // [Fact]
-        // public async Task GetAudioBookDetail_WithValidId_ReturnsOk()
-        // {
-        //     var validId = 1; // Replace with a valid ID from your test data
-
-        //     var response = await _client.GetAsync($"/api/books/audio/{validId}");
-
-        //     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // }
-
-        // [Fact]
-        // public async Task GetAudioBookDetail_WithInvalidId_ReturnsNotFound()
-        // {
-        //     var invalidId = 999999; // An ID that doesn't exist
-
-        //     var response = await _client.GetAsync($"/api/books/audio/{invalidId}");
-
-        //     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        // }
-
-        [Fact]
-        public async Task SearchBooks_WithValidQuery_ReturnsOk()
-        {
-            var query = "Test"; // Replace with a valid search query
-
-            var response = await _client.GetAsync($"/api/books/search?query={query}");
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        // [Fact]
-        // public async Task SearchBooks_WithEmptyQuery_ReturnsOk()
-        // {
-        //     var query = "";
-
-        //     var response = await _client.GetAsync($"/api/books/search?query={query}");
-
-        //     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // }
 
 
     }
