@@ -1,59 +1,61 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Moq;
-using Services.Implementations;
-using Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VieBook.BE.Controllers;
+// using System.Net;
+// using System.Net.Http.Json;
+// using System.Net.Http.Headers;
+// using System.Collections.Generic;
+// using BusinessObject.Dtos;
+// using Xunit;
 
-namespace Tests
-{
-    //public class UploadControllerTest
-    //{
-    //    private readonly Mock<ICloudinaryService> _mockService;
-    //    private readonly UploadController _controller;
+// namespace Tests
+// {
+//     public class UploadControllerTest : IClassFixture<CustomWebApplicationFactory<Program>>
+//     {
+//         private readonly HttpClient _client;
 
-    //    public UploadControllerTest()
-    //    {
-    //        _mockService = new Mock<ICloudinaryService>();
-    //        _controller = new UploadController(_mockService.Object);
-    //    }
+//         public UploadControllerTest(CustomWebApplicationFactory<Program> factory)
+//         {
+//             _client = factory.CreateClient();
+//         }
 
-    //    [Fact]
-    //    public async Task UploadImage_ReturnsOk_WhenUploadSuccess()
-    //    {
-    //        // Arrange
-    //        var fileMock = new Mock<IFormFile>();
-    //        _mockService.Setup(s => s.UploadBookImageAsync(It.IsAny<IFormFile>()))
-    //            .ReturnsAsync("http://mock.cloudinary.com/test.jpg");
+//     [Fact]
+//     public async Task UploadImage_WithValidFile_ReturnsOk()
+//     {
+//         var fileContent = new StreamContent(new MemoryStream(File.ReadAllBytes("testimage.jpg"))); // Replace with a real image file
+//         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
 
-    //        // Act
-    //        var result = await _controller.UploadImage(fileMock.Object);
+//         var formData = new MultipartFormDataContent();
+//         formData.Add(fileContent, "file", "testimage.jpg");
 
-    //        // Assert
-    //        var okResult = Assert.IsType<OkObjectResult>(result);
-    //        Assert.Contains("http://mock.cloudinary.com", okResult.Value.ToString());
-    //    }
+//         var response = await _client.PostAsync("/api/Upload/bookImage", formData);
 
-    //    [Fact]
-    //    public async Task UploadImage_ReturnsBadRequest_WhenUploadFails()
-    //    {
-    //        // Arrange
-    //        var fileMock = new Mock<IFormFile>();
-    //        _mockService.Setup(s => s.UploadBookImageAsync(It.IsAny<IFormFile>()))
-    //            .ReturnsAsync((string?)null);
+//         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+//     }
 
-    //        // Act
-    //        var result = await _controller.UploadImage(fileMock.Object);
+//     [Fact]
+//     public async Task UploadImage_WithInvalidFile_ReturnsBadRequest()
+//     {
+//         var fileContent = new StreamContent(new MemoryStream(File.ReadAllBytes("test.txt"))); // Replace with a real text file. Cloudinary service probably checks file type.
+//         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/plain");
 
-    //        // Assert
-    //        var badResult = Assert.IsType<BadRequestObjectResult>(result);
-    //        Assert.Equal("Upload thất bại", badResult.Value);
-    //    }
-    //}
+//         var formData = new MultipartFormDataContent();
+//         formData.Add(fileContent, "file", "test.txt");
 
-}
+//         var response = await _client.PostAsync("/api/Upload/bookImage", formData);
+
+//         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+//     }
+
+//      [Fact]
+//         public async Task UploadImage_WithEmptyFile_ReturnsBadRequest()
+//         {
+//             var fileContent = new StreamContent(new MemoryStream(Array.Empty<byte>())); // Empty File
+
+//             var formData = new MultipartFormDataContent();
+//             formData.Add(fileContent, "file", "");
+
+//             var response = await _client.PostAsync("/api/Upload/bookImage", formData);
+
+//             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+//         }
+
+//     }
+// }

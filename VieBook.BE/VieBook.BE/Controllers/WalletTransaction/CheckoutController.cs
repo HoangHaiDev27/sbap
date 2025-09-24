@@ -47,7 +47,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
                 var baseUrl = httpRequest != null ? $"{httpRequest.Scheme}://{httpRequest.Host}" : "http://localhost:5143";
 
                 // Tạo description ngắn gọn (tối đa 25 ký tự)
-                var description = $"Nap xu U1 {request.Amount}";
+                var description = $"Nap xu:  {request.Amount}";
 
                 // Sử dụng ApiConfiguration để tạo URLs
                 var cancelUrl = ApiConfiguration.FrontendUrls.RechargePage("cancel", request.Amount, orderCode);

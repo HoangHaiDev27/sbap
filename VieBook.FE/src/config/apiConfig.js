@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   AUDIO_BOOKS: `${API_BASE_URL}/api/books/audio`,
   AUDIO_BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/audio/${id}`,
   RELATED_BOOKS: (id) => `${API_BASE_URL}/api/books/${id}/related`,
+  
 
 
   // Auth endpoints
@@ -61,7 +62,9 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/books`,
     UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+    
   },
+  BOOK_SEARCH: (query) => `${API_BASE_URL}/api/books/search?query=${encodeURIComponent(query)}`,
   CATEGORIES: {
     GET_ALL: `${API_BASE_URL}/api/categories`,
   },

@@ -47,7 +47,14 @@ export const useRechargeForm = () => {
   const getTotalCoins = () => {
     const amount = getCurrentAmount();
     const baseCoins = amount / 1000;
-    const bonus = selectedAmount ? presetAmounts.find(item => item.amount === selectedAmount)?.bonus || 0 : 0;
+  
+    // Tìm mốc bonus phù hợp (mốc lớn nhất mà <= amount)
+    const bonusTier = presetAmounts
+      .filter(item => amount >= item.amount)
+      .sort((a, b) => b.amount - a.amount)[0];
+  
+    const bonus = bonusTier ? bonusTier.bonus : 0;
+  
     return baseCoins + bonus;
   };
 
@@ -57,8 +64,13 @@ export const useRechargeForm = () => {
   };
 
   const getBonusCoins = () => {
-    if (!selectedAmount) return 0;
-    return presetAmounts.find(item => item.amount === selectedAmount)?.bonus || 0;
+    const amount = getCurrentAmount();
+  
+    const bonusTier = presetAmounts
+      .filter(item => amount >= item.amount)
+      .sort((a, b) => b.amount - a.amount)[0];
+  
+    return bonusTier ? bonusTier.bonus : 0;
   };
 
   const isFormValid = () => {

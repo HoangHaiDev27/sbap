@@ -57,36 +57,35 @@ List<string> GetControllerActions(string controllerCode)
     {
         var line = lines[i].Trim();
 
-        // Tìm các method có attribute [HttpGet], [HttpPost], [HttpPut], [HttpDelete]
-        if (line.Contains("[HttpGet]") ||
-            line.Contains("[HttpPost]") ||
-            line.Contains("[HttpPut]") ||
-            line.Contains("[HttpDelete]") ||
-            line.Contains("[HttpPatch]"))
+        // Regex bắt attribute [HttpGet], [HttpGet("search")], [HttpPost("create")]...
+        if (Regex.IsMatch(line, @"\[Http(Get|Post|Put|Delete|Patch)(\(.*\))?\]"))
         {
-            // Tìm method declaration ở dòng tiếp theo
-            for (int j = i + 1; j < lines.Length && j < i + 3; j++) // Tìm trong 3 dòng tiếp theo
+            // Tìm method declaration ở 1-3 dòng tiếp theo
+            for (int j = i + 1; j < lines.Length && j < i + 3; j++)
             {
                 var methodLine = lines[j].Trim();
                 if (methodLine.Contains("public") &&
                     methodLine.Contains("(") &&
                     (methodLine.Contains("IActionResult") || methodLine.Contains("Task")))
                 {
-                    // Extract method name - tìm từ cuối dòng về trước
+                    // Extract method name
                     var openParenIndex = methodLine.IndexOf('(');
                     if (openParenIndex > 0)
                     {
                         var beforeParen = methodLine.Substring(0, openParenIndex).Trim();
-                        var parts = beforeParen.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        var methodName = parts.LastOrDefault();
 
-                        if (!string.IsNullOrEmpty(methodName) &&
-                            methodName != "Controller" &&
-                            methodName != "Task" &&
-                            methodName != "IActionResult" &&
-                            methodName != "async")
+                        var match = Regex.Match(beforeParen, @"(\w+)$");
+                        if (match.Success)
                         {
-                            actions.Add(methodName);
+                            var methodName = match.Groups[1].Value;
+                            if (!string.IsNullOrEmpty(methodName) &&
+                                methodName != "Controller" &&
+                                methodName != "Task" &&
+                                methodName != "IActionResult" &&
+                                methodName != "async")
+                            {
+                                actions.Add(methodName);
+                            }
                         }
                     }
                     break;
@@ -98,52 +97,33 @@ List<string> GetControllerActions(string controllerCode)
     return actions;
 }
 
+
 // Hàm phân tích file test hiện có để lấy danh sách các test methods
 List<string> GetExistingTestMethods(string testCode)
 {
     var testMethods = new List<string>();
-    var lines = testCode.Split('\n');
 
-    for (int i = 0; i < lines.Length; i++)
+    // Regex: bắt [Fact] hoặc [Theory] + public async Task MethodName(
+    var regex = new Regex(@"\[(Fact|Theory)\]\s*public\s+async\s+Task\s+(\w+)\s*\(",
+        RegexOptions.Multiline);
+
+    var matches = regex.Matches(testCode);
+    foreach (Match match in matches)
     {
-        var line = lines[i].Trim();
-
-        // Tìm các method có attribute [Fact] hoặc [Theory]
-        if (line.Contains("[Fact]") || line.Contains("[Theory]"))
+        if (match.Groups.Count > 2)
         {
-            // Tìm method declaration ở dòng tiếp theo
-            for (int j = i + 1; j < lines.Length && j < i + 3; j++)
+            var methodName = match.Groups[2].Value;
+            if (!string.IsNullOrWhiteSpace(methodName))
             {
-                var methodLine = lines[j].Trim();
-                if (methodLine.Contains("public") &&
-                    methodLine.Contains("async") &&
-                    methodLine.Contains("(") &&
-                    methodLine.Contains("Task"))
-                {
-                    // Extract method name
-                    var openParenIndex = methodLine.IndexOf('(');
-                    if (openParenIndex > 0)
-                    {
-                        var beforeParen = methodLine.Substring(0, openParenIndex).Trim();
-                        var parts = beforeParen.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        var methodName = parts.LastOrDefault();
-
-                        if (!string.IsNullOrEmpty(methodName) &&
-                            methodName != "Task" &&
-                            methodName != "async")
-                        {
-                            testMethods.Add(methodName);
-                        }
-                    }
-                    break;
-                }
+                testMethods.Add(methodName);
             }
         }
     }
-
     return testMethods;
 }
 
+
+// Hàm tìm các action còn thiếu test
 // Hàm tìm các action còn thiếu test
 List<string> FindMissingTests(List<string> controllerActions, List<string> existingTests)
 {
@@ -151,18 +131,9 @@ List<string> FindMissingTests(List<string> controllerActions, List<string> exist
 
     foreach (var action in controllerActions)
     {
-        // Kiểm tra xem có test nào cho action này không
-        bool hasTest = false;
-        foreach (var test in existingTests)
-        {
-            if (test.ToLower().Contains(action.ToLower()) ||
-                test.ToLower().Contains("test" + action.ToLower()) ||
-                test.ToLower().Contains(action.ToLower() + "test"))
-            {
-                hasTest = true;
-                break;
-            }
-        }
+        // Kiểm tra xem có test nào liên quan đến action không
+        bool hasTest = existingTests.Any(tm =>
+            tm.Contains(action, StringComparison.OrdinalIgnoreCase));
 
         if (!hasTest)
         {
@@ -251,6 +222,7 @@ string CleanGeneratedCode(string code)
     return string.Join('\n', cleanedLines);
 }
 
+
 // Hàm tìm vị trí insert chính xác trong file test hiện có
 int FindInsertPosition(List<string> lines)
 {
@@ -333,6 +305,7 @@ Yêu cầu:
 - VÍ DỤ: BookDTO chỉ có: BookId, Title, Description, CoverUrl, Isbn, Language, TotalView, CreatedAt, Author, OwnerId, Status, TotalPrice, Sold, Rating, OwnerName, CategoryIds - KHÔNG có Price, PublishedDate, TotalPages, BookType
 - VÍ DỤ: UserDTO chỉ có: UserId, Email, Status, CreatedAt, LastLoginAt, Wallet - KHÔNG có FirstName, LastName, Password, Phone, Address
 - VÍ DỤ: CategoryDTO chỉ có: CategoryId, Name, Type, ParentId, IsActive - KHÔNG có CategoryName
+- VÍ DỤ: BookSearchReponseDTO chỉ có: BookId, Title, CoverImageUrl - KHÔNG có Description, Isbn, Language, TotalView, CreatedAt, Author, OwnerId, Status, TotalPrice, Sold, Rating, OwnerName, CategoryIds
 - CHỈ trả về code test methods, KHÔNG bao gồm:
   * Class declaration
   * Using statements
@@ -573,6 +546,50 @@ try
 
             // Làm sạch code được generate
             newTestCode = CleanGeneratedCode(newTestCode);
+            // 🔹 Lọc các test mới để tránh bị trùng
+            var existingTestNames = GetExistingTestMethods(existingTestCode);
+            var newTestLinesDupCheck = newTestCode.Split('\n').ToList();
+
+            var filteredNewTests = new List<string>();
+            string buffer = "";
+            bool insideMethod = false;
+            string? currentMethod = null;
+
+            foreach (var line in newTestLinesDupCheck)
+            {
+                if (line.Trim().StartsWith("[Fact]") || line.Trim().StartsWith("[Theory]"))
+                {
+                    buffer = line + "\n";
+                    insideMethod = true;
+                    currentMethod = null;
+                }
+                else if (insideMethod && line.Trim().StartsWith("public async Task"))
+                {
+                    var matchDupCheck = Regex.Match(line, @"public\s+async\s+Task\s+(\w+)\s*\(");
+                    if (matchDupCheck.Success)
+                    {
+                        currentMethod = matchDupCheck.Groups[1].Value;
+                    }
+                    buffer += line + "\n";
+                }
+                else if (insideMethod)
+                {
+                    buffer += line + "\n";
+                    if (line.Trim() == "}")
+                    {
+                        insideMethod = false;
+                        if (currentMethod == null || !existingTestNames.Contains(currentMethod))
+                        {
+                            filteredNewTests.Add(buffer);
+                        }
+                        buffer = "";
+                    }
+                }
+            }
+
+            // Replace newTestCode với filtered
+            newTestCode = string.Join("\n", filteredNewTests);
+
 
             // backup nếu có file cũ
             if (File.Exists(testFile))
