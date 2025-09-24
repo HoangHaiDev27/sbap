@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { getBookById, getCategories, updateBook, uploadBookImage } from "../../api/ownerBookApi";
+import { getBookById, getCategories, updateBook, uploadBookImage, removeOldBookImage } from "../../api/ownerBookApi";
 
 export default function BookEditForm() {
   const { bookId } = useParams();
@@ -10,10 +10,10 @@ export default function BookEditForm() {
     title: "",
     author: "",
     isbn: "",
-    language: "",
     description: "",
     categoryIds: [],
     status: "Active",
+    createdAt: null,
   });
 
   const [coverUrl, setCoverUrl] = useState("");
@@ -24,9 +24,11 @@ export default function BookEditForm() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [isbnError, setIsbnError] = useState("");
+  const [errors, setErrors] = useState({});
 
   const dropdownRef = useRef(null);
 
+  // đóng dropdown khi click ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -36,15 +38,11 @@ export default function BookEditForm() {
 
     if (showCategoryDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showCategoryDropdown]);
 
+  // load dữ liệu sách & categories
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -54,10 +52,12 @@ export default function BookEditForm() {
           getCategories(),
         ]);
 
-        const normalizedCats = catsData.map((c) => ({
-          categoryId: c.categoryId ?? c.id ?? c.CategoryId ?? null,
-          name: c.name ?? c.title ?? c.Name ?? "",
-        })).filter(c => c.categoryId != null);
+        const normalizedCats = catsData
+          .map((c) => ({
+            categoryId: c.categoryId ?? c.id ?? c.CategoryId ?? null,
+            name: c.name ?? c.title ?? c.Name ?? "",
+          }))
+          .filter((c) => c.categoryId != null);
 
         setAllCategories(normalizedCats);
 
@@ -81,7 +81,6 @@ export default function BookEditForm() {
           title: bookData.title ?? "",
           author: bookData.author ?? "",
           isbn: bookData.isbn ?? "",
-          language: bookData.language ?? "",
           description: bookData.description ?? "",
           categoryIds: initialCategoryIds,
           status: bookData.status ?? "Active",
@@ -121,23 +120,50 @@ export default function BookEditForm() {
     const selected = e.target.files?.[0];
     if (!selected) return;
     setFile(selected);
-    const url = URL.createObjectURL(selected);
-    setPreview(url);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result);
+    };
+    reader.readAsDataURL(selected);
   };
 
-  // submit PUT
+  // validate dữ liệu nhập
+  const validate = () => {
+    const errs = {};
+    if (!form.title.trim()) errs.title = "Tên sách là bắt buộc";
+    if (!form.author.trim()) errs.author = "Tác giả là bắt buộc";
+    if (!form.isbn.trim()) errs.isbn = "Mã ISBN là bắt buộc";
+    if (!form.description.trim()) errs.description = "Mô tả là bắt buộc";
+    if (!form.categoryIds.length) errs.categoryIds = "Phải chọn ít nhất 1 thể loại";
+    return errs;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const errs = validate();
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
     setUploading(true);
 
     let finalCoverUrl = coverUrl;
 
     try {
       if (file) {
+        if (coverUrl) {
+          try {
+            await removeOldBookImage(coverUrl);
+          } catch (err) {
+            console.warn("Xóa ảnh cũ thất bại:", err);
+          }
+        }
+
         const formData = new FormData();
         formData.append("file", file);
         finalCoverUrl = await uploadBookImage(formData);
       }
+
 
       const payload = {
         bookId: Number(bookId),
@@ -145,7 +171,7 @@ export default function BookEditForm() {
         author: form.author,
         isbn: form.isbn,
         description: form.description,
-        language: form.language,
+        language: null, // luôn lưu NULL
         coverUrl: finalCoverUrl,
         categoryIds: form.categoryIds,
         status: "Active",
@@ -205,6 +231,7 @@ export default function BookEditForm() {
               <label className="block mb-2 text-sm font-medium">Tên sách *</label>
               <input name="title" value={form.title} onChange={handleChange}
                 className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" />
+              {errors.title && <p className="text-red-400 text-sm">{errors.title}</p>}
             </div>
 
             {/* author */}
@@ -212,6 +239,7 @@ export default function BookEditForm() {
               <label className="block mb-2 text-sm font-medium">Tác giả *</label>
               <input name="author" value={form.author} onChange={handleChange}
                 className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" />
+              {errors.author && <p className="text-red-400 text-sm">{errors.author}</p>}
             </div>
 
             {/* isbn */}
@@ -221,13 +249,13 @@ export default function BookEditForm() {
                 name="isbn"
                 value={form.isbn}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 rounded focus:outline-none ${isbnError ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"
-                  }`}
+                className={`w-full px-3 py-2 rounded focus:outline-none ${isbnError ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"}`}
               />
               {isbnError && <p className="text-red-400 text-sm">{isbnError}</p>}
+              {errors.isbn && <p className="text-red-400 text-sm">{errors.isbn}</p>}
             </div>
 
-            {/* category*/}
+            {/* category */}
             <div>
               <label className="block mb-2 text-sm font-medium">Thể loại *</label>
               <div className="w-full relative" ref={dropdownRef}>
@@ -259,42 +287,33 @@ export default function BookEditForm() {
                   </div>
                 )}
               </div>
+              {errors.categoryIds && <p className="text-red-400 text-sm">{errors.categoryIds}</p>}
             </div>
 
-
-            {/* cover preview */}
-            <div className="md:col-span-2">
+            {/* cover preview (giống bên Add) */}
+            <div className="md:col-span-2 mt-6">
               <label className="block mb-2 text-sm font-medium">Ảnh bìa</label>
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-700">
-                  <img
-                    src={preview || coverUrl || "https://via.placeholder.com/120x160"}
-                    alt="cover"
-                    className="w-32 h-44 object-cover rounded mb-2"
-                  />
-                  <input id="coverInput" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                  <button type="button" onClick={() => document.getElementById("coverInput").click()} className="px-4 py-2 bg-orange-500 rounded hover:bg-orange-600">
-                    Chọn ảnh mới
-                  </button>
-                </div>
-                <div className="text-sm text-gray-400">
-                  <p>Ảnh hiện tại sẽ được giữ nếu bạn không upload file thực sự lên server.</p>
-                  <p>Nếu chọn ảnh mới, hệ thống sẽ upload lên Cloudinary khi bạn lưu thay đổi.</p>
-                </div>
+              <div
+                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-700 cursor-pointer hover:border-orange-500"
+                onClick={() => document.getElementById("coverInput").click()}
+              >
+                <img
+                  src={preview || coverUrl || "https://placehold.co/200x300?text=No+Image"}
+                  alt="Preview"
+                  className="w-40 h-56 object-cover rounded"
+                />
+                <p className="text-gray-400 mt-2">
+                  Chọn ảnh từ máy, sẽ upload khi lưu
+                </p>
+                <input
+                  id="coverInput"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </div>
             </div>
-          </div>
-
-          {/* ngôn ngữ  */}
-          <div className="mt-6">
-            <label className="block mb-2 text-sm font-medium">Ngôn ngữ</label>
-            <input
-              name="language"
-              value={form.language}
-              onChange={handleChange}
-              placeholder="Ví dụ: Vietnamese, VN, English..."
-              className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none"
-            />
           </div>
 
           {/* description */}
@@ -302,15 +321,14 @@ export default function BookEditForm() {
             <label className="block mb-2 text-sm font-medium">Mô tả *</label>
             <textarea name="description" value={form.description} onChange={handleChange} rows={4}
               className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" />
-            <p className="text-xs text-gray-400 mt-1">{form.description.length}/500 ký tự</p>
+            {errors.description && <p className="text-red-400 text-sm">{errors.description}</p>}
           </div>
 
           <div className="mt-6 flex justify-end">
             <button
               type="submit"
               disabled={uploading}
-              className={`px-6 py-2 rounded-lg transition ${uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-                }`}
+              className={`px-6 py-2 rounded-lg transition ${uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}`}
             >
               {uploading ? "Đang lưu..." : "Lưu thay đổi"}
             </button>

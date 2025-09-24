@@ -65,6 +65,7 @@ export const API_ENDPOINTS = {
     GET_ALL: `${API_BASE_URL}/api/categories`,
   },
   UPLOADBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
+  REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
 };
 
 // Helper function to get full API URL
