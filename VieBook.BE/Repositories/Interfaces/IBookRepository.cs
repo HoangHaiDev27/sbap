@@ -25,5 +25,10 @@ namespace Repositories.Interfaces
         Task<List<Book>> GetAudioBooksAsync();
         Task<Book?> GetAudioBookDetailAsync(int id);
         Task<List<BookSearchReponseDTO?>> SearchBooksAsync(string query);
+        Task<List<Book>> GetTopPurchasedReadBooksByCategoryAsync(int categoryId);
+        Task<List<Book>> GetTopPurchasedAudioBooksByCategoryAsync(int categoryId);
+        Task<List<Book>> GetTopPurchasedAudioBooksAsync();
+        Task<List<Book>> GetTopPurchasedReadBooksAsync();
+        Task<List<Book>> GetRecommendationsForUserAsync(int userId);
     }
 }

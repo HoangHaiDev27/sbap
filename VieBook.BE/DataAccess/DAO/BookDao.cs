@@ -163,6 +163,59 @@ namespace DataAccess.DAO
                 .ToListAsync();
             return books!;
         }
-
+        // Lấy sách nói của category có lượt mua nhiều (top 10)
+        public async Task<List<Book>> GetTopPurchasedAudioBooksByCategoryAsync(int categoryId)
+        {
+            return await _context.Books
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null) // chỉ sách có audio
+                            && b.Categories.Any(c => c.CategoryId == categoryId)) // thuộc category
+                .OrderByDescending(b => b.Chapters.Sum(c => c.OrderItems.Count)) // sắp xếp theo tổng lượt mua
+                .Take(10) // lấy top N
+                .ToListAsync();
+        }
+        // Lấy sách đọc của category có lượt mua nhiều (top 10)
+        public async Task<List<Book>> GetTopPurchasedReadBooksByCategoryAsync(int categoryId)
+        {
+            return await _context.Books
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .Where(b => b.Chapters.Any(c => c.ChapterSoftUrl != null)   // chỉ sách có soft copy
+                            && b.Categories.Any(c => c.CategoryId == categoryId)) // thuộc category
+                .OrderByDescending(b => b.Chapters.Sum(c => c.OrderItems.Count)) // sắp xếp theo tổng lượt mua
+                .Take(10) // lấy top N
+                .ToListAsync();
+        }
+        // Lấy sách nói có lượt mua nhiều (top 10)
+        public async Task<List<Book>> GetTopPurchasedAudioBooksAsync()
+        {
+            return await _context.Books
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null)) // chỉ sách có audio
+                .OrderByDescending(b => b.Chapters.Sum(c => c.OrderItems.Count)) // sắp xếp theo tổng lượt mua
+                .Take(10) // lấy top N
+                .ToListAsync();
+        }
+        // Lấy sách đọc có lượt mua nhiều (top 10)
+        public async Task<List<Book>> GetTopPurchasedReadBooksAsync()
+        {
+            return await _context.Books
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .Where(b => b.Chapters.Any(c => c.ChapterSoftUrl != null)) // chỉ sách có soft copy
+                .OrderByDescending(b => b.Chapters.Sum(c => c.OrderItems.Count)) // sắp xếp theo tổng lượt mua
+                .Take(10) // lấy top N
+                .ToListAsync();
+        }
     }
 }

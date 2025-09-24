@@ -31,3 +31,12 @@ export async function getRelatedBooks(bookId) {
   if (!res.ok) throw new Error("Failed to fetch related books");
   return res.json();
 }
+
+export async function getAllCategories() {
+  const res = await fetch(API_ENDPOINTS.CATEGORIES.GET_ALL, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+}

@@ -176,5 +176,46 @@ namespace VieBook.BE.Controllers
             var books = await _bookService.SearchBooksAsync(query);
             return Ok(books);
         }
+        [HttpGet("top-read/category/{categoryId}")]
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetTopPurchasedReadBooksByCategory(int categoryId)
+        {
+            var books = await _bookService.GetTopPurchasedReadBooksByCategoryAsync(categoryId);
+            if (books == null || !books.Any())
+                return NotFound("Không có sách đọc nào.");
+            return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
+        }
+        [HttpGet("top-audio/category/{categoryId}")]
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetTopPurchasedAudioBooksByCategory(int categoryId)
+        {
+            var books = await _bookService.GetTopPurchasedAudioBooksByCategoryAsync(categoryId);
+            if (books == null || !books.Any())
+                return NotFound("Không có sách audio nào.");
+            return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
+        }
+        [HttpGet("top-audio")]
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetTopPurchasedAudioBooks()
+        {
+            var books = await _bookService.GetTopPurchasedAudioBooksAsync();
+            if (books == null || !books.Any())
+                return NotFound("Không có sách audio nào.");
+            return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
+        }
+        [HttpGet("top-read")]
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetTopPurchasedReadBooks()
+        {
+            var books = await _bookService.GetTopPurchasedReadBooksAsync();
+            if (books == null || !books.Any())
+                return NotFound("Không có sách đọc nào.");
+            return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
+        }
+
+        // GET: api/books/recommendations?userId=123
+        [HttpGet("recommendations")]
+        public async Task<ActionResult<List<BookResponseDTO>>> GetRecommendations([FromQuery] int userId)
+        {
+            if (userId <= 0) return BadRequest("userId không hợp lệ");
+            var books = await _bookService.GetRecommendationsForUserAsync(userId);
+            return Ok(books);
+        }
     }
 }

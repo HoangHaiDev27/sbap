@@ -67,5 +67,26 @@ namespace Services.Implementations
         {
             return await _bookRepo.SearchBooksAsync(query);
         }
+        public async Task<List<Book>> GetTopPurchasedReadBooksByCategoryAsync(int categoryId)
+        {
+            return await _bookRepo.GetTopPurchasedReadBooksByCategoryAsync(categoryId);
+        }
+        public async Task<List<Book>> GetTopPurchasedAudioBooksByCategoryAsync(int categoryId)
+        {
+            return await _bookRepo.GetTopPurchasedAudioBooksByCategoryAsync(categoryId);
+        }
+        public async Task<List<Book>> GetTopPurchasedAudioBooksAsync()
+        {
+            return await _bookRepo.GetTopPurchasedAudioBooksAsync();
+        }
+        public async Task<List<Book>> GetTopPurchasedReadBooksAsync()
+        {
+            return await _bookRepo.GetTopPurchasedReadBooksAsync();
+        }
+        public async Task<List<BookResponseDTO>> GetRecommendationsForUserAsync(int userId)
+        {
+            var books = await _bookRepo.GetRecommendationsForUserAsync(userId);
+            return _mapper.Map<List<BookResponseDTO>>(books);
+        }
     }
 }

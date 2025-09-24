@@ -1,8 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 
 export default function BookCarousel({ title, books, hasCategories, categories }) {
   const [activeCategory, setActiveCategory] = useState(0);
+
+  const filteredBooks = useMemo(() => {
+    if (!hasCategories || !categories || activeCategory === 0) return books;
+    const selected = categories[activeCategory];
+    if (!selected) return books;
+    return (books || []).filter((b) => (b?.category || "").toLowerCase() === selected.toLowerCase());
+  }, [books, hasCategories, categories, activeCategory]);
 
   return (
     <div className="space-y-6">
@@ -38,28 +45,32 @@ export default function BookCarousel({ title, books, hasCategories, categories }
 
       {/* Book list */}
       <div className="flex space-x-4 overflow-x-auto pb-4">
-        {books.map((book) => (
-          <Link
-            key={book.id}
-            to={`/bookdetails/${book.id}`}
-            className="flex-shrink-0 cursor-pointer group"
-          >
-            <div className="w-40">
-              <div className="relative mb-3">
-                <img
-                  src={book.image}
-                  alt={book.title}
-                  className="w-full h-56 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-lg"></div>
+        {(filteredBooks || []).length === 0 ? (
+          <div className="text-gray-400 text-sm px-2 py-1">Không có sách phù hợp.</div>
+        ) : (
+          filteredBooks.map((book) => (
+            <Link
+              key={book.id}
+              to={`/bookdetails/${book.id}`}
+              className="flex-shrink-0 cursor-pointer group"
+            >
+              <div className="w-40">
+                <div className="relative mb-3">
+                  <img
+                    src={book.image}
+                    alt={book.title}
+                    className="w-full h-56 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-lg"></div>
+                </div>
+                <h3 className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
+                  {book.title}
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">{book.author}</p>
               </div>
-              <h3 className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
-                {book.title}
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">{book.author}</p>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );
