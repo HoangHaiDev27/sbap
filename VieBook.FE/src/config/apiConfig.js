@@ -70,7 +70,24 @@ export const API_ENDPOINTS = {
   },
   UPLOADBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
   REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
+  UPLOADAVATARIMAGE: `${API_BASE_URL}/api/upload/avatarImage`,
+  //Staff
+  STAFF: {
+    GETALLSTAFF: () => `${API_BASE_URL}/api/staff`,           
+    GETSTAFFBYID: (staffId) => `${API_BASE_URL}/api/staff/${staffId}`, 
+    ADD: `${API_BASE_URL}/api/staff/add`,                         
+    UPDATE: (staffId) => `${API_BASE_URL}/api/staff/update/${staffId}`, 
+    DELETE: (staffId) => `${API_BASE_URL}/api/staff/delete/${staffId}`, 
+    LOCK: (staffId) => `${API_BASE_URL}/api/staff/lock/${staffId}`,
+    UNLOCK: (staffId) => `${API_BASE_URL}/api/staff/unlock/${staffId}`,
+    TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}` 
+  },
+  ADMIN: {
+    GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`, 
+    UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`       
+  }
 };
+
 
 // Helper function to get full API URL
 export const getFullApiUrl = (endpoint) => {

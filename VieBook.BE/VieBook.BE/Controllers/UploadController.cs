@@ -37,5 +37,13 @@ namespace VieBook.BE.Controllers
 
             return Ok(new { message = "Đã xóa ảnh thành công" });
         }
+        [HttpPost("avatarImage")]
+        public async Task<IActionResult> UploadAvaterImage(IFormFile file)
+        {
+            var url = await _cloudinaryService.UploadAvatarImageAsync(file);
+            if (url == null) return BadRequest("Upload thất bại");
+
+            return Ok(new { imageUrl = url });
+        }
     }
 }
