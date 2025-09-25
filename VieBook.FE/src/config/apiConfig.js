@@ -87,7 +87,18 @@ export const API_ENDPOINTS = {
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`, 
     UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`       
-  }
+  },
+  BOOKAPPROVAL: {
+    GET_ALL:        `${API_BASE_URL}/api/BookApproval`,                        
+    GET_BY_ID:      (id)     => `${API_BASE_URL}/api/BookApproval/${id}`,       
+    ADD:            `${API_BASE_URL}/api/BookApproval`,                        
+    APPROVE:        (id)     => `${API_BASE_URL}/api/BookApproval/approve/${id}`, 
+    REFUSE:         (id)     => `${API_BASE_URL}/api/BookApproval/refuse/${id}`,  
+    GET_LATEST_BY_BOOKID: (bookId) => `${API_BASE_URL}/api/BookApproval/latest/${bookId}`,
+    GET_ALL_ACTIVE_BOOKS:  `${API_BASE_URL}/api/BookApproval/active-books`,
+    GET_ALL_USERS_WITH_PROFILE: `${API_BASE_URL}/api/BookApproval/users`
+  },
+
 };
 
 
