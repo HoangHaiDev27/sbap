@@ -65,6 +65,8 @@ export const API_ENDPOINTS = {
     
   },
   BOOK_SEARCH: (query) => `${API_BASE_URL}/api/books/search?query=${encodeURIComponent(query)}`,
+  RECOMMENDATIONS: `${API_BASE_URL}/api/books/recommendations`,
+  
   CATEGORIES: {
     GET_ALL: `${API_BASE_URL}/api/categories`,
   },
