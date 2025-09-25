@@ -35,6 +35,8 @@ namespace Services.Implementations
         {
             return await _promotionRepository.UpdatePromotionAsync(promotion, bookIds);
         }
+        public Task<bool> DeletePromotionAsync(int promotionId, int ownerId)
+        => _promotionRepository.DeletePromotionAsync(promotionId, ownerId);
 
     }
 }

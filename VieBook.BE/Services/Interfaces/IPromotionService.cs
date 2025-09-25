@@ -13,6 +13,7 @@ namespace Services.Interfaces
         Task<Promotion> CreatePromotionAsync(Promotion promotion, List<int> bookIds);
         Task<Promotion?> GetPromotionByIdAsync(int promotionId);
         Task<Promotion> UpdatePromotionAsync(Promotion promotion, List<int> bookIds);
+        Task<bool> DeletePromotionAsync(int promotionId, int ownerId);
 
     }
 }

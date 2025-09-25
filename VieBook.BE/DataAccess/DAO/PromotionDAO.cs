@@ -22,10 +22,11 @@ namespace DataAccess.DAO
                         .ThenInclude(o => o.UserProfile)
                 .Include(p => p.Books)
                     .ThenInclude(b => b.Chapters)
-                .Where(p => p.OwnerId == ownerId)
+                .Where(p => p.OwnerId == ownerId && p.IsActive)
                 .OrderDescending()
                 .ToListAsync();
         }
+
         public async Task<Promotion> CreatePromotionAsync(Promotion promotion, List<int> bookIds)
         {
             var books = await _context.Books
@@ -33,20 +34,22 @@ namespace DataAccess.DAO
                 .ToListAsync();
 
             promotion.Books = books;
+            promotion.IsActive = true;
 
             _context.Promotions.Add(promotion);
             await _context.SaveChangesAsync();
 
             return promotion;
         }
+
         public async Task<Promotion?> GetPromotionByIdAsync(int promotionId)
         {
             return await _context.Promotions
                 .Include(p => p.Books)
-                .ThenInclude(b => b.Chapters)
+                    .ThenInclude(b => b.Chapters)
                 .Include(p => p.Books)
-                .ThenInclude(b => b.Categories)
-                .FirstOrDefaultAsync(p => p.PromotionId == promotionId);
+                    .ThenInclude(b => b.Categories)
+                .FirstOrDefaultAsync(p => p.PromotionId == promotionId && p.IsActive);
         }
 
         public async Task<Promotion> UpdatePromotionAsync(Promotion promotion, List<int> bookIds)
@@ -64,6 +67,18 @@ namespace DataAccess.DAO
             return promotion;
         }
 
+        public async Task<bool> DeletePromotionAsync(int promotionId, int ownerId)
+        {
+            var promo = await _context.Promotions
+                .FirstOrDefaultAsync(p => p.PromotionId == promotionId && p.OwnerId == ownerId);
 
+            if (promo == null) return false;
+
+            promo.IsActive = false; // đánh dấu đã xoá
+            _context.Promotions.Update(promo);
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

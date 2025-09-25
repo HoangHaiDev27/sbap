@@ -68,7 +68,7 @@ export default function PromotionPage() {
         </button>
       </div>
 
-      <PromotionTable promotions={filteredPromotions} onEdit={handleEdit} />
+      <PromotionTable promotions={filteredPromotions} onEdit={handleEdit} onDeleted={fetchPromotions} />
 
       <PromotionFormModal
         isOpen={open}

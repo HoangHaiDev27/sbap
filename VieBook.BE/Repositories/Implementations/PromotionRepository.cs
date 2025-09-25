@@ -35,6 +35,7 @@ namespace Repositories.Implementations
         {
             return await _promotionDAO.UpdatePromotionAsync(promotion, bookIds);
         }
-
+        public Task<bool> DeletePromotionAsync(int promotionId, int ownerId)
+        => _promotionDAO.DeletePromotionAsync(promotionId, ownerId);
     }
 }

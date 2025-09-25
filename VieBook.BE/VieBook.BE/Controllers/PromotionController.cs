@@ -158,6 +158,16 @@ namespace VieBookAPI.Controllers
 
             return Ok(result);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePromotion(int id, [FromQuery] int ownerId)
+        {
+            var result = await _promotionService.DeletePromotionAsync(id, ownerId);
+
+            if (!result)
+                return NotFound(new { message = "Promotion không tồn tại hoặc không thuộc quyền sở hữu" });
+
+            return Ok(new { message = "Promotion đã được vô hiệu hoá (soft delete)" });
+        }
 
     }
 }

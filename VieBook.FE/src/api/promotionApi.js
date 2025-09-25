@@ -49,3 +49,13 @@ export async function updatePromotion(promotionId, payload) {
   }
   return res.json();
 }
+export async function deletePromotion(promotionId, ownerId) {
+  const url = `${API_ENDPOINTS.PROMOTIONS.CREATE}/${promotionId}?ownerId=${ownerId}`;
+  const res = await authFetch(url, { method: "DELETE" });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Xóa promotion thất bại");
+  }
+  return res.json();
+}
