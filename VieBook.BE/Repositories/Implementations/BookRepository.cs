@@ -57,5 +57,25 @@ namespace Repositories.Implementations
         {
             return await _bookDao.SearchBooksAsync(query);
         }
+        public async Task<List<Book>> GetTopPurchasedReadBooksByCategoryAsync(int categoryId)
+        {
+            return await _bookDao.GetTopPurchasedReadBooksByCategoryAsync(categoryId);
+        }
+        public async Task<List<Book>> GetTopPurchasedAudioBooksByCategoryAsync(int categoryId)
+        {
+            return await _bookDao.GetTopPurchasedAudioBooksByCategoryAsync(categoryId);
+        }
+        public async Task<List<Book>> GetTopPurchasedAudioBooksAsync()
+        {
+            return await _bookDao.GetTopPurchasedAudioBooksAsync();
+        }
+        public async Task<List<Book>> GetTopPurchasedReadBooksAsync()
+        {
+            return await _bookDao.GetTopPurchasedReadBooksAsync();
+        }
+        public async Task<List<Book>> GetRecommendedBooksAsync(int? userId = null)
+        {
+            return await _bookDao.GetRecommendedBooksAsync(userId);
+        }
     }
 }
