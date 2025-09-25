@@ -1,15 +1,20 @@
 using BusinessObject;
-using DataAccess;
 using BusinessObject.Dtos;
-using Microsoft.EntityFrameworkCore;
-using Repositories.Interfaces;
-using Repositories.Implementations;
-using Services.Interfaces;
-using Services.Implementations;
-using Net.payOS;
+using DataAccess;
 using DataAccess.DAO;
+using DataAccess.DAO.Admin;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Net.payOS;
+using Repositories.Implementations;
+using Repositories.Implementations.Admin;
+using Repositories.Interfaces;
+using Repositories.Interfaces.Admin;
+using Services.Implementations;
+using Services.Implementations.Admin;
+using Services.Interfaces;
+using Services.Interfaces.Admin;
 using System.Text;
 using VieBook.BE.Configuration;
 
@@ -69,6 +74,8 @@ builder.Services.AddScoped<PasswordResetTokenDAO>();
 builder.Services.AddScoped<RefreshTokenDAO>();
 builder.Services.AddScoped<BookDao>();
 builder.Services.AddScoped<CategoryDAO>();
+builder.Services.AddScoped<StaffDAO>();
+builder.Services.AddScoped<AdminDAO>();
 
 //Add Repo
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -79,6 +86,8 @@ builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepo
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IStaffRepository, StaffRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -94,6 +103,9 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+
 
 // Cloudinaary service
 builder.Services.Configure<CloudinarySettings>(

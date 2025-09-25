@@ -114,7 +114,46 @@ namespace BusinessObject.Dtos
                         .Select(c => c.StorageMeta)
                         .FirstOrDefault()));
 
-        }
+            CreateMap<User, StaffDTO>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
+                .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
+                .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
+            CreateMap<CreateStaffRequestDTO, User>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
+                {
+                    FullName = src.FullName,
+                    AvatarUrl = src.AvatarUrl,
+                    DateOfBirth = src.DateOfBirth
+
+                }))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Active"))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.Roles, opt => opt.Ignore())       // gán trong Service
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // hash trong Service
+                                                                            // Trong MappingProfile.cs
+            CreateMap<UpdateStaffRequestDTO, User>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
+                {
+                    FullName = src.FullName,
+                    AvatarUrl = src.AvatarUrl,
+                    DateOfBirth = src.DateOfBirth
+                }))
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // nếu cập nhật mật khẩu, xử lý riêng
+                .ForMember(dest => dest.Roles, opt => opt.Ignore()); // giữ nguyên roles
+
+            CreateMap<User, AdminProfileDTO>()
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile.FullName))
+            .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile.AvatarUrl))
+            .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile.PhoneNumber))
+            .ReverseMap()
+            .ForPath(dest => dest.UserProfile.FullName, opt => opt.MapFrom(src => src.FullName))
+            .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl))
+            .ForPath(dest => dest.UserProfile.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber));
+        }
     }
+
 }
