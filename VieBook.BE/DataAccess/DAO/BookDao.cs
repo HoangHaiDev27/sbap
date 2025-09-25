@@ -217,5 +217,49 @@ namespace DataAccess.DAO
                 .Take(10) // lấy top N
                 .ToListAsync();
         }
+        // Lấy danh sách gợi ý sách
+        public async Task<List<Book>> GetRecommendedBooksAsync(int? userId = null)
+        {
+            IQueryable<Book> query = _context.Books
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews);
+
+            if (userId == null)
+            {
+                // ✅ Trường hợp chưa đăng nhập: lấy sách mới nhất
+                return await query
+                    .OrderByDescending(b => b.CreatedAt)
+                    .Take(10)
+                    .ToListAsync();
+            }
+            else
+            {
+                // ✅ Trường hợp đã đăng nhập: lấy category từ sách mà user đã mua
+                var purchasedCategoryIds = await _context.OrderItems
+                    .Where(o => o.CustomerId == userId)
+                    .SelectMany(o => o.Chapter.Book.Categories.Select(c => c.CategoryId))
+                    .Distinct()
+                    .ToListAsync();
+
+                if (purchasedCategoryIds == null || purchasedCategoryIds.Count == 0)
+                {
+                    // Nếu user chưa mua gì thì fallback về sách mới nhất
+                    return await query
+                        .OrderByDescending(b => b.CreatedAt)
+                        .Take(10)
+                        .ToListAsync();
+                }
+
+                // Lấy sách mới nhất thuộc các category đã mua
+                return await query
+                    .Where(b => b.Categories.Any(c => purchasedCategoryIds.Contains(c.CategoryId)))
+                    .OrderByDescending(b => b.CreatedAt)
+                    .Take(10)
+                    .ToListAsync();
+            }
+        }
+
     }
 }

@@ -211,11 +211,12 @@ namespace VieBook.BE.Controllers
 
         // GET: api/books/recommendations?userId=123
         [HttpGet("recommendations")]
-        public async Task<ActionResult<List<BookResponseDTO>>> GetRecommendations([FromQuery] int userId)
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetRecommendedBooks([FromQuery] int? userId)
         {
-            if (userId <= 0) return BadRequest("userId không hợp lệ");
-            var books = await _bookService.GetRecommendationsForUserAsync(userId);
-            return Ok(books);
+            var books = await _bookService.GetRecommendedBooksAsync(userId);
+            if (books == null || !books.Any())
+                return NotFound("Không có sách đề xuất nào.");
+            return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
         }
     }
 }

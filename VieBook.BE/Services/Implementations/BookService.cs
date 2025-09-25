@@ -83,10 +83,9 @@ namespace Services.Implementations
         {
             return await _bookRepo.GetTopPurchasedReadBooksAsync();
         }
-        public async Task<List<BookResponseDTO>> GetRecommendationsForUserAsync(int userId)
+        public async Task<List<Book>> GetRecommendedBooksAsync(int? userId = null)
         {
-            var books = await _bookRepo.GetRecommendationsForUserAsync(userId);
-            return _mapper.Map<List<BookResponseDTO>>(books);
+            return await _bookRepo.GetRecommendedBooksAsync(userId);
         }
     }
 }

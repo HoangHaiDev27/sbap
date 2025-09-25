@@ -1285,10 +1285,10 @@ WHERE NOT EXISTS (SELECT 1 FROM dbo.Chapters c WHERE c.BookId=b.BookId);
    Seed thêm: 3 sách ở trang chủ (HomeManager) + category + chapters
    ========================================================= */
 -- Đảm bảo category tồn tại
-IF NOT EXISTS (SELECT 1 FROM dbo.Categories WHERE Name=N'Truyện nói' AND Type='Genre')
+IF NOT EXISTS (SELECT 1 FROM dbo.Categories WHERE Name=N'Khoa Học' AND Type='Genre')
 BEGIN
   INSERT INTO dbo.Categories(Name, Type, ParentId, IsActive)
-  VALUES (N'Truyện nói', 'Genre', NULL, 1);
+  VALUES (N'Khoa Học', 'Genre', NULL, 1);
 END
 IF NOT EXISTS (SELECT 1 FROM dbo.Categories WHERE Name=N'Lịch sử' AND Type='Genre')
 BEGIN
@@ -1301,7 +1301,7 @@ BEGIN
   VALUES (N'Văn học', 'Genre', NULL, 1);
 END
 
-DECLARE @CatAudio INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Truyện nói' AND Type='Genre');
+DECLARE @CatAudio INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Khoa Học' AND Type='Genre');
 DECLARE @CatHistory INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Lịch sử' AND Type='Genre');
 DECLARE @CatLiterature INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Văn học' AND Type='Genre');
 

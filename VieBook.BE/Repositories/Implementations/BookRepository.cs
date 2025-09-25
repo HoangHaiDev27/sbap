@@ -73,9 +73,9 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetTopPurchasedReadBooksAsync();
         }
-        public async Task<List<Book>> GetRecommendationsForUserAsync(int userId)
+        public async Task<List<Book>> GetRecommendedBooksAsync(int? userId = null)
         {
-            return await _bookDao.GetRecommendationsForUserAsync(userId);
+            return await _bookDao.GetRecommendedBooksAsync(userId);
         }
     }
 }
