@@ -153,6 +153,19 @@ namespace BusinessObject.Dtos
             .ForPath(dest => dest.UserProfile.FullName, opt => opt.MapFrom(src => src.FullName))
             .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl))
             .ForPath(dest => dest.UserProfile.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber));
+
+            // Map từ BookApproval -> BookApprovalDTO
+            CreateMap<BookApproval, BookApprovalDTO>()
+                .ForMember(dest => dest.StaffName,
+                           opt => opt.MapFrom(src => src.Staff.UserProfile.FullName));
+            CreateMap<User, UserNameDTO>()
+                .ForMember(dest => dest.UserId,
+                    opt => opt.MapFrom(src => src.UserId)) 
+                .ForMember(dest => dest.Email,
+                    opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.Name,
+                    opt => opt.MapFrom(src => src.UserProfile.FullName));
+
         }
     }
 

@@ -142,3 +142,90 @@ export async function toggleStaffStatus(staffId) {
 
   return true;
 }
+//BookApproval api ///////////////////////////////////////
+// Hàm dùng chung để xử lý fetch và lỗi
+async function handleFetch(url, options, defaultError) {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    let errorMessage = defaultError;
+    try {
+      const data = await res.json();
+      errorMessage = data.message || errorMessage;
+    } catch {
+      if (res.status === 500) {
+        errorMessage = "Lỗi hệ thống.";
+      }
+    }
+    throw new Error(errorMessage);
+  }
+
+  return options?.method === "PUT" ? true : res.json();
+}
+
+// Lấy tất cả BookApproval
+export async function getAllBookApprovals() {
+  return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_ALL, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }, "Lấy danh sách BookApproval thất bại");
+}
+
+// Lấy BookApproval theo Id
+export async function getBookApprovalById(approvalId) {
+  return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_BY_ID(approvalId), {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }, "Lấy BookApproval thất bại");
+}
+
+// Thêm mới BookApproval
+export async function addBookApproval(payload) {
+  return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.ADD, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }, "Thêm BookApproval thất bại");
+}
+
+// Duyệt (Approve) BookApproval
+export async function approveBookApproval(bookId, staffId) {
+  const url = `${API_ENDPOINTS.BOOKAPPROVAL.APPROVE(bookId)}?staffId=${staffId}`;
+  return handleFetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+  }, "Duyệt BookApproval thất bại");
+}
+
+// Từ chối (Refuse) BookApproval
+export async function refuseBookApproval(bookId, staffId, reason = "") {
+  const url = `${API_ENDPOINTS.BOOKAPPROVAL.REFUSE(bookId)}?staffId=${staffId}&reason=${encodeURIComponent(reason)}`;
+  return handleFetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+  }, "Từ chối BookApproval thất bại");
+}
+
+
+// Lấy BookApproval mới nhất theo BookId
+export async function getLatestBookApprovalByBookId(bookId) {
+  return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_LATEST_BY_BOOKID(bookId), {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }, "Lấy BookApproval mới nhất thất bại");
+}
+
+// Lấy tất cả sách đang Active
+export async function getAllActiveBooks() {
+  return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_ALL_ACTIVE_BOOKS, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }, "Lấy danh sách sách đang Active thất bại");
+}
+// Lấy toàn bộ User kèm Profile (UserNameDTO)
+export async function getAllUsersWithProfile() {
+  return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_ALL_USERS_WITH_PROFILE, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }, "Lấy danh sách User kèm Profile thất bại");
+}
+/////////////////////////////////////////////////////////////////

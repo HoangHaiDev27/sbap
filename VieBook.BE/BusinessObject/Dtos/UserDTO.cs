@@ -15,4 +15,11 @@ namespace BusinessObject.Dtos
         public DateTime? LastLoginAt { get; set; }
         public decimal Wallet { get; set; }
     }
+
+    public class UserNameDTO
+    {
+        public int UserId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Name { get; set; }
+    }
 }
