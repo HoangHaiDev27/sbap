@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import CustomerDetailModal from "../../components/staff/customers/CustomerDetailModal";
 import ConfirmModal from "../../components/staff/customers/ConfirmModal";
+import { getCustomerAccounts, toggleAccountStatus } from "../../api/userManagementApi";
 
 export default function CustomersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -9,27 +11,33 @@ export default function CustomersManagement() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [actionCustomer, setActionCustomer] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fake data để test (12 khách hàng)
-  const customers = [
-    { id: 1, name: "Nguyễn Minh A", email: "a@email.com", avatar: "https://i.pravatar.cc/100?img=1", totalListens: 1250, feedbackCount: 8, status: "active", joinDate: "2024-01-20" },
-    { id: 2, name: "Trần Thị B", email: "b@email.com", avatar: "https://i.pravatar.cc/100?img=2", totalListens: 850, feedbackCount: 12, status: "active", joinDate: "2024-01-18" },
-    { id: 3, name: "Lê Văn C", email: "c@email.com", avatar: "https://i.pravatar.cc/100?img=3", totalListens: 450, feedbackCount: 3, status: "blocked", joinDate: "2024-01-15" },
-    { id: 4, name: "Phạm Thị D", email: "d@email.com", avatar: "https://i.pravatar.cc/100?img=4", totalListens: 2100, feedbackCount: 15, status: "active", joinDate: "2023-12-10" },
-    { id: 5, name: "Hoàng Văn E", email: "e@email.com", avatar: "https://i.pravatar.cc/100?img=5", totalListens: 1800, feedbackCount: 9, status: "active", joinDate: "2023-11-25" },
-    { id: 6, name: "Nguyễn Văn F", email: "f@email.com", avatar: "https://i.pravatar.cc/100?img=6", totalListens: 600, feedbackCount: 2, status: "active", joinDate: "2023-11-15" },
-    { id: 7, name: "Trần Văn G", email: "g@email.com", avatar: "https://i.pravatar.cc/100?img=7", totalListens: 1400, feedbackCount: 5, status: "blocked", joinDate: "2023-11-05" },
-    { id: 8, name: "Lê Thị H", email: "h@email.com", avatar: "https://i.pravatar.cc/100?img=8", totalListens: 1950, feedbackCount: 10, status: "active", joinDate: "2023-10-30" },
-    { id: 9, name: "Phạm Văn I", email: "i@email.com", avatar: "https://i.pravatar.cc/100?img=9", totalListens: 2300, feedbackCount: 20, status: "active", joinDate: "2023-10-15" },
-    { id: 10, name: "Hoàng Thị J", email: "j@email.com", avatar: "https://i.pravatar.cc/100?img=10", totalListens: 720, feedbackCount: 4, status: "active", joinDate: "2023-10-01" },
-    { id: 11, name: "Đỗ Văn K", email: "k@email.com", avatar: "https://i.pravatar.cc/100?img=11", totalListens: 1320, feedbackCount: 6, status: "active", joinDate: "2023-09-20" },
-    { id: 12, name: "Ngô Thị L", email: "l@email.com", avatar: "https://i.pravatar.cc/100?img=12", totalListens: 980, feedbackCount: 7, status: "blocked", joinDate: "2023-09-05" },
-  ];
+  // Load data từ API
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getCustomerAccounts();
+      setCustomers(data);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading customer accounts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Lọc theo search + trạng thái
   const filteredCustomers = customers.filter((c) => {
     const matchesSearch =
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.fullName && c.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       c.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -52,11 +60,21 @@ export default function CustomersManagement() {
     setShowConfirmModal(true);
   };
 
-  const handleToggleStatus = () => {
+  const handleToggleStatus = async () => {
     if (actionCustomer) {
-      const newStatus = actionCustomer.status === "active" ? "blocked" : "active";
-      console.log("Toggling status for customer:", actionCustomer.id, "to", newStatus);
-      setShowConfirmModal(false);
+      try {
+        await toggleAccountStatus(actionCustomer.userId);
+        await loadCustomers(); // Reload data
+        setShowConfirmModal(false);
+        
+        // Hiển thị toast thành công
+        const newStatus = actionCustomer.status === "Active" ? "khóa" : "mở khóa";
+        toast.success(`Đã ${newStatus} tài khoản ${actionCustomer.fullName || actionCustomer.email} thành công!`);
+      } catch (err) {
+        setError(err.message);
+        toast.error(`Lỗi khi ${actionCustomer.status === "Active" ? "khóa" : "mở khóa"} tài khoản: ${err.message}`);
+        console.error('Error toggling account status:', err);
+      }
     }
   };
 
@@ -64,6 +82,11 @@ export default function CustomersManagement() {
     <div className="min-h-screen bg-gray-50 p-6 pt-30">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Quản lý khách hàng</h2>
       <p className="text-gray-600 mb-6">Quản lý người dùng sử dụng nền tảng</p>
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Filter */}
@@ -81,8 +104,10 @@ export default function CustomersManagement() {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-800"
           >
             <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="blocked">Bị khóa</option>
+            <option value="Active">Đang hoạt động</option>
+            <option value="Locked">Bị khóa</option>
+            <option value="Pending">Chờ duyệt</option>
+            <option value="Inactive">Không hoạt động</option>
           </select>
         </div>
 
@@ -100,27 +125,45 @@ export default function CustomersManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap flex items-center">
-                    <img className="h-10 w-10 rounded-full object-cover" src={customer.avatar} alt={customer.name} />
-                    <div className="ml-4">
-                      <div className="font-medium text-gray-900">{customer.name}</div>
-                      <div className="text-gray-500 text-sm">{customer.email}</div>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-6 text-gray-500">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2">Đang tải...</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">{customer.totalListens.toLocaleString()}</td>
-                  <td className="px-6 py-4">{customer.feedbackCount}</td>
+                </tr>
+              ) : (
+                paginatedCustomers.map((customer) => (
+                  <tr key={customer.userId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap flex items-center">
+                      {customer.avatarUrl ? (
+                        <img className="h-10 w-10 rounded-full object-cover" src={customer.avatarUrl} alt={customer.fullName} />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                          <i className="ri-user-line text-gray-600"></i>
+                        </div>
+                      )}
+                      <div className="ml-4">
+                        <div className="font-medium text-gray-900">{customer.fullName || 'Chưa cập nhật'}</div>
+                        <div className="text-gray-500 text-sm">{customer.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{customer.orderCount || 0}</td>
+                  <td className="px-6 py-4">-</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        customer.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        customer.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {customer.status === "active" ? "Hoạt động" : "Bị khóa"}
+                      {customer.status === "Active" ? "Hoạt động" : "Bị khóa"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500">{customer.joinDate}</td>
+                  <td className="px-6 py-4 text-gray-500">
+                    {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                  </td>
                   <td className="px-6 py-4 space-x-2 flex">
                     <button
                       onClick={() => handleViewDetails(customer)}
@@ -130,7 +173,7 @@ export default function CustomersManagement() {
                       <i className="ri-eye-line"></i>
                     </button>
                     <button
-                      onClick={() => (window.location.href = `/staff/transactions?userId=${customer.id}`)}
+                      onClick={() => (window.location.href = `/staff/transactions?userId=${customer.userId}`)}
                       className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg"
                       title="Xem lịch sử giao dịch"
                     >
@@ -139,15 +182,23 @@ export default function CustomersManagement() {
                     <button
                       onClick={() => handleConfirmToggle(customer)}
                       className={`p-2 rounded-lg ${
-                        customer.status === "active" ? "text-red-600 hover:bg-red-100" : "text-green-600 hover:bg-green-100"
+                        customer.status === "Active" ? "text-red-600 hover:bg-red-100" : "text-green-600 hover:bg-green-100"
                       }`}
-                      title={customer.status === "active" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                      title={customer.status === "Active" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
                     >
-                      <i className={customer.status === "active" ? "ri-lock-line" : "ri-lock-unlock-line"}></i>
+                      <i className={customer.status === "Active" ? "ri-lock-line" : "ri-lock-unlock-line"}></i>
                     </button>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
+              {!loading && paginatedCustomers.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="text-center py-6 text-gray-500">
+                    Không có dữ liệu
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -181,7 +232,6 @@ export default function CustomersManagement() {
         <CustomerDetailModal
           customer={selectedCustomer}
           onClose={() => setShowDetailModal(false)}
-          onToggleStatus={handleConfirmToggle}
         />
       )}
 

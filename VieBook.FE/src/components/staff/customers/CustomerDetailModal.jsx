@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function CustomerDetailModal({ customer, onClose, onToggleStatus }) {
+export default function CustomerDetailModal({ customer, onClose }) {
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -27,14 +27,20 @@ export default function CustomerDetailModal({ customer, onClose, onToggleStatus 
         {/* Content */}
         <div className="space-y-6">
           <div className="flex items-center space-x-4">
-            <img
-              className="h-16 w-16 rounded-full object-cover"
-              src={customer.avatar}
-              alt={customer.name}
-            />
+            {customer.avatarUrl ? (
+              <img
+                className="h-16 w-16 rounded-full object-cover"
+                src={customer.avatarUrl}
+                alt={customer.fullName}
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
+                <i className="ri-user-line text-gray-600 text-2xl"></i>
+              </div>
+            )}
             <div>
               <h4 className="text-lg font-medium text-gray-900">
-                {customer.name}
+                {customer.fullName || 'Chưa cập nhật'}
               </h4>
               <p className="text-gray-600">{customer.email}</p>
             </div>
@@ -42,52 +48,37 @@ export default function CustomerDetailModal({ customer, onClose, onToggleStatus 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Tổng lượt nghe</div>
+              <div className="text-sm text-gray-600">Số đơn hàng</div>
               <div className="text-2xl font-bold text-gray-900">
-                {customer.totalListens.toLocaleString()}
+                {customer.orderCount || 0}
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Số feedback đã gửi</div>
+              <div className="text-sm text-gray-600">Số sách đã mua</div>
               <div className="text-2xl font-bold text-gray-900">
-                {customer.feedbackCount}
+                {customer.bookCount || 0}
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-sm text-gray-600">Trạng thái</div>
               <div
                 className={`text-lg font-semibold ${
-                  customer.status === "active"
+                  customer.status === "Active"
                     ? "text-green-600"
                     : "text-red-600"
                 }`}
               >
-                {customer.status === "active" ? "Hoạt động" : "Bị khóa"}
+                {customer.status === "Active" ? "Hoạt động" : "Bị khóa"}
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600">Hoạt động cuối</div>
+              <div className="text-sm text-gray-600">Ngày tạo tài khoản</div>
               <div className="text-lg font-semibold text-gray-900">
-                {customer.lastActive}
+                {new Date(customer.createdAt).toLocaleDateString('vi-VN')}
               </div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex space-x-3">
-            <button
-              onClick={() => onToggleStatus(customer.id, customer.status)}
-              className={`px-4 py-2 rounded-lg cursor-pointer whitespace-nowrap ${
-                customer.status === "active"
-                  ? "bg-red-600 text-white hover:bg-red-700"
-                  : "bg-green-600 text-white hover:bg-green-700"
-              }`}
-            >
-              {customer.status === "active"
-                ? "Khóa tài khoản"
-                : "Mở khóa tài khoản"}
-            </button>
-          </div>
         </div>
       </div>
     </div>

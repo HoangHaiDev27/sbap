@@ -1,7 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import CategoryModal from '../../components/staff/categories/CategoryModal';
 import ConfirmDeleteModal from '../../components/staff/categories/ConfirmDeleteModal';
+import { getAllCategories, createCategory, updateCategory, deleteCategory } from '../../api/categoryApi';
 
 export default function CategoriesManagement() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,27 +12,40 @@ export default function CategoriesManagement() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', status: 'active' });
+  const [formData, setFormData] = useState({ name: '', type: 'Genre', isActive: true });
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
 
-  const categories = [
-    { id: 1, name: 'Sách nói', bookCount: 156, status: 'active', createdAt: '2024-01-01' },
-    { id: 2, name: 'Truyện nói', bookCount: 89, status: 'active', createdAt: '2024-01-02' },
-    { id: 3, name: 'Podcast', bookCount: 45, status: 'active', createdAt: '2024-01-03' },
-    { id: 4, name: 'Sách tóm tắt', bookCount: 78, status: 'active', createdAt: '2024-01-04' },
-    { id: 5, name: 'Thiếu nhi', bookCount: 0, status: 'inactive', createdAt: '2024-01-05' },
-    { id: 6, name: 'Tiểu thuyết', bookCount: 200, status: 'active', createdAt: '2024-01-06' },
-    { id: 7, name: 'Khoa học', bookCount: 33, status: 'inactive', createdAt: '2024-01-07' },
-    { id: 8, name: 'Kinh doanh', bookCount: 54, status: 'active', createdAt: '2024-01-08' },
-  ];
+  // Load categories từ API
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllCategories();
+      setCategories(data);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading categories:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Lọc theo search và status
   const filteredCategories = categories.filter((category) => {
     const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || category.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && category.isActive) || 
+      (statusFilter === 'inactive' && !category.isActive);
     return matchesSearch && matchesStatus;
   });
 
@@ -45,19 +60,55 @@ export default function CategoriesManagement() {
 
   const handleAddNew = () => {
     setEditingCategory(null);
-    setFormData({ name: '', status: 'active' });
+    setFormData({ name: '', type: 'Genre', isActive: true });
     setShowCategoryModal(true);
   };
 
   const handleEdit = (category) => {
     setEditingCategory(category);
-    setFormData({ name: category.name, status: category.status });
+    setFormData({ 
+      name: category.name, 
+      type: category.type || 'Genre', 
+      isActive: category.isActive 
+    });
     setShowCategoryModal(true);
   };
 
-  const handleSave = () => {
-    console.log('Saving category:', formData);
-    setShowCategoryModal(false);
+  const handleSave = async () => {
+    try {
+      if (!formData.name.trim()) {
+        setError('Tên thể loại không được để trống');
+        toast.error('Tên thể loại không được để trống');
+        return;
+      }
+
+      if (!formData.type.trim()) {
+        setError('Loại thể loại không được để trống');
+        toast.error('Loại thể loại không được để trống');
+        return;
+      }
+
+      if (editingCategory) {
+        // Update existing category - cần thêm categoryId vào formData
+        const updateData = {
+          ...formData,
+          categoryId: editingCategory.categoryId
+        };
+        await updateCategory(editingCategory.categoryId, updateData);
+        toast.success(`Cập nhật thể loại "${formData.name}" thành công!`);
+      } else {
+        // Create new category
+        await createCategory(formData);
+        toast.success(`Tạo thể loại "${formData.name}" thành công!`);
+      }
+      await loadCategories(); // Reload data
+      setShowCategoryModal(false);
+      setError(null); // Clear error on success
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Lỗi khi ${editingCategory ? 'cập nhật' : 'tạo'} thể loại: ${err.message}`);
+      console.error('Error saving category:', err);
+    }
   };
 
   const handleDelete = (id) => {
@@ -65,9 +116,20 @@ export default function CategoriesManagement() {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    console.log('Deleting category:', deleteId);
-    setShowDeleteModal(false);
+  const confirmDelete = async () => {
+    try {
+      const categoryToDelete = categories.find(cat => cat.categoryId === deleteId);
+      await deleteCategory(deleteId);
+      await loadCategories(); // Reload data
+      setShowDeleteModal(false);
+      
+      // Hiển thị toast thành công
+      toast.success(`Xóa thể loại "${categoryToDelete?.name || 'này'}" thành công!`);
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Lỗi khi xóa thể loại: ${err.message}`);
+      console.error('Error deleting category:', err);
+    }
   };
 
   return (
@@ -77,6 +139,11 @@ export default function CategoriesManagement() {
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Quản lý Thể loại Sách</h2>
             <p className="text-gray-600">Quản lý các thể loại sách trên hệ thống</p>
+            {error && (
+              <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -129,52 +196,63 @@ export default function CategoriesManagement() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên thể loại</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số lượng sách</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày tạo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số lượng sách</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedCategories.map((category) => (
-                    <tr key={category.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-900">{category.name}</td>
-                      <td className="px-6 py-4 text-gray-900">{category.bookCount}</td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            category.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {category.status === 'active' ? 'Đang dùng' : 'Không dùng'}
-                        </span>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-6 text-gray-500">
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          <span className="ml-2">Đang tải...</span>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">{category.createdAt}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEdit(category)}
-                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
-                            title="Chỉnh sửa"
+                    </tr>
+                  ) : (
+                    paginatedCategories.map((category) => (
+                      <tr key={category.categoryId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">{category.name}</td>
+                        <td className="px-6 py-4 text-gray-900">{category.type}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              category.isActive
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
                           >
-                            <i className="ri-edit-line"></i>
-                          </button>
-                          {category.bookCount === 0 && (
+                            {category.isActive ? 'Đang dùng' : 'Không dùng'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-500">
+                          {category.books ? category.books.length : 0} sách
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex space-x-2">
                             <button
-                              onClick={() => handleDelete(category.id)}
+                              onClick={() => handleEdit(category)}
+                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
+                              title="Chỉnh sửa"
+                            >
+                              <i className="ri-edit-line"></i>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(category.categoryId)}
                               className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
                               title="Xóa"
                             >
                               <i className="ri-delete-bin-line"></i>
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {paginatedCategories.length === 0 && (
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                  {!loading && paginatedCategories.length === 0 && (
                     <tr>
                       <td colSpan="5" className="text-center py-6 text-gray-500">
                         Không có dữ liệu

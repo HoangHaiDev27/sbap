@@ -49,5 +49,36 @@ namespace DataAccess
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<User>> GetUsersByRoleAsync(string roleName)
+        {
+            Console.WriteLine($"[DEBUG] UserDAO.GetUsersByRoleAsync: Looking for role '{roleName}'");
+            
+            var users = await _context.Users
+                .Include(u => u.Roles)
+                .Include(u => u.UserProfile)
+                .Include(u => u.Books)
+                .Include(u => u.OrderItems)
+                .Where(u => u.Roles.Any(r => r.RoleName == roleName))
+                .ToListAsync();
+                
+            Console.WriteLine($"[DEBUG] UserDAO.GetUsersByRoleAsync: Found {users.Count} users with role '{roleName}'");
+            foreach (var user in users)
+            {
+                Console.WriteLine($"[DEBUG] User: {user.Email}, Roles: {string.Join(", ", user.Roles.Select(r => r.RoleName))}");
+            }
+            
+            return users;
+        }
+
+        public async Task<User?> GetUserWithProfileAsync(int userId)
+        {
+            return await _context.Users
+                .Include(u => u.UserProfile)
+                .Include(u => u.Roles)
+                .Include(u => u.Books)
+                .Include(u => u.OrderItems)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+        }
     }
 }

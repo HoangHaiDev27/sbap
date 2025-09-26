@@ -111,6 +111,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IBookApprovalService, BookApprovalService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 
 // Cloudinaary service

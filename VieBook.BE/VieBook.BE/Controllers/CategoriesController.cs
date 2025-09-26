@@ -49,6 +49,16 @@ namespace VieBook.BE.Controllers
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    return BadRequest("Tên thể loại không được để trống");
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.Type))
+                {
+                    return BadRequest("Loại thể loại không được để trống");
+                }
+
                 var category = _mapper.Map<Category>(dto);
                 await _categoryService.AddAsync(category);
                 return CreatedAtAction(nameof(GetCategory),
@@ -58,26 +68,66 @@ namespace VieBook.BE.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] PostCategory: {ex}");
-                throw;
+                return StatusCode(500, "Có lỗi xảy ra khi tạo thể loại");
             }
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCategory(int id, CategoryDTO dto)
         {
-            if (id != dto.CategoryId) return BadRequest();
-            var category = _mapper.Map<Category>(dto);
-            await _categoryService.UpdateAsync(category);
-            return NoContent();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    return BadRequest("Tên thể loại không được để trống");
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.Type))
+                {
+                    return BadRequest("Loại thể loại không được để trống");
+                }
+
+                var existingCategory = await _categoryService.GetByIdAsync(id);
+                if (existingCategory == null) return NotFound();
+
+                // Cập nhật dữ liệu từ DTO vào entity hiện có
+                existingCategory.Name = dto.Name;
+                existingCategory.Type = dto.Type;
+                existingCategory.IsActive = dto.IsActive;
+                existingCategory.ParentId = dto.ParentId;
+
+                await _categoryService.UpdateAsync(existingCategory);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] PutCategory: {ex}");
+                return StatusCode(500, "Có lỗi xảy ra khi cập nhật thể loại");
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var category = await _categoryService.GetByIdAsync(id);
-            if (category == null) return NotFound();
-            await _categoryService.DeleteAsync(category);
-            return NoContent();
+            try
+            {
+                var category = await _categoryService.GetByIdAsync(id);
+                if (category == null) return NotFound();
+
+                // Kiểm tra xem category có sách nào không
+                if (category.Books != null && category.Books.Any())
+                {
+                    return BadRequest("Không thể xóa thể loại đang có sách");
+                }
+
+                await _categoryService.DeleteAsync(category);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] DeleteCategory: {ex}");
+                return StatusCode(500, "Có lỗi xảy ra khi xóa thể loại");
+            }
         }
     }
 }
