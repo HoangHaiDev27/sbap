@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { changePassword} from "../../api/authApi";
+import React, { useEffect, useState } from "react";
+import { changePassword, isBookOwner } from "../../api/authApi";
+import { becomeOwner, upsertMyProfile } from "../../api/userApi";
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -32,6 +33,21 @@ export default function UserProfile() {
   });
 
   const [tempData, setTempData] = useState(formData);
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    fullName: "",
+    phoneNumber: "",
+    bankNumber: "",
+    bankName: "",
+    dateOfBirth: "",
+  });
+  const [isOwner, setIsOwner] = useState(isBookOwner());
+
+  useEffect(() => {
+    const onAuthChanged = () => setIsOwner(isBookOwner());
+    window.addEventListener("auth:changed", onAuthChanged);
+    return () => window.removeEventListener("auth:changed", onAuthChanged);
+  }, []);
 
   const handleChange = (e) => {
     setTempData({ ...tempData, [e.target.name]: e.target.value });
@@ -40,6 +56,44 @@ export default function UserProfile() {
   const handleSave = () => {
     setFormData(tempData);
     setIsEditing(false);
+  };
+
+  const handleBecomeOwner = async () => {
+    try {
+      const res = await becomeOwner();
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: res?.message || "Đăng ký Book Owner thành công" } }));
+      setIsOwner(true);
+    } catch (err) {
+      // Nếu lỗi do hồ sơ chưa hoàn chỉnh, mở form điền thông tin
+      setShowCompleteProfile(true);
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Vui lòng cập nhật thông tin cá nhân trước" } }));
+    }
+  };
+
+  const handleProfileFieldChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitProfile = async () => {
+    try {
+      const payload = {
+        fullName: profileForm.fullName,
+        phoneNumber: profileForm.phoneNumber,
+        bankNumber: profileForm.bankNumber,
+        bankName: profileForm.bankName,
+      };
+      if (profileForm.dateOfBirth) {
+        payload.dateOfBirth = new Date(profileForm.dateOfBirth);
+      }
+      await upsertMyProfile(payload);
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Cập nhật hồ sơ thành công" } }));
+      setShowCompleteProfile(false);
+      // Retry become owner after profile completion
+      await handleBecomeOwner();
+    } catch (error) {
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: error.message || "Cập nhật hồ sơ thất bại" } }));
+    }
   };
 
   const handleCancel = () => {
@@ -127,6 +181,15 @@ export default function UserProfile() {
               <i className="ri-edit-line mr-2"></i>
               Chỉnh sửa
             </button>
+            {!isOwner && (
+              <button
+                onClick={handleBecomeOwner}
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+              >
+                <i className="ri-vip-crown-2-line mr-2"></i>
+                Trở thành Book Owner
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:space-x-2">
@@ -315,6 +378,39 @@ export default function UserProfile() {
                   "Lưu"
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showCompleteProfile && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg text-white">
+            <h3 className="text-lg font-semibold mb-4">Hoàn thành hồ sơ để trở thành Book Owner</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-sm text-gray-300">Họ và tên</label>
+                <input name="fullName" value={profileForm.fullName} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-300">Số điện thoại</label>
+                <input name="phoneNumber" value={profileForm.phoneNumber} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-300">Ngày sinh</label>
+                <input type="date" name="dateOfBirth" value={profileForm.dateOfBirth} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-300">Số tài khoản</label>
+                <input name="bankNumber" value={profileForm.bankNumber} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-300">Tên ngân hàng</label>
+                <input name="bankName" value={profileForm.bankName} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => setShowCompleteProfile(false)} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg">Hủy</button>
+              <button onClick={handleSubmitProfile} className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg">Lưu và đăng ký Owner</button>
             </div>
           </div>
         </div>

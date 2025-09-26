@@ -19,3 +19,62 @@ export async function updateUser(id, user) {
   });
   return res.json();
 }
+
+export async function becomeOwner() {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/become-owner`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = data?.message || "Không thể trở thành Book Owner";
+    throw new Error(message);
+  }
+  // Persist roles if returned
+  try {
+    const roles = data?.roles || data?.Roles || [];
+    if (Array.isArray(roles) && roles.length) {
+      // update localStorage roles while keeping existing token/user
+      const token = localStorage.getItem("auth_token");
+      const user = localStorage.getItem("auth_user");
+      localStorage.setItem("auth_roles", JSON.stringify(roles.map(r => String(r).toLowerCase())));
+      // set current role to owner if available
+      if (roles.map(r => String(r).toLowerCase()).includes("owner")) {
+        localStorage.setItem("current_role", "owner");
+        localStorage.setItem("auth_role", "owner");
+      }
+      // notify app
+      window.dispatchEvent(new CustomEvent("auth:changed", { detail: { token, user: user ? JSON.parse(user) : null, role: "owner" } }));
+    }
+  } catch { /* noop */ }
+  return data;
+}
+
+export async function upsertMyProfile(profile) {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/profile`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = data?.message || "Cập nhật hồ sơ thất bại";
+    throw new Error(message);
+  }
+  return data;
+}
+
+export async function getOwnerPlans() {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/owner-plans`, { method: "GET" });
+  if (!res.ok) throw new Error("Không tải được danh sách gói Owner");
+  return res.json();
+}
+
+export async function purchaseOwnerPlan(planId) {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/purchase-plan/${planId}`, { method: "POST" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || "Mua gói thất bại");
+  }
+  return data;
+}
