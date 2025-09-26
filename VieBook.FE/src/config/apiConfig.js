@@ -74,7 +74,8 @@ export const API_ENDPOINTS = {
   REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
   PROMOTIONS: {
     GET_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}`,
-    CREATE: `${API_BASE_URL}/api/promotions`
+    CREATE: `${API_BASE_URL}/api/promotions`,
+    STATS_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}/stats`
   },
 
 
