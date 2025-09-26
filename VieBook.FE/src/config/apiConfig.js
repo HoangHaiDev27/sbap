@@ -77,6 +77,10 @@ export const API_ENDPOINTS = {
 
   CATEGORIES: {
     GET_ALL: `${API_BASE_URL}/api/categories`,
+    GET_BY_ID: (id) => `${API_BASE_URL}/api/categories/${id}`,
+    CREATE: `${API_BASE_URL}/api/categories`,
+    UPDATE: (id) => `${API_BASE_URL}/api/categories/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/api/categories/${id}`,
   },
   UPLOADBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
   REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
@@ -113,6 +117,16 @@ export const API_ENDPOINTS = {
     GET_ALL_ACTIVE_BOOKS: `${API_BASE_URL}/api/BookApproval/active-books`,
     GET_ALL_USERS_WITH_PROFILE: `${API_BASE_URL}/api/BookApproval/users`
   },
+  USER_MANAGEMENT: {
+    GET_USERS_BY_ROLE: (roleName) => `${API_BASE_URL}/api/staff/users-by-role/${roleName}`,
+    GET_BOOK_OWNERS: `${API_BASE_URL}/api/staff/book-owners`,
+    GET_CUSTOMERS: `${API_BASE_URL}/api/staff/customers`,
+    GET_USER_DETAIL: (id) => `${API_BASE_URL}/api/staff/users/${id}`,
+    TOGGLE_STATUS: (id) => `${API_BASE_URL}/api/staff/toggle-user-status/${id}`,
+    LOCK_USER: (id) => `${API_BASE_URL}/api/staff/lock-user/${id}`,
+    UNLOCK_USER: (id) => `${API_BASE_URL}/api/staff/unlock-user/${id}`,
+  },
+  API_BASE_URL: API_BASE_URL,
 
 };
 

@@ -18,6 +18,8 @@ namespace Repositories.Interfaces
         Task DeleteAsync(User user);
         Task<User?> GetByEmailAsync(string email);
         Task UpdateWalletBalanceAsync(int userId, decimal amount);
+        Task<List<User>> GetUsersByRoleAsync(string roleName);
+        Task<User?> GetUserWithProfileAsync(int userId);
         Task<bool> AddRoleToUserByNameAsync(int userId, string roleName);
         Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName);
         // Plans & Subscriptions (owner packages)

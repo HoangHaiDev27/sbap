@@ -27,15 +27,31 @@ export default function CategoryModal({ editingCategory, formData, setFormData, 
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="Nhập tên thể loại"
+              required
+              maxLength={100}
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Loại
+            </label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({...formData, type: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            >
+              <option value="Genre">Thể loại</option>
+              <option value="Category">Danh mục</option>
+              <option value="Tag">Thẻ</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Trạng thái
             </label>
             <select
-              value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value})}
+              value={formData.isActive ? 'active' : 'inactive'}
+              onChange={(e) => setFormData({...formData, isActive: e.target.value === 'active'})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               <option value="active">Đang dùng</option>

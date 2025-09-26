@@ -25,6 +25,8 @@ namespace Repositories.Implementations
         public Task DeleteAsync(User book) => _userDAO.DeleteAsync(book);
         public Task<User?> GetByEmailAsync(string email) => _userDAO.GetByEmailAsync(email);
         public Task UpdateWalletBalanceAsync(int userId, decimal amount) => _userDAO.UpdateWalletBalanceAsync(userId, amount);
+        public Task<List<User>> GetUsersByRoleAsync(string roleName) => _userDAO.GetUsersByRoleAsync(roleName);
+        public Task<User?> GetUserWithProfileAsync(int userId) => _userDAO.GetUserWithProfileAsync(userId);
         public Task<bool> AddRoleToUserByNameAsync(int userId, string roleName) => _userDAO.AddRoleToUserByNameAsync(userId, roleName);
         public Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName)
             => _userDAO.UpsertUserProfileAsync(userId, fullName, phoneNumber, dateOfBirth, avatarUrl, bankNumber, bankName);
