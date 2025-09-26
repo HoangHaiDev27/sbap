@@ -422,28 +422,30 @@ CREATE INDEX IX_BookClaims_Customer ON dbo.BookClaims(CustomerId, CreatedAt DESC
 -- Plans (siêu gọn) & Subscriptions (không dính Orders)
 -- =========================================================
 CREATE TABLE dbo.Plans (
-  PlanId     INT IDENTITY(1,1) PRIMARY KEY,
-  Name       NVARCHAR(200) NOT NULL,
-  ForRole    VARCHAR(10) NOT NULL,       -- Owner/Customer (không CHECK)
-  Period     VARCHAR(10) NOT NULL,       -- OneTime/Monthly/Yearly
-  Price      DECIMAL(18,2) NOT NULL,
-  Currency   VARCHAR(10) NOT NULL DEFAULT('VND'),
-  TrialDays  INT NULL,
-  Status     VARCHAR(20) NOT NULL,       -- KHÔNG CHECK/DEFAULT
-  CreatedAt  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  PlanId           INT IDENTITY(1,1) PRIMARY KEY,
+  Name             NVARCHAR(200) NOT NULL,
+  ForRole          VARCHAR(10) NOT NULL,       -- Owner/Customer (không CHECK)
+  Period           VARCHAR(10) NOT NULL,       -- Weekly/Monthly/Yearly
+  Price            DECIMAL(18,2) NOT NULL,
+  Currency         VARCHAR(10) NOT NULL DEFAULT('VND'),
+  TrialDays        INT NULL,
+  ConversionLimit  INT NOT NULL DEFAULT(0),     -- số lần chuyển đổi audio tối đa trong kỳ
+  Status           VARCHAR(20) NOT NULL,       -- KHÔNG CHECK/DEFAULT
+  CreatedAt        DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 CREATE INDEX IX_Plans_ForRoleStatus ON dbo.Plans(ForRole, Status);
 
 CREATE TABLE dbo.Subscriptions (
-  SubscriptionId   BIGINT IDENTITY(1,1) PRIMARY KEY,
-  UserId           INT NOT NULL REFERENCES dbo.Users(UserId),
-  PlanId           INT NOT NULL REFERENCES dbo.Plans(PlanId),
-  Status           VARCHAR(20) NOT NULL,   -- Active/Cancelled/Expired (không CHECK/DEFAULT)
-  AutoRenew        BIT NOT NULL DEFAULT(1),
-  StartAt          DATETIME2 NOT NULL,
-  EndAt            DATETIME2 NOT NULL,
-  CancelAt         DATETIME2 NULL,
-  CreatedAt        DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  SubscriptionId      BIGINT IDENTITY(1,1) PRIMARY KEY,
+  UserId              INT NOT NULL REFERENCES dbo.Users(UserId),
+  PlanId              INT NOT NULL REFERENCES dbo.Plans(PlanId),
+  Status              VARCHAR(20) NOT NULL,   -- Active/Cancelled/Expired (không CHECK/DEFAULT)
+  AutoRenew           BIT NOT NULL DEFAULT(1),
+  StartAt             DATETIME2 NOT NULL,
+  EndAt               DATETIME2 NOT NULL,
+  RemainingConversions INT NOT NULL DEFAULT(0),
+  CancelAt            DATETIME2 NULL,
+  CreatedAt           DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 CREATE INDEX IX_Subscriptions_UserStatus ON dbo.Subscriptions(UserId, Status);
 CREATE INDEX IX_Subscriptions_PlanStatus ON dbo.Subscriptions(PlanId, Status);
@@ -463,7 +465,7 @@ INSERT INTO dbo.Users(Email, PasswordHash, Status)
 VALUES
   ('admin@viebook.local',  NULL, 'Active'),
   ('staff@viebook.local',  NULL, 'Active'),
-  ('owner@viebook.local',  NULL, 'Active'),
+  ('owner@viebook.local',  0x2432612431312464386C38775047464648614A766F4A504157414574754841427933766143634D584E4A573058732E6A665075356D53587930717761, 'Active'),
   ('alice@viebook.local',  NULL, 'Active'),
   ('bob@viebook.local',    NULL, 'Active');
 
@@ -1051,13 +1053,14 @@ END
 /* =========================================================
    Plans & Subscriptions (siêu gọn)
    ========================================================= */
-INSERT INTO dbo.Plans(Name, ForRole, Period, Price, Currency, TrialDays, Status)
+INSERT INTO dbo.Plans(Name, ForRole, Period, Price, Currency, TrialDays, ConversionLimit, Status)
 VALUES
-  (N'Reader Plus', 'Customer', 'Monthly', 49000, 'VND', 7, 'Active'),
-  (N'Owner Pro',   'Owner',    'Monthly', 99000, 'VND', NULL, 'Active');
+  (N'Owner Week',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
+  (N'Owner Month', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
+  (N'Owner Year',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
 
 DECLARE @ReaderPlanId INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Reader Plus');
-DECLARE @OwnerPlanId  INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Owner Pro');
+DECLARE @OwnerPlanId  INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Owner Month');
 
 -- Subscriptions
 INSERT INTO dbo.Subscriptions(UserId, PlanId, Status, AutoRenew, StartAt, EndAt, CreatedAt)
