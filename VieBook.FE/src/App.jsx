@@ -14,7 +14,7 @@ function App() {
   const location = useLocation();
   const [role, setRole] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const noLayoutRoutes = ["/auth","/auth/verify-email","/access-denied"];
+  const noLayoutRoutes = ["/auth", "/auth/verify-email", "/access-denied"];
   const hideLayout = noLayoutRoutes.includes(location.pathname);
   const fetchCoins = useCoinsStore((state) => state.fetchCoins);
   useEffect(() => {
@@ -55,7 +55,7 @@ function App() {
     return (
       <>
         <AppRoutes />
-        <Toast />   {/* ✅ luôn render toast */}
+        <Toast /> {/* ✅ luôn render toast */}
       </>
     );
   }
@@ -108,70 +108,41 @@ function App() {
         {/* Footer */}
         <Footer />
         <Toast />
-        
-        <div className="flex gap-4 mt-4">
-          <button
-            onClick={() => setRole("staff")}
-            className="px-4 py-2 rounded-2xl bg-blue-500 text-white hover:bg-blue-600 shadow-md transition"
-          >
-            Staff
-          </button>
-          <button
-            onClick={() => setRole("admin")}
-            className="px-4 py-2 rounded-2xl bg-green-500 text-white hover:bg-green-600 shadow-md transition"
-          >
-            Admin
-          </button>
-          <button
-            onClick={() => setRole("owner")}
-            className="px-4 py-2 rounded-2xl bg-purple-500 text-white hover:bg-purple-600 shadow-md transition"
-          >
-            Owner
-          </button>
-          <button
-            onClick={() => setRole("user")}
-            className="px-4 py-2 rounded-2xl bg-gray-500 text-white hover:bg-gray-600 shadow-md transition"
-          >
-            User
-          </button>
-        </div>
-
       </div>
-      
+
       {/* Toast Notifications */}
       <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1f2937',
-            color: '#fff',
-            border: '1px solid #374151',
+            background: "#1f2937",
+            color: "#fff",
+            border: "1px solid #374151",
           },
           success: {
             style: {
-              background: '#059669',
-              color: '#fff',
+              background: "#059669",
+              color: "#fff",
             },
             iconTheme: {
-              primary: '#fff',
-              secondary: '#059669',
+              primary: "#fff",
+              secondary: "#059669",
             },
           },
           error: {
             style: {
-              background: '#dc2626',
-              color: '#fff',
+              background: "#dc2626",
+              color: "#fff",
             },
             iconTheme: {
-              primary: '#fff',
-              secondary: '#dc2626',
+              primary: "#fff",
+              secondary: "#dc2626",
             },
           },
         }}
       />
     </div>
-
   );
 }
 

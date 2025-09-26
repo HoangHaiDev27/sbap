@@ -1,12 +1,14 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getAllActiveBooks, getAllUsersWithProfile } from '../../api/staffApi';
+import { getCategories } from '../../api/ownerBookApi';
 import BookDetailModal from '../../components/staff/pending-books/BookDetailModal';
 import ApproveRejectModal from '../../components/staff/pending-books/ApproveRejectModal';
+import { getUserId } from '../../api/authApi';
 
 export default function PendingBooksManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
 
@@ -17,35 +19,89 @@ export default function PendingBooksManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // ✅ tạo dữ liệu test nhiều hơn
-  const books = Array.from({ length: 22 }).map((_, i) => ({
-    id: i + 1,
-    title: `Sách demo ${i + 1}`,
-    author: `Tác giả ${i + 1}`,
-    owner: `Người gửi ${i + 1}`,
-    category: ['Khoa học', 'Kỹ năng sống', 'Phát triển bản thân', 'Tâm lý học', 'Kinh doanh'][i % 5],
-    submitDate: `2024-01-${(i % 28) + 1}`,
-    status: ['pending', 'approved', 'rejected'][i % 3],
-    cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-    summary: `Mô tả ngắn gọn cho sách demo ${i + 1}.`
-  }));
+  // ✅ data từ API
+  const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [users, setUsers] = useState([]); // ✅ danh sách user
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const categoryColors = {
-    'Khoa học': 'bg-blue-100 text-blue-800',
-    'Kỹ năng sống': 'bg-green-100 text-green-800',
-    'Phát triển bản thân': 'bg-purple-100 text-purple-800',
-    'Tâm lý học': 'bg-pink-100 text-pink-800',
-    'Kinh doanh': 'bg-yellow-100 text-yellow-800'
-  };
+  useEffect(() => {
+    (async () => {
+      try {
+        const [cateRes, bookRes, userRes] = await Promise.all([
+          getCategories(),
+          getAllActiveBooks(),
+          getAllUsersWithProfile() // ✅ lấy tên user
+        ]);
+
+        setCategories(cateRes);
+        setUsers(userRes);
+
+        // map id -> name cho category
+        const cateMap = Object.fromEntries(
+          cateRes.map(c => [c.categoryId, c.name])
+        );
+
+        // map userId -> name
+        const userMap = Object.fromEntries(
+          userRes.map(u => [u.userId, u.name || u.email])
+        );
+
+        const mappedBooks = bookRes.map(b => {
+          const categoryNames = b.categoryIds?.length > 0
+            ? b.categoryIds.map(id => cateMap[id] || 'Khác')
+            : ['Khác'];
+
+          return {
+            id: b.bookId,
+            title: b.title,
+            author: b.author,
+            owner: userMap[b.ownerId] || '—',
+            categories: categoryNames,
+            submitDate: (() => {
+              const d = new Date(b.createdAt);
+              const day = String(d.getDate()).padStart(2, '0');
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const year = d.getFullYear();
+              const hours = String(d.getHours()).padStart(2, '0');
+              const minutes = String(d.getMinutes()).padStart(2, '0');
+              return `${hours}:${minutes} ${day}/${month}/${year}`;
+            })(),
+            cover: b.coverUrl || 'https://placehold.co/80x120',
+            summary: b.description || ''
+          };
+        });
+
+        setBooks(mappedBooks);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Màu động cho từng category
+  const categoryColors = Object.fromEntries(
+    categories.map((c, idx) => [
+      c.name,
+      [
+        'bg-blue-100 text-blue-800',
+        'bg-green-100 text-green-800',
+        'bg-purple-100 text-purple-800',
+        'bg-pink-100 text-pink-800',
+        'bg-yellow-100 text-yellow-800'
+      ][idx % 5]
+    ])
+  );
 
   const filteredBooks = books.filter((book) => {
     const matchSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCategory = filterCategory === 'all' || book.category === filterCategory;
-    const matchStatus = filterStatus === 'all' || book.status === filterStatus;
-    return matchSearch && matchCategory && matchStatus;
+    const matchCategory = filterCategory === 'all' || book.categories?.includes(filterCategory);
+    return matchSearch && matchCategory; // ✅ bỏ matchStatus
   });
 
-  // tính trang
   const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
   const paginatedBooks = filteredBooks.slice(
     (currentPage - 1) * itemsPerPage,
@@ -62,15 +118,15 @@ export default function PendingBooksManagement() {
     setActionType(type);
   };
 
-  const handleConfirmAction = (type, id, reason) => {
-    if (type === "approve") {
-      alert(`✅ Đã duyệt sách ID ${id}`);
-    } else {
-      alert(`❌ Từ chối sách ID ${id}.\nLý do: ${reason}`);
-    }
+  const handleConfirmAction = (type, bookId) => {
+    setBooks(prev => prev.filter(b => b.id !== bookId));
     setActionType(null);
     setShowModal(false);
   };
+
+
+  if (loading) return <p className="p-6">Đang tải dữ liệu...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,20 +150,9 @@ export default function PendingBooksManagement() {
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
             >
               <option value="all">Tất cả thể loại</option>
-              {Object.keys(categoryColors).map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+              {categories.map((cat) => (
+                <option key={cat.categoryId} value={cat.name}>{cat.name}</option>
               ))}
-            </select>
-
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="pending">Chờ duyệt</option>
-              <option value="approved">Đã duyệt</option>
-              <option value="rejected">Từ chối</option>
             </select>
           </div>
 
@@ -122,7 +167,6 @@ export default function PendingBooksManagement() {
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Chủ sách</th>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Thể loại</th>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Ngày gửi</th>
-                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Trạng thái</th>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Hành động</th>
                   </tr>
                 </thead>
@@ -145,30 +189,20 @@ export default function PendingBooksManagement() {
                       </td>
                       <td className="px-4 py-2 text-gray-700">{book.owner}</td>
                       <td className="px-4 py-2">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${categoryColors[book.category] || 'bg-gray-100 text-gray-800'
-                            }`}
+                        <div
+                          className={`flex flex-wrap gap-1 ${book.categories?.length > 2 ? 'flex-col items-start' : ''}`}
                         >
-                          {book.category}
-                        </span>
+                          {book.categories?.map(cat => (
+                            <span
+                              key={cat}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${categoryColors[cat] || 'bg-gray-100 text-gray-800'}`}
+                            >
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-4 py-2 text-gray-700">{book.submitDate}</td>
-                      <td className="px-4 py-2">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${book.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : book.status === 'approved'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                        >
-                          {book.status === 'pending'
-                            ? 'Chờ duyệt'
-                            : book.status === 'approved'
-                              ? 'Đã duyệt'
-                              : 'Từ chối'}
-                        </span>
-                      </td>
                       <td className="px-4 py-2 flex space-x-2">
                         <button
                           title="Xem chi tiết"
@@ -178,24 +212,20 @@ export default function PendingBooksManagement() {
                           <i className="ri-eye-line"></i>
                         </button>
 
-                        {book.status === 'pending' && (
-                          <>
-                            <button
-                              title="Duyệt sách"
-                              onClick={() => handleActionClick("approve", book)}
-                              className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
-                            >
-                              <i className="ri-check-line"></i>
-                            </button>
-                            <button
-                              title="Từ chối sách"
-                              onClick={() => handleActionClick("reject", book)}
-                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
-                            >
-                              <i className="ri-close-line"></i>
-                            </button>
-                          </>
-                        )}
+                        <button
+                          title="Duyệt sách"
+                          onClick={() => handleActionClick("approve", book)}
+                          className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
+                        >
+                          <i className="ri-check-line"></i>
+                        </button>
+                        <button
+                          title="Từ chối sách"
+                          onClick={() => handleActionClick("reject", book)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                        >
+                          <i className="ri-close-line"></i>
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -237,8 +267,8 @@ export default function PendingBooksManagement() {
         <BookDetailModal
           book={selectedBook}
           onClose={() => setShowModal(false)}
-          onApprove={(id) => handleActionClick("approve", selectedBook)}
-          onReject={(id) => handleActionClick("reject", selectedBook)}
+          staffId={getUserId()}
+          onConfirm={(type, bookId) => handleConfirmAction(type, bookId)}
         />
       )}
 
@@ -247,6 +277,7 @@ export default function PendingBooksManagement() {
         <ApproveRejectModal
           type={actionType}
           book={selectedBook}
+          staffId={getUserId()}
           onClose={() => setActionType(null)}
           onConfirm={handleConfirmAction}
         />
