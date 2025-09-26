@@ -20,5 +20,10 @@ namespace Repositories.Interfaces
         Task UpdateWalletBalanceAsync(int userId, decimal amount);
         Task<bool> AddRoleToUserByNameAsync(int userId, string roleName);
         Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName);
+        // Plans & Subscriptions (owner packages)
+        Task<List<Plan>> GetPlansByRoleAsync(string forRole);
+        Task<Plan?> GetPlanByIdAsync(int planId);
+        Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt);
+        Task<bool> DeductWalletAsync(int userId, decimal amount);
     }
 }

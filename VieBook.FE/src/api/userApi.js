@@ -63,3 +63,18 @@ export async function upsertMyProfile(profile) {
   }
   return data;
 }
+
+export async function getOwnerPlans() {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/owner-plans`, { method: "GET" });
+  if (!res.ok) throw new Error("Không tải được danh sách gói Owner");
+  return res.json();
+}
+
+export async function purchaseOwnerPlan(planId) {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/purchase-plan/${planId}`, { method: "POST" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || "Mua gói thất bại");
+  }
+  return data;
+}

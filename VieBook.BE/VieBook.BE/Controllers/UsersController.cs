@@ -224,5 +224,96 @@ namespace VieBook.BE.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
             }
         }
+
+        /// <summary>
+        /// Danh sách plan dành cho Owner (tuần/tháng/năm)
+        /// </summary>
+        [HttpGet("owner-plans")]
+        public async Task<IActionResult> GetOwnerPlans()
+        {
+            var plans = await _userService.GetPlansByRoleAsync("Owner");
+            return Ok(plans.Select(p => new
+            {
+                p.PlanId,
+                p.Name,
+                p.Period,
+                p.Price,
+                p.Currency,
+                p.TrialDays,
+                p.ConversionLimit
+            }));
+        }
+
+        /// <summary>
+        /// Mua gói Owner: trừ trực tiếp từ ví, yêu cầu role Owner
+        /// </summary>
+        [Authorize]
+        [HttpPost("purchase-plan/{planId:int}")]
+        public async Task<IActionResult> PurchaseOwnerPlan(int planId)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var user = await _userService.GetByIdWithProfileAndRolesAsync(userId);
+                if (user == null) return NotFound(new { message = "Không tìm thấy người dùng" });
+                if (!user.Roles.Any(r => string.Equals(r.RoleName, "Owner", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return Forbid();
+                }
+
+                var plan = await _userService.GetPlanByIdAsync(planId);
+                if (plan == null) return NotFound(new { message = "Gói không tồn tại hoặc không hoạt động" });
+                if (!string.Equals(plan.ForRole, "Owner", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { message = "Gói này không dành cho Owner" });
+                }
+
+                // Tính thời gian kết thúc theo period
+                DateTime startAt = DateTime.UtcNow;
+                DateTime endAt = plan.Period.ToLower() switch
+                {
+                    "weekly"  => startAt.AddDays(7),
+                    "monthly" => startAt.AddMonths(1),
+                    "yearly"  => startAt.AddYears(1),
+                    _ => startAt.AddMonths(1)
+                };
+
+                // Trừ tiền từ ví
+                var paid = await _userService.DeductWalletAsync(userId, plan.Price);
+                if (!paid)
+                {
+                    return BadRequest(new { message = "Số dư ví không đủ" });
+                }
+
+                // Tạo subscription
+                var sub = await _userService.CreateSubscriptionAsync(userId, plan, startAt, endAt);
+
+                return Ok(new
+                {
+                    message = "Mua gói thành công",
+                    subscription = new
+                    {
+                        sub.SubscriptionId,
+                        sub.UserId,
+                        sub.PlanId,
+                        sub.Status,
+                        sub.StartAt,
+                        sub.EndAt
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] PurchaseOwnerPlan: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
+            }
+        }
     }
 }

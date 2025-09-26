@@ -18,5 +18,9 @@ namespace Services.Interfaces
         Task<User?> GetByEmailAsync(string email);
         Task<bool> AddRoleToUserByNameAsync(int userId, string roleName);
         Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName);
+        Task<List<Plan>> GetPlansByRoleAsync(string forRole);
+        Task<Plan?> GetPlanByIdAsync(int planId);
+        Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt);
+        Task<bool> DeductWalletAsync(int userId, decimal amount);
     }
 }

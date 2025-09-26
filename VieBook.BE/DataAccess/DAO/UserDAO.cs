@@ -2,6 +2,7 @@
 using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -106,6 +107,50 @@ namespace DataAccess
             }
             await _context.SaveChangesAsync();
             return profile;
+        }
+
+        // Plans & Subscriptions helpers
+        public async Task<List<Plan>> GetPlansByRoleAsync(string forRole)
+        {
+            return await _context.Plans
+                .Where(p => p.ForRole == forRole && p.Status == "Active")
+                .OrderBy(p => p.Price)
+                .ToListAsync();
+        }
+
+        public async Task<Plan?> GetPlanByIdAsync(int planId)
+        {
+            return await _context.Plans.FirstOrDefaultAsync(p => p.PlanId == planId && p.Status == "Active");
+        }
+
+        public async Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt)
+        {
+            var sub = new Subscription
+            {
+                UserId = userId,
+                PlanId = plan.PlanId,
+                Status = "Active",
+                AutoRenew = false,
+                StartAt = startAt,
+                EndAt = endAt,
+                CreatedAt = DateTime.UtcNow
+            };
+            // set remaining conversions if column exists
+            sub.RemainingConversions = plan.ConversionLimit;
+
+            _context.Subscriptions.Add(sub);
+            await _context.SaveChangesAsync();
+            return sub;
+        }
+
+        public async Task<bool> DeductWalletAsync(int userId, decimal amount)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null) return false;
+            if (user.Wallet < amount) return false;
+            user.Wallet -= amount;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
