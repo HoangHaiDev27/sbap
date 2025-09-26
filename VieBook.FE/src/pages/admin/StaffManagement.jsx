@@ -1,4 +1,3 @@
-// StaffManagement.js
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import StaffFormModal from '../../components/admin/StaffFormModal';
@@ -20,16 +19,13 @@ export default function StaffManagement() {
   const [toggleStaff, setToggleStaff] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [toast, setToast] = useState(null);
 
   const defaultAvatar = "https://img5.thuthuatphanmem.vn/uploads/2021/11/22/anh-gau-nau_092901233.jpg";
 
-  // Toast auto hide
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2200);
-    return () => clearTimeout(t);
-  }, [toast]);
+  // Helper: bắn toast global
+  const showToast = (type, message) => {
+    window.dispatchEvent(new CustomEvent("app:toast", { detail: { type, message } }));
+  };
 
   // Fetch staff từ API
   const fetchStaffs = async () => {
@@ -39,7 +35,7 @@ export default function StaffManagement() {
       setStaffs(data);
     } catch (error) {
       console.error(error);
-      setToast('Không thể tải danh sách nhân viên');
+      showToast('error', 'Không thể tải danh sách nhân viên');
     } finally {
       setLoading(false);
     }
@@ -94,43 +90,42 @@ export default function StaffManagement() {
         avatarUrl = await uploadAvatarStaffImage(formData);
       }
 
-      // Gộp data và avatar, gửi lên API
       const payload = { ...data, avatarUrl };
 
       if (id) {
         await updateStaff(id, payload);
-        setToast('Cập nhật nhân viên thành công');
+        showToast('success', 'Cập nhật nhân viên thành công');
       } else {
         await addStaff(payload);
-        setToast('Thêm nhân viên thành công');
+        showToast('success', 'Thêm nhân viên thành công');
       }
 
       setIsFormOpen(false);
       setEditingStaff(null);
-      await fetchStaffs(); // reload danh sách
+      await fetchStaffs();
     } catch (error) {
       console.error(error);
-      setToast('Lưu nhân viên thất bại');
+      showToast('error', 'Lưu nhân viên thất bại');
     }
   };
 
   // Delete staff
   const handleConfirmDelete = async (staff) => {
-    if (!staff?.userId) return setToast("Nhân viên không hợp lệ");
+    if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
     try {
       await deleteStaffAPI(staff.userId);
       setDeleteStaff(null);
-      setToast('Xóa nhân viên thành công');
+      showToast('success', 'Xóa nhân viên thành công');
       await fetchStaffs();
     } catch (error) {
       console.error(error);
-      setToast('Xóa nhân viên thất bại');
+      showToast('error', 'Xóa nhân viên thất bại');
     }
   };
 
   // Toggle status
   const handleConfirmToggle = async (staff) => {
-    if (!staff?.userId) return setToast("Nhân viên không hợp lệ");
+    if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
     try {
       if (staff.status === 'Active') {
         await lockStaff(staff.userId);
@@ -138,11 +133,11 @@ export default function StaffManagement() {
         await unlockStaff(staff.userId);
       }
       setToggleStaff(null);
-      setToast('Đổi trạng thái thành công');
+      showToast('success', 'Đổi trạng thái thành công');
       await fetchStaffs();
     } catch (error) {
       console.error(error);
-      setToast('Đổi trạng thái thất bại');
+      showToast('error', 'Đổi trạng thái thất bại');
     }
   };
 
@@ -210,7 +205,9 @@ export default function StaffManagement() {
                           </div>
                         </td>
                         <td className="px-6 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700`}>{staff.roles || 'Staff'}</span>
+                           <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                            {staff.roles === "Staff" ? "Nhân viên" : "Không xác định"}
+                          </span>
                         </td>
                         <td className="px-6 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${staff.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -258,8 +255,6 @@ export default function StaffManagement() {
       {isFormOpen && <StaffFormModal staff={editingStaff} onSave={(data, _, newAvatarFile) => handleSaveForm(data, editingStaff?.userId, newAvatarFile)} onCancel={handleCancelAll} />}
       {deleteStaff && <StaffDeleteModal staff={deleteStaff} onCancel={() => setDeleteStaff(null)} onConfirm={handleConfirmDelete} />}
       {toggleStaff && <StaffToggleStatusModal staff={toggleStaff} onCancel={() => setToggleStaff(null)} onConfirm={handleConfirmToggle} />}
-
-      {toast && <div className="fixed right-6 bottom-6 bg-gray-900 text-white px-4 py-2 rounded shadow-lg z-50">{toast}</div>}
     </div>
   );
 }

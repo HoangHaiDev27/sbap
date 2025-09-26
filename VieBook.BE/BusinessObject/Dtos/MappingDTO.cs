@@ -146,13 +146,16 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Roles, opt => opt.Ignore()); // giữ nguyên roles
 
             CreateMap<User, AdminProfileDTO>()
-            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile.FullName))
-            .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile.AvatarUrl))
-            .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile.PhoneNumber))
-            .ReverseMap()
-            .ForPath(dest => dest.UserProfile.FullName, opt => opt.MapFrom(src => src.FullName))
-            .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl))
-            .ForPath(dest => dest.UserProfile.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber));
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile.FullName))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile.AvatarUrl))
+                .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile.PhoneNumber))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ReverseMap()
+                .ForPath(dest => dest.UserProfile.FullName, opt => opt.MapFrom(src => src.FullName))
+                .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl))
+                .ForPath(dest => dest.UserProfile.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+                .ForPath(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+
 
             // Map từ BookApproval -> BookApprovalDTO
             CreateMap<BookApproval, BookApprovalDTO>()

@@ -32,13 +32,27 @@ namespace Services.Implementations.Admin
             var user = await _repo.GetAdminByIdAsync(id);
             if (user == null) throw new Exception("Admin not found");
 
-            // chỉ cập nhật các field được phép
-            user.UserProfile.FullName = dto.FullName;
-            user.UserProfile.AvatarUrl = dto.AvatarUrl;
-            user.UserProfile.PhoneNumber = dto.PhoneNumber;
+            if (user.UserProfile == null)
+            {
+                user.UserProfile = new UserProfile();
+            }
+
+            // Update tùy chọn
+            if (!string.IsNullOrEmpty(dto.FullName))
+                user.UserProfile.FullName = dto.FullName;
+
+            if (!string.IsNullOrEmpty(dto.AvatarUrl))
+                user.UserProfile.AvatarUrl = dto.AvatarUrl;
+
+            if (!string.IsNullOrEmpty(dto.PhoneNumber))
+                user.UserProfile.PhoneNumber = dto.PhoneNumber;
+
+            if (!string.IsNullOrEmpty(dto.Email))
+                user.Email = dto.Email;
 
             return await _repo.UpdateAdminAsync(user);
         }
+
 
     }
 }
