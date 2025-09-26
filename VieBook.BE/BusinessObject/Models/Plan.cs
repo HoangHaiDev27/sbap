@@ -19,6 +19,8 @@ public partial class Plan
 
     public int? TrialDays { get; set; }
 
+    public int ConversionLimit { get; set; }
+
     public string Status { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }

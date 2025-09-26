@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaEye,
   FaEnvelope,
@@ -7,9 +7,11 @@ import {
   FaCrown,
   FaRegCircle,
 } from "react-icons/fa";
+import toast from "react-hot-toast";
 import BookOwnerDetailModal from "../../components/staff/book-owners/BookOwnerDetailModal";
 import EmailModal from "../../components/staff/book-owners/EmailModal";
 import ConfirmStatusModal from "../../components/staff/book-owners/ConfirmStatusModal";
+import { getBookOwnerAccounts, toggleAccountStatus } from "../../api/userManagementApi";
 
 export default function BookOwnersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,25 +21,33 @@ export default function BookOwnersManagement() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [bookOwners, setBookOwners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fake data nhiều trang
-  const bookOwners = Array.from({ length: 20 }).map((_, i) => ({
-    id: i + 1,
-    name: `Người dùng ${i + 1}`,
-    email: `user${i + 1}@email.com`,
-    avatar: `https://i.pravatar.cc/100?img=${i + 1}`,
-    bookCount: Math.floor(Math.random() * 20),
-    status: i % 3 === 0 ? "blocked" : "active",
-    joinDate: "2024-01-15",
-    totalViews: Math.floor(Math.random() * 20000),
-    rating: (Math.random() * 5).toFixed(1),
-    vipPackage: i % 2 === 0 ? "Gold" : i % 3 === 0 ? "Silver" : "None",
-  }));
+  // Load data từ API
+  useEffect(() => {
+    loadBookOwners();
+  }, []);
+
+  const loadBookOwners = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getBookOwnerAccounts();
+      setBookOwners(data);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading book owner accounts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Lọc + phân trang
   const filteredOwners = bookOwners.filter((owner) => {
     const matchesSearch =
-      owner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (owner.fullName && owner.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       owner.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || owner.status === statusFilter;
@@ -62,10 +72,20 @@ export default function BookOwnersManagement() {
     setShowStatusModal(true);
   };
 
-  const confirmToggleStatus = (owner) => {
-    const newStatus = owner.status === "active" ? "blocked" : "active";
-    console.log("Toggling status for owner:", owner.id, "to", newStatus);
-    setShowStatusModal(false);
+  const confirmToggleStatus = async (owner) => {
+    try {
+      await toggleAccountStatus(owner.userId);
+      await loadBookOwners(); // Reload data
+      setShowStatusModal(false);
+      
+      // Hiển thị toast thành công
+      const newStatus = owner.status === "Active" ? "khóa" : "mở khóa";
+      toast.success(`Đã ${newStatus} tài khoản ${owner.fullName || owner.email} thành công!`);
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Lỗi khi ${owner.status === "Active" ? "khóa" : "mở khóa"} tài khoản: ${err.message}`);
+      console.error('Error toggling account status:', err);
+    }
   };
 
   const handleSendEmail = (owner) => {
@@ -104,6 +124,11 @@ export default function BookOwnersManagement() {
       <p className="text-gray-600 mb-6">
         Quản lý người dùng đăng sách trên hệ thống
       </p>
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200 flex items-center space-x-4">
@@ -120,8 +145,10 @@ export default function BookOwnersManagement() {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-800"
           >
             <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="blocked">Bị khóa</option>
+            <option value="Active">Đang hoạt động</option>
+            <option value="Locked">Bị khóa</option>
+            <option value="Pending">Chờ duyệt</option>
+            <option value="Inactive">Không hoạt động</option>
           </select>
         </div>
 
@@ -153,38 +180,58 @@ export default function BookOwnersManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedOwners.map((owner) => (
-                <tr key={owner.id} className="hover:bg-gray-50 text-gray-800">
-                  <td className="px-6 py-4 whitespace-nowrap flex items-center">
-                    <img
-                      src={owner.avatar}
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                    <div className="ml-4">
-                      <div className="font-medium text-gray-900">
-                        {owner.name}
-                      </div>
-                      <div className="text-gray-600 text-sm">{owner.email}</div>
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-6 text-gray-500">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2">Đang tải...</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">{owner.bookCount}</td>
-                  <td className="px-6 py-4">
-                    {owner.totalViews.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4">{owner.rating}</td>
-                  <td className="px-6 py-4">{renderVipBadge(owner.vipPackage)}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        owner.status === "active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {owner.status === "active" ? "Hoạt động" : "Bị khóa"}
-                    </span>
-                  </td>
+                </tr>
+              ) : (
+                paginatedOwners.map((owner) => (
+                  <tr key={owner.userId} className="hover:bg-gray-50 text-gray-800">
+                    <td className="px-6 py-4 whitespace-nowrap flex items-center">
+                      {owner.avatarUrl ? (
+                        <img
+                          src={owner.avatarUrl}
+                          alt=""
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                          <i className="ri-user-line text-gray-600"></i>
+                        </div>
+                      )}
+                      <div className="ml-4">
+                        <div className="font-medium text-gray-900">
+                          {owner.fullName || 'Chưa cập nhật'}
+                        </div>
+                        <div className="text-gray-600 text-sm">{owner.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{owner.bookCount}</td>
+                    <td className="px-6 py-4">
+                      {owner.orderCount || 0}
+                    </td>
+                    <td className="px-6 py-4">-</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
+                        <FaRegCircle className="mr-1" /> Book Owner
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          owner.status === "Active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {owner.status === "Active" ? "Hoạt động" : "Bị khóa"}
+                      </span>
+                    </td>
                   <td className="px-6 py-4 space-x-2 flex">
                     <button
                       onClick={() => handleViewDetails(owner)}
@@ -203,21 +250,29 @@ export default function BookOwnersManagement() {
                     <button
                       onClick={() => handleToggleStatus(owner)}
                       className={`p-2 rounded-lg ${
-                        owner.status === "active"
+                        owner.status === "Active"
                           ? "text-red-600 hover:bg-red-100"
                           : "text-green-600 hover:bg-green-100"
                       }`}
                       title={
-                        owner.status === "active"
+                        owner.status === "Active"
                           ? "Khóa tài khoản"
                           : "Mở khóa tài khoản"
                       }
                     >
-                      {owner.status === "active" ? <FaLock /> : <FaLockOpen />}
+                      {owner.status === "Active" ? <FaLock /> : <FaLockOpen />}
                     </button>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
+              {!loading && paginatedOwners.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="text-center py-6 text-gray-500">
+                    Không có dữ liệu
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

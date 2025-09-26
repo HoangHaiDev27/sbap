@@ -79,6 +79,7 @@ builder.Services.AddScoped<PasswordResetTokenDAO>();
 builder.Services.AddScoped<RefreshTokenDAO>();
 builder.Services.AddScoped<BookDao>();
 builder.Services.AddScoped<CategoryDAO>();
+builder.Services.AddScoped<PromotionDAO>();
 builder.Services.AddScoped<StaffDAO>();
 builder.Services.AddScoped<AdminDAO>();
 builder.Services.AddScoped<ChapterDAO>();
@@ -94,6 +95,7 @@ builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepo
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IBookApprovalRepository, BookApprovalRepository>();
@@ -113,9 +115,11 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IBookApprovalService, BookApprovalService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 
 

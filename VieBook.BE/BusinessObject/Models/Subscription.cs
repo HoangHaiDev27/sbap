@@ -19,6 +19,8 @@ public partial class Subscription
 
     public DateTime EndAt { get; set; }
 
+    public int RemainingConversions { get; set; }
+
     public DateTime? CancelAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
