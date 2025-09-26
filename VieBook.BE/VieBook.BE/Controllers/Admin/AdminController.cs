@@ -34,7 +34,7 @@ namespace VieBook.BE.Controllers.Admin
             }
         }
 
-        [HttpPut("update/{id}")]
+       [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateProfile(int id, [FromBody] AdminProfileDTO dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -42,8 +42,8 @@ namespace VieBook.BE.Controllers.Admin
             try
             {
                 var updated = await _service.UpdateProfileAsync(id, dto);
-
                 var result = _mapper.Map<AdminProfileDTO>(updated);
+
                 return Ok(new { message = "Cập nhật thành công", data = result });
             }
             catch (Exception ex)
@@ -51,6 +51,7 @@ namespace VieBook.BE.Controllers.Admin
                 return BadRequest(new { message = ex.Message });
             }
         }
+
 
     }
 }
