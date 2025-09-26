@@ -100,6 +100,28 @@ namespace Services.Implementations
 
             return null;
         }
+        public async Task<string> UploadTextAsync(string content, string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return null;
+
+            var bytes = Encoding.UTF8.GetBytes(content);
+            await using var stream = new MemoryStream(bytes);
+
+            var uploadParams = new RawUploadParams
+            {
+                File = new FileDescription(fileName, stream),
+                Folder = "bookChapters" // thư mục lưu chương
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+            if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                return uploadResult.SecureUrl.ToString();
+
+            return null;
+        }
+        
+
     }
 
     public class CloudinarySettings

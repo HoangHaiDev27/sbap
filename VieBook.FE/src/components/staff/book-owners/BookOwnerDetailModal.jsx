@@ -1,12 +1,10 @@
 import React from "react";
-import { FaEnvelope, FaLock, FaLockOpen, FaCrown, FaRegCircle } from "react-icons/fa";
+import { FaRegCircle } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
 export default function BookOwnerDetailModal({
   owner,
   onClose,
-  onSendEmail,
-  onToggleStatus,
 }) {
   const renderVipBadge = (vip) => {
     switch (vip) {
@@ -50,16 +48,22 @@ export default function BookOwnerDetailModal({
 
         {/* Thông tin cơ bản */}
         <div className="flex items-center space-x-4 mb-6">
-          <img
-            className="h-16 w-16 rounded-full object-cover"
-            src={owner.avatar}
-            alt=""
-          />
+          {owner.avatarUrl ? (
+            <img
+              className="h-16 w-16 rounded-full object-cover"
+              src={owner.avatarUrl}
+              alt={owner.fullName}
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
+              <i className="ri-user-line text-gray-600 text-2xl"></i>
+            </div>
+          )}
           <div>
-            <h4 className="text-lg font-medium text-gray-900">{owner.name}</h4>
+            <h4 className="text-lg font-medium text-gray-900">{owner.fullName || 'Chưa cập nhật'}</h4>
             <p className="text-gray-600">{owner.email}</p>
             <div className="mt-1 text-sm text-gray-600">
-              ⭐ {owner.rating} điểm
+              📧 {owner.email}
             </div>
           </div>
         </div>
@@ -69,13 +73,13 @@ export default function BookOwnerDetailModal({
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="text-sm text-gray-600">Số sách đã đăng</div>
             <div className="text-2xl font-bold text-gray-900">
-              {owner.bookCount}
+              {owner.bookCount || 0}
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">Tổng lượt xem</div>
+            <div className="text-sm text-gray-600">Số đơn hàng</div>
             <div className="text-2xl font-bold text-gray-900">
-              {owner.totalViews.toLocaleString()}
+              {owner.orderCount || 0}
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg">
@@ -83,54 +87,31 @@ export default function BookOwnerDetailModal({
             <div>
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                  owner.status === "active"
+                  owner.status === "Active"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
                 }`}
               >
-                {owner.status === "active" ? "Hoạt động" : "Bị khóa"}
+                {owner.status === "Active" ? "Hoạt động" : "Bị khóa"}
               </span>
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">Ngày tham gia</div>
+            <div className="text-sm text-gray-600">Ngày tạo tài khoản</div>
             <div className="text-lg font-semibold text-gray-900">
-              {owner.joinDate}
+              {new Date(owner.createdAt).toLocaleDateString('vi-VN')}
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg col-span-2">
-            <div className="text-sm text-gray-600">Gói VIP</div>
-            <div className="mt-1">{renderVipBadge(owner.vipPackage)}</div>
+            <div className="text-sm text-gray-600">Vai trò</div>
+            <div className="mt-1">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
+                <FaRegCircle className="mr-1" /> Book Owner
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex space-x-3">
-          <button
-            onClick={() => onSendEmail(owner.email)}
-            className="px-4 py-2 flex items-center bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <FaEnvelope className="mr-2" /> Gửi email
-          </button>
-          <button
-            onClick={() => onToggleStatus(owner.id, owner.status)}
-            className={`px-4 py-2 flex items-center rounded-lg text-white ${
-              owner.status === "active"
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-green-600 hover:bg-green-700"
-            }`}
-          >
-            {owner.status === "active" ? (
-              <>
-                <FaLock className="mr-2" /> Khóa tài khoản
-              </>
-            ) : (
-              <>
-                <FaLockOpen className="mr-2" /> Mở khóa tài khoản
-              </>
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );

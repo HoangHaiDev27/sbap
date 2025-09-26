@@ -169,7 +169,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
               <td className="p-3 align-middle">
                 <div className="flex items-center space-x-2">
                   <Link
-                    to={`/owner/books/${book.bookId}`}
+                    to={`/owner/books/${book.bookId}/chapters`}
                     className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition"
                     title="Xem"
                   >

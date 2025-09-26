@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Net.payOS;
 using Repositories.Implementations;
 using Repositories.Implementations.Admin;
+using Repositories.Implementations.DataAccess.Repository;
 using Repositories.Implementations.Staff;
 using Repositories.Interfaces;
 using Repositories.Interfaces.Admin;
@@ -81,6 +82,9 @@ builder.Services.AddScoped<CategoryDAO>();
 builder.Services.AddScoped<PromotionDAO>();
 builder.Services.AddScoped<StaffDAO>();
 builder.Services.AddScoped<AdminDAO>();
+builder.Services.AddScoped<ChapterDAO>();
+
+
 
 //Add Repo
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -95,6 +99,7 @@ builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IBookApprovalRepository, BookApprovalRepository>();
+builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -114,6 +119,8 @@ builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IBookApprovalService, BookApprovalService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IChapterService, ChapterService>();
 
 
 // Cloudinaary service

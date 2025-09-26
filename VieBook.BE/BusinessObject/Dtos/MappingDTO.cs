@@ -120,6 +120,16 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
                 .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
+            // User → UserManagementDTO
+            CreateMap<User, UserManagementDTO>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
+                .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => ""))
+                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Roles.Select(r => r.RoleName).FirstOrDefault() ?? "Unknown"))
+                .ForMember(dest => dest.BookCount, opt => opt.MapFrom(src => src.Books != null ? src.Books.Count : 0))
+                .ForMember(dest => dest.OrderCount, opt => opt.MapFrom(src => src.OrderItems != null ? src.OrderItems.Count : 0));
+
             CreateMap<CreateStaffRequestDTO, User>()
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
@@ -168,7 +178,12 @@ namespace BusinessObject.Dtos
                     opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Name,
                     opt => opt.MapFrom(src => src.UserProfile.FullName));
+            // Map giữa Chapter ↔ ChapterViewDTO
+            CreateMap<Chapter, ChapterViewDTO>()
+                .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title));
 
+            CreateMap<ChapterViewDTO, Chapter>()
+                .ForMember(dest => dest.Book, opt => opt.Ignore());
         }
     }
 
