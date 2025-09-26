@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using BusinessObject.Dtos;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Implementations;
 
@@ -44,6 +45,19 @@ namespace VieBook.BE.Controllers
             if (url == null) return BadRequest("Upload thất bại");
 
             return Ok(new { imageUrl = url });
+        }
+        [HttpPost("uploadChapterFile")]
+        public async Task<IActionResult> UploadChapter([FromBody] ChapterUploadDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Content))
+                return BadRequest(new { message = "Nội dung chương trống" });
+
+            var fileName = $"{dto.BookId}_{dto.Title}.txt";
+            var url = await _cloudinaryService.UploadTextAsync(dto.Content, fileName);
+
+            if (url == null) return StatusCode(500, new { message = "Upload thất bại" });
+
+            return Ok(new { url });
         }
     }
 }

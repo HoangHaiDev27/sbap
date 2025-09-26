@@ -66,7 +66,15 @@ export const API_ENDPOINTS = {
   },
   BOOK_SEARCH: (query) => `${API_BASE_URL}/api/books/search?query=${encodeURIComponent(query)}`,
   RECOMMENDATIONS: `${API_BASE_URL}/api/books/recommendations`,
-  
+  CHAPTERS: {
+    GET_BY_ID: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}`,
+    GET_BY_BOOK_ID: (bookId) => `${API_BASE_URL}/api/chapter/book/${bookId}`,
+    CREATE: `${API_BASE_URL}/api/chapter`,
+    UPDATE: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}`,
+    DELETE: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}`,
+    UPLOAD_FILE: `${API_BASE_URL}/api/upload/uploadChapterFile`,
+  },
+
   CATEGORIES: {
     GET_ALL: `${API_BASE_URL}/api/categories`,
   },
@@ -82,27 +90,27 @@ export const API_ENDPOINTS = {
   UPLOADAVATARIMAGE: `${API_BASE_URL}/api/upload/avatarImage`,
   //Staff
   STAFF: {
-    GETALLSTAFF: () => `${API_BASE_URL}/api/staff`,           
-    GETSTAFFBYID: (staffId) => `${API_BASE_URL}/api/staff/${staffId}`, 
-    ADD: `${API_BASE_URL}/api/staff/add`,                         
-    UPDATE: (staffId) => `${API_BASE_URL}/api/staff/update/${staffId}`, 
-    DELETE: (staffId) => `${API_BASE_URL}/api/staff/delete/${staffId}`, 
+    GETALLSTAFF: () => `${API_BASE_URL}/api/staff`,
+    GETSTAFFBYID: (staffId) => `${API_BASE_URL}/api/staff/${staffId}`,
+    ADD: `${API_BASE_URL}/api/staff/add`,
+    UPDATE: (staffId) => `${API_BASE_URL}/api/staff/update/${staffId}`,
+    DELETE: (staffId) => `${API_BASE_URL}/api/staff/delete/${staffId}`,
     LOCK: (staffId) => `${API_BASE_URL}/api/staff/lock/${staffId}`,
     UNLOCK: (staffId) => `${API_BASE_URL}/api/staff/unlock/${staffId}`,
-    TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}` 
+    TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`
   },
   ADMIN: {
-    GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`, 
-    UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`       
+    GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
+    UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`
   },
   BOOKAPPROVAL: {
-    GET_ALL:        `${API_BASE_URL}/api/BookApproval`,                        
-    GET_BY_ID:      (id)     => `${API_BASE_URL}/api/BookApproval/${id}`,       
-    ADD:            `${API_BASE_URL}/api/BookApproval`,                        
-    APPROVE:        (id)     => `${API_BASE_URL}/api/BookApproval/approve/${id}`, 
-    REFUSE:         (id)     => `${API_BASE_URL}/api/BookApproval/refuse/${id}`,  
+    GET_ALL: `${API_BASE_URL}/api/BookApproval`,
+    GET_BY_ID: (id) => `${API_BASE_URL}/api/BookApproval/${id}`,
+    ADD: `${API_BASE_URL}/api/BookApproval`,
+    APPROVE: (id) => `${API_BASE_URL}/api/BookApproval/approve/${id}`,
+    REFUSE: (id) => `${API_BASE_URL}/api/BookApproval/refuse/${id}`,
     GET_LATEST_BY_BOOKID: (bookId) => `${API_BASE_URL}/api/BookApproval/latest/${bookId}`,
-    GET_ALL_ACTIVE_BOOKS:  `${API_BASE_URL}/api/BookApproval/active-books`,
+    GET_ALL_ACTIVE_BOOKS: `${API_BASE_URL}/api/BookApproval/active-books`,
     GET_ALL_USERS_WITH_PROFILE: `${API_BASE_URL}/api/BookApproval/users`
   },
 

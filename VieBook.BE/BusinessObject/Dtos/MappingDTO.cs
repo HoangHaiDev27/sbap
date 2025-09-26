@@ -168,7 +168,12 @@ namespace BusinessObject.Dtos
                     opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Name,
                     opt => opt.MapFrom(src => src.UserProfile.FullName));
+            // Map giữa Chapter ↔ ChapterViewDTO
+            CreateMap<Chapter, ChapterViewDTO>()
+                .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title));
 
+            CreateMap<ChapterViewDTO, Chapter>()
+                .ForMember(dest => dest.Book, opt => opt.Ignore());
         }
     }
 
