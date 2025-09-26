@@ -14,6 +14,7 @@ namespace Repositories.Interfaces
         Task<Promotion?> GetPromotionByIdAsync(int promotionId);
         Task<Promotion> UpdatePromotionAsync(Promotion promotion, List<int> bookIds);
         Task<bool> DeletePromotionAsync(int promotionId, int ownerId);
+        Task<BusinessObject.Dtos.PromotionStatsDTO> GetStatsByOwnerAsync(int ownerId);
 
     }
 }

@@ -26,12 +26,14 @@ export default function PromotionPage() {
     fetchPromotions();
   }, []);
 
-  // Filter promotions theo tên hoặc tên sách
+  // Filter promotions theo tên hoặc tên của bất kỳ sách nào
   const filteredPromotions = promotions.filter((p) => {
     const lowerSearch = searchText.toLowerCase();
     const promotionMatch = p.promotionName?.toLowerCase().includes(lowerSearch);
-    const bookMatch = p.book?.title?.toLowerCase().includes(lowerSearch);
-    return promotionMatch || bookMatch;
+    const anyBookMatch = Array.isArray(p.books)
+      ? p.books.some((b) => b.title?.toLowerCase().includes(lowerSearch))
+      : false;
+    return promotionMatch || anyBookMatch;
   });
 
   // mở modal edit
@@ -48,14 +50,14 @@ export default function PromotionPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Quản lý Promotion</h1>
+      <h1 className="text-2xl font-bold">Quản lý Khuyến mãi</h1>
 
       <PromotionStats promotions={filteredPromotions} />
 
       <div className="flex justify-between items-center">
         <input
           type="text"
-          placeholder="Tìm kiếm promotion hoặc sách..."
+          placeholder="Tìm kiếm khuyến mãi hoặc sách..."
           className="px-3 py-2 border rounded-lg w-1/3 bg-slate-800 text-white"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
@@ -64,7 +66,7 @@ export default function PromotionPage() {
           className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg"
           onClick={() => setOpen(true)}
         >
-          + Tạo Promotion
+          + Tạo Khuyến mãi
         </button>
       </div>
 

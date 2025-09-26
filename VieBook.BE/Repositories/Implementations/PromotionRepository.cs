@@ -37,5 +37,8 @@ namespace Repositories.Implementations
         }
         public Task<bool> DeletePromotionAsync(int promotionId, int ownerId)
         => _promotionDAO.DeletePromotionAsync(promotionId, ownerId);
+
+        public Task<BusinessObject.Dtos.PromotionStatsDTO> GetStatsByOwnerAsync(int ownerId)
+            => _promotionDAO.GetStatsByOwnerAsync(ownerId);
     }
 }

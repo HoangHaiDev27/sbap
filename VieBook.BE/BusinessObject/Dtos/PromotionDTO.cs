@@ -13,7 +13,11 @@
         public DateTime EndAt { get; set; }
         public bool IsActive { get; set; }
 
-        // 1 promotion chỉ có 1 book
-        public BookWithPromotionDTO? Book { get; set; }
+        // Nhiều sách trong 1 promotion
+        public List<BookWithPromotionDTO> Books { get; set; } = new();
+
+        // Thông tin trạng thái & thống kê nhanh
+        public string Status { get; set; } = ""; // Upcoming | Active | Expired
+        public int BookCount { get; set; }
     }
 }
