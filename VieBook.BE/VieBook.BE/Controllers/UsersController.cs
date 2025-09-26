@@ -1,15 +1,14 @@
 ﻿using AutoMapper;
 using BusinessObject;
-using BusinessObject.Dtos;
+// using BusinessObject.Dtos; // duplicate removal
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using BusinessObject.Models;
 using Services.Interfaces;
 using VieBook.BE.Attributes;
 using VieBook.BE.Constants;
+using BusinessObject.Dtos;
 
 namespace VieBook.BE.Controllers
 {
@@ -114,6 +113,116 @@ namespace VieBook.BE.Controllers
             if (user == null) return NotFound();
             await _userService.DeleteAsync(user);
             return NoContent();
+        }
+
+        /// <summary>
+        /// Trở thành Book Owner: yêu cầu hồ sơ cá nhân đầy đủ (FullName, PhoneNumber, BankNumber, BankName)
+        /// </summary>
+        [Authorize]
+        [HttpPost("become-owner")]
+        public async Task<IActionResult> BecomeOwner()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var user = await _userService.GetByIdWithProfileAndRolesAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy người dùng" });
+                }
+
+                var profile = user.UserProfile;
+                if (profile == null
+                    || string.IsNullOrWhiteSpace(profile.FullName)
+                    || string.IsNullOrWhiteSpace(profile.PhoneNumber)
+                    || string.IsNullOrWhiteSpace(profile.BankNumber)
+                    || string.IsNullOrWhiteSpace(profile.BankName))
+                {
+                    return BadRequest(new { message = "Vui lòng cập nhật đầy đủ thông tin cá nhân trước khi trở thành Book Owner" });
+                }
+
+                // Thêm role Owner nếu chưa có
+                var added = await _userService.AddRoleToUserByNameAsync(userId, "Owner");
+                if (!added)
+                {
+                    return BadRequest(new { message = "Không thể gán quyền Owner cho người dùng" });
+                }
+
+                // Reload user to get updated roles
+                var refreshed = await _userService.GetByIdWithProfileAndRolesAsync(userId);
+                var roleNames = refreshed?.Roles.Select(r => r.RoleName).ToList() ?? new List<string>();
+
+                return Ok(new { message = "Bạn đã trở thành Book Owner", roles = roleNames });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] BecomeOwner: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật/khởi tạo hồ sơ cá nhân cho người dùng hiện tại
+        /// </summary>
+        [Authorize]
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpsertProfile([FromBody] UserProfileUpdateDTO dto)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                DateOnly? dob = null;
+                if (dto.DateOfBirth.HasValue)
+                {
+                    dob = DateOnly.FromDateTime(dto.DateOfBirth.Value);
+                }
+
+                var profile = await _userService.UpsertUserProfileAsync(
+                    userId,
+                    dto.FullName,
+                    dto.PhoneNumber,
+                    dob,
+                    dto.AvatarUrl,
+                    dto.BankNumber,
+                    dto.BankName
+                );
+
+                return Ok(new
+                {
+                    message = "Cập nhật hồ sơ thành công",
+                    profile = new
+                    {
+                        profile.UserId,
+                        profile.FullName,
+                        profile.PhoneNumber,
+                        profile.DateOfBirth,
+                        profile.AvatarUrl,
+                        profile.BankNumber,
+                        profile.BankName
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] UpsertProfile: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
+            }
         }
     }
 }

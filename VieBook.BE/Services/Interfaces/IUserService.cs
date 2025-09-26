@@ -11,9 +11,12 @@ namespace Services.Interfaces
     {
         Task<List<User>> GetAllAsync();
         Task<User?> GetByIdAsync(int id);
+        Task<User?> GetByIdWithProfileAndRolesAsync(int id);
         Task AddAsync(User user);
         Task UpdateAsync(User user);
         Task DeleteAsync(User user);
         Task<User?> GetByEmailAsync(string email);
+        Task<bool> AddRoleToUserByNameAsync(int userId, string roleName);
+        Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName);
     }
 }
