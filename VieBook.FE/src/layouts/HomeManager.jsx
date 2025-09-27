@@ -78,7 +78,7 @@ export default function HomeManager() {
 
         <div className="px-6 py-8 space-y-12">
           <BookCarousel
-            title="Gợi ý cho người bạn"
+            title="Gợi ý cho bạn"
             books={loading ? [] : recommendBooks}
           />
 
