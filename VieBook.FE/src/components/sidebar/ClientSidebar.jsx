@@ -69,15 +69,15 @@ export default function ClientSidebar({ isOpen, onClose }) {
     { id: "forum", label: "Diễn đàn sách", icon: RiChat3Line, href: "/forum" },
     {
       id: "audiobook",
-      label: "Sách nói",
+      label: "Sách đọc",
       icon: RiBookOpenLine,
-      href: "/audiobooks",
+      href: "/stories",
     },
     {
       id: "story",
-      label: "Sách đọc",
+      label: "Sách nói",
       icon: RiBookReadLine,
-      href: "/stories",
+      href: "/audiobooks",
     },
   ];
 
