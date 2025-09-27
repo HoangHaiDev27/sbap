@@ -21,27 +21,33 @@ export default function ClientSidebar({ isOpen, onClose }) {
   const handleRoleSwitch = () => {
     // Chuyển đổi giữa customer và owner
     const currentRole = getCurrentRole();
-    const newRole = currentRole === 'owner' ? 'user' : 'owner';
-    
+    const newRole = currentRole === "owner" ? "user" : "owner";
+
     const success = switchRole(newRole);
     if (success) {
       // Navigate về trang phù hợp với role mới
-      if (newRole === 'owner') {
-        navigate('/owner/dashboard');
+      if (newRole === "owner") {
+        navigate("/owner/dashboard");
       } else {
-        navigate('/');
+        navigate("/");
       }
     }
   };
 
   const getSwitchButtonText = () => {
     const currentRole = getCurrentRole();
-    return currentRole === 'owner' ? 'Chuyển sang khách hàng' : 'Chuyển sang chủ sách';
+    return currentRole === "owner"
+      ? "Chuyển sang khách hàng"
+      : "Chuyển sang chủ sách";
   };
 
   const getSwitchButtonIcon = () => {
     const currentRole = getCurrentRole();
-    return currentRole === 'owner' ? <RiUserLine className="w-4 h-4" /> : <RiStoreLine className="w-4 h-4" />;
+    return currentRole === "owner" ? (
+      <RiUserLine className="w-4 h-4" />
+    ) : (
+      <RiStoreLine className="w-4 h-4" />
+    );
   };
 
   const menuItems = [
@@ -65,13 +71,13 @@ export default function ClientSidebar({ isOpen, onClose }) {
       id: "audiobook",
       label: "Sách đọc",
       icon: RiBookOpenLine,
-      href: "/audiobooks",
+      href: "/stories",
     },
     {
       id: "story",
       label: "Sách nói",
       icon: RiBookReadLine,
-      href: "/stories",
+      href: "/audiobooks",
     },
   ];
 
@@ -82,7 +88,9 @@ export default function ClientSidebar({ isOpen, onClose }) {
       {/* Overlay for mobile */}
       <div
         className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity ${
-          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          isOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
       ></div>
@@ -92,50 +100,50 @@ export default function ClientSidebar({ isOpen, onClose }) {
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-      {/* logo */}
-      <div className="p-6">
-        <Link to="/" className="flex items-center space-x-3">
-          <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
-          <span className="text-2xl font-bold text-orange-500">VieBook</span>
-        </Link>
-      </div>
-
-      {/* menu */}
-      <nav className="px-4 flex-1">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              <Link
-                to={item.href}
-                className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
-                  pathname === item.href || activeMenu === item.id
-                    ? "bg-orange-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
-                onClick={() => setActiveMenu(item.id)}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                <span className="text-sm">{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* Role Switch Button - chỉ hiển thị khi user có role owner - nằm dưới cùng */}
-      {isBookOwner() && (
-        <div className="px-4 pb-4">
-          <div className="border-t border-gray-700 pt-4">
-            <button
-              onClick={handleRoleSwitch}
-              className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
-            >
-              {getSwitchButtonIcon()}
-              <span>{getSwitchButtonText()}</span>
-            </button>
-          </div>
+        {/* logo */}
+        <div className="p-6">
+          <Link to="/" className="flex items-center space-x-3">
+            <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
+            <span className="text-2xl font-bold text-orange-500">VieBook</span>
+          </Link>
         </div>
-      )}
+
+        {/* menu */}
+        <nav className="px-4 flex-1">
+          <ul className="space-y-2">
+            {menuItems.map((item) => (
+              <li key={item.id}>
+                <Link
+                  to={item.href}
+                  className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
+                    pathname === item.href || activeMenu === item.id
+                      ? "bg-orange-600 text-white"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  }`}
+                  onClick={() => setActiveMenu(item.id)}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  <span className="text-sm">{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Role Switch Button - chỉ hiển thị khi user có role owner - nằm dưới cùng */}
+        {isBookOwner() && (
+          <div className="px-4 pb-4">
+            <div className="border-t border-gray-700 pt-4">
+              <button
+                onClick={handleRoleSwitch}
+                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
+              >
+                {getSwitchButtonIcon()}
+                <span>{getSwitchButtonText()}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );
