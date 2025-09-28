@@ -33,7 +33,7 @@ namespace Tests
                 {
                     Title = "Test Book",
                     OwnerId = 1,
-                    Status = "Active",
+                    Status = "Approved",
                     CreatedAt = DateTime.UtcNow,
                     TotalView = 10,
                     Owner = new User
@@ -180,7 +180,7 @@ namespace Tests
                     ctx.Books.Add(new Book
                     {
                         Title = "Seed Book",
-                        Status = "Active",
+                        Status = "Approved",
                         CreatedAt = DateTime.UtcNow,
                         Owner = new User
                         {
@@ -207,7 +207,7 @@ namespace Tests
             var dto = new BookDTO
             {
                 Title = "New Book",
-                Status = "Active",
+                Status = "Approved",
                 OwnerId = 1,
                 CategoryIds = new List<int>()
             };
@@ -274,7 +274,7 @@ namespace Tests
                 var book = new Book
                 {
                     Title = "To InActive",
-                    Status = "Active",
+                    Status = "Approved",
                     CreatedAt = DateTime.UtcNow,
                     Owner = new User
                     {
@@ -311,7 +311,7 @@ namespace Tests
                 var owner = new User
                 {
                     Email = "owner@books.com",
-                    Status = "Active",
+                    Status = "Approved",
                     CreatedAt = DateTime.UtcNow
                 };
                 ctx.Users.Add(owner);
@@ -321,7 +321,7 @@ namespace Tests
                 ctx.Books.Add(new Book
                 {
                     Title = "Owner Book",
-                    Status = "Active",
+                    Status = "Approved",
                     CreatedAt = DateTime.UtcNow,
                     OwnerId = ownerId
                 });
@@ -355,12 +355,12 @@ namespace Tests
                 var mainBook = new Book
                 {
                     Title = "Main Book",
-                    Status = "Active",
+                    Status = "Approved",
                     CreatedAt = DateTime.UtcNow,
                     Owner = new User
                     {
                         Email = "owner@main.com",
-                        Status = "Active",
+                        Status = "Approved",
                         CreatedAt = DateTime.UtcNow
                     },
                     Categories = new List<Category> { category }
@@ -373,7 +373,7 @@ namespace Tests
                 var relatedBook = new Book
                 {
                     Title = "Related Book",
-                    Status = "Active",
+                    Status = "Approved",
                     CreatedAt = DateTime.UtcNow,
                     Owner = new User
                     {
