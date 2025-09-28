@@ -20,11 +20,13 @@ namespace DataAccess.DAO
         public async Task<Book?> GetBookDetailAsync(int id)
         {
             var book = await _context.Books
+                            .Where(b => b.Status == "Approved")
                             .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                             .Include(b => b.Categories)
                             .Include(b => b.Chapters)
                             .Include(b => b.BookReviews)
-                                .ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
+                                .ThenInclude(r => r.User)
+                                .ThenInclude(u => u.UserProfile)
                             .FirstOrDefaultAsync(b => b.BookId == id);
 
             return book;
@@ -52,6 +54,7 @@ namespace DataAccess.DAO
         public async Task<List<Book>> GetAudioBooksAsync()
         {
             return await _context.Books
+                .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters)
@@ -63,6 +66,7 @@ namespace DataAccess.DAO
         public async Task<Book?> GetAudioBookDetailAsync(int id)
         {
             return await _context.Books
+                .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters)
@@ -75,6 +79,7 @@ namespace DataAccess.DAO
         public async Task<List<Book>> GetAllAsync()
         {
             return await _context.Books
+                .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters)
