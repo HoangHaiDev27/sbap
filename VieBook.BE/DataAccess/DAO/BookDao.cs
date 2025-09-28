@@ -37,7 +37,8 @@ namespace DataAccess.DAO
                 .Include(b => b.Categories) // lấy category
                 .Include(b => b.Chapters) // để map Price, Duration, Chapters
                 .Include(b => b.BookReviews) // để map Rating, Reviews
-                .Where(b => b.Chapters.Any(c => c.ChapterSoftUrl != null)) // chỉ sách có soft copy
+                .Where(b => b.Status == "Approved" && 
+                 b.Chapters.Any(c => c.ChapterSoftUrl != null)) // chỉ sách có soft copy
                 .ToListAsync();
         }
 

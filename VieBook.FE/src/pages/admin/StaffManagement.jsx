@@ -4,7 +4,7 @@ import StaffFormModal from '../../components/admin/StaffFormModal';
 import StaffDeleteModal from '../../components/admin/StaffDeleteModal';
 import StaffToggleStatusModal from '../../components/admin/StaffToggleStatusModal';
 import { 
-  getAllStaff, addStaff, updateStaff, deleteStaff as deleteStaffAPI, lockStaff, unlockStaff,
+  getAllStaff, addStaff, updateStaff, lockStaff, unlockStaff,
   uploadAvatarStaffImage, removeOldAvatarStaffImage
 } from '../../api/staffApi';
 
@@ -15,7 +15,7 @@ export default function StaffManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
-  const [deleteStaff, setDeleteStaff] = useState(null);
+  //const [deleteStaff, setDeleteStaff] = useState(null);
   const [toggleStaff, setToggleStaff] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -79,72 +79,75 @@ export default function StaffManagement() {
   };
 
   // Save staff (add/update)
-  const handleSaveForm = async (data, id, newAvatarFile) => {
-    try {
-      let avatarUrl = data.avatarUrl;
+const handleSaveForm = async (data, id, newAvatarFile) => {
+  try {
+    let avatarUrl = data.avatarUrl;
 
-      if (newAvatarFile) {
-        if (data.avatarUrl) await removeOldAvatarStaffImage(data.avatarUrl);
-        const formData = new FormData();
-        formData.append("file", newAvatarFile);
-        avatarUrl = await uploadAvatarStaffImage(formData);
-      }
-
-      const payload = { ...data, avatarUrl };
-
-      if (id) {
-        await updateStaff(id, payload);
-        showToast('success', 'Cập nhật nhân viên thành công');
-      } else {
-        await addStaff(payload);
-        showToast('success', 'Thêm nhân viên thành công');
-      }
-
-      setIsFormOpen(false);
-      setEditingStaff(null);
-      await fetchStaffs();
-    } catch (error) {
-      console.error(error);
-      showToast('error', 'Lưu nhân viên thất bại');
+    if (newAvatarFile) {
+      if (data.avatarUrl) await removeOldAvatarStaffImage(data.avatarUrl);
+      const formData = new FormData();
+      formData.append("file", newAvatarFile);
+      avatarUrl = await uploadAvatarStaffImage(formData);
     }
-  };
 
-  // Delete staff
-  const handleConfirmDelete = async (staff) => {
-    if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
-    try {
-      await deleteStaffAPI(staff.userId);
-      setDeleteStaff(null);
-      showToast('success', 'Xóa nhân viên thành công');
-      await fetchStaffs();
-    } catch (error) {
-      console.error(error);
-      showToast('error', 'Xóa nhân viên thất bại');
-    }
-  };
+    const payload = { ...data, avatarUrl };
 
-  // Toggle status
-  const handleConfirmToggle = async (staff) => {
-    if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
-    try {
-      if (staff.status === 'Active') {
-        await lockStaff(staff.userId);
-      } else {
-        await unlockStaff(staff.userId);
-      }
-      setToggleStaff(null);
-      showToast('success', 'Đổi trạng thái thành công');
-      await fetchStaffs();
-    } catch (error) {
-      console.error(error);
-      showToast('error', 'Đổi trạng thái thất bại');
+    let res;
+    if (id) {
+      res = await updateStaff(id, payload);
+    } else {
+      res = await addStaff(payload);
     }
-  };
+
+    showToast("success", res?.message || "Thao tác thành công");
+
+    setIsFormOpen(false);
+    setEditingStaff(null);
+    await fetchStaffs();
+  } catch (error) {
+    console.error(error);
+    showToast("error", error.message || "Lưu nhân viên thất bại"); // ✅ sửa chỗ này
+  }
+};
+
+// Delete staff
+// const handleConfirmDelete = async (staff) => {
+//   if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
+//   try {
+//     const res = await deleteStaffAPI(staff.userId);
+//     setDeleteStaff(null);
+//     showToast("success", res?.message || "Xóa nhân viên thành công");
+//     await fetchStaffs();
+//   } catch (error) {
+//     console.error(error);
+//     showToast("error", error.message || "Xóa nhân viên thất bại"); // ✅ sửa chỗ này
+//   }
+// };
+
+// Toggle status
+const handleConfirmToggle = async (staff) => {
+  if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
+  try {
+    let res;
+    if (staff.status === "Active") {
+      res = await lockStaff(staff.userId);
+    } else {
+      res = await unlockStaff(staff.userId);
+    }
+    setToggleStaff(null);
+    showToast("success", res?.message || "Đổi trạng thái thành công");
+    await fetchStaffs();
+  } catch (error) {
+    console.error(error);
+    showToast("error", error.message || "Đổi trạng thái thất bại"); // ✅ sửa chỗ này
+  }
+};
+
 
   const handleCancelAll = () => {
     setIsFormOpen(false);
     setEditingStaff(null);
-    setDeleteStaff(null);
+   // setDeleteStaff(null);
     setToggleStaff(null);
   };
 
@@ -224,11 +227,11 @@ export default function StaffManagement() {
                           <button onClick={() => setToggleStaff(staff)} className="p-2 text-green-600 hover:bg-green-50 rounded">
                             <i className={staff.status === 'Active' ? 'ri-lock-line' : 'ri-lock-unlock-line'} />
                           </button>
-                          {staff.roles !== 'admin' && (
+                          {/* {staff.roles !== 'admin' && (
                             <button onClick={() => setDeleteStaff(staff)} className="p-2 text-red-600 hover:bg-red-50 rounded">
                               <i className="ri-delete-bin-line" />
                             </button>
-                          )}
+                          )} */}
                         </td>
                       </tr>
                     )) : (
@@ -253,7 +256,7 @@ export default function StaffManagement() {
       </main>
 
       {isFormOpen && <StaffFormModal staff={editingStaff} onSave={(data, _, newAvatarFile) => handleSaveForm(data, editingStaff?.userId, newAvatarFile)} onCancel={handleCancelAll} />}
-      {deleteStaff && <StaffDeleteModal staff={deleteStaff} onCancel={() => setDeleteStaff(null)} onConfirm={handleConfirmDelete} />}
+      {/* {deleteStaff && <StaffDeleteModal staff={deleteStaff} onCancel={() => setDeleteStaff(null)} onConfirm={handleConfirmDelete} />} */}
       {toggleStaff && <StaffToggleStatusModal staff={toggleStaff} onCancel={() => setToggleStaff(null)} onConfirm={handleConfirmToggle} />}
     </div>
   );
