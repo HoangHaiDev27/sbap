@@ -101,7 +101,7 @@ namespace Tests
                         OwnerId = owner.UserId,
                         CoverUrl = "https://example.com/book.jpg",
                         Description = "A test book for reading endpoint",
-                        Status = "Published",
+                        Status = "Approved",
                         TotalView = 10,
                         CreatedAt = DateTime.UtcNow,
                         Author = "Nguyễn Văn A"
