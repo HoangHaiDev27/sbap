@@ -141,7 +141,6 @@ namespace VieBook.BE.Controllers
 
                 var profile = user.UserProfile;
                 if (profile == null
-                    || string.IsNullOrWhiteSpace(profile.FullName)
                     || string.IsNullOrWhiteSpace(profile.PhoneNumber)
                     || string.IsNullOrWhiteSpace(profile.BankNumber)
                     || string.IsNullOrWhiteSpace(profile.BankName))
