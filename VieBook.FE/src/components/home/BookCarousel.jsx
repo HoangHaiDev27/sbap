@@ -34,7 +34,7 @@ export default function BookCarousel({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">{title}</h2>
-        {title !== "Gợi ý cho người bạn" && (
+        {title !== "Gợi ý cho bạn" && (
           <Link
             to={
               title === "Sách nói chất lượng"
@@ -97,19 +97,21 @@ export default function BookCarousel({
                 to={`/bookdetails/${book.id}`}
                 className="flex-shrink-0 cursor-pointer group"
               >
-                <div className="w-40">
+                <div className="w-56">
+                  {" "}
+                  {/* ~224px */}
                   <div className="relative mb-3">
                     <img
                       src={book.image}
                       alt={book.title}
-                      className="w-full h-56 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
+                      className="w-full h-80 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
                     />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-lg"></div>
                   </div>
-                  <h3 className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
+                  <h3 className="text-base font-semibold text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
                     {book.title}
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">{book.author}</p>
+                  <p className="text-sm text-gray-400 mt-1">{book.author}</p>
                 </div>
               </Link>
             ))

@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = "http://localhost:5757";
+const API_BASE_URL = "http://102.37.147.127:5757";
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -86,7 +86,8 @@ export const API_ENDPOINTS = {
   REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
   PROMOTIONS: {
     GET_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}`,
-    CREATE: `${API_BASE_URL}/api/promotions`
+    CREATE: `${API_BASE_URL}/api/promotions`,
+    STATS_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}/stats`
   },
 
 

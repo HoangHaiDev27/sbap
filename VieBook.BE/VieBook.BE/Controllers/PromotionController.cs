@@ -16,6 +16,13 @@ namespace VieBookAPI.Controllers
             _promotionService = promotionService;
         }
 
+        [HttpGet("owner/{ownerId}/stats")]
+        public async Task<IActionResult> GetStatsByOwner(int ownerId)
+        {
+            var stats = await _promotionService.GetStatsByOwnerAsync(ownerId);
+            return Ok(stats);
+        }
+
         [HttpGet("owner/{ownerId}")]
         public async Task<IActionResult> GetPromotionsByOwner(int ownerId)
         {
@@ -24,20 +31,23 @@ namespace VieBookAPI.Controllers
                 return NotFound(new { message = "Không tìm thấy promotion nào." });
 
             // Map entity -> DTO
-            var result = promotions.Select(p => new PromotionDTO
+            var result = promotions.Select(p =>
             {
-                PromotionId = p.PromotionId,
-                OwnerId = p.OwnerId,
-                PromotionName = p.PromotionName,
-                Description = p.Description,
-                DiscountType = p.DiscountType,
-                DiscountValue = p.DiscountValue,
-                Quantity = p.Quantity,
-                StartAt = p.StartAt,
-                EndAt = p.EndAt,
-                IsActive = p.IsActive,
+                var dto = new PromotionDTO
+                {
+                    PromotionId = p.PromotionId,
+                    OwnerId = p.OwnerId,
+                    PromotionName = p.PromotionName,
+                    Description = p.Description,
+                    DiscountType = p.DiscountType,
+                    DiscountValue = p.DiscountValue,
+                    Quantity = p.Quantity,
+                    StartAt = p.StartAt,
+                    EndAt = p.EndAt,
+                    IsActive = p.IsActive,
+                };
 
-                Book = p.Books.Select(b => new BookWithPromotionDTO
+                dto.Books = p.Books.Select(b => new BookWithPromotionDTO
                 {
                     BookId = b.BookId,
                     Title = b.Title,
@@ -50,17 +60,19 @@ namespace VieBookAPI.Controllers
                     Author = b.Author,
                     OwnerId = b.OwnerId,
                     Status = b.Status,
-
-                    // tính giá
                     TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
                     DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
-                      (1 - (p.DiscountType == "Percent" ? (p.DiscountValue / 100) : 0)),
-
+                        (1 - (p.DiscountType == "Percent" ? (p.DiscountValue / 100) : 0)),
                     Sold = 0,
                     Rating = 0,
                     OwnerName = b.Owner?.UserProfile?.FullName,
                     CategoryIds = b.Categories?.Select(c => c.CategoryId).ToList() ?? new List<int>()
-                }).FirstOrDefault()
+                }).ToList();
+
+                dto.BookCount = dto.Books.Count;
+                dto.Status = DateTime.UtcNow < dto.StartAt ? "Upcoming" :
+                             DateTime.UtcNow > dto.EndAt ? "Expired" : "Active";
+                return dto;
             });
 
             return Ok(result);
@@ -88,25 +100,41 @@ namespace VieBookAPI.Controllers
                 IsActive = true
             };
 
-            var created = await _promotionService.CreatePromotionAsync(promotion, dto.BookIds);
-
-            var result = new PromotionDTO
+            try
             {
-                PromotionId = created.PromotionId,
-                OwnerId = created.OwnerId,
-                PromotionName = created.PromotionName,
-                Description = created.Description,
-                DiscountType = created.DiscountType,
-                DiscountValue = created.DiscountValue,
-                Quantity = created.Quantity,
-                StartAt = created.StartAt,
-                EndAt = created.EndAt,
-                IsActive = created.IsActive
-            };
+                var created = await _promotionService.CreatePromotionAsync(promotion, dto.BookIds);
 
-            return CreatedAtAction(nameof(GetPromotionsByOwner),
-                new { ownerId = result.OwnerId },
-                result);
+                var result = new PromotionDTO
+                {
+                    PromotionId = created.PromotionId,
+                    OwnerId = created.OwnerId,
+                    PromotionName = created.PromotionName,
+                    Description = created.Description,
+                    DiscountType = created.DiscountType,
+                    DiscountValue = created.DiscountValue,
+                    Quantity = created.Quantity,
+                    StartAt = created.StartAt,
+                    EndAt = created.EndAt,
+                    IsActive = created.IsActive,
+                };
+
+                result.Books = created.Books.Select(b => new BookWithPromotionDTO
+                {
+                    BookId = b.BookId,
+                    Title = b.Title,
+                }).ToList();
+                result.BookCount = result.Books.Count;
+                result.Status = DateTime.UtcNow < result.StartAt ? "Upcoming" :
+                                 DateTime.UtcNow > result.EndAt ? "Expired" : "Active";
+
+                return CreatedAtAction(nameof(GetPromotionsByOwner),
+                    new { ownerId = result.OwnerId },
+                    result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{promotionId}")]
@@ -130,21 +158,25 @@ namespace VieBookAPI.Controllers
             existing.StartAt = dto.StartAt;
             existing.EndAt = dto.EndAt;
 
-            var updated = await _promotionService.UpdatePromotionAsync(existing, dto.BookIds);
-
-            var result = new PromotionDTO
+            try
             {
-                PromotionId = updated.PromotionId,
-                OwnerId = updated.OwnerId,
-                PromotionName = updated.PromotionName,
-                Description = updated.Description,
-                DiscountType = updated.DiscountType,
-                DiscountValue = updated.DiscountValue,
-                Quantity = updated.Quantity,
-                StartAt = updated.StartAt,
-                EndAt = updated.EndAt,
-                IsActive = updated.IsActive,
-                Book = updated.Books.Select(b => new BookWithPromotionDTO
+                var updated = await _promotionService.UpdatePromotionAsync(existing, dto.BookIds);
+
+                var result = new PromotionDTO
+                {
+                    PromotionId = updated.PromotionId,
+                    OwnerId = updated.OwnerId,
+                    PromotionName = updated.PromotionName,
+                    Description = updated.Description,
+                    DiscountType = updated.DiscountType,
+                    DiscountValue = updated.DiscountValue,
+                    Quantity = updated.Quantity,
+                    StartAt = updated.StartAt,
+                    EndAt = updated.EndAt,
+                    IsActive = updated.IsActive,
+                };
+
+                result.Books = updated.Books.Select(b => new BookWithPromotionDTO
                 {
                     BookId = b.BookId,
                     Title = b.Title,
@@ -153,7 +185,47 @@ namespace VieBookAPI.Controllers
                     TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
                     DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
                                       (1 - (updated.DiscountType == "Percent" ? (updated.DiscountValue / 100) : 0)),
-                }).FirstOrDefault()
+                }).ToList();
+
+                result.BookCount = result.Books.Count;
+                result.Status = DateTime.UtcNow < result.StartAt ? "Upcoming" :
+                                 DateTime.UtcNow > result.EndAt ? "Expired" : "Active";
+
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("{promotionId}")]
+        public async Task<IActionResult> GetPromotionDetail(int promotionId)
+        {
+            var promotion = await _promotionService.GetPromotionByIdAsync(promotionId);
+            if (promotion == null) return NotFound(new { message = "Promotion không tồn tại." });
+
+            var result = new PromotionWithBookDTO
+            {
+                PromotionId = promotion.PromotionId,
+                OwnerId = promotion.OwnerId,
+                PromotionName = promotion.PromotionName,
+                Description = promotion.Description,
+                DiscountValue = promotion.DiscountValue,
+                Quantity = promotion.Quantity,
+                StartAt = promotion.StartAt,
+                EndAt = promotion.EndAt,
+                IsActive = promotion.IsActive,
+                Books = promotion.Books.Select(b => new BookWithPromotionDTO
+                {
+                    BookId = b.BookId,
+                    Title = b.Title,
+                    Description = b.Description,
+                    CoverUrl = b.CoverUrl,
+                    TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
+                    DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
+                                      (1 - (promotion.DiscountType == "Percent" ? (promotion.DiscountValue / 100) : 0)),
+                }).ToList()
             };
 
             return Ok(result);

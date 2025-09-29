@@ -41,7 +41,6 @@ export default function UserProfile() {
   const [tempData, setTempData] = useState(formData);
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
-    fullName: "",
     phoneNumber: "",
     bankNumber: "",
     bankName: "",
@@ -84,7 +83,6 @@ export default function UserProfile() {
   const handleSubmitProfile = async () => {
     try {
       const payload = {
-        fullName: profileForm.fullName,
         phoneNumber: profileForm.phoneNumber,
         bankNumber: profileForm.bankNumber,
         bankName: profileForm.bankName,
@@ -464,10 +462,6 @@ export default function UserProfile() {
           <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg text-white">
             <h3 className="text-lg font-semibold mb-4">Hoàn thành hồ sơ để trở thành Book Owner</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="text-sm text-gray-300">Họ và tên</label>
-                <input name="fullName" value={profileForm.fullName} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
-              </div>
               <div>
                 <label className="text-sm text-gray-300">Số điện thoại</label>
                 <input name="phoneNumber" value={profileForm.phoneNumber} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />

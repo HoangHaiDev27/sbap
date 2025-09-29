@@ -5,13 +5,21 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 export default function StaffFormModal({ staff, onSave, onCancel }) {
   const isEdit = !!staff;
 
+  // Hàm format ngày về dạng YYYY-MM-DD cho input date
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  };
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',      // dùng khi thêm
     newPassword: '',   // dùng khi edit
     avatarUrl: '',
-    dateOfBirth: '',   // ngày sinh
+    dateOfBirth: '',   // ngày sinh (YYYY-MM-DD)
   });
   const [newAvatarFile, setNewAvatarFile] = useState(null);
   const [previewAvatar, setPreviewAvatar] = useState('');
@@ -25,7 +33,7 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
         password: '',
         newPassword: '',
         avatarUrl: staff.avatarUrl || '',
-        dateOfBirth: staff.dateOfBirth || '',
+        dateOfBirth: formatDate(staff.dateOfBirth), // ✅ fix ngày sinh
       });
       setPreviewAvatar(staff.avatarUrl || '');
     } else {
@@ -50,75 +58,115 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
     setPreviewAvatar(URL.createObjectURL(file));
   };
 
-  const handleSubmit = () => {
-    if (!formData.fullName || !formData.email) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!formData.fullName.trim() || !formData.email.trim()) {
       return alert('Vui lòng nhập đầy đủ họ tên và email');
     }
-    if (!isEdit && !formData.password) {
+    if (!isEdit && !formData.password.trim()) {
       return alert('Vui lòng nhập mật khẩu cho tài khoản mới');
     }
-    if (formData.dateOfBirth) {
-      const dob = new Date(formData.dateOfBirth);
-      if (isNaN(dob.getTime()) || dob > new Date()) {
-        return alert('Ngày sinh không hợp lệ');
-      }
+    if (!formData.dateOfBirth) {
+      return alert('Vui lòng chọn ngày sinh');
+    // } else {
+    //   const dob = new Date(formData.dateOfBirth);
+    //   if (isNaN(dob.getTime()) || dob > new Date()) {
+    //     return alert('Ngày sinh không hợp lệ');
+    //   }
     }
+
     onSave(formData, staff?.userId || null, newAvatarFile);
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl text-gray-800">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl text-gray-800"
+      >
         <h3 className="text-xl font-semibold text-gray-900 mb-4 border-b pb-2">
           {isEdit ? 'Cập nhật Staff' : 'Thêm Staff mới'}
         </h3>
 
         <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Họ và tên"
-            value={formData.fullName}
-            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="date"
-            placeholder="Ngày sinh"
-            value={formData.dateOfBirth}
-            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-          />
-
-          <div className="relative">
+          {/* Họ và tên */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Họ và tên <span className="text-red-500">*</span>
+            </label>
             <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder={isEdit ? 'Nhập mật khẩu mới (nếu muốn)' : 'Mật khẩu'}
-              value={isEdit ? formData.newPassword : formData.password}
-              onChange={(e) =>
-                isEdit
-                  ? setFormData({ ...formData, newPassword: e.target.value })
-                  : setFormData({ ...formData, password: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 pr-10"
+              type="text"
+              required
+              placeholder="Nguyễn Văn A"
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showPassword ? <AiOutlineEyeInvisible size={20} /> : <AiOutlineEye size={20} />}
-            </button>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="a@gmail.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Ngày sinh */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Ngày sinh <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              required
+              placeholder="Chọn ngày sinh"
+              value={formData.dateOfBirth}
+              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Mật khẩu */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              {isEdit ? 'Mật khẩu mới (nếu muốn)' : 'Mật khẩu'}{' '}
+              {!isEdit && <span className="text-red-500">*</span>}
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder={isEdit ? 'Nhập mật khẩu mới' : 'Nhập mật khẩu'}
+                value={isEdit ? formData.newPassword : formData.password}
+                onChange={(e) =>
+                  isEdit
+                    ? setFormData({ ...formData, newPassword: e.target.value })
+                    : setFormData({ ...formData, password: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 pr-10"
+                {...(!isEdit ? { required: true } : {})}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <AiOutlineEyeInvisible size={20} /> : <AiOutlineEye size={20} />}
+              </button>
+            </div>
           </div>
 
           {/* Avatar */}
           <div className="flex flex-col items-center mt-2">
+            <label className="mb-2 text-sm font-medium text-gray-700">Ảnh đại diện</label>
             <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 hover:border-blue-400 transition-all">
               {previewAvatar ? (
                 <img src={previewAvatar} alt="avatar preview" className="w-full h-full object-cover" />
@@ -140,19 +188,20 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
 
         <div className="flex justify-end space-x-2 mt-6">
           <button
+            type="button"
             onClick={onCancel}
             className="px-4 py-2 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200"
           >
             Hủy
           </button>
           <button
-            onClick={handleSubmit}
+            type="submit"
             className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
           >
             {isEdit ? 'Cập nhật' : 'Thêm mới'}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

@@ -59,3 +59,23 @@ export async function deletePromotion(promotionId, ownerId) {
   }
   return res.json();
 }
+
+// Promotion detail
+export async function getPromotionDetail(promotionId) {
+  const url = `${API_ENDPOINTS.PROMOTIONS.CREATE}/${promotionId}`;
+  const res = await authFetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Lấy chi tiết promotion thất bại");
+  }
+  return res.json();
+}
+
+export async function getPromotionStats(ownerId) {
+  const res = await authFetch(API_ENDPOINTS.PROMOTIONS.STATS_BY_OWNER(ownerId));
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Lấy thống kê promotion thất bại");
+  }
+  return res.json();
+}

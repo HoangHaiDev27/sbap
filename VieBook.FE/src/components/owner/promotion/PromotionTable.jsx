@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { RiEdit2Line, RiDeleteBin6Line, RiCoinLine } from "react-icons/ri";
 import { deletePromotion } from "../../../api/promotionApi";
 import { getUserId } from "../../../api/authApi";
@@ -19,6 +20,7 @@ function getPromotionStatus(promo) {
 export default function PromotionTable({ promotions, onEdit, onDeleted }) {
   const [page, setPage] = useState(1);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const navigate = useNavigate();
 
   const totalPages = Math.ceil(promotions.length / ITEMS_PER_PAGE);
   const currentData = promotions.slice(
@@ -51,16 +53,16 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
 
   return (
     <div>
-      <div className="overflow-x-auto bg-slate-900 text-white rounded-2xl shadow-lg">
+      <div className="bg-slate-900 text-white rounded-2xl shadow-lg">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-700 text-white">
-              <th className="p-3">Promotion & Sách</th>
+              <th className="p-3">Khuyến mãi & Sách</th>
               <th className="p-3">Loại & Giá trị</th>
               <th className="p-3">Thời gian</th>
               <th className="p-3">Trạng thái</th>
               <th className="p-3">Hiệu quả</th>
-              <th className="p-3 text-center">Hành động</th>
+              <th className="p-3 text-center w-28">Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -71,34 +73,52 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
                   key={promo.promotionId}
                   className={`border-b border-slate-600 ${i % 2 === 0 ? "bg-slate-800" : "bg-slate-700"} hover:bg-slate-600 transition`}
                 >
-                  <td className="p-3">
-                    <p className="font-semibold">{promo.promotionName}</p>
-                    <p className="text-xs opacity-70">{promo.book?.title}</p>
+                  <td className="p-3 cursor-pointer align-top" onClick={() => navigate(`/owner/promotions/${promo.promotionId}`)}>
+                    <p className="font-semibold truncate pr-4">{promo.promotionName}</p>
+                    <div className="text-xs opacity-80">
+                      {Array.isArray(promo.books) && promo.books.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {promo.books.slice(0,3).map((b) => (
+                            <span key={b.bookId} className="bg-slate-600 px-2 py-0.5 rounded">
+                              {b.title}
+                            </span>
+                          ))}
+                          {promo.books.length > 3 && (
+                            <span className="opacity-60">+{promo.books.length - 3} nữa</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="opacity-60">Chưa có sách</span>
+                      )}
+                    </div>
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 align-top">
                     <p className="font-medium text-orange-400">
                       {promo.discountType === "Percent"
                         ? `${promo.discountValue}%`
                         : `${promo.discountValue.toLocaleString()} đ`}
                     </p>
-                    <p className="text-xs opacity-70 flex items-center gap-1">
-                      {promo.book?.totalPrice?.toLocaleString()} <RiCoinLine className="inline text-yellow-400" /> →{" "}
-                      {promo.book?.discountedPrice?.toLocaleString()} <RiCoinLine className="inline text-yellow-400" />
-                    </p>
+                    {/* Tổng giá và giá sau giảm là minh hoạ theo 1 sách, ẩn khi nhiều sách */}
+                    {Array.isArray(promo.books) && promo.books.length === 1 && (
+                      <p className="text-xs opacity-70 flex items-center gap-1">
+                        {promo.books[0]?.totalPrice?.toLocaleString()} <RiCoinLine className="inline text-yellow-400" /> →{" "}
+                        {promo.books[0]?.discountedPrice?.toLocaleString()} <RiCoinLine className="inline text-yellow-400" />
+                      </p>
+                    )}
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 align-top whitespace-nowrap">
                     {new Date(promo.startAt).toLocaleDateString("vi-VN")} -{" "}
                     {new Date(promo.endAt).toLocaleDateString("vi-VN")}
                   </td>
-                  <td className="p-3">
-                    <span className={`${status.className} text-white px-2 py-1 rounded-lg text-xs`}>
+                  <td className="p-3 align-top">
+                    <span className={`${status.className} text-white px-2 py-1 rounded-lg text-xs whitespace-nowrap`}>
                       {status.label}
                     </span>
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 align-top whitespace-nowrap">
                     {0}/{promo.quantity} lượt
                   </td>
-                  <td className="p-3 flex gap-2 justify-center">
+                  <td className="p-3 align-top flex gap-2 justify-center">
                     <button
                       className="p-2 bg-green-500 rounded hover:bg-green-600"
                       onClick={() => onEdit && onEdit(promo)}

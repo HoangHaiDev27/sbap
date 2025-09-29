@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { getAdminById, updateAdmin, uploadAvatarImage, removeOldAvatarImage } from "../../api/adminApi";
+import {
+  getAdminById,
+  updateAdmin,
+  uploadAvatarImage,
+  removeOldAvatarImage,
+} from "../../api/adminApi";
 import { changePassword } from "../../api/authApi";
 
 export default function AdminProfile() {
@@ -9,7 +14,8 @@ export default function AdminProfile() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const defaultAvatar = "https://img5.thuthuatphanmem.vn/uploads/2021/11/22/anh-gau-nau_092901233.jpg";
+  const defaultAvatar =
+    "https://img5.thuthuatphanmem.vn/uploads/2021/11/22/anh-gau-nau_092901233.jpg";
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatar);
@@ -73,21 +79,21 @@ export default function AdminProfile() {
 
       // Upload avatar nếu có file mới
       if (avatarFile) {
-        // Xóa avatar cũ nếu tồn tại
-        if (adminInfo.avatarUrl) {
-          await removeOldAvatarImage(adminInfo.avatarUrl);
-        }
-
-        const formData = new FormData();
-        formData.append("file", avatarFile);
-        uploadedAvatarUrl = await uploadAvatarImage(formData);
+      // Chỉ xóa nếu avatar cũ không phải là ảnh mặc định
+      if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar) {
+        await removeOldAvatarImage(adminInfo.avatarUrl);
       }
+
+      const formData = new FormData();
+      formData.append("file", avatarFile);
+      uploadedAvatarUrl = await uploadAvatarImage(formData);
+    }
 
       const updatedData = {
         fullName: adminInfo.fullName || "",
         email: adminInfo.email || "",
         phoneNumber: adminInfo.phone || "",
-        address: adminInfo.address || "Chưa có địa chỉ",
+        address: adminInfo.address || "FPT University, Da Nang",
         avatarUrl: uploadedAvatarUrl || defaultAvatar,
       };
 
@@ -162,7 +168,8 @@ export default function AdminProfile() {
       <h2 className="text-2xl font-bold text-gray-800 mb-1">Thông tin cá nhân</h2>
       <p className="text-gray-500 mb-6">Quản lý thông tin tài khoản và cài đặt bảo mật</p>
 
-      <div className="bg-white p-6 rounded-lg shadow border">
+      {/* Thông tin cơ bản */}
+      <div className="bg-white p-6 rounded-lg shadow border mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Thông tin cơ bản</h3>
           <div className="flex gap-2">
@@ -188,7 +195,9 @@ export default function AdminProfile() {
             className="w-20 h-20 rounded-full object-cover"
           />
           <div>
-            <h4 className="text-lg font-semibold text-gray-900">{adminInfo.fullName || "Chưa có tên"}</h4>
+            <h4 className="text-lg font-semibold text-gray-900">
+              {adminInfo.fullName || "Chưa có tên"}
+            </h4>
             <p className="text-gray-500 text-sm">Quản trị viên hệ thống</p>
             <span className="inline-block mt-1 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">
               Admin
@@ -203,20 +212,47 @@ export default function AdminProfile() {
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Email *</p>
-            <p className="text-base text-gray-800">{adminInfo.email || "Chưa có"}</p>
+            <p className="text-base text-gray-800">{adminInfo.email || "support@wewe.vn"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Số điện thoại</p>
-            <p className="text-base text-gray-800">{adminInfo.phone || "Chưa có"}</p>
+            <p className="text-base text-gray-800">{adminInfo.phone || "0345 510 055"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Địa chỉ</p>
-            <p className="text-base text-gray-800">{adminInfo.address || "155 Nguyễn Khuyến"}</p>
+            <p className="text-base text-gray-800">
+              {adminInfo.address || "FPT University, Da Nang"}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Modal chỉnh sửa */}
+      {/* Mô tả công việc Admin */}
+      <div className="bg-white p-6 rounded-lg shadow border">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          📝 Mô tả công việc của Quản trị viên
+        </h3>
+        <p className="text-gray-700 mb-4">
+          Với vai trò là <strong>Quản trị viên (Admin)</strong>, tôi có quyền và trách nhiệm quản lý toàn bộ hệ thống. 
+          Dưới đây là những nhiệm vụ chính:
+        </p>
+        <ul className="list-disc list-inside text-gray-700 space-y-2">
+          <li>Quản lý và phân quyền người dùng trong hệ thống.</li>
+          <li>Theo dõi hoạt động của Staff, BookOwner và Customer.</li>
+          <li>Quản lý tin tức, bài viết và các thông báo quan trọng.</li>
+          <li>Đảm bảo tính bảo mật và an toàn dữ liệu.</li>
+          <li>Thiết lập và duy trì các cài đặt hệ thống.</li>
+          <li>Kiểm tra và xử lý các sự cố liên quan đến hệ thống.</li>
+        </ul>
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <p className="text-sm text-blue-700">
+            💡 <strong>Lời khuyên:</strong> Luôn theo dõi thông báo và báo cáo thường xuyên để
+            kịp thời phát hiện các vấn đề trong hệ thống.
+          </p>
+        </div>
+      </div>
+
+      {/* Modal chỉnh sửa thông tin */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative text-gray-800">
@@ -250,7 +286,9 @@ export default function AdminProfile() {
               {["fullName", "email", "phone", "address"].map((key) => (
                 <div key={key}>
                   <label className="text-sm font-medium">
-                    {key === "fullName" ? "Họ và tên" : key.charAt(0).toUpperCase() + key.slice(1)}
+                    {key === "fullName"
+                      ? "Họ và tên"
+                      : key.charAt(0).toUpperCase() + key.slice(1)}
                   </label>
                   <input
                     type={key === "email" ? "email" : "text"}
@@ -288,7 +326,9 @@ export default function AdminProfile() {
             <h3 className="text-lg font-semibold mb-4">Đổi mật khẩu</h3>
 
             {changePasswordError && (
-              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{changePasswordError}</div>
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                {changePasswordError}
+              </div>
             )}
 
             {["currentPassword", "newPassword", "confirmPassword"].map((key) => {

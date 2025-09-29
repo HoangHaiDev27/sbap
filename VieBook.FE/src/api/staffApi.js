@@ -1,89 +1,108 @@
 import { API_ENDPOINTS } from "../config/apiConfig";
 
+async function handleFetch(url, options = {}, defaultError) {
+  const res = await fetch(url, options);
+
+  if (!res.ok) {
+    let errorMessage = defaultError;
+    try {
+      const data = await res.json();
+      errorMessage = data.message || errorMessage;
+    } catch {
+      if (res.status === 500) {
+        errorMessage = "Lỗi hệ thống.";
+      }
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Nếu là 204 No Content thì không parse JSON
+  if (res.status === 204) return true;
+
+  return res.json();
+}
+
+// ================= STAFF API =================
 export async function getAllStaff() {
-  const res = await fetch(API_ENDPOINTS.STAFF.GETALLSTAFF(), {
+  return handleFetch(API_ENDPOINTS.STAFF.GETALLSTAFF(), {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}` // nếu cần token
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-  });
-  if (!res.ok) throw new Error("Failed to fetch staff list");
-  return res.json();
+  }, "Failed to fetch staff list");
 }
 
 export async function getStaffById(staffId) {
-  const res = await fetch(API_ENDPOINTS.STAFF.GETSTAFFBYID(staffId), {
+  return handleFetch(API_ENDPOINTS.STAFF.GETSTAFFBYID(staffId), {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-  });
-  if (!res.ok) throw new Error("Failed to fetch staff detail");
-  return res.json();
+  }, "Failed to fetch staff detail");
 }
 
 export async function addStaff(data) {
-  const res = await fetch(API_ENDPOINTS.STAFF.ADD, {
+  return handleFetch(API_ENDPOINTS.STAFF.ADD, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error("Failed to add staff");
-  return res.json();
+    body: JSON.stringify(data),
+  }, "Failed to add staff");
 }
 
 export async function updateStaff(staffId, data) {
-  const res = await fetch(API_ENDPOINTS.STAFF.UPDATE(staffId), {
+  return handleFetch(API_ENDPOINTS.STAFF.UPDATE(staffId), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error("Failed to update staff");
-  return res.json();
+    body: JSON.stringify(data),
+  }, "Failed to update staff");
 }
 
 export async function deleteStaff(staffId) {
-  const res = await fetch(API_ENDPOINTS.STAFF.DELETE(staffId), {
+  return handleFetch(API_ENDPOINTS.STAFF.DELETE(staffId), {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text(); // lấy message nếu có
-    throw new Error(errorText || "Failed to delete staff");
-  }
-
-  // 204 No Content không parse JSON
-  return true;
+  }, "Failed to delete staff");
 }
 
 export async function lockStaff(staffId) {
-  const res = await fetch(API_ENDPOINTS.STAFF.LOCK(staffId), {
+  return handleFetch(API_ENDPOINTS.STAFF.LOCK(staffId), {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-  });
+  }, "Failed to lock staff");
+}
 
-  if (!res.ok) {
-    const errorText = await res.text(); // lấy message nếu có
-    throw new Error(errorText || "Failed to lock staff");
-  }
+export async function unlockStaff(staffId) {
+  return handleFetch(API_ENDPOINTS.STAFF.UNLOCK(staffId), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Failed to unlock staff");
+}
 
-  // 204 No Content không parse JSON
-  return true;
+export async function toggleStaffStatus(staffId) {
+  return handleFetch(API_ENDPOINTS.STAFF.TOGGLE_STATUS(staffId), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Failed to toggle staff status");
 }
 
 export async function uploadAvatarStaffImage(formData) {
@@ -108,58 +127,6 @@ export async function removeOldAvatarStaffImage(imageUrl) {
   }
   const data = await res.json();
   return data.message;
-}
-export async function unlockStaff(staffId) {
-  const res = await fetch(API_ENDPOINTS.STAFF.UNLOCK(staffId), {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
-    },
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || "Failed to unlock staff");
-  }
-
-  return true;
-}
-
-export async function toggleStaffStatus(staffId) {
-  const res = await fetch(API_ENDPOINTS.STAFF.TOGGLE_STATUS(staffId), {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
-    },
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || "Failed to toggle staff status");
-  }
-
-  return true;
-}
-//BookApproval api ///////////////////////////////////////
-// Hàm dùng chung để xử lý fetch và lỗi
-async function handleFetch(url, options, defaultError) {
-  const res = await fetch(url, options);
-  if (!res.ok) {
-    let errorMessage = defaultError;
-    try {
-      const data = await res.json();
-      errorMessage = data.message || errorMessage;
-    } catch {
-      if (res.status === 500) {
-        errorMessage = "Lỗi hệ thống.";
-      }
-    }
-    throw new Error(errorMessage);
-  }
-
-  return options?.method === "PUT" ? true : res.json();
 }
 
 // Lấy tất cả BookApproval

@@ -9,7 +9,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
     limit: "",
     startDate: "",
     endDate: "",
-    book: null,
+    books: [],
     description: "",
   });
   const [books, setBooks] = useState([]);
@@ -31,7 +31,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
           limit: editingPromotion.quantity,
           startDate: editingPromotion.startAt.slice(0, 16),
           endDate: editingPromotion.endAt.slice(0, 16),
-          book: editingPromotion.book?.bookId || null,
+          books: Array.isArray(editingPromotion.books) ? editingPromotion.books.map(b => b.bookId) : [],
           description: editingPromotion.description || "",
         });
       } else {
@@ -41,7 +41,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
           limit: "",
           startDate: "",
           endDate: "",
-          book: null,
+          books: [],
           description: "",
         });
       }
@@ -52,7 +52,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
   const handleSubmit = async () => {
     try {
-      if (!form.name || !form.value || !form.limit || !form.startDate || !form.endDate || !form.book) {
+      if (!form.name || !form.value || !form.limit || !form.startDate || !form.endDate || !form.books?.length) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Vui lòng điền đầy đủ thông tin" }}));
         return;
       }
@@ -73,7 +73,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         quantity: parseInt(form.limit, 10),
         startAt: form.startDate,
         endAt: form.endDate,
-        bookIds: [form.book],
+        bookIds: form.books,
       };
 
       if (editingPromotion) {
@@ -97,14 +97,14 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
       <div className="bg-slate-900 w-full max-w-2xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh] text-white custom-scrollbar">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{editingPromotion ? "Cập nhật Promotion" : "Tạo Promotion Mới"}</h2>
+          <h2 className="text-xl font-bold">{editingPromotion ? "Cập nhật Khuyến mãi" : "Tạo Khuyến mãi Mới"}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
         </div>
 
         {/* Form */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm">Tên Promotion *</label>
+            <label className="text-sm">Tên Khuyến mãi *</label>
             <input
               type="text"
               className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
@@ -151,16 +151,21 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         </div>
 
         {/* Chọn sách */}
-        <div className="mt-4">
+    <div className="mt-4">
           <label className="text-sm">Chọn sách áp dụng *</label>
           <div className="mt-2 space-y-2 bg-slate-800 p-3 rounded max-h-40 overflow-y-auto">
             {books.map((b) => (
               <label key={b.bookId} className="flex items-center space-x-3">
                 <input
-                  type="radio"
-                  name="selectedBook"
-                  checked={form.book === b.bookId}
-                  onChange={() => setForm({ ...form, book: b.bookId })}
+                  type="checkbox"
+                  checked={form.books.includes(b.bookId)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setForm({ ...form, books: [...form.books, b.bookId] });
+                    } else {
+                      setForm({ ...form, books: form.books.filter(id => id !== b.bookId) });
+                    }
+                  }}
                 />
                 <img src={b.coverUrl} alt={b.title} className="w-10 h-14 object-cover rounded" />
                 <div>
@@ -176,7 +181,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
         {/* Mô tả */}
         <div className="mt-4">
-          <label className="text-sm">Mô tả promotion</label>
+            <label className="text-sm">Mô tả khuyến mãi</label>
           <textarea
             rows="3"
             className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
@@ -189,7 +194,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         <div className="flex justify-end gap-3 mt-6">
           <button className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500" onClick={onClose}>Hủy</button>
           <button className="px-4 py-2 rounded bg-orange-500 hover:bg-orange-600" onClick={handleSubmit}>
-            {editingPromotion ? "Cập nhật" : "Tạo Promotion"}
+            {editingPromotion ? "Cập nhật" : "Tạo Khuyến mãi"}
           </button>
         </div>
       </div>

@@ -26,6 +26,7 @@ import ChapterEdit from "../pages/owner/ChapterEdit";
 import OwnerOrders from "../pages/owner/OwnerOrders";
 import OrderDetail from "../pages/owner/OrderDetail";
 import PromotionPage from "../pages/owner/PromotionPage";
+import PromotionDetailPage from "../pages/owner/PromotionDetailPage";
 import OwnerReviews from "../pages/owner/OwnerReviews";
 import SupportChat from "../pages/owner/SupportChat";
 import BookDetailOwnerPage from "../pages/owner/BookDetailPage";
@@ -65,17 +66,16 @@ function AppRoutes() {
       <Route path="/listening" element={<ListeningPage />} />
       <Route path="/forum" element={<ForumPage />} />
       <Route path="/wishlist" element={<WishListPage />} />
-      <Route path="/audiobooks" element={<AudiobookPage />} />
-      <Route path="/stories" element={<StoryPage />} />
+      <Route path="/stories" element={<AudiobookPage />} />
+      <Route path="/audiobooks" element={<StoryPage />} />
       <Route path="/bookdetails/:id" element={<BookDetailPage />} />
       {/* Reader dùng ReaderManager làm layout */}
       <Route path="/reader/:id" element={<ReaderPage />} />
       <Route path="/player/:id" element={<PlayerPage />} />
       {/* Routes cho staff/admin */}
       {/* Demo: Chỉ cấu hình 1 route admin để demo */}
-      <Route path="/admin" element={AdminPage} />
-      
       {/* Các route khác giữ nguyên không bảo vệ để demo */}
+      <Route path="/admin" element={<AdminPage />} />
       <Route path="/admin/staff" element={<StaffManagerPage />} />
       <Route path="/admin/profile" element={<AdminProfile />} />
       <Route path="/staff" element={<StaffPage />} />
@@ -100,10 +100,17 @@ function AppRoutes() {
         path="/owner/books/:bookId/chapters/new"
         element={<ChapterForm />}
       />
-      <Route path="/owner/books/:bookId/chapters/edit/:chapterId" element={<ChapterEdit />} />
+      <Route
+        path="/owner/books/:bookId/chapters/edit/:chapterId"
+        element={<ChapterEdit />}
+      />
       <Route path="/owner/sales-history" element={<OwnerOrders />} />
       <Route path="/owner/orders/:orderId" element={<OrderDetail />} />
       <Route path="/owner/promotions" element={<PromotionPage />} />
+      <Route
+        path="/owner/promotions/:promotionId"
+        element={<PromotionDetailPage />}
+      />
       <Route path="/owner/feedback" element={<OwnerReviews />} />
       <Route path="/owner/chat" element={<SupportChat />} />
       <Route path="/owner/books/:id" element={<BookDetailOwnerPage />} />
@@ -115,9 +122,12 @@ function AppRoutes() {
       <Route path="/change-password" element={<ChangePassword />} />
       {/* Routes cho authentication */}
       <Route path="/auth" element={<AuthenticationPage />} />
-      <Route path="/auth/change-password" element={<AuthenticationManager defaultTab="change" />} />
+      <Route
+        path="/auth/change-password"
+        element={<AuthenticationManager defaultTab="change" />}
+      />
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
-      
+
       {/* Access Denied page */}
       <Route path="/access-denied" element={<AccessDenied />} />
     </Routes>
