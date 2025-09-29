@@ -61,7 +61,6 @@ export default function BookOwnerDetailModal({
           )}
           <div>
             <h4 className="text-lg font-medium text-gray-900">{owner.fullName || 'Chưa cập nhật'}</h4>
-            <p className="text-gray-600">{owner.email}</p>
             <div className="mt-1 text-sm text-gray-600">
               📧 {owner.email}
             </div>
@@ -100,14 +99,6 @@ export default function BookOwnerDetailModal({
             <div className="text-sm text-gray-600">Ngày tạo tài khoản</div>
             <div className="text-lg font-semibold text-gray-900">
               {new Date(owner.createdAt).toLocaleDateString('vi-VN')}
-            </div>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg col-span-2">
-            <div className="text-sm text-gray-600">Vai trò</div>
-            <div className="mt-1">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
-                <FaRegCircle className="mr-1" /> Book Owner
-              </span>
             </div>
           </div>
         </div>

@@ -15,5 +15,6 @@ namespace Services.Interfaces
         Task UpdateAsync(Category category);
         Task DeleteAsync(Category category);
         Task<List<Category>> GetChildrenAsync(int parentId);
+        Task<bool> IsNameExistsAsync(string name, int? excludeId = null);
     }
 }

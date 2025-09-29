@@ -1,9 +1,20 @@
 'use client';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
+import { switchRole, getCurrentRole, hasRole, canSwitchStaffAdmin } from '../../api/authApi';
+import { RiAdminLine, RiUserLine } from 'react-icons/ri';
 
 export default function StaffSidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleRoleSwitch = () => {
+    // Chuyển từ staff sang admin
+    const success = switchRole('admin');
+    if (success) {
+      navigate('/admin');
+    }
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Tổng quan', icon: 'ri-dashboard-line', href: '/staff' },
@@ -29,7 +40,7 @@ export default function StaffSidebar({ isOpen, onClose }) {
 
       <aside
         className={`fixed top-0 left-0 w-64 h-screen bg-slate-900 text-white z-50 shadow-lg transform transition-transform duration-200 
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}
       >
         {/* Logo */}
         <div className="p-6 flex items-center justify-between">
@@ -47,7 +58,7 @@ export default function StaffSidebar({ isOpen, onClose }) {
         </div>
 
         {/* Menu */}
-        <nav className="px-4 space-y-1">
+        <nav className="px-4 space-y-1 flex-1">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -68,6 +79,21 @@ export default function StaffSidebar({ isOpen, onClose }) {
             );
           })}
         </nav>
+
+        {/* Role Switch Button - chỉ hiển thị khi user có thể chuyển đổi giữa staff và admin - nằm dưới cùng */}
+        {canSwitchStaffAdmin() && (
+          <div className="px-4 pb-4 mt-auto">
+            <div className="border-t border-gray-700 pt-4">
+              <button
+                onClick={handleRoleSwitch}
+                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-slate-800 hover:text-white rounded transition-colors"
+              >
+                <RiAdminLine className="w-4 h-4" />
+                <span>Chuyển sang Admin</span>
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );

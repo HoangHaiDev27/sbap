@@ -34,5 +34,6 @@ namespace Repositories.Implementations
         public Task<Plan?> GetPlanByIdAsync(int planId) => _userDAO.GetPlanByIdAsync(planId);
         public Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt) => _userDAO.CreateSubscriptionAsync(userId, plan, startAt, endAt);
         public Task<bool> DeductWalletAsync(int userId, decimal amount) => _userDAO.DeductWalletAsync(userId, amount);
+        public Task<Subscription?> GetUserActiveSubscriptionAsync(int userId) => _userDAO.GetUserActiveSubscriptionAsync(userId);
     }
 }
