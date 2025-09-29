@@ -91,3 +91,52 @@ export async function toggleAccountStatus(userId) {
     method: "PATCH",
   }, "Đổi trạng thái tài khoản thất bại");
 }
+
+// Lấy thông tin subscription của user
+export async function getUserSubscription(userId) {
+  return handleFetch(API_ENDPOINTS.USER_MANAGEMENT.GET_USER_SUBSCRIPTION(userId), {
+    method: "GET",
+  }, "Lấy thông tin subscription thất bại");
+}
+
+// Gửi email cho book owner
+export async function sendEmailToBookOwner(emailData) {
+  const formData = new FormData();
+  formData.append('to', emailData.to);
+  formData.append('subject', emailData.subject);
+  formData.append('message', emailData.message);
+  if (emailData.cc) {
+    formData.append('cc', emailData.cc);
+  }
+  if (emailData.attachment) {
+    formData.append('attachment', emailData.attachment);
+  }
+
+  const token = localStorage.getItem("token");
+  const headers = {
+    ...(token && { "Authorization": `Bearer ${token}` }),
+  };
+
+  const res = await fetch(API_ENDPOINTS.USER_MANAGEMENT.SEND_EMAIL, {
+    method: "POST",
+    headers: headers,
+    body: formData,
+  });
+
+  // Đọc response body một lần duy nhất
+  const responseText = await res.text();
+  let responseData;
+  
+  try {
+    responseData = JSON.parse(responseText);
+  } catch (error) {
+    // Nếu không parse được JSON, dùng text làm message
+    responseData = { message: responseText || `HTTP ${res.status}: ${res.statusText}` };
+  }
+
+  if (!res.ok) {
+    throw new Error(responseData.message || "Gửi email thất bại");
+  }
+  
+  return responseData;
+}

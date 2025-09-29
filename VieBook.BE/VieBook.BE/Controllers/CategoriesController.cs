@@ -51,12 +51,19 @@ namespace VieBook.BE.Controllers
             {
                 if (string.IsNullOrWhiteSpace(dto.Name))
                 {
-                    return BadRequest("Tên thể loại không được để trống");
+                    return BadRequest(new { message = "Tên thể loại không được để trống" });
                 }
 
                 if (string.IsNullOrWhiteSpace(dto.Type))
                 {
-                    return BadRequest("Loại thể loại không được để trống");
+                    return BadRequest(new { message = "Loại thể loại không được để trống" });
+                }
+
+                // Kiểm tra tên category có trùng lặp không
+                var nameExists = await _categoryService.IsNameExistsAsync(dto.Name);
+                if (nameExists)
+                {
+                    return BadRequest(new { message = "Tên thể loại đã tồn tại" });
                 }
 
                 var category = _mapper.Map<Category>(dto);
@@ -79,16 +86,23 @@ namespace VieBook.BE.Controllers
             {
                 if (string.IsNullOrWhiteSpace(dto.Name))
                 {
-                    return BadRequest("Tên thể loại không được để trống");
+                    return BadRequest(new { message = "Tên thể loại không được để trống" });
                 }
 
                 if (string.IsNullOrWhiteSpace(dto.Type))
                 {
-                    return BadRequest("Loại thể loại không được để trống");
+                    return BadRequest(new { message = "Loại thể loại không được để trống" });
                 }
 
                 var existingCategory = await _categoryService.GetByIdAsync(id);
                 if (existingCategory == null) return NotFound();
+
+                // Kiểm tra tên category có trùng lặp không (loại trừ category hiện tại)
+                var nameExists = await _categoryService.IsNameExistsAsync(dto.Name, id);
+                if (nameExists)
+                {
+                    return BadRequest(new { message = "Tên thể loại đã tồn tại" });
+                }
 
                 // Cập nhật dữ liệu từ DTO vào entity hiện có
                 existingCategory.Name = dto.Name;

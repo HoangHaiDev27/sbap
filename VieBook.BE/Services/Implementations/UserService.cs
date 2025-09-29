@@ -30,5 +30,6 @@ namespace Services.Implementations
         public Task<Plan?> GetPlanByIdAsync(int planId) => _userRepo.GetPlanByIdAsync(planId);
         public Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt) => _userRepo.CreateSubscriptionAsync(userId, plan, startAt, endAt);
         public Task<bool> DeductWalletAsync(int userId, decimal amount) => _userRepo.DeductWalletAsync(userId, amount);
+        public Task<Subscription?> GetUserActiveSubscriptionAsync(int userId) => _userRepo.GetUserActiveSubscriptionAsync(userId);
     }
 }

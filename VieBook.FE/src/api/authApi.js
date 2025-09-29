@@ -378,6 +378,21 @@ export function isBookOwner() {
   return hasRole('owner');
 }
 
+// Kiểm tra user có role staff không
+export function isStaff() {
+  return hasRole('staff');
+}
+
+// Kiểm tra user có role admin không
+export function isAdmin() {
+  return hasRole('admin');
+}
+
+// Kiểm tra user có thể chuyển đổi giữa staff và admin
+export function canSwitchStaffAdmin() {
+  return isStaff() && isAdmin();
+}
+
 // Chuyển đổi role
 export function switchRole(newRole) {
   const roles = getAllRoles();
@@ -406,8 +421,8 @@ export function switchRole(newRole) {
   }
   
   // Nếu không tìm thấy role trong danh sách, vẫn cho phép chuyển đổi
-  // (để hỗ trợ chuyển đổi giữa owner và user)
-  console.log('Role not found in user roles, but allowing switch for owner/user toggle');
+  // (để hỗ trợ chuyển đổi giữa owner/user và staff/admin)
+  console.log('Role not found in user roles, but allowing switch for role toggle');
   localStorage.setItem(CURRENT_ROLE_KEY, normalizedNewRole);
   localStorage.setItem(ROLE_KEY, normalizedNewRole);
   

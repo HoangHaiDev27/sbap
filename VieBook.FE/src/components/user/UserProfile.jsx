@@ -22,6 +22,7 @@ export default function UserProfile() {
   const [changePasswordError, setChangePasswordError] = useState("");
   const [passwordStrength, setPasswordStrength] = useState({
     hasMinLength: false,
+    hasLetter: false,
     hasNumber: false,
     hasSpecialChar: false
   });
@@ -120,8 +121,9 @@ export default function UserProfile() {
     if (name === "newPassword") {
       setPasswordStrength({
         hasMinLength: value.length >= 6,
+        hasLetter: /[a-zA-Z]/.test(value),
         hasNumber: /\d/.test(value),
-        hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)
+        hasSpecialChar: false // No longer required
       });
     }
   };
@@ -134,12 +136,12 @@ export default function UserProfile() {
       errors.push("Mật khẩu phải có ít nhất 6 ký tự");
     }
     
-    if (!/\d/.test(password)) {
-      errors.push("Mật khẩu phải chứa ít nhất 1 chữ số");
+    if (!/[a-zA-Z]/.test(password)) {
+      errors.push("Mật khẩu phải chứa ít nhất 1 chữ cái");
     }
     
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      errors.push("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt");
+    if (!/\d/.test(password)) {
+      errors.push("Mật khẩu phải chứa ít nhất 1 chữ số");
     }
     
     return errors;
@@ -178,6 +180,7 @@ export default function UserProfile() {
       });
       setPasswordStrength({
         hasMinLength: false,
+        hasLetter: false,
         hasNumber: false,
         hasSpecialChar: false
       });
@@ -206,6 +209,7 @@ export default function UserProfile() {
     setChangePasswordError("");
     setPasswordStrength({
       hasMinLength: false,
+      hasLetter: false,
       hasNumber: false,
       hasSpecialChar: false
     });
@@ -385,15 +389,15 @@ export default function UserProfile() {
                     </span>
                   </div>
                   <div className="flex items-center text-xs">
-                    <i className={`ri-${passwordStrength.hasNumber ? 'check-line text-green-400' : 'close-line text-red-400'} mr-2`}></i>
-                    <span className={passwordStrength.hasNumber ? 'text-green-300' : 'text-gray-400'}>
-                      Chứa ít nhất 1 chữ số
+                    <i className={`ri-${passwordStrength.hasLetter ? 'check-line text-green-400' : 'close-line text-red-400'} mr-2`}></i>
+                    <span className={passwordStrength.hasLetter ? 'text-green-300' : 'text-gray-400'}>
+                      Chứa ít nhất 1 chữ cái
                     </span>
                   </div>
                   <div className="flex items-center text-xs">
-                    <i className={`ri-${passwordStrength.hasSpecialChar ? 'check-line text-green-400' : 'close-line text-red-400'} mr-2`}></i>
-                    <span className={passwordStrength.hasSpecialChar ? 'text-green-300' : 'text-gray-400'}>
-                      Chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)
+                    <i className={`ri-${passwordStrength.hasNumber ? 'check-line text-green-400' : 'close-line text-red-400'} mr-2`}></i>
+                    <span className={passwordStrength.hasNumber ? 'text-green-300' : 'text-gray-400'}>
+                      Chứa ít nhất 1 chữ số
                     </span>
                   </div>
                 </div>
