@@ -12,7 +12,7 @@ obj/
 # EF / DB tooling
 *.dbmdl
 *.opendb
-
+appsettings.json
 # Test/coverage
 TestResult*/
 TestResults/

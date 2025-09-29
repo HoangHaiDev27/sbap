@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import HeroSection from "../components/home/HeroSection";
 import BookCarousel from "../components/home/BookCarousel";
-import AuthorSection from "../components/home/AuthorSection";
 import { getAudioBooks } from "../api/audioBookApi";
 import {
   getReadBooks,
@@ -9,15 +8,23 @@ import {
   getRecommendations,
 } from "../api/bookApi";
 import { getUserId } from "../api/authApi";
+import { useHomeStore } from "../hooks/stores/homeStore";
 
 export default function HomeManager() {
-  const [audioBooks, setAudioBooks] = useState([]);
-  const [readBooks, setReadBooks] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    audioBooks,
+    readBooks,
+    categories,
+    recommendBooks,
+    loaded,
+    setHomeData,
+  } = useHomeStore();
+  const [loading, setLoading] = useState(!loaded);
   const [error, setError] = useState("");
-  const [recommendBooks, setRecommendBooks] = useState([]);
+
   useEffect(() => {
+    if (loaded) return; // đã có data rồi, không fetch lại
+
     let cancelled = false;
 
     async function fetchData() {
@@ -25,7 +32,6 @@ export default function HomeManager() {
         setLoading(true);
         setError("");
         const userId = getUserId();
-        console.log("🧑‍💻 [HomeManager] userId:", userId);
 
         const [audioRes, readRes, categoriesRes, recommendRes] =
           await Promise.all([
@@ -45,19 +51,25 @@ export default function HomeManager() {
           category: b.category || b.categoryIds?.join(", ") || "",
         });
 
-        setAudioBooks(
-          Array.isArray(audioRes) ? audioRes.map(mapToCarouselItem) : []
-        );
-        setReadBooks(
-          Array.isArray(readRes) ? readRes.map(mapToCarouselItem) : []
-        );
-        setRecommendBooks(
-          Array.isArray(recommendRes) ? recommendRes.map(mapToCarouselItem) : []
-        );
-        const catNames = Array.isArray(categoriesRes)
-          ? categoriesRes.map((c) => c.name).filter(Boolean)
-          : [];
-        setCategories(["Tất cả", ...catNames]);
+        const data = {
+          audioBooks: Array.isArray(audioRes)
+            ? audioRes.map(mapToCarouselItem)
+            : [],
+          readBooks: Array.isArray(readRes)
+            ? readRes.map(mapToCarouselItem)
+            : [],
+          recommendBooks: Array.isArray(recommendRes)
+            ? recommendRes.map(mapToCarouselItem)
+            : [],
+          categories: [
+            "Tất cả",
+            ...(Array.isArray(categoriesRes)
+              ? categoriesRes.map((c) => c.name).filter(Boolean)
+              : []),
+          ],
+        };
+
+        setHomeData(data); // ✅ lưu vào store Zustand
       } catch (e) {
         if (!cancelled) setError("Không thể tải dữ liệu trang chủ.");
       } finally {
@@ -69,34 +81,29 @@ export default function HomeManager() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loaded, setHomeData]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex-1">
         <HeroSection />
-
         <div className="px-6 py-8 space-y-12">
           <BookCarousel
             title="Gợi ý cho bạn"
             books={loading ? [] : recommendBooks}
           />
-
           <BookCarousel
             title="Sách nói chất lượng"
             hasCategories={true}
             categories={categories}
             books={loading ? [] : audioBooks}
           />
-
           <BookCarousel
             title="Sách đọc hấp dẫn"
             hasCategories={true}
             categories={categories}
             books={loading ? [] : readBooks}
           />
-
-          {/* <AuthorSection /> */}
         </div>
       </div>
     </div>
