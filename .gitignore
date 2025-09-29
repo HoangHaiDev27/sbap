@@ -13,6 +13,7 @@ obj/
 *.dbmdl
 *.opendb
 appsettings.json
+**/appsettings.json
 # Test/coverage
 TestResult*/
 TestResults/
