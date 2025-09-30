@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { RiHomeLine } from "react-icons/ri";
-import { register } from "../../api/authApi"; // 👈 import API
+import { register, checkEmailExists } from "../../api/authApi";
 
 export default function Register({ setActiveTab }) {
   const [formData, setFormData] = useState({
@@ -15,13 +15,60 @@ export default function Register({ setActiveTab }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const navigate = useNavigate();
 
+  // Debounce function để tránh gọi API quá nhiều lần
+  const debounce = useCallback((func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func.apply(null, args), delay);
+    };
+  }, []);
+
+  // Function kiểm tra email
+  const checkEmail = useCallback(async (email) => {
+    if (!email || !email.includes('@')) {
+      setEmailError("");
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    try {
+      const result = await checkEmailExists(email);
+      if (result.exists) {
+        setEmailError("Email này đã được sử dụng");
+      } else {
+        setEmailError("");
+      }
+    } catch (error) {
+      console.error("Error checking email:", error);
+      setEmailError("");
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  }, []);
+
+  // Debounced version của checkEmail
+  const debouncedCheckEmail = useCallback(
+    debounce(checkEmail, 500),
+    [debounce, checkEmail]
+  );
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Kiểm tra email khi user nhập
+    if (name === "email") {
+      setEmailError(""); // Clear error trước khi check
+      debouncedCheckEmail(value);
+    }
   };
 
   const showToast = (type, message) => {
@@ -32,6 +79,27 @@ export default function Register({ setActiveTab }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Kiểm tra email error trước
+    if (emailError) {
+      showToast("error", emailError);
+      return;
+    }
+
+    // Kiểm tra nếu đang check email
+    if (isCheckingEmail) {
+      showToast("error", "Đang kiểm tra email, vui lòng chờ...");
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      showToast(
+        "error",
+        "Mật khẩu phải có ít nhất 6 ký tự và bao gồm cả chữ và số!"
+      );
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       showToast("error", "Mật khẩu xác nhận không khớp!");
@@ -98,15 +166,52 @@ export default function Register({ setActiveTab }) {
         {/* Email */}
         <div>
           <label className="block text-sm text-gray-400 mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="example@gmail.com"
-            className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            required
-          />
+          <div className="relative">
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="example@gmail.com"
+              className={`w-full px-4 py-2.5 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 pr-10 ${
+                emailError 
+                  ? "border-red-500 focus:ring-red-500" 
+                  : "border-gray-600 focus:ring-orange-500"
+              }`}
+              required
+            />
+            {/* Loading spinner */}
+            {isCheckingEmail && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+              </div>
+            )}
+            {/* Success icon */}
+            {!isCheckingEmail && formData.email && !emailError && formData.email.includes('@') && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg className="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+            {/* Error icon */}
+            {!isCheckingEmail && emailError && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg className="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
+          {/* Error message */}
+          {emailError && (
+            <p className="mt-1 text-sm text-red-500 flex items-center">
+              <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {emailError}
+            </p>
+          )}
         </div>
 
         {/* Password */}
@@ -145,7 +250,7 @@ export default function Register({ setActiveTab }) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                   />
                 )}
               </svg>
@@ -191,7 +296,7 @@ export default function Register({ setActiveTab }) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                   />
                 )}
               </svg>

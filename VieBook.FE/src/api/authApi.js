@@ -243,6 +243,32 @@ export async function register(fullName, email, password) {
   return res.json();
 }
 
+// ==== Check Email Exists ====
+export async function checkEmailExists(email) {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.USERS.EMAIL}?email=${encodeURIComponent(email)}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    // Nếu trả về 200, email đã tồn tại
+    if (res.ok) {
+      return { exists: true };
+    }
+    
+    // Nếu trả về 404, email chưa tồn tại
+    if (res.status === 404) {
+      return { exists: false };
+    }
+    
+    // Các lỗi khác
+    throw new Error("Lỗi kiểm tra email");
+  } catch (err) {
+    console.error("Check email error:", err);
+    return { exists: false, error: err.message };
+  }
+}
+
 export async function forgotPassword(email) {
   try {
     const res = await fetch(API_ENDPOINTS.AUTH.FORGOT, {

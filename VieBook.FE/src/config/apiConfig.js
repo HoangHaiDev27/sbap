@@ -1,10 +1,13 @@
 // API Configuration
-const API_BASE_URL = "http://102.37.147.127:5757";
+const API_BASE_URL = "https://localhost:7058";
 
 // API Endpoints
 export const API_ENDPOINTS = {
   // User endpoints
-  USERS: `${API_BASE_URL}/api/users`,
+  USERS: {
+    BASE: `${API_BASE_URL}/api/users`,
+    EMAIL: `${API_BASE_URL}/api/users/email`,
+  },
   BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/${id}`,
   READ_BOOKS: `${API_BASE_URL}/api/books/read`,
   AUDIO_BOOKS: `${API_BASE_URL}/api/books/audio`,
