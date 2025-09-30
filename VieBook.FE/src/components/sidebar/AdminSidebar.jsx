@@ -1,8 +1,19 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
+import { switchRole, getCurrentRole, hasRole, canSwitchStaffAdmin } from "../../api/authApi";
+import { RiAdminLine, RiUserLine } from "react-icons/ri";
 
 export default function AdminSidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleRoleSwitch = () => {
+    // Chuyển từ admin sang staff
+    const success = switchRole('staff');
+    if (success) {
+      navigate('/staff');
+    }
+  };
 
   const menuItems = [
     { id: "dashboard", label: "Thống kê", icon: "ri-dashboard-line", href: "/admin" },
@@ -20,7 +31,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
       ></div>
 
       <aside
-        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg transform transition-transform duration-200 lg:translate-x-0 flex flex-col ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -33,7 +44,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
         </div>
 
         {/* Menu */}
-        <nav className="px-4">
+        <nav className="px-4 flex-1">
           <ul className="space-y-1">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.href;
@@ -56,6 +67,21 @@ export default function AdminSidebar({ isOpen, onClose }) {
             })}
           </ul>
         </nav>
+
+        {/* Role Switch Button - chỉ hiển thị khi user có thể chuyển đổi giữa staff và admin - nằm dưới cùng */}
+        {canSwitchStaffAdmin() && (
+          <div className="px-4 pb-4 mt-auto">
+            <div className="border-t border-gray-700 pt-4">
+              <button
+                onClick={handleRoleSwitch}
+                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
+              >
+                <RiUserLine className="w-4 h-4" />
+                <span>Chuyển sang Staff</span>
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );

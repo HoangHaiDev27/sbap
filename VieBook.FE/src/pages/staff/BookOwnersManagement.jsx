@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import BookOwnerDetailModal from "../../components/staff/book-owners/BookOwnerDetailModal";
 import EmailModal from "../../components/staff/book-owners/EmailModal";
 import ConfirmStatusModal from "../../components/staff/book-owners/ConfirmStatusModal";
-import { getBookOwnerAccounts, toggleAccountStatus } from "../../api/userManagementApi";
+import { getBookOwnerAccounts, toggleAccountStatus, getUserSubscription } from "../../api/userManagementApi";
 
 export default function BookOwnersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,6 +24,7 @@ export default function BookOwnersManagement() {
   const [bookOwners, setBookOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [subscriptions, setSubscriptions] = useState({});
 
   // Load data từ API
   useEffect(() => {
@@ -36,6 +37,25 @@ export default function BookOwnersManagement() {
       setError(null);
       const data = await getBookOwnerAccounts();
       setBookOwners(data);
+      
+      // Load subscription data for each book owner
+      const subscriptionPromises = data.map(async (owner) => {
+        try {
+          const subscription = await getUserSubscription(owner.userId);
+          return { userId: owner.userId, subscription };
+        } catch (err) {
+          console.warn(`Failed to load subscription for user ${owner.userId}:`, err);
+          return { userId: owner.userId, subscription: null };
+        }
+      });
+      
+      const subscriptionResults = await Promise.all(subscriptionPromises);
+      const subscriptionMap = {};
+      subscriptionResults.forEach(({ userId, subscription }) => {
+        subscriptionMap[userId] = subscription;
+      });
+      console.log('Loaded subscriptions:', subscriptionMap);
+      setSubscriptions(subscriptionMap);
     } catch (err) {
       setError(err.message);
       console.error('Error loading book owner accounts:', err);
@@ -93,27 +113,49 @@ export default function BookOwnersManagement() {
     setShowEmailModal(true);
   };
 
-  const renderVipBadge = (vip) => {
-    switch (vip) {
-      case "Gold":
-        return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
-            <FaCrown className="mr-1 text-yellow-500" /> Gold
-          </span>
-        );
-      case "Silver":
-        return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">
-            🥈 Silver
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
-            <FaRegCircle className="mr-1" /> None
-          </span>
-        );
+  const renderVipBadge = (owner) => {
+    const subscription = subscriptions[owner.userId];
+    
+    // Debug log để kiểm tra dữ liệu
+    console.log('Owner:', owner.userId, 'Subscription:', subscription);
+    
+    // Nếu có subscription và đang active
+    if (subscription && subscription.status === 'Active') {
+      const planId = subscription.planId || subscription.plan?.id;
+      const planName = subscription.plan?.name || subscription.planName;
+      
+      // Check theo PlanId trước
+      switch (planId) {
+        case 1:
+          return (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+              <FaCrown className="mr-1 text-yellow-500" /> Reader Plus
+            </span>
+          );
+        case 2:
+          return (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+              <FaCrown className="mr-1 text-purple-500" /> Owner Pro
+            </span>
+          );
+        default:
+          // Fallback theo tên plan nếu có
+          if (planName) {
+            return (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                <FaCrown className="mr-1 text-blue-500" /> {planName}
+              </span>
+            );
+          }
+      }
     }
+    
+    // Nếu không có subscription hoặc không active
+    return (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
+        <FaRegCircle className="mr-1" /> None
+      </span>
+    );
   };
 
   return (
@@ -145,7 +187,7 @@ export default function BookOwnersManagement() {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-800"
           >
             <option value="all">Tất cả trạng thái</option>
-            <option value="Active">Đang hoạt động</option>
+            <option value="Active">Hoạt động</option>
             <option value="Locked">Bị khóa</option>
             <option value="Pending">Chờ duyệt</option>
             <option value="Inactive">Không hoạt động</option>
@@ -217,9 +259,7 @@ export default function BookOwnersManagement() {
                     </td>
                     <td className="px-6 py-4">-</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
-                        <FaRegCircle className="mr-1" /> Book Owner
-                      </span>
+                      {renderVipBadge(owner)}
                     </td>
                     <td className="px-6 py-4">
                       <span

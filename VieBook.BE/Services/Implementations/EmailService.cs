@@ -21,6 +21,11 @@ namespace Services.Implementations
 
         public async Task SendEmailAsync(string to, string subject, string body)
         {
+            await SendEmailAsync(to, null, subject, body, null);
+        }
+
+        public async Task SendEmailAsync(string to, string? cc, string subject, string body, string? attachmentPath = null)
+        {
             var smtpServer = _config["EmailSettings:SmtpServer"];
             var port = int.Parse(_config["EmailSettings:Port"]);
             var senderEmail = _config["EmailSettings:SenderEmail"];
@@ -35,7 +40,19 @@ namespace Services.Implementations
                 Body = body,
                 IsBodyHtml = true
             };
+            
             message.To.Add(to);
+            
+            if (!string.IsNullOrWhiteSpace(cc))
+            {
+                message.CC.Add(cc);
+            }
+            
+            if (!string.IsNullOrWhiteSpace(attachmentPath) && System.IO.File.Exists(attachmentPath))
+            {
+                var attachment = new Attachment(attachmentPath);
+                message.Attachments.Add(attachment);
+            }
 
             using var client = new SmtpClient(smtpServer, port)
             {

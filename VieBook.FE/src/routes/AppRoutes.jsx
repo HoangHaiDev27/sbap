@@ -75,7 +75,6 @@ function AppRoutes() {
       <Route path="/player/:id" element={<PlayerPage />} />
       {/* Routes cho staff/admin */}
       {/* Demo: Chỉ cấu hình 1 route admin để demo */}
-
       {/* Các route khác giữ nguyên không bảo vệ để demo */}
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/admin/staff" element={<StaffManagerPage />} />
