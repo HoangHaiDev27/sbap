@@ -70,18 +70,36 @@ namespace Services.Implementations
             return afterUpload;
         }
 
-        public async Task<bool> DeleteImageAsync(string imageUrl)
-        {
-            if (string.IsNullOrWhiteSpace(imageUrl)) return false;
+        //public async Task<bool> DeleteImageAsync(string imageUrl)
+        //{
+        //    if (string.IsNullOrWhiteSpace(imageUrl)) return false;
 
-            var publicId = ExtractPublicIdFromUrl(imageUrl);
+        //    var publicId = ExtractPublicIdFromUrl(imageUrl);
+        //    if (string.IsNullOrEmpty(publicId)) return false;
+
+        //    var deletionParams = new DeletionParams(publicId);
+        //    var result = await _cloudinary.DestroyAsync(deletionParams);
+
+        //    return result.Result == "ok";
+        //}
+        public async Task<bool> DeleteImageAsync(string fileUrl, bool isRaw = false)
+        {
+            if (string.IsNullOrWhiteSpace(fileUrl)) return false;
+
+            var publicId = ExtractPublicIdFromUrl(fileUrl);
             if (string.IsNullOrEmpty(publicId)) return false;
 
             var deletionParams = new DeletionParams(publicId);
+            if (isRaw)
+            {
+                deletionParams.ResourceType = ResourceType.Raw;
+            }
+
             var result = await _cloudinary.DestroyAsync(deletionParams);
 
             return result.Result == "ok";
         }
+
         public async Task<string> UploadAvatarImageAsync(IFormFile file)
         {
             if (file.Length == 0) return null;

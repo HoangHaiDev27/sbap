@@ -31,6 +31,20 @@ namespace DataAccess.DAO
 
             return book;
         }
+        // full status
+        public async Task<Book?> GetBookDetail(int id)
+        {
+            var book = await _context.Books
+                            .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
+                            .Include(b => b.Categories)
+                            .Include(b => b.Chapters)
+                            .Include(b => b.BookReviews)
+                                .ThenInclude(r => r.User)
+                                .ThenInclude(u => u.UserProfile)
+                            .FirstOrDefaultAsync(b => b.BookId == id);
+
+            return book;
+        }
         //lấy book không có audio 
         public async Task<List<Book>> GetReadBooksAsync()
         {
@@ -143,7 +157,6 @@ namespace DataAccess.DAO
         public async Task<List<Book>> GetBooksByOwnerId(int ownerId)
         {
             return await _context.Books
-                .Where(b => b.Status == "Approved")
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters)
                     .ThenInclude(c => c.OrderItems)

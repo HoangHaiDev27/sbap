@@ -7,32 +7,23 @@ import {
   RiEdit2Line,
   RiDeleteBinLine,
   RiSoundModuleLine,
+  RiMessage2Line,
 } from "react-icons/ri";
-import { getCategories } from "../../../api/ownerBookApi";
-import { deleteBook } from "../../../api/ownerBookApi";
+import { getCategories, deleteBook } from "../../../api/ownerBookApi";
+import { getLatestBookApprovalByBookId } from "../../../api/staffApi";
 
-
-// biến books url
 const BOOK_API_URL = getCategories();
-
 const ITEMS_PER_PAGE = 5;
 
-// Hàm tạo danh sách số trang thông minh với dấu "..."
 function getPaginationRange(currentPage, totalPages, delta = 1) {
   const range = [];
   const left = Math.max(2, currentPage - delta);
   const right = Math.min(totalPages - 1, currentPage + delta);
 
   range.push(1);
-
   if (left > 2) range.push("...");
-
-  for (let i = left; i <= right; i++) {
-    range.push(i);
-  }
-
+  for (let i = left; i <= right; i++) range.push(i);
   if (right < totalPages - 1) range.push("...");
-
   if (totalPages > 1) range.push(totalPages);
 
   return range;
@@ -40,8 +31,11 @@ function getPaginationRange(currentPage, totalPages, delta = 1) {
 
 export default function BookTable({ books, categories, onBookDeleted }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedBook, setSelectedBook] = useState(null); // sách đang chọn để xóa
+  const [selectedBook, setSelectedBook] = useState(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
+
+  // popup từ chối
+  const [approvalInfo, setApprovalInfo] = useState(null);
 
   const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE);
 
@@ -50,7 +44,6 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // 🔗 Helper: render categories dạng badge
   const getCategoryTags = (categoryIds) => {
     if (!categoryIds || categoryIds.length === 0)
       return <span className="text-gray-400">Chưa có thể loại</span>;
@@ -73,7 +66,6 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     );
   };
 
-  // Helper: đổi status
   const getStatusBadge = (status) => {
     let colorClass = "bg-gray-600";
     let text = status;
@@ -87,6 +79,9 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     } else if (status === "InActive") {
       colorClass = "bg-red-600";
       text = "Tạm dừng";
+    } else if (status === "Refused") {
+      colorClass = "bg-purple-600";
+      text = "Bị từ chối";
     }
 
     return (
@@ -96,35 +91,54 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     );
   };
 
-  // Hàm xóa sách (DELETE -> theo id)
   const handleDeleteBook = async () => {
     if (!selectedBook) return;
     try {
       setLoadingDelete(true);
-
       await deleteBook(selectedBook.bookId);
-
       if (onBookDeleted) {
         onBookDeleted(selectedBook.bookId);
       }
-
-      window.dispatchEvent(new CustomEvent("app:toast", {
-        detail: { type: "success", message: `Đã xóa sách "${selectedBook.title}" thành công!` }
-      }));
-
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "success",
+            message: `Đã xóa sách "${selectedBook.title}" thành công!`,
+          },
+        })
+      );
       setSelectedBook(null);
     } catch (err) {
       console.error(err);
-
-      window.dispatchEvent(new CustomEvent("app:toast", {
-        detail: { type: "error", message: err.message || "Có lỗi khi xóa sách!" }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: err.message || "Có lỗi khi xóa sách!",
+          },
+        })
+      );
     } finally {
       setLoadingDelete(false);
     }
   };
 
-
+  const handleShowRefused = async (bookId) => {
+    try {
+      const approval = await getLatestBookApprovalByBookId(bookId);
+      setApprovalInfo(approval);
+    } catch (err) {
+      console.error(err);
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Không lấy được lý do từ chối!",
+          },
+        })
+      );
+    }
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -186,11 +200,13 @@ export default function BookTable({ books, categories, onBookDeleted }) {
 
                   <Link
                     to={`/owner/books/${book.bookId}/chapters`}
+                    state={{ bookTitle: book.title }}
                     className="p-2 bg-indigo-500 rounded hover:bg-indigo-600 transition"
                     title="Quản lý chương"
                   >
                     <RiBookOpenLine className="text-white text-lg" />
                   </Link>
+
                   <Link
                     to={`/owner/books/${book.bookId}/audio`}
                     className="p-2 bg-purple-500 rounded hover:bg-purple-600 transition"
@@ -198,6 +214,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                   >
                     <RiSoundModuleLine className="text-white text-lg" />
                   </Link>
+
                   <button
                     className="p-2 bg-red-500 rounded hover:bg-red-600 transition"
                     title="Xóa"
@@ -205,6 +222,16 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                   >
                     <RiDeleteBinLine className="text-white text-lg" />
                   </button>
+
+                  {book.status === "Refused" && (
+                    <button
+                      className="p-2 bg-orange-500 rounded hover:bg-orange-600 transition"
+                      title="Xem lý do bị từ chối"
+                      onClick={() => handleShowRefused(book.bookId)}
+                    >
+                      <RiMessage2Line className="text-white text-lg" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
@@ -212,59 +239,38 @@ export default function BookTable({ books, categories, onBookDeleted }) {
         </tbody>
       </table>
 
-      {/* Phân trang */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-4 space-x-2">
-          {/* Nút Trước */}
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 rounded text-sm ${currentPage === 1
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-          >
-            Trước
-          </button>
-
-          {/* Các số trang */}
-          {getPaginationRange(currentPage, totalPages).map((page, index) =>
-            page === "..." ? (
-              <span
-                key={`dots-${index}`}
-                className="px-3 py-1 text-sm text-gray-400 select-none"
-              >
-                ...
-              </span>
-            ) : (
+      {/* Popup từ chối */}
+      {approvalInfo && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+          <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Thông tin từ chối
+            </h2>
+            <p className="text-gray-300 mb-2">
+              <span className="font-bold text-orange-400">Nhân viên:</span>{" "}
+              {approvalInfo.staffName}
+            </p>
+            <p className="text-gray-300 mb-2">
+              <span className="font-bold text-orange-400">Hành động:</span>{" "}
+              {approvalInfo.action}
+            </p>
+            <p className="text-gray-300 mb-4">
+              <span className="font-bold text-orange-400">Ngày:</span>{" "}
+              {new Date(approvalInfo.createdAt).toLocaleString()}
+            </p>
+            <div className="flex justify-end">
               <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded text-sm ${currentPage === page
-                  ? "bg-orange-500 text-white"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  }`}
+                onClick={() => setApprovalInfo(null)}
+                className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
               >
-                {page}
+                Đóng
               </button>
-            )
-          )}
-
-          {/* Nút Sau */}
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded text-sm ${currentPage === totalPages
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-              : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-          >
-            Sau
-          </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Popup xác nhận xóa */}
+      {/* Popup xóa */}
       {selectedBook && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
           <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-96">
