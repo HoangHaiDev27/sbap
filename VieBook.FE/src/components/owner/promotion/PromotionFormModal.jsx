@@ -13,8 +13,8 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
     description: "",
   });
   const [books, setBooks] = useState([]);
+  const [bookSearch, setBookSearch] = useState(""); // search state
 
-  // Load sách và set dữ liệu edit
   useEffect(() => {
     if (isOpen) {
       const ownerId = getUserId();
@@ -45,6 +45,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
           description: "",
         });
       }
+      setBookSearch("");
     }
   }, [isOpen, editingPromotion]);
 
@@ -54,6 +55,11 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
     try {
       if (!form.name || !form.value || !form.limit || !form.startDate || !form.endDate || !form.books?.length) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Vui lòng điền đầy đủ thông tin" }}));
+        return;
+      }
+
+      if (parseInt(form.limit, 10) <= 0) {
+        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Số lượt sử dụng phải lớn hơn 0" }}));
         return;
       }
 
@@ -92,6 +98,11 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
     }
   };
 
+  // filter theo từ khóa search
+  const filteredBooks = books.filter(b => 
+    b.title.toLowerCase().includes(bookSearch.toLowerCase())
+  );
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-slate-900 w-full max-w-2xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh] text-white custom-scrollbar">
@@ -125,11 +136,16 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
             <label className="text-sm">Số lượt sử dụng tối đa *</label>
             <input
               type="number"
+              min="1"
               className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
               value={form.limit}
               onChange={(e) => setForm({ ...form, limit: e.target.value })}
             />
           </div>
+        </div>
+
+        {/* Thời gian ngang hàng */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="text-sm">Ngày bắt đầu *</label>
             <input
@@ -150,11 +166,18 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
           </div>
         </div>
 
-        {/* Chọn sách */}
-    <div className="mt-4">
+        {/* Search sách */}
+        <div className="mt-4">
           <label className="text-sm">Chọn sách áp dụng *</label>
+          <input
+            type="text"
+            placeholder="Tìm kiếm sách..."
+            className="w-full mt-2 px-3 py-2 rounded bg-slate-800"
+            value={bookSearch}
+            onChange={(e) => setBookSearch(e.target.value)}
+          />
           <div className="mt-2 space-y-2 bg-slate-800 p-3 rounded max-h-40 overflow-y-auto">
-            {books.map((b) => (
+            {filteredBooks.map((b) => (
               <label key={b.bookId} className="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -181,9 +204,9 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
         {/* Mô tả */}
         <div className="mt-4">
-            <label className="text-sm">Mô tả khuyến mãi</label>
+          <label className="text-sm">Mô tả khuyến mãi</label>
           <textarea
-            rows="3"
+            rows="6"
             className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
