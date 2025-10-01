@@ -21,7 +21,7 @@ namespace Repositories.Interfaces
         Task<List<User>> GetUsersByRoleAsync(string roleName);
         Task<User?> GetUserWithProfileAsync(int userId);
         Task<bool> AddRoleToUserByNameAsync(int userId, string roleName);
-        Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName);
+        Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName, string? portfolioUrl = null, string? bio = null, bool? agreeTos = null);
         // Plans & Subscriptions (owner packages)
         Task<List<Plan>> GetPlansByRoleAsync(string forRole);
         Task<Plan?> GetPlanByIdAsync(int planId);

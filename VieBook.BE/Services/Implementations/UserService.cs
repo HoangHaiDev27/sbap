@@ -24,8 +24,8 @@ namespace Services.Implementations
         public Task DeleteAsync(User book) => _userRepo.DeleteAsync(book);
         public Task<User?> GetByEmailAsync(string email) => _userRepo.GetByEmailAsync(email);
         public Task<bool> AddRoleToUserByNameAsync(int userId, string roleName) => _userRepo.AddRoleToUserByNameAsync(userId, roleName);
-        public Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName)
-            => _userRepo.UpsertUserProfileAsync(userId, fullName, phoneNumber, dateOfBirth, avatarUrl, bankNumber, bankName);
+        public Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName, string? portfolioUrl = null, string? bio = null, bool? agreeTos = null)
+            => _userRepo.UpsertUserProfileAsync(userId, fullName, phoneNumber, dateOfBirth, avatarUrl, bankNumber, bankName, portfolioUrl, bio, agreeTos);
         public Task<List<Plan>> GetPlansByRoleAsync(string forRole) => _userRepo.GetPlansByRoleAsync(forRole);
         public Task<Plan?> GetPlanByIdAsync(int planId) => _userRepo.GetPlanByIdAsync(planId);
         public Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt) => _userRepo.CreateSubscriptionAsync(userId, plan, startAt, endAt);

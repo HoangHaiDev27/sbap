@@ -10,6 +10,9 @@ namespace BusinessObject.Dtos
         public string? AvatarUrl { get; set; }
         public string? BankNumber { get; set; }
         public string? BankName { get; set; }
+        public string? PortfolioUrl { get; set; }
+        public string? Bio { get; set; }
+        public bool? AgreeTos { get; set; }
     }
 }
 

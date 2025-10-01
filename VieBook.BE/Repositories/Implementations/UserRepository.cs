@@ -28,8 +28,8 @@ namespace Repositories.Implementations
         public Task<List<User>> GetUsersByRoleAsync(string roleName) => _userDAO.GetUsersByRoleAsync(roleName);
         public Task<User?> GetUserWithProfileAsync(int userId) => _userDAO.GetUserWithProfileAsync(userId);
         public Task<bool> AddRoleToUserByNameAsync(int userId, string roleName) => _userDAO.AddRoleToUserByNameAsync(userId, roleName);
-        public Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName)
-            => _userDAO.UpsertUserProfileAsync(userId, fullName, phoneNumber, dateOfBirth, avatarUrl, bankNumber, bankName);
+        public Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName, string? portfolioUrl = null, string? bio = null, bool? agreeTos = null)
+            => _userDAO.UpsertUserProfileAsync(userId, fullName, phoneNumber, dateOfBirth, avatarUrl, bankNumber, bankName, portfolioUrl, bio, agreeTos);
         public Task<List<Plan>> GetPlansByRoleAsync(string forRole) => _userDAO.GetPlansByRoleAsync(forRole);
         public Task<Plan?> GetPlanByIdAsync(int planId) => _userDAO.GetPlanByIdAsync(planId);
         public Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt) => _userDAO.CreateSubscriptionAsync(userId, plan, startAt, endAt);
