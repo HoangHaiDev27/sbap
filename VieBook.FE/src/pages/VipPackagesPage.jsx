@@ -22,21 +22,27 @@ export default function VipPackagesPage() {
   }, []);
 
   useEffect(() => {
-    if (isOwner) {
-      (async () => {
-        try {
-          const plans = await getOwnerPlans();
-          setOwnerPlans(plans);
-        } catch (e) {
-          window.dispatchEvent(
-            new CustomEvent("app:toast", {
-              detail: { type: "error", message: e.message },
-            })
-          );
-        }
-      })();
-    }
-  }, [isOwner]);
+    (async () => {
+      try {
+        const plans = await getOwnerPlans();
+        setOwnerPlans(plans);
+      } catch (e) {
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { type: "error", message: e.message },
+          })
+        );
+      }
+    })();
+  }, []);
+
+  // Fallback public plans when API returns empty (e.g., unauthenticated customers)
+  const fallbackPlans = [
+    { planId: null, name: "Starter", price: 5000, period: "MONTHLY", conversionLimit: 5 },
+    { planId: null, name: "Pro", price: 12000, period: "MONTHLY", conversionLimit: 15 },
+    { planId: null, name: "Business", price: 30000, period: "QUARTERLY", conversionLimit: 50 },
+  ];
+  const displayPlans = Array.isArray(ownerPlans) && ownerPlans.length > 0 ? ownerPlans : fallbackPlans;
 
   const faqs = [
     {
@@ -79,70 +85,71 @@ export default function VipPackagesPage() {
           </div>
         </div>
 
-        {/* Nếu không phải owner */}
-        {!isOwner && (
-          <div className="mb-16 text-center bg-gray-800 border border-gray-700 rounded-2xl p-8">
-            <h3 className="text-2xl font-semibold mb-2">
-              Gói dành cho chủ sách
-            </h3>
-            <p className="text-gray-400">
-              Vui lòng trở thành chủ sách để mua các gói chuyển sách sang audio.
-            </p>
-          </div>
-        )}
+        {/* Ẩn thông báo đối với user bình thường theo yêu cầu */}
 
-        {/* Owner Plans */}
-        {isOwner && (
-          <div className="mb-12">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Gói dành cho chủ sách</h2>
-              <p className="text-gray-400">
-                Mua gói để chuyển sách sang audio theo hạn mức
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {ownerPlans.map((p) => (
-                <div
-                  key={p.planId}
-                  className="bg-gray-800 rounded-2xl p-6 border border-gray-700"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-semibold">{p.name}</h3>
-                    <span className="text-xs px-2 py-1 rounded-full bg-gray-700 border border-gray-600 uppercase">
-                      {p.period}
+        {/* Owner Plans (hiển thị cho tất cả, chỉ owner mới mua được) */}
+        <div className="mb-12">
+          <div className="text-center mb-12">
+            {isOwner ? (
+              <>
+                <h2 className="text-3xl font-bold mb-4">Gói dành cho chủ sách</h2>
+                <p className="text-gray-400">
+                  Mua gói để chuyển sách sang audio theo hạn mức
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-3xl font-bold mb-4">Các gói chuyển sách sang audio</h2>
+                <p className="text-gray-400">
+                  Dành cho chủ sách. Vui lòng trở thành chủ sách để mua.
+                </p>
+              </>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {displayPlans.map((p) => (
+              <div
+                key={p.planId || p.name}
+                className="bg-gray-800 rounded-2xl p-6 border border-gray-700"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-semibold">{p.name}</h3>
+                  <span className="text-xs px-2 py-1 rounded-full bg-gray-700 border border-gray-600 uppercase">
+                    {p.period}
+                  </span>
+                </div>
+                <div className="text-2xl font-bold text-orange-500 mb-3">
+                  {p.price?.toLocaleString("vi-VN")} coin
+                </div>
+                <ul className="text-sm text-gray-300 space-y-2 mb-4">
+                  <li className="flex items-start">
+                    <i className="ri-sound-module-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                    Số lượt chuyển đổi:{" "}
+                    <span className="ml-1 text-white font-medium">
+                      {p.conversionLimit} lần/kỳ
                     </span>
-                  </div>
-                  <div className="text-2xl font-bold text-orange-500 mb-3">
-                    {p.price?.toLocaleString("vi-VN")} coin
-                  </div>
-                  <ul className="text-sm text-gray-300 space-y-2 mb-4">
-                    <li className="flex items-start">
-                      <i className="ri-sound-module-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Số lượt chuyển đổi:{" "}
-                      <span className="ml-1 text-white font-medium">
-                        {p.conversionLimit} lần/kỳ
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <i className="ri-time-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Chu kỳ:{" "}
-                      <span className="ml-1 capitalize">
-                        {p.period.toLowerCase()}
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <i className="ri-recycle-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Tự gia hạn: <span className="ml-1">Không (mua lẻ)</span>
-                    </li>
-                    <li className="flex items-start">
-                      <i className="ri-book-open-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Phạm vi: Chuyển đổi sách sang audio trực tuyến
-                    </li>
-                    <li className="flex items-start">
-                      <i className="ri-customer-service-2-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Hỗ trợ: Trong giờ hành chính
-                    </li>
-                  </ul>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="ri-time-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                    Chu kỳ:{" "}
+                    <span className="ml-1 capitalize">
+                      {String(p.period || '').toLowerCase()}
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="ri-recycle-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                    Tự gia hạn: <span className="ml-1">Không (mua lẻ)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <i className="ri-book-open-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                    Phạm vi: Chuyển đổi sách sang audio trực tuyến
+                  </li>
+                  <li className="flex items-start">
+                    <i className="ri-customer-service-2-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                    Hỗ trợ: Trong giờ hành chính
+                  </li>
+                </ul>
+                {isOwner && p.planId ? (
                   <button
                     disabled={loading}
                     onClick={async () => {
@@ -153,11 +160,19 @@ export default function VipPackagesPage() {
                   >
                     Mua bằng coin
                   </button>
-                </div>
-              ))}
-            </div>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full py-3 rounded-lg bg-gray-700 text-gray-300 cursor-not-allowed"
+                    title={isOwner ? "Gói minh họa - vui lòng đăng nhập để xem gói thực" : "Chỉ chủ sách (book owner) mới có thể mua"}
+                  >
+                    {isOwner ? "Gói minh họa" : "Chỉ dành cho chủ sách"}
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Modal xác nhận mua gói */}
         {confirmOpen && confirmPlan && (
