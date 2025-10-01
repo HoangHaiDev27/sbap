@@ -188,5 +188,14 @@ namespace DataAccess
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<Subscription?> GetUserActiveSubscriptionAsync(int userId)
+        {
+            return await _context.Subscriptions
+                .Include(s => s.Plan)
+                .Where(s => s.UserId == userId && s.Status == "Active")
+                .OrderByDescending(s => s.CreatedAt)
+                .FirstOrDefaultAsync();
+        }
     }
 }

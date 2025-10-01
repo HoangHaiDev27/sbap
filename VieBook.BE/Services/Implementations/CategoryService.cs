@@ -29,5 +29,7 @@ namespace Services.Implementations
         public Task DeleteAsync(Category category) => _categoryRepo.DeleteAsync(category);
 
         public Task<List<Category>> GetChildrenAsync(int parentId) => _categoryRepo.GetChildrenAsync(parentId);
+
+        public Task<bool> IsNameExistsAsync(string name, int? excludeId = null) => _categoryRepo.IsNameExistsAsync(name, excludeId);
     }
 }

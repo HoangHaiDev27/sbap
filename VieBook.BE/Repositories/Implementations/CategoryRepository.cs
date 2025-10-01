@@ -29,5 +29,7 @@ namespace Repositories.Implementations
         public Task DeleteAsync(Category category) => _categoryDAO.DeleteAsync(category);
 
         public Task<List<Category>> GetChildrenAsync(int parentId) => _categoryDAO.GetChildrenAsync(parentId);
+
+        public Task<bool> IsNameExistsAsync(string name, int? excludeId = null) => _categoryDAO.IsNameExistsAsync(name, excludeId);
     }
 }

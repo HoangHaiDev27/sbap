@@ -27,5 +27,6 @@ namespace Repositories.Interfaces
         Task<Plan?> GetPlanByIdAsync(int planId);
         Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt);
         Task<bool> DeductWalletAsync(int userId, decimal amount);
+        Task<Subscription?> GetUserActiveSubscriptionAsync(int userId);
     }
 }

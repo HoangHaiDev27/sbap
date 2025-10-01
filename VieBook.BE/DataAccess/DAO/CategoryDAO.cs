@@ -61,5 +61,18 @@ namespace DataAccess.DAO
                 .ToListAsync();
         }
 
+        // Kiểm tra tên category có trùng lặp không
+        public async Task<bool> IsNameExistsAsync(string name, int? excludeId = null)
+        {
+            var query = _context.Categories.Where(c => c.Name == name);
+            
+            if (excludeId.HasValue)
+            {
+                query = query.Where(c => c.CategoryId != excludeId.Value);
+            }
+            
+            return await query.AnyAsync();
+        }
+
     }
 }

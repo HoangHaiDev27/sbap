@@ -12,11 +12,15 @@ namespace VieBook.BE.Controllers
     {
         private readonly IUserManagementService _userManagementService;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
+        private readonly IUserService _userService;
 
-        public StaffController(IUserManagementService userManagementService, IMapper mapper)
+        public StaffController(IUserManagementService userManagementService, IMapper mapper, IEmailService emailService, IUserService userService)
         {
             _userManagementService = userManagementService;
             _mapper = mapper;
+            _emailService = emailService;
+            _userService = userService;
         }
 
         // GET: api/staff/book-owners
@@ -86,6 +90,51 @@ namespace VieBook.BE.Controllers
             {
                 Console.WriteLine($"[ERROR] GetCustomers: {ex}");
                 return StatusCode(500, new { message = "Có lỗi xảy ra khi lấy danh sách customers" });
+            }
+        }
+
+        // GET: api/staff/users/{id}/subscription
+        [HttpGet("users/{id}/subscription")]
+        public async Task<ActionResult> GetUserSubscription(int id)
+        {
+            try
+            {
+                var subscription = await _userService.GetUserActiveSubscriptionAsync(id);
+                if (subscription == null)
+                {
+                    return Ok(new { message = "User không có subscription active", subscription = (object?)null });
+                }
+
+                return Ok(new
+                {
+                    subscriptionId = subscription.SubscriptionId,
+                    userId = subscription.UserId,
+                    planId = subscription.PlanId,
+                    status = subscription.Status,
+                    autoRenew = subscription.AutoRenew,
+                    startAt = subscription.StartAt,
+                    endAt = subscription.EndAt,
+                    remainingConversions = subscription.RemainingConversions,
+                    cancelAt = subscription.CancelAt,
+                    createdAt = subscription.CreatedAt,
+                    plan = new
+                    {
+                        planId = subscription.Plan.PlanId,
+                        name = subscription.Plan.Name,
+                        forRole = subscription.Plan.ForRole,
+                        period = subscription.Plan.Period,
+                        price = subscription.Plan.Price,
+                        currency = subscription.Plan.Currency,
+                        trialDays = subscription.Plan.TrialDays,
+                        conversionLimit = subscription.Plan.ConversionLimit,
+                        status = subscription.Plan.Status
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetUserSubscription: {ex}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi lấy thông tin subscription" });
             }
         }
 
@@ -214,5 +263,82 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new { message = "Có lỗi xảy ra khi lấy danh sách users theo role" });
             }
         }
+
+        // POST: api/staff/send-email
+        [HttpPost("send-email")]
+        public async Task<IActionResult> SendEmail([FromForm] SendEmailRequest request)
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] SendEmail: To={request.To}, Subject={request.Subject}");
+                
+                // Validation
+                if (string.IsNullOrWhiteSpace(request.To))
+                {
+                    return BadRequest(new { message = "Email người nhận không được để trống" });
+                }
+                
+                if (string.IsNullOrWhiteSpace(request.Subject))
+                {
+                    return BadRequest(new { message = "Tiêu đề email không được để trống" });
+                }
+                
+                if (string.IsNullOrWhiteSpace(request.Message))
+                {
+                    return BadRequest(new { message = "Nội dung email không được để trống" });
+                }
+
+                // Save attachment if provided
+                string? attachmentPath = null;
+                if (request.Attachment != null && request.Attachment.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "email-attachments");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+                    
+                    var fileName = $"{Guid.NewGuid()}_{request.Attachment.FileName}";
+                    attachmentPath = Path.Combine(uploadsFolder, fileName);
+                    
+                    using (var stream = new FileStream(attachmentPath, FileMode.Create))
+                    {
+                        await request.Attachment.CopyToAsync(stream);
+                    }
+                }
+
+                // Send email using EmailService
+                await _emailService.SendEmailAsync(
+                    request.To, 
+                    request.Cc, 
+                    request.Subject, 
+                    request.Message, 
+                    attachmentPath
+                );
+                
+                Console.WriteLine($"[DEBUG] SendEmail: Email sent successfully to {request.To}");
+                
+                return Ok(new { 
+                    message = "Email đã được gửi thành công",
+                    to = request.To,
+                    subject = request.Subject,
+                    sentAt = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] SendEmail: {ex}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi gửi email" });
+            }
+        }
+    }
+
+    public class SendEmailRequest
+    {
+        public string To { get; set; } = string.Empty;
+        public string? Cc { get; set; }
+        public string Subject { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public IFormFile? Attachment { get; set; }
     }
 }
