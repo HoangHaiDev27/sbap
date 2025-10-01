@@ -1055,9 +1055,9 @@ END
    ========================================================= */
 INSERT INTO dbo.Plans(Name, ForRole, Period, Price, Currency, TrialDays, ConversionLimit, Status)
 VALUES
-  (N'Owner Week',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
-  (N'Owner Month', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
-  (N'Owner Year',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
+  (N'Gói tuần',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
+  (N'Gói tháng', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
+  (N'Gói năm',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
 
 DECLARE @ReaderPlanId INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Reader Plus');
 DECLARE @OwnerPlanId  INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Owner Month');

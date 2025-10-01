@@ -246,7 +246,7 @@ export async function register(fullName, email, password) {
 // ==== Check Email Exists ====
 export async function checkEmailExists(email) {
   try {
-    const res = await fetch(`${API_ENDPOINTS.USERS.EMAIL}?email=${encodeURIComponent(email)}`, {
+    const res = await fetch(`${API_ENDPOINTS.USER_EMAIL}?email=${encodeURIComponent(email)}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
