@@ -202,10 +202,52 @@ namespace Services.Implementations
             var token = _jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
             var verifyUrl = $"{frontendUrl}/auth/verify-email?token={token}";
 
-            await _emailService.SendEmailAsync(user.Email, "Xác thực tài khoản VieBook",
-                $"<p>Xin chào {request.FullName},</p>" +
-                $"<p>Vui lòng click vào link sau để kích hoạt tài khoản:</p>" +
-                $"<a href='{verifyUrl}'>Xác thực email</a>");
+            await _emailService.SendEmailAsync(
+                user.Email,
+                "Xác thực tài khoản VieBook",
+                $@"
+                <div style='font-family: Arial, sans-serif; background-color:#1a1a1a; color:#f5f5f5; padding:30px; border-radius:10px; max-width:600px; margin:auto;'>
+        
+                    <!-- Logo + Text -->
+                    <div style='text-align:center; margin-bottom:25px; display:flex; align-items:center; justify-content:center; gap:10px;'>
+                        <img src='https://res.cloudinary.com/dfrugzmdt/image/upload/v1759167979/logo_fniaot.png' alt='VieBook Logo' style='height:50px;'/>
+                        <span style='font-size:26px; font-weight:bold; color:#ff6600;'>VieBook</span>
+                    </div>
+
+                    <!-- Header -->
+                    <h2 style='color:#ff6600; text-align:center;'>Xin chào {request.FullName},</h2>
+
+                    <!-- Content -->
+                    <p style='font-size:15px; line-height:1.6; text-align:center; margin:20px 0;'>
+                        Cảm ơn bạn đã đăng ký VieBook.<br/>
+                        Vui lòng xác thực email để kích hoạt tài khoản và bắt đầu hành trình đọc sách cùng chúng tôi.
+                    </p>
+
+                    <!-- CTA Button -->
+                    <div style='text-align:center; margin:30px 0;'>
+                        <a href='{verifyUrl}' 
+                           style='background-color:#ff6600; color:#fff; padding:14px 28px; text-decoration:none; 
+                                  border-radius:8px; font-size:16px; display:inline-block; font-weight:bold;'>
+                            ✅ Xác thực email
+                        </a>
+                    </div>
+
+                    <!-- Extra note -->
+                    <p style='font-size:14px; text-align:center; margin-top:25px; color:#ccc;'>
+                        Sau khi xác thực, bạn sẽ có thể khám phá kho sách phong phú và nhận nhiều ưu đãi hấp dẫn từ VieBook 🚀
+                    </p>
+
+                    <!-- Footer -->
+                    <hr style='border:0; border-top:1px solid #444; margin:30px 20px;'/>
+                    <div style='text-align:center; font-size:12px; color:#aaa;'>
+                        <p>📚 VieBook - Nền tảng đọc sách trực tuyến</p>
+                        <p>Email hỗ trợ: <a href='mailto:support@viebook.com' style='color:#ff6600;'>support@viebook.com</a></p>
+                        <p>© 2025 VieBook</p>
+                    </div>
+                </div>"
+            );
+
+
 
             return new RegisterResponseDto
             {
@@ -256,7 +298,7 @@ namespace Services.Implementations
         public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
         {
             var refreshToken = await _refreshTokenRepo.GetByTokenAsync(request.RefreshToken);
-            
+
             if (refreshToken == null || !refreshToken.IsActive)
                 throw new Exception("Refresh token không hợp lệ");
 
@@ -298,7 +340,7 @@ namespace Services.Implementations
         public async Task RevokeTokenAsync(string token, string reason = "Revoked")
         {
             var refreshToken = await _refreshTokenRepo.GetByTokenAsync(token);
-            
+
             if (refreshToken != null && refreshToken.IsActive)
             {
                 refreshToken.RevokedAt = DateTime.UtcNow;
@@ -310,7 +352,7 @@ namespace Services.Implementations
         public async Task<string> ActiveAccountAsync(string email)
         {
             var user = await _authRepo.GetByEmailAsync(email);
-            if (user == null) 
+            if (user == null)
                 return "Email không tồn tại";
 
             user.Status = "Active";

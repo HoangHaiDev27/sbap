@@ -39,54 +39,50 @@ export default function StaffSidebar({ isOpen, onClose }) {
       ></div>
 
       <aside
-        className={`fixed top-0 left-0 w-64 h-screen bg-slate-900 text-white z-50 shadow-lg transform transition-transform duration-200 
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}
+        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg transform transition-transform duration-200 lg:translate-x-0 flex flex-col ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
         {/* Logo */}
-        <div className="p-6 flex items-center justify-between">
+        <div className="p-6">
           <Link to="/" className="flex items-center space-x-3">
             <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
             <span className="text-2xl font-bold text-orange-500">VieBook</span>
           </Link>
-          {/* Nút close chỉ hiện mobile */}
-          <button
-            onClick={onClose}
-            className="lg:hidden text-gray-400 hover:text-white text-xl"
-          >
-            <i className="ri-close-line"></i>
-          </button>
         </div>
 
         {/* Menu */}
-        <nav className="px-4 space-y-1 flex-1">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.id}
-                to={item.href}
-                onClick={onClose} // đóng khi click menu trên mobile
-                className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors whitespace-nowrap
-                  ${
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-slate-800 hover:text-white'
-                  }`}
-              >
-                <i className={`${item.icon} w-5 h-5 flex items-center justify-center`}></i>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="px-4 flex-1">
+          <ul className="space-y-2">
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <li key={item.id}>
+                  <Link
+                    to={item.href}
+                    onClick={onClose} // đóng khi click menu trên mobile
+                    className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
+                      isActive
+                        ? 'bg-orange-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    <i className={`${item.icon} w-5 h-5 mr-3`}></i>
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
         {/* Role Switch Button - chỉ hiển thị khi user có thể chuyển đổi giữa staff và admin - nằm dưới cùng */}
         {canSwitchStaffAdmin() && (
-          <div className="px-4 pb-4 mt-auto">
+          <div className="px-4 pb-4">
             <div className="border-t border-gray-700 pt-4">
               <button
                 onClick={handleRoleSwitch}
-                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-slate-800 hover:text-white rounded transition-colors"
+                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
               >
                 <RiAdminLine className="w-4 h-4" />
                 <span>Chuyển sang Admin</span>

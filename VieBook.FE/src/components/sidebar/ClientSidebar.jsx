@@ -21,7 +21,7 @@ export default function ClientSidebar({ isOpen, onClose }) {
   const handleRoleSwitch = () => {
     // Chuyển đổi giữa customer và owner
     const currentRole = getCurrentRole();
-    const newRole = currentRole === "owner" ? "user" : "owner";
+    const newRole = currentRole === "owner" ? "customer" : "owner";
 
     const success = switchRole(newRole);
     if (success) {

@@ -17,9 +17,9 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
 
   const handleRoleSwitch = () => {
-    // Chuyển từ owner sang user
-    console.log('Switching from owner to user');
-    const success = switchRole('user');
+    // Chuyển từ owner sang customer
+    console.log('Switching from owner to customer');
+    const success = switchRole('customer');
     console.log('Switch result:', success);
     if (success) {
       navigate('/');
@@ -75,7 +75,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
                   to={item.href}
                   className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
                     pathname === item.href || activeMenu === item.id
-                      ? "bg-orange-500 text-white"
+                      ? "bg-orange-600 text-white"
                       : "text-gray-300 hover:bg-gray-800 hover:text-white"
                   }`}
                   onClick={() => {

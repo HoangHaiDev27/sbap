@@ -7,7 +7,7 @@ import GuestHeader from "../components/header/GuestHeader";
 
 export default function HeaderManager({ role, onToggleSidebar }) {
   switch (role) {
-    case "user":
+    case "customer":
       return <UserHeader onToggleSidebar={onToggleSidebar} />;
     case "staff":
       return <StaffHeader onToggleSidebar={onToggleSidebar} />;

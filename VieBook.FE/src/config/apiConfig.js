@@ -6,6 +6,7 @@ const API_BASE_URL = "http://localhost:5757";
 export const API_ENDPOINTS = {
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
+  USER_EMAIL: `${API_BASE_URL}/api/users/email`,
   BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/${id}`,
   READ_BOOKS: `${API_BASE_URL}/api/books/read`,
   AUDIO_BOOKS: `${API_BASE_URL}/api/books/audio`,

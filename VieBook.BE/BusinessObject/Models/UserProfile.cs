@@ -21,5 +21,17 @@ public partial class UserProfile
 
     public string? BankName { get; set; }
 
+    public bool IsPhoneVerified { get; set; }
+
+    public DateTime? PhoneVerifiedAt { get; set; }
+
+    public string? PortfolioUrl { get; set; }
+
+    public string? Bio { get; set; }
+
+    public bool AgreeTos { get; set; }
+
+    // Removed owner review workflow fields per requirements
+
     public virtual User User { get; set; } = null!;
 }

@@ -143,10 +143,13 @@ namespace VieBook.BE.Controllers
                 if (profile == null
                     || string.IsNullOrWhiteSpace(profile.PhoneNumber)
                     || string.IsNullOrWhiteSpace(profile.BankNumber)
-                    || string.IsNullOrWhiteSpace(profile.BankName))
+                    || string.IsNullOrWhiteSpace(profile.BankName)
+                    || profile.AgreeTos == false)
                 {
                     return BadRequest(new { message = "Vui lòng cập nhật đầy đủ thông tin cá nhân trước khi trở thành Book Owner" });
                 }
+
+                // Phone verification is optional in current setup
 
                 // Thêm role Owner nếu chưa có
                 var added = await _userService.AddRoleToUserByNameAsync(userId, "Owner");
@@ -199,7 +202,10 @@ namespace VieBook.BE.Controllers
                     dob,
                     dto.AvatarUrl,
                     dto.BankNumber,
-                    dto.BankName
+                    dto.BankName,
+                    dto.PortfolioUrl,
+                    dto.Bio,
+                    dto.AgreeTos
                 );
 
                 return Ok(new

@@ -21,7 +21,7 @@ export function setAuth(token, user, roles, refreshToken = null) {
     localStorage.setItem(ROLES_KEY, JSON.stringify(normalizedRoles));
     
     // Ưu tiên role user trước, sau đó mới đến các role khác
-    const rolePriority = ['user', 'customer', 'owner', 'staff', 'admin'];
+    const rolePriority = [ 'customer', 'owner', 'staff', 'admin'];
     let selectedRole = null;
     
     // Tìm role theo thứ tự ưu tiên
@@ -38,7 +38,7 @@ export function setAuth(token, user, roles, refreshToken = null) {
     }
     
     // Map backend role names to UI header roles
-    const roleMap = { customer: "user" };
+    const roleMap = { customer: "customer" };
     if (selectedRole && roleMap[selectedRole]) selectedRole = roleMap[selectedRole];
     
     if (selectedRole) {
@@ -243,6 +243,32 @@ export async function register(fullName, email, password) {
   return res.json();
 }
 
+// ==== Check Email Exists ====
+export async function checkEmailExists(email) {
+  try {
+    const res = await fetch(`${API_ENDPOINTS.USER_EMAIL}?email=${encodeURIComponent(email)}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    // Nếu trả về 200, email đã tồn tại
+    if (res.ok) {
+      return { exists: true };
+    }
+    
+    // Nếu trả về 404, email chưa tồn tại
+    if (res.status === 404) {
+      return { exists: false };
+    }
+    
+    // Các lỗi khác
+    throw new Error("Lỗi kiểm tra email");
+  } catch (err) {
+    console.error("Check email error:", err);
+    return { exists: false, error: err.message };
+  }
+}
+
 export async function forgotPassword(email) {
   try {
     const res = await fetch(API_ENDPOINTS.AUTH.FORGOT, {
@@ -386,6 +412,11 @@ export function isStaff() {
 // Kiểm tra user có role admin không
 export function isAdmin() {
   return hasRole('admin');
+}
+
+// Kiểm tra user có role customer không
+export function isCustomer() {
+  return hasRole('customer');
 }
 
 // Kiểm tra user có thể chuyển đổi giữa staff và admin
