@@ -14,7 +14,7 @@ export default function ChapterForm() {
   const [file, setFile] = useState(null);
   const [pdfPages, setPdfPages] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [status, setStatus] = useState("draft");
+  const [status, setStatus] = useState("Draft");
   const fileInputRef = useRef(null);
   const location = useLocation();
 
@@ -81,13 +81,42 @@ export default function ChapterForm() {
   };
 
   // Lưu chương
+  // Validate giá không âm
+  useEffect(() => {
+    if (price < 0) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Giá chương không được âm" },
+        })
+      );
+      setPrice(0);
+    }
+  }, [price]);
+
+  // Lưu chương
   const handleSaveChapter = async () => {
     if (!title.trim()) {
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Vui lòng nhập tiêu đề chương" } }));
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Vui lòng nhập tiêu đề chương" },
+        })
+      );
       return;
     }
     if (!content.trim()) {
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Nội dung chương trống" } }));
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Nội dung chương trống" },
+        })
+      );
+      return;
+    }
+    if (price < 0) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Giá chương không được âm" },
+        })
+      );
       return;
     }
 
@@ -106,15 +135,24 @@ export default function ChapterForm() {
         DurationSec: null,
         PriceAudio: price,
         UploadedAt: new Date().toISOString(),
+        Status: status, // gửi status chuẩn: "Draft" hoặc "Active"
       });
 
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Đã lưu chương thành công!" } }));
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "success", message: "Đã lưu chương thành công!" },
+        })
+      );
       navigate(`/owner/books/${bookId}/chapters`, {
         state: { bookTitle },
       });
     } catch (err) {
       console.error(err);
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Có lỗi khi lưu chương" } }));
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: err.message || "Có lỗi khi lưu chương" },
+        })
+      );
     } finally {
       setIsSaving(false);
     }
@@ -171,28 +209,28 @@ export default function ChapterForm() {
               <label className="block text-sm mb-1">Trạng thái</label>
               <div className="flex space-x-3">
                 <label
-                  className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "draft" ? "bg-purple-600 text-white" : "bg-gray-700"
+                  className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "Draft" ? "bg-purple-600 text-white" : "bg-gray-700"
                     }`}
                 >
                   <input
                     type="radio"
                     name="chapterStatus"
-                    value="draft"
-                    checked={status === "draft"}
+                    value="Draft"
+                    checked={status === "Draft"}
                     onChange={(e) => setStatus(e.target.value)}
                     className="hidden"
                   />
                   Bản nháp
                 </label>
                 <label
-                  className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "published" ? "bg-green-600 text-white" : "bg-gray-700"
+                  className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "Active" ? "bg-green-600 text-white" : "bg-gray-700"
                     }`}
                 >
                   <input
                     type="radio"
                     name="chapterStatus"
-                    value="published"
-                    checked={status === "published"}
+                    value="Active"
+                    checked={status === "Active"}
                     onChange={(e) => setStatus(e.target.value)}
                     className="hidden"
                   />
@@ -201,11 +239,8 @@ export default function ChapterForm() {
               </div>
             </div>
           </div>
-
         </div>
       </div>
-
-
 
       {/* Upload file chương */}
       <div

@@ -1379,3 +1379,6 @@ BEGIN
     (@BHS3, N'Chương 1: Hai đứa trẻ', 6, 'https://cdn/vb/hm3/ch1.pdf', 14, NULL, NULL, NULL),
     (@BHS3, N'Chương 2: Dưới bóng hoàng lan', 4, 'https://cdn/vb/hm3/ch2.pdf', 12, NULL, NULL, NULL);
 END
+
+ALTER TABLE Chapters
+ADD Status NVARCHAR(255) NULL;

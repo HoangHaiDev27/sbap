@@ -59,7 +59,8 @@ namespace DataAccess
             var chapter = await _context.Chapters.FindAsync(chapterId);
             if (chapter != null)
             {
-                _context.Chapters.Remove(chapter);
+                chapter.Status = "InActive";
+                _context.Chapters.Update(chapter);
                 await _context.SaveChangesAsync();
             }
         }

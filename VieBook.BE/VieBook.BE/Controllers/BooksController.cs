@@ -34,7 +34,7 @@ namespace VieBook.BE.Controllers
         [HttpGet("detail/{id:int}")]
         public async Task<ActionResult<BookDetailDTO>> GetBookDetailById(int id)
         {
-            var book = await _bookService.GetBookDetailAsync(id);
+            var book = await _bookService.GetBookDetail(id);
             if (book == null)
             {
                 return NotFound(new { message = $"Không tìm thấy sách với ID {id}" });

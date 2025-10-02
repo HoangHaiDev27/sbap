@@ -183,7 +183,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
               <td className="p-3 align-middle">
                 <div className="flex items-center space-x-2">
                   <Link
-                    to={`/owner/books/${book.bookId}/chapters`}
+                    to={`/owner/books/${book.bookId}`}
                     className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition"
                     title="Xem"
                   >
@@ -238,11 +238,59 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           ))}
         </tbody>
       </table>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 space-x-2">
+          {/* Nút Trước */}
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 rounded text-sm ${currentPage === 1
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+          >
+            Trước
+          </button>
+
+          {/* Các số trang */}
+          {getPaginationRange(currentPage, totalPages).map((p, i) =>
+            p === "..." ? (
+              <span key={i} className="px-3 py-1 text-gray-400">
+                ...
+              </span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                className={`px-3 py-1 rounded text-sm ${currentPage === p
+                    ? "bg-orange-500 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  }`}
+              >
+                {p}
+              </button>
+            )
+          )}
+
+          {/* Nút Sau */}
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1 rounded text-sm ${currentPage === totalPages
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+          >
+            Sau
+          </button>
+        </div>
+      )}
 
       {/* Popup từ chối */}
       {approvalInfo && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-          <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-96">
+          <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-[600px]">
             <h2 className="text-xl font-semibold text-white mb-4">
               Thông tin từ chối
             </h2>
@@ -251,12 +299,12 @@ export default function BookTable({ books, categories, onBookDeleted }) {
               {approvalInfo.staffName}
             </p>
             <p className="text-gray-300 mb-2">
-              <span className="font-bold text-orange-400">Hành động:</span>{" "}
-              {approvalInfo.action}
-            </p>
-            <p className="text-gray-300 mb-4">
               <span className="font-bold text-orange-400">Ngày:</span>{" "}
               {new Date(approvalInfo.createdAt).toLocaleString()}
+            </p>
+            <p className="text-gray-300 mb-4">
+              <span className="font-bold text-orange-400">Lý do:</span>{" "}
+              {approvalInfo.reason}
             </p>
             <div className="flex justify-end">
               <button

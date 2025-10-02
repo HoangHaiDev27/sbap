@@ -25,7 +25,9 @@ export default function ChapterView() {
         setPrice(data.priceAudio || 0);
         setIsFree(data.priceAudio === 0);
         setBookTitle(data.bookTitle || "Không xác định");
-        setStatus(data.uploadedAt ? "published" : "draft");
+
+        // 👇 lấy trực tiếp từ API
+        setStatus(data.status || "Draft");
 
         if (data.chapterSoftUrl) {
           const res = await fetch(data.chapterSoftUrl);
@@ -62,13 +64,18 @@ export default function ChapterView() {
           </span>
           {/* Trạng thái */}
           <span
-            className={`px-3 py-1 rounded-lg ${
-              status === "published"
+            className={`px-3 py-1 rounded-lg ${status === "Active"
                 ? "bg-green-600 text-white"
-                : "bg-purple-600 text-white"
-            }`}
+                : status === "InActive"
+                  ? "bg-red-600 text-white"
+                  : "bg-purple-600 text-white"
+              }`}
           >
-            {status === "published" ? "Phát hành" : "Bản nháp"}
+            {status === "Active"
+              ? "Phát hành"
+              : status === "InActive"
+                ? "Tạm dừng"
+                : "Bản nháp"}
           </span>
         </div>
       </div>

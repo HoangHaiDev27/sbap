@@ -184,5 +184,19 @@ export async function uploadChapterFile(chapterData) {
 
   return res.json();
 }
+// Dếm từ
+export async function getWordCountFromUrl(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Không lấy được file");
+    const text = await res.text();
+    // Tách từ bằng regex: chữ cái, số, bỏ ký tự đặc biệt
+    const words = text.trim().split(/\s+/);
+    return words.length;
+  } catch (err) {
+    console.error("Lỗi khi đếm từ:", err);
+    return 0;
+  }
+}
 
 ////////////////////////////
