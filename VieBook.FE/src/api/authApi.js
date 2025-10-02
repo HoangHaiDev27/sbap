@@ -414,6 +414,11 @@ export function isAdmin() {
   return hasRole('admin');
 }
 
+// Kiểm tra user có role customer không
+export function isCustomer() {
+  return hasRole('customer');
+}
+
 // Kiểm tra user có thể chuyển đổi giữa staff và admin
 export function canSwitchStaffAdmin() {
   return isStaff() && isAdmin();
