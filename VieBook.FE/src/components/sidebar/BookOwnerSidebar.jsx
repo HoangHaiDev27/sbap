@@ -17,9 +17,9 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
 
   const handleRoleSwitch = () => {
-    // Chuyển từ owner sang user
-    console.log('Switching from owner to user');
-    const success = switchRole('user');
+    // Chuyển từ owner sang customer
+    console.log('Switching from owner to customer');
+    const success = switchRole('customer');
     console.log('Switch result:', success);
     if (success) {
       navigate('/');
