@@ -45,7 +45,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
         {/* Menu */}
         <nav className="px-4 flex-1">
-          <ul className="space-y-1">
+          <ul className="space-y-2">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.href;
               return (
@@ -54,7 +54,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
                     to={item.href}
                     className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
                       isActive
-                        ? "bg-blue-600 text-white"
+                        ? "bg-orange-600 text-white"
                         : "text-gray-300 hover:bg-gray-800 hover:text-white"
                     }`}
                     onClick={onClose}
@@ -70,7 +70,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
         {/* Role Switch Button - chỉ hiển thị khi user có thể chuyển đổi giữa staff và admin - nằm dưới cùng */}
         {canSwitchStaffAdmin() && (
-          <div className="px-4 pb-4 mt-auto">
+          <div className="px-4 pb-4">
             <div className="border-t border-gray-700 pt-4">
               <button
                 onClick={handleRoleSwitch}
