@@ -21,7 +21,7 @@ export function setAuth(token, user, roles, refreshToken = null) {
     localStorage.setItem(ROLES_KEY, JSON.stringify(normalizedRoles));
     
     // Ưu tiên role user trước, sau đó mới đến các role khác
-    const rolePriority = ['user', 'customer', 'owner', 'staff', 'admin'];
+    const rolePriority = [ 'customer', 'owner', 'staff', 'admin'];
     let selectedRole = null;
     
     // Tìm role theo thứ tự ưu tiên
@@ -38,7 +38,7 @@ export function setAuth(token, user, roles, refreshToken = null) {
     }
     
     // Map backend role names to UI header roles
-    const roleMap = { customer: "user" };
+    const roleMap = { customer: "customer" };
     if (selectedRole && roleMap[selectedRole]) selectedRole = roleMap[selectedRole];
     
     if (selectedRole) {
