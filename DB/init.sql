@@ -1083,9 +1083,9 @@ END
    ========================================================= */
 INSERT INTO dbo.Plans(Name, ForRole, Period, Price, Currency, TrialDays, ConversionLimit, Status)
 VALUES
-  (N'Gói tuần',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
-  (N'Gói tháng', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
-  (N'Gói năm',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
+  (N'Gói tuần',  'Owner',    'Tuần',  69, 'VND', NULL, 10, 'Active'),
+  (N'Gói tháng', 'Owner',    'Tháng', 199,'VND', NULL, 60, 'Active'),
+  (N'Gói năm',  'Owner',    'Năm',  1999,'VND',NULL, 800,'Active');
 
 DECLARE @ReaderPlanId INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Reader Plus');
 DECLARE @OwnerPlanId  INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Owner Month');
@@ -1407,3 +1407,30 @@ BEGIN
     (@BHS3, N'Chương 1: Hai đứa trẻ', 6, 'https://cdn/vb/hm3/ch1.pdf', 14, NULL, NULL, NULL),
     (@BHS3, N'Chương 2: Dưới bóng hoàng lan', 4, 'https://cdn/vb/hm3/ch2.pdf', 12, NULL, NULL, NULL);
 END
+-- Thêm Users
+INSERT INTO Users (Email, PasswordHash, Status, CreatedAt, LastLoginAt, Wallet)
+VALUES 
+('huongnttde170298@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
+('tantvde170310@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
+('anhtvde170315@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
+('nhantdtde170313@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
+('haindhde170464@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 200);
+-- Thêm UserProfiles
+INSERT INTO UserProfiles (UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, BankNumber, BankName)
+VALUES
+(7, N'Admin', '0909000001', '1990-01-01', 'https://example.com/avatar/admin.png', 0, '111111', 'Vietcombank'),
+(8, N'Tấn Trần', '0909000002', '1992-02-02', 'https://example.com/avatar/staff.png', 0, '222222', 'Techcombank'),
+(9, N'Văn Anh', '0909000003', '1995-03-03', 'https://example.com/avatar/customer.png', 0, '333333', 'ACB'),
+(10, N'Trương Nhân', '0909000004', '1988-04-04', 'https://example.com/avatar/owner.png', 0, '444444', 'Sacombank'),
+(11, N'Nguyễn Đình Hoàng Hải', '0909000004', '1988-04-04', 'https://example.com/avatar/owner.png', 0, '444444', 'Sacombank');
+
+-- Gán Role cho từng User
+INSERT INTO UserRoles (UserId, RoleId)
+VALUES
+(7, 1), --Admin
+(7, 2), --Staff
+(8, 2), --Staff
+(9, 3), --Book Owner
+(9, 4), --Customer
+(10, 4), --Customer
+(11, 3); --Customer
