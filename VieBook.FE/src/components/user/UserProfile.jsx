@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { changePassword, isBookOwner } from "../../api/authApi";
 import { becomeOwner, upsertMyProfile } from "../../api/userApi";
+import OwnerApplicationStepper from "./OwnerApplicationStepper";
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -39,13 +40,8 @@ export default function UserProfile() {
   });
 
   const [tempData, setTempData] = useState(formData);
-  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    phoneNumber: "",
-    bankNumber: "",
-    bankName: "",
-    dateOfBirth: "",
-  });
+  const [showOwnerStepper, setShowOwnerStepper] = useState(false);
+  const [initialProfile, setInitialProfile] = useState({});
   const [isOwner, setIsOwner] = useState(isBookOwner());
 
   useEffect(() => {
@@ -69,34 +65,13 @@ export default function UserProfile() {
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: res?.message || "Đăng ký Book Owner thành công" } }));
       setIsOwner(true);
     } catch (err) {
-      // Nếu lỗi do hồ sơ chưa hoàn chỉnh, mở form điền thông tin
-      setShowCompleteProfile(true);
+      // Nếu lỗi do hồ sơ chưa hoàn chỉnh, mở Stepper đăng ký Owner
+      setInitialProfile({
+        fullName: formData.fullName,
+        phoneNumber: formData.phone,
+      });
+      setShowOwnerStepper(true);
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Vui lòng cập nhật thông tin cá nhân trước" } }));
-    }
-  };
-
-  const handleProfileFieldChange = (e) => {
-    const { name, value } = e.target;
-    setProfileForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmitProfile = async () => {
-    try {
-      const payload = {
-        phoneNumber: profileForm.phoneNumber,
-        bankNumber: profileForm.bankNumber,
-        bankName: profileForm.bankName,
-      };
-      if (profileForm.dateOfBirth) {
-        payload.dateOfBirth = new Date(profileForm.dateOfBirth);
-      }
-      await upsertMyProfile(payload);
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Cập nhật hồ sơ thành công" } }));
-      setShowCompleteProfile(false);
-      // Retry become owner after profile completion
-      await handleBecomeOwner();
-    } catch (error) {
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: error.message || "Cập nhật hồ sơ thất bại" } }));
     }
   };
 
@@ -457,33 +432,16 @@ export default function UserProfile() {
           </div>
         </div>
       )}
-      {showCompleteProfile && (
+      {showOwnerStepper && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg text-white">
-            <h3 className="text-lg font-semibold mb-4">Hoàn thành hồ sơ để trở thành Book Owner</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-300">Số điện thoại</label>
-                <input name="phoneNumber" value={profileForm.phoneNumber} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
-              </div>
-              <div>
-                <label className="text-sm text-gray-300">Ngày sinh</label>
-                <input type="date" name="dateOfBirth" value={profileForm.dateOfBirth} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
-              </div>
-              <div>
-                <label className="text-sm text-gray-300">Số tài khoản</label>
-                <input name="bankNumber" value={profileForm.bankNumber} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
-              </div>
-              <div>
-                <label className="text-sm text-gray-300">Tên ngân hàng</label>
-                <input name="bankName" value={profileForm.bankName} onChange={handleProfileFieldChange} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setShowCompleteProfile(false)} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg">Hủy</button>
-              <button onClick={handleSubmitProfile} className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg">Lưu và đăng ký Owner</button>
-            </div>
-          </div>
+          <OwnerApplicationStepper
+            initialProfile={initialProfile}
+            onClose={() => setShowOwnerStepper(false)}
+            onSuccess={() => {
+              setShowOwnerStepper(false);
+              setIsOwner(true);
+            }}
+          />
         </div>
       )}
     </div>

@@ -66,7 +66,21 @@ export async function upsertMyProfile(profile) {
 
 export async function getOwnerPlans() {
   const res = await authFetch(`${API_ENDPOINTS.USERS}/owner-plans`, { method: "GET" });
-  if (!res.ok) throw new Error("Không tải được danh sách gói Owner");
+  // Nếu chưa đăng nhập hoặc không có quyền, trả về danh sách rỗng để trang vẫn hiển thị
+  if (res.status === 401 || res.status === 403) {
+    return [];
+  }
+  if (!res.ok) {
+    // Cố gắng lấy message JSON, fallback tránh parse HTML
+    const data = await res.json().catch(() => ({}));
+    const message = data?.message || "Không tải được danh sách gói Owner";
+    throw new Error(message);
+  }
+  // Tránh parse HTML khi server trả về không phải JSON
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    return [];
+  }
   return res.json();
 }
 

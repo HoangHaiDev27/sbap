@@ -67,7 +67,9 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
                 {
-                    FullName = src.FullName
+                    FullName = src.FullName,
+                    AgreeTos = false,
+                    IsPhoneVerified = false
                 }))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Pending"))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))

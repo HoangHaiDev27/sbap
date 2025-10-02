@@ -1,5 +1,9 @@
 import { API_ENDPOINTS } from "../config/apiConfig";
 
+// Simple in-memory cache with TTL for read books list
+let readBooksCache = { data: null, ts: 0 };
+const READBOOKS_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export async function getBookDetail(id) {
   const res = await fetch(API_ENDPOINTS.BOOK_DETAIL(id), {
     method: "GET",
@@ -13,6 +17,10 @@ export async function getBookDetail(id) {
 
 //  danh sách sách đọc
 export async function getReadBooks() {
+  const now = Date.now();
+  if (readBooksCache.data && now - readBooksCache.ts < READBOOKS_TTL_MS) {
+    return readBooksCache.data;
+  }
   const res = await fetch(API_ENDPOINTS.READ_BOOKS, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
@@ -20,7 +28,9 @@ export async function getReadBooks() {
   if (!res.ok) {
     throw new Error("Failed to fetch read books");
   }
-  return res.json();
+  const data = await res.json();
+  readBooksCache = { data, ts: now };
+  return data;
 }
 // Lấy sách cùng thể loại
 export async function getRelatedBooks(bookId) {

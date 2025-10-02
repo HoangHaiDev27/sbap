@@ -38,6 +38,29 @@ CREATE TABLE dbo.UserProfiles (
 );
 ALTER TABLE dbo.UserProfiles ADD BankNumber VARCHAR(50) NULL;  -- số tài khoản
 ALTER TABLE dbo.UserProfiles ADD BankName NVARCHAR(150) NULL;  -- tên ngân hàng
+-- Xác thực số điện thoại cho quy trình đăng ký Owner
+IF COL_LENGTH('dbo.UserProfiles','IsPhoneVerified') IS NULL
+BEGIN
+  ALTER TABLE dbo.UserProfiles ADD IsPhoneVerified BIT NOT NULL DEFAULT(0);
+END
+IF COL_LENGTH('dbo.UserProfiles','PhoneVerifiedAt') IS NULL
+BEGIN
+  ALTER TABLE dbo.UserProfiles ADD PhoneVerifiedAt DATETIME2 NULL;
+END
+
+-- Các trường phục vụ đăng ký Owner (mở rộng trong UserProfiles, không tạo bảng riêng)
+IF COL_LENGTH('dbo.UserProfiles','PortfolioUrl') IS NULL
+BEGIN
+  ALTER TABLE dbo.UserProfiles ADD PortfolioUrl VARCHAR(500) NULL;  -- link tác phẩm, social, drive
+END
+IF COL_LENGTH('dbo.UserProfiles','Bio') IS NULL
+BEGIN
+  ALTER TABLE dbo.UserProfiles ADD Bio NVARCHAR(1000) NULL;        -- mô tả cá nhân/nghề nghiệp
+END
+IF COL_LENGTH('dbo.UserProfiles','AgreeTos') IS NULL
+BEGIN
+  ALTER TABLE dbo.UserProfiles ADD AgreeTos BIT NOT NULL DEFAULT(0); -- đồng ý điều khoản
+END
 
 CREATE TABLE dbo.UserRoles (
   UserId INT NOT NULL REFERENCES dbo.Users(UserId),
@@ -137,6 +160,11 @@ CREATE TABLE dbo.BookApprovals (
   Reason     NVARCHAR(1000) NULL,
   CreatedAt  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+
+-- =========================================================
+-- Owner Applications Workflow
+-- =========================================================
+-- Bỏ OwnerApplications: dùng các cột trong UserProfiles để quản lý quy trình
 
 -- =========================================================
 -- Promotions / Gifts / Entitlements
@@ -1055,9 +1083,9 @@ END
    ========================================================= */
 INSERT INTO dbo.Plans(Name, ForRole, Period, Price, Currency, TrialDays, ConversionLimit, Status)
 VALUES
-  (N'Owner Week',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
-  (N'Owner Month', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
-  (N'Owner Year',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
+  (N'Gói tuần',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
+  (N'Gói tháng', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
+  (N'Gói năm',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
 
 DECLARE @ReaderPlanId INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Reader Plus');
 DECLARE @OwnerPlanId  INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Owner Month');

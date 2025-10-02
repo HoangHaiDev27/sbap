@@ -75,7 +75,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
                   to={item.href}
                   className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
                     pathname === item.href || activeMenu === item.id
-                      ? "bg-orange-500 text-white"
+                      ? "bg-orange-600 text-white"
                       : "text-gray-300 hover:bg-gray-800 hover:text-white"
                   }`}
                   onClick={() => {
