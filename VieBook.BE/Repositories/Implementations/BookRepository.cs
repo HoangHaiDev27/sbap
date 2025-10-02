@@ -22,6 +22,7 @@ namespace Repositories.Implementations
         public Task<List<Book>> GetAllAsync() => _bookDao.GetAllAsync();
         public Task<Book?> GetByIdAsync(int id) => _bookDao.GetByIdAsync(id);
         public Task<Book?> GetBookDetailAsync(int id) => _bookDao.GetBookDetailAsync(id);
+        public Task<Book?> GetBookDetail(int id) => _bookDao.GetBookDetail(id);
         public Task AddAsync(Book book) => _bookDao.AddAsync(book);
         public Task UpdateAsync(Book book) => _bookDao.UpdateAsync(book);
         public Task DeleteAsync(Book book) => _bookDao.DeleteAsync(book);

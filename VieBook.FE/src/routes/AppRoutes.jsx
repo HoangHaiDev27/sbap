@@ -23,6 +23,7 @@ import BookForm from "../pages/owner/BookForm";
 import OwnerChapters from "../pages/owner/OwnerChapters";
 import ChapterForm from "../pages/owner/ChapterForm";
 import ChapterEdit from "../pages/owner/ChapterEdit";
+import ChapterView from "../pages/owner/ChapterView";
 import OwnerOrders from "../pages/owner/OwnerOrders";
 import OrderDetail from "../pages/owner/OrderDetail";
 import PromotionPage from "../pages/owner/PromotionPage";
@@ -103,6 +104,10 @@ function AppRoutes() {
       <Route
         path="/owner/books/:bookId/chapters/edit/:chapterId"
         element={<ChapterEdit />}
+      />
+      <Route
+        path="/owner/books/:bookId/chapters/view/:chapterId"
+        element={<ChapterView />}
       />
       <Route path="/owner/sales-history" element={<OwnerOrders />} />
       <Route path="/owner/orders/:orderId" element={<OrderDetail />} />

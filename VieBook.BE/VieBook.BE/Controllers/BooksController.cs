@@ -30,6 +30,18 @@ namespace VieBook.BE.Controllers
 
             return Ok(book);
         }
+        // GET api/book/detail/{id} full status
+        [HttpGet("detail/{id:int}")]
+        public async Task<ActionResult<BookDetailDTO>> GetBookDetailById(int id)
+        {
+            var book = await _bookService.GetBookDetailAsync(id);
+            if (book == null)
+            {
+                return NotFound(new { message = $"Không tìm thấy sách với ID {id}" });
+            }
+
+            return Ok(book);
+        }
 
         // get all
         [HttpGet]

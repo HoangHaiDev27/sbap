@@ -58,7 +58,7 @@ export const API_ENDPOINTS = {
   // Book owner endpoints
   BOOKS: {
     GET_ALL_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/books/owner/${ownerId}`,
-    GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
+    GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/detail/${bookId}`,
     CREATE: `${API_BASE_URL}/api/books`,
     UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,

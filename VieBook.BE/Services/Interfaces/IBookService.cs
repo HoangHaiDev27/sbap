@@ -11,6 +11,7 @@ namespace Services.Interfaces
     public interface IBookService
     {
         Task<BookDetailDTO?> GetBookDetailAsync(int id);
+        Task<BookDetailDTO?> GetBookDetail(int id);
         Task<List<Book>> GetAllAsync();
         Task<Book?> GetByIdAsync(int id);
         Task AddAsync(Book book);

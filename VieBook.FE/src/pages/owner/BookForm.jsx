@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { getUserId } from "../../api/authApi";
 import { getCategories, createBook, uploadBookImage } from "../../api/ownerBookApi";
 
@@ -47,14 +47,12 @@ export default function BookForm() {
     loadCategories();
   }, []);
 
-  // handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === "isbn") setIsbnError("");
   };
 
-  // chọn/bỏ chọn category
   const handleCategoryToggle = (id) => {
     setForm((prev) => {
       const exists = prev.categoryIds.includes(id);
@@ -67,7 +65,6 @@ export default function BookForm() {
     });
   };
 
-  // chọn file -> chỉ preview
   const handleFileChange = (e) => {
     const selected = e.target.files?.[0];
     if (selected) {
@@ -88,10 +85,14 @@ export default function BookForm() {
     if (!form.categoryIds.length) errs.categoryIds = "Phải chọn ít nhất 1 thể loại";
     if (!form.description.trim()) errs.description = "Mô tả là bắt buộc";
     if (!file) errs.coverUri = "Ảnh bìa là bắt buộc";
+    if (!form.isbn.trim()) {
+      errs.isbn = "Mã ISBN là bắt buộc";
+    } else if (form.isbn.length > 20) {
+      errs.isbn = "Mã ISBN không được vượt quá 20 ký tự";
+    }
     return errs;
   };
 
-  // submit form
   const handleSubmit = async () => {
     const errs = validate();
     setErrors(errs);
@@ -123,7 +124,7 @@ export default function BookForm() {
       const payload = {
         title: form.title,
         description: form.description,
-        coverUrl, // lấy link thực từ Cloudinary
+        coverUrl,
         isbn: form.isbn,
         language: null,
         ownerId,
@@ -153,7 +154,6 @@ export default function BookForm() {
     }
   };
 
-
   return (
     <div className="p-6 text-white">
       {/* Header */}
@@ -162,12 +162,7 @@ export default function BookForm() {
           <h1 className="text-2xl font-bold">Thêm sách mới</h1>
           <p className="text-gray-400">Tạo sách mới</p>
         </div>
-        <Link
-          to="/owner/books"
-          className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
-        >
-          ← Quay lại
-        </Link>
+        {/* Nút quay lại đã bỏ */}
       </div>
 
       {/* Form */}
@@ -210,9 +205,11 @@ export default function BookForm() {
               value={form.isbn}
               onChange={handleChange}
               placeholder="Nhập mã ISBN..."
-              className={`w-full px-3 py-2 rounded focus:outline-none ${isbnError ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"}`}
+              className={`w-full px-3 py-2 rounded focus:outline-none ${isbnError || errors.isbn ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"}`}
             />
-            {isbnError && <p className="text-red-400 text-sm">{isbnError}</p>}
+            {(isbnError || errors.isbn) && (
+              <p className="text-red-400 text-sm">{isbnError || errors.isbn}</p>
+            )}
           </div>
 
           {/* Thể loại */}
@@ -281,7 +278,7 @@ export default function BookForm() {
         <div className="mt-6">
           <label className="block mb-2 text-sm font-medium">Mô tả *</label>
           <textarea
-            rows={4}
+            rows={8}
             name="description"
             value={form.description}
             onChange={handleChange}
@@ -291,15 +288,22 @@ export default function BookForm() {
           {errors.description && <p className="text-red-400 text-sm">{errors.description}</p>}
         </div>
 
-        {/* Submit */}
-        <div className="mt-6 flex justify-end">
+        {/* Submit & Cancel */}
+        <div className="mt-6 flex justify-end gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-6 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 transition"
+          >
+            Hủy
+          </button>
           <button
             onClick={handleSubmit}
             disabled={uploading}
-            className={`px-6 py-2 rounded-lg transition ${uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-              }`}
+            className={`px-6 py-2 rounded-lg transition ${
+              uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+            }`}
           >
-            {uploading ? "Đang lưu..." : "Lưu sách"}
+            {uploading ? "Đang tạo..." : "Tạo sách"}
           </button>
         </div>
       </div>

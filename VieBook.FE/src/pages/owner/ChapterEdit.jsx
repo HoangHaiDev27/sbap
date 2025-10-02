@@ -10,7 +10,7 @@ export default function ChapterEdit() {
     const location = useLocation();
 
     const [title, setTitle] = useState("");
-    const [price, setPrice] = useState(5000);
+    const [price, setPrice] = useState(10);
     const [isFree, setIsFree] = useState(false);
     const [content, setContent] = useState("");
     const [originalContent, setOriginalContent] = useState("");
@@ -22,6 +22,7 @@ export default function ChapterEdit() {
     const [duration, setDuration] = useState(null);
 
     const [bookTitle, setBookTitle] = useState(location.state?.bookTitle || "Không xác định");
+    const [status, setStatus] = useState("draft");
 
     // Load chương
     useEffect(() => {
@@ -29,7 +30,7 @@ export default function ChapterEdit() {
             try {
                 const data = await getChapterById(chapterId);
                 setTitle(data.chapterTitle || "");
-                setPrice(data.priceAudio || 5000);
+                setPrice(data.priceAudio || 10);
                 setAudioUrl(data.chapterAudioUrl || null);
                 setDuration(data.durationSec || null);
                 setIsFree(data.priceAudio === 0);
@@ -51,7 +52,9 @@ export default function ChapterEdit() {
                         detail: { type: "error", message: "Không tải được chương" },
                     })
                 );
-                navigate(`/owner/books/${bookId}/chapters`);
+                navigate(`/owner/books/${bookId}/chapters`, {
+                    state: { bookTitle },
+                });
             }
         }
         fetchChapter();
@@ -60,7 +63,7 @@ export default function ChapterEdit() {
     // Khi tick Free
     useEffect(() => {
         if (isFree) setPrice(0);
-        else if (price === 0) setPrice(5000);
+        else if (price === 0) setPrice(10);
     }, [isFree, price]);
 
     // Xử lý chọn file TXT/PDF
@@ -190,41 +193,77 @@ export default function ChapterEdit() {
             {/* Thông tin chương */}
             <div className="bg-slate-800 p-6 rounded-lg mb-6">
                 <h2 className="text-lg font-semibold mb-4">Thông tin chương</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
+                <div className="grid grid-cols-1 gap-4">
+                    {/* Tiêu đề chương */}
+                    <div>
                         <label className="block text-sm mb-1">Tiêu đề chương *</label>
                         <input
                             type="text"
-                            placeholder="Ví dụ: Chương 1: Khởi đầu cuộc hành trình"
+                            placeholder="Ví dụ: Khởi đầu cuộc hành trình"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             className="w-full px-3 py-2 rounded-lg bg-gray-700 focus:outline-none"
                         />
                     </div>
 
-                    {/* Chương miễn phí */}
-                    <div className="flex items-center space-x-2">
-                        <input
-                            type="checkbox"
-                            checked={isFree}
-                            onChange={(e) => setIsFree(e.target.checked)}
-                        />
-                        <span>Chương miễn phí</span>
-                    </div>
+                    <div className="flex items-center space-x-6">
+                        {/* Giá chương */}
+                        <div className="flex flex-col max-w-[120px]">
+                            <label className="block text-sm mb-1">Giá (xu)</label>
+                            <input
+                                type="number"
+                                value={isFree ? 0 : price}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setPrice(val === "" ? 0 : parseInt(val, 10));
+                                }}
+                                disabled={isFree}
+                                className="w-full px-3 py-2 rounded-lg bg-gray-700 focus:outline-none"
+                            />
+                        </div>
 
-                    {/* Giá chương */}
-                    <div>
-                        <label className="block text-sm mb-1">Giá chương (xu)</label>
-                        <input
-                            type="number"
-                            value={price}
-                            onChange={(e) => setPrice(Number(e.target.value))}
-                            disabled={isFree}
-                            className="w-full px-3 py-2 rounded-lg bg-gray-700 focus:outline-none"
-                        />
+                        {/* Miễn phí */}
+                        <div className="flex items-center space-x-3 mt-6 ml-6">
+                            <input
+                                type="checkbox"
+                                checked={isFree}
+                                onChange={(e) => setIsFree(e.target.checked)}
+                            />
+                            <span className="text-sm">Miễn phí</span>
+                        </div>
+
+                        {/* Trạng thái */}
+                        <div className="flex flex-col ml-6">
+                            <label className="block text-sm mb-1">Trạng thái</label>
+                            <div className="flex space-x-3">
+                                {/* Bản nháp */}
+                                <div
+                                    onClick={() => setStatus("draft")}
+                                    className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "draft"
+                                        ? "bg-purple-600 text-white"
+                                        : "bg-gray-700 text-gray-300"
+                                        }`}
+                                >
+                                    Bản nháp
+                                </div>
+
+                                {/* Phát hành */}
+                                <div
+                                    onClick={() => setStatus("published")}
+                                    className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "published"
+                                        ? "bg-green-600 text-white"
+                                        : "bg-gray-700 text-gray-300"
+                                        }`}
+                                >
+                                    Phát hành
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
+
 
             {/* Upload file chương */}
             <div
@@ -233,7 +272,7 @@ export default function ChapterEdit() {
             >
                 <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.pdf" onChange={handleFileChange} />
                 <p className="text-center">
-                    {file ? file.name : "Chọn file chương (TXT hoặc PDF)"} {getFileTag()}
+                    {file ? file.name : "Chọn file chương (TXT hoặc PDF không nhận hình ảnh)"} {getFileTag()}
                 </p>
                 {file && <p className="text-xs text-gray-400 mt-1 text-center">{formatFileSize(file.size)}{pdfPages && ` • Số trang: ${pdfPages}`}</p>}
             </div>
@@ -263,7 +302,9 @@ export default function ChapterEdit() {
             {/* Buttons */}
             <div className="flex justify-end space-x-3">
                 <button
-                    onClick={() => navigate(`/owner/books/${bookId}/chapters`)}
+                    onClick={() => navigate(`/owner/books/${bookId}/chapters`, {
+                        state: { bookTitle },
+                    })}
                     className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition"
                     disabled={isSaving}
                 >
@@ -274,7 +315,7 @@ export default function ChapterEdit() {
                     disabled={isSaving}
                     className={`px-4 py-2 rounded-lg transition ${isSaving ? "bg-gray-500 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600"}`}
                 >
-                    {isSaving ? "Đang xử lý..." : "Lưu thay đổi"}
+                    {isSaving ? "Đang xử lý..." : "Cập nhật thay đổi"}
                 </button>
             </div>
         </div>

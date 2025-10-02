@@ -6,9 +6,9 @@ import {
   RiDraftLine,
   RiEyeLine,
 } from "react-icons/ri";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getChaptersByBookId, deleteChapter } from "../../api/ownerBookApi";
+import { getChaptersByBookId, deleteChapter, removeOldBookImage } from "../../api/ownerBookApi";
 
 export default function OwnerChapters() {
   const { bookId } = useParams();
@@ -16,6 +16,9 @@ export default function OwnerChapters() {
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const location = useLocation();
+  const [bookTitle, setBookTitle] = useState(location.state?.bookTitle || "Không xác định");
+  const [chapterToDelete, setChapterToDelete] = useState(null);
 
   useEffect(() => {
     async function fetchChapters() {
@@ -33,14 +36,37 @@ export default function OwnerChapters() {
     fetchChapters();
   }, [bookId]);
 
-  const handleDelete = async (chapterId) => {
-    if (!window.confirm("Bạn có chắc muốn xóa chapter này?")) return;
+  const handleDeleteConfirm = async () => {
+    if (!chapterToDelete) return;
+
+    // lấy chapter cần xóa
+    const chapter = chapters.find((ch) => ch.chapterId === chapterToDelete);
+
     try {
-      await deleteChapter(chapterId);
-      setChapters(chapters.filter((ch) => ch.chapterId !== chapterId));
+      // Nếu có file audio/url => xóa Cloudinary trước
+      if (chapter?.chapterAudioUrl) {
+        await removeOldBookImage(chapter.chapterAudioUrl);
+      }
+
+      // Xóa trong DB
+      await deleteChapter(chapterToDelete);
+
+      setChapters(chapters.filter((ch) => ch.chapterId !== chapterToDelete));
+
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "success", message: "Xóa chapter thành công" },
+        })
+      );
     } catch (err) {
       console.error("Failed to delete chapter:", err);
-      alert("Xóa chapter thất bại");
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Xóa chapter thất bại" },
+        })
+      );
+    } finally {
+      setChapterToDelete(null); // đóng popup
     }
   };
 
@@ -61,13 +87,13 @@ export default function OwnerChapters() {
         <div>
           <h1 className="text-2xl font-bold">Quản lý Chương</h1>
           <p className="text-gray-400">
-            Truyện: {chapters[0]?.bookTitle || "Không xác định"}
+            Truyện: {bookTitle}
           </p>
         </div>
 
         <Link
           to={`/owner/books/${bookId}/chapters/new`}
-          state={{ bookTitle: chapters[0]?.bookTitle }}
+          state={{ bookTitle }}
           className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
         >
           <RiAddLine className="mr-2" /> Thêm chương mới
@@ -128,8 +154,8 @@ export default function OwnerChapters() {
                 className="flex items-center justify-between bg-slate-700 p-3 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <span className="w-6 h-6 flex items-center justify-center bg-orange-500 rounded-full text-xs font-bold">
-                    {index + 1}
+                  <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white">
+                    Chương {index + 1}
                   </span>
                   <div>
                     <p className="font-semibold">{ch.chapterTitle}</p>
@@ -166,19 +192,19 @@ export default function OwnerChapters() {
                     <Link
                       to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
                       state={{ bookTitle: chapters[0]?.bookTitle }}
-                      className="px-2 py-1 bg-green-500 rounded text-xs hover:bg-green-600"
+                      className="px-2 py-1 min-w-[50px] text-center bg-green-500 rounded text-xs text-white hover:bg-green-600"
                     >
                       Sửa
                     </Link>
                     <Link
-                      to={`/owner/books/${bookId}/chapters/${ch.chapterId}`}
-                      className="px-2 py-1 bg-blue-500 rounded text-xs hover:bg-blue-600"
+                      to={`/owner/books/${bookId}/chapters/view/${ch.chapterId}`}
+                      className="px-2 py-1 min-w-[50px] text-center bg-purple-500 rounded text-xs text-white hover:bg-purple-600"
                     >
                       Xem
                     </Link>
                     <button
-                      onClick={() => handleDelete(ch.chapterId)}
-                      className="px-2 py-1 bg-red-500 rounded text-xs hover:bg-red-600"
+                      onClick={() => setChapterToDelete(ch.chapterId)}
+                      className="px-2 py-1 min-w-[50px] text-center bg-red-500 rounded text-xs text-white hover:bg-red-600"
                     >
                       Xóa
                     </button>
@@ -189,6 +215,29 @@ export default function OwnerChapters() {
           })}
         </div>
       </div>
+      {/* Popup confirm */}
+      {chapterToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-80 text-center">
+            <h3 className="text-lg font-bold mb-4">Xác nhận xóa</h3>
+            <p className="mb-6 text-gray-300">Bạn có chắc chắn muốn xóa chương này?</p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => setChapterToDelete(null)}
+                className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-500 rounded hover:bg-red-600"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
