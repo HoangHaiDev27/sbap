@@ -17,16 +17,15 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
 
   const handleRoleSwitch = () => {
-    // Chuyển từ owner sang customer
-    console.log('Switching from owner to customer');
-    const success = switchRole('customer');
-    console.log('Switch result:', success);
+    const success = switchRole("customer");
     if (success) {
-      navigate('/');
-    } else {
-      console.error('Failed to switch role');
+      navigate("/");
     }
   };
+
+  const getSwitchButtonText = () => "Chuyển sang khách hàng";
+
+  const getSwitchButtonIcon = () => <RiUserLine className="w-4 h-4" />;
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: RiDashboardLine, href: "/owner/dashboard" },
@@ -42,17 +41,19 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Overlay mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {/* Overlay for mobile */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity ${
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={onClose}
+      ></div>
 
       <aside
-        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white shadow-lg z-50 transform transition-transform duration-300 
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 flex flex-col`}
+        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white shadow-lg z-50 transform transition-transform duration-200 
+        lg:translate-x-0 flex flex-col ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
         {/* Logo */}
         <div className="p-6">
@@ -66,9 +67,9 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
           </Link>
         </div>
 
-        {/* Menu chính */}
+        {/* Menu */}
         <nav className="px-4 flex-1">
-          <ul className="space-y-1">
+          <ul className="space-y-2">
             {menuItems.map((item) => (
               <li key={item.id}>
                 <Link
@@ -91,15 +92,15 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
           </ul>
         </nav>
 
-        {/* Role Switch Button - chuyển về khách hàng - nằm dưới cùng */}
+        {/* Role Switch Button */}
         <div className="px-4 pb-4">
           <div className="border-t border-gray-700 pt-4">
             <button
               onClick={handleRoleSwitch}
               className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
             >
-              <RiUserLine className="w-4 h-4" />
-              <span>Chuyển sang khách hàng</span>
+              {getSwitchButtonIcon()}
+              <span>{getSwitchButtonText()}</span>
             </button>
           </div>
         </div>
