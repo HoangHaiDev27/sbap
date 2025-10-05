@@ -66,7 +66,6 @@ namespace VieBook.BE.Controllers
             return Ok(new { message = "Chapter updated successfully" });
         }
 
-
         // DELETE api/chapter/{id}
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> DeleteChapter(int id)
