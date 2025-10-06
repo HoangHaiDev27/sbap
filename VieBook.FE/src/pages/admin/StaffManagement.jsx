@@ -42,14 +42,27 @@ export default function StaffManagement() {
   };
 
   useEffect(() => {
-    fetchStaffs();
-  }, []);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllStaff();
+      setStaffs(data);
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Không thể tải danh sách nhân viên');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
   // Filter và search
   const filteredStaff = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return staffs.filter((s) => {
-      const matchesSearch = !q || s.fullName.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.phoneNumber?.toLowerCase().includes(q);;
+      const matchesSearch = !q || s.fullName.toLowerCase().includes(q) || s.email.toLowerCase().includes(q);
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'active' && s.status === 'Active') ||
@@ -188,7 +201,7 @@ const handleConfirmToggle = async (staff) => {
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">STT</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nhân viên</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Số điện thoại</th>
+                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Vai trò</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ngày sinh</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ngày tạo</th>
@@ -209,7 +222,7 @@ const handleConfirmToggle = async (staff) => {
                         </td>
                         <td className="px-6 py-3">
                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                            {staff.phoneNumber || '-'}
+                            {staff.roles === "Staff" ? "Nhân viên" : "Không xác định"}
                           </span>
                         </td>
                         <td className="px-6 py-3">
