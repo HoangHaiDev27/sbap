@@ -195,6 +195,7 @@ export default function AdminHeader({ onToggleSidebar }) {
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
               <Link
                 to="/admin/profile"
+                onClick={() => setShowUserMenu(false)} // 👈 tự đóng popup
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <i className="ri-user-line mr-2" />
@@ -202,6 +203,7 @@ export default function AdminHeader({ onToggleSidebar }) {
               </Link>
               <Link
                 to="/admin/settings"
+                onClick={() => setShowUserMenu(false)} // 👈 tự đóng popup
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <i className="ri-settings-3-line mr-2" />
@@ -209,7 +211,10 @@ export default function AdminHeader({ onToggleSidebar }) {
               </Link>
               <hr className="my-1" />
               <button
-                onClick={handleLogout}
+                onClick={() => {
+                  setShowUserMenu(false); // 👈 tự đóng popup
+                  handleLogout();
+                }}
                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
               >
                 <i className="ri-logout-box-line mr-2" />
@@ -217,6 +222,7 @@ export default function AdminHeader({ onToggleSidebar }) {
               </button>
             </div>
           )}
+
         </div>
       </div>
     </header>

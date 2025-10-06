@@ -23,7 +23,7 @@ namespace DataAccess.DAO.Admin
             return await _context.Users
                 .Include(u => u.UserProfile)
                 .Include(u => u.Roles)
-                .Where(u => u.Roles.Any(r => r.RoleName == "Staff"))
+                .Where(u => u.Roles.All(r => r.RoleName == "Staff"))
                 .OrderByDescending(u => u.CreatedAt)
                 .ToListAsync();
         }

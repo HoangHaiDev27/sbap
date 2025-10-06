@@ -119,8 +119,9 @@ namespace BusinessObject.Dtos
             CreateMap<User, StaffDTO>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
+                .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
                 .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
-                .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Select(r => r.RoleName).FirstOrDefault() ?? ""));
+                .ForMember(dest => dest.Roles,opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
             // User → UserManagementDTO
             CreateMap<User, UserManagementDTO>()
@@ -138,7 +139,8 @@ namespace BusinessObject.Dtos
                 {
                     FullName = src.FullName,
                     AvatarUrl = src.AvatarUrl,
-                    DateOfBirth = src.DateOfBirth
+                    DateOfBirth = src.DateOfBirth,
+                    PhoneNumber = src.PhoneNumber
 
                 }))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Active"))
@@ -152,7 +154,8 @@ namespace BusinessObject.Dtos
                 {
                     FullName = src.FullName,
                     AvatarUrl = src.AvatarUrl,
-                    DateOfBirth = src.DateOfBirth
+                    DateOfBirth = src.DateOfBirth,
+                    PhoneNumber = src.PhoneNumber
                 }))
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // nếu cập nhật mật khẩu, xử lý riêng
                 .ForMember(dest => dest.Roles, opt => opt.Ignore()); // giữ nguyên roles
