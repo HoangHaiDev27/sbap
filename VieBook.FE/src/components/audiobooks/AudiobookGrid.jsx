@@ -246,8 +246,36 @@ function BookFooter({ book, isFavorite, setIsFavorite }) {
 
 // --- Pagination Component ---
 function Pagination({ totalPages, currentPage, setCurrentPage }) {
+  // Hàm sinh danh sách trang cần hiển thị
+  const getPageNumbers = () => {
+    const pages = [];
+
+    if (totalPages <= 3) {
+      // Nếu ít hơn 7 trang thì hiện hết
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      // Luôn hiện trang đầu, cuối, và 2 trang quanh currentPage
+      pages.push(1);
+
+      if (currentPage > 4) pages.push("...");
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+
+      if (currentPage < totalPages - 3) pages.push("...");
+
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
   return (
     <div className="flex justify-center mt-6 space-x-2">
+      {/* Nút Trang trước */}
       <button
         onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
         disabled={currentPage === 1}
@@ -259,19 +287,29 @@ function Pagination({ totalPages, currentPage, setCurrentPage }) {
       >
         Trang trước
       </button>
-      {Array.from({ length: totalPages }).map((_, i) => (
-        <button
-          key={i}
-          onClick={() => setCurrentPage(i + 1)}
-          className={`px-3 py-1 rounded ${
-            currentPage === i + 1
-              ? "bg-orange-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-        >
-          {i + 1}
-        </button>
-      ))}
+
+      {/* Nút số trang */}
+      {pageNumbers.map((num, i) =>
+        num === "..." ? (
+          <span key={i} className="px-3 py-1 text-gray-400">
+            ...
+          </span>
+        ) : (
+          <button
+            key={i}
+            onClick={() => setCurrentPage(num)}
+            className={`px-3 py-1 rounded ${
+              currentPage === num
+                ? "bg-orange-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            {num}
+          </button>
+        )
+      )}
+
+      {/* Nút Trang sau */}
       <button
         onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
         disabled={currentPage === totalPages}
@@ -286,3 +324,4 @@ function Pagination({ totalPages, currentPage, setCurrentPage }) {
     </div>
   );
 }
+
