@@ -22,43 +22,7 @@ export default function ChapterEdit() {
     const [duration, setDuration] = useState(null);
 
     const [bookTitle, setBookTitle] = useState(location.state?.bookTitle || "Không xác định");
-    const [status, setStatus] = useState("draft");
-
-    // Load chương
-    useEffect(() => {
-        async function fetchChapter() {
-            try {
-                const data = await getChapterById(chapterId);
-                setTitle(data.chapterTitle || "");
-                setPrice(data.priceAudio || 10);
-                setAudioUrl(data.chapterAudioUrl || null);
-                setDuration(data.durationSec || null);
-                setIsFree(data.priceAudio === 0);
-                setBookTitle(data.bookTitle || "Không xác định");
-
-                let text = "";
-                if (data.chapterSoftUrl) {
-                    const res = await fetch(data.chapterSoftUrl);
-                    text = await res.text();
-                } else {
-                    text = "";
-                }
-                setContent(text);
-                setOriginalContent(text);
-            } catch (err) {
-                console.error("Lỗi khi tải chương:", err);
-                window.dispatchEvent(
-                    new CustomEvent("app:toast", {
-                        detail: { type: "error", message: "Không tải được chương" },
-                    })
-                );
-                navigate(`/owner/books/${bookId}/chapters`, {
-                    state: { bookTitle },
-                });
-            }
-        }
-        fetchChapter();
-    }, [chapterId, bookId, navigate]);
+    const [status, setStatus] = useState("Draft");
 
     // Khi tick Free
     useEffect(() => {
@@ -119,6 +83,50 @@ export default function ChapterEdit() {
         return null;
     };
 
+    useEffect(() => {
+        async function fetchChapter() {
+            try {
+                const data = await getChapterById(chapterId);
+                setTitle(data.chapterTitle || "");
+                setPrice(data.priceAudio || 10);
+                setAudioUrl(data.chapterAudioUrl || null);
+                setDuration(data.durationSec || null);
+                setIsFree(data.priceAudio === 0);
+                setBookTitle(data.bookTitle || "Không xác định");
+                setStatus(data.status || "Draft"); // ✅ lấy status từ BE
+
+                let text = "";
+                if (data.chapterSoftUrl) {
+                    const res = await fetch(data.chapterSoftUrl);
+                    text = await res.text();
+                }
+                setContent(text);
+                setOriginalContent(text);
+            } catch (err) {
+                console.error("Lỗi khi tải chương:", err);
+                window.dispatchEvent(
+                    new CustomEvent("app:toast", {
+                        detail: { type: "error", message: "Không tải được chương" },
+                    })
+                );
+                navigate(`/owner/books/${bookId}/chapters`, { state: { bookTitle } });
+            }
+        }
+        fetchChapter();
+    }, [chapterId, bookId, navigate]);
+
+    // Validate giá âm
+    useEffect(() => {
+        if (price < 0) {
+            window.dispatchEvent(
+                new CustomEvent("app:toast", {
+                    detail: { type: "error", message: "Giá chương không được âm" },
+                })
+            );
+            setPrice(0);
+        }
+    }, [price]);
+
     // Cập nhật chương
     const handleSaveChapter = async () => {
         if (!title.trim()) {
@@ -137,36 +145,41 @@ export default function ChapterEdit() {
             );
             return;
         }
+        if (price < 0) {
+            window.dispatchEvent(
+                new CustomEvent("app:toast", {
+                    detail: { type: "error", message: "Giá chương không được âm" },
+                })
+            );
+            return;
+        }
 
         setIsSaving(true);
         try {
             let chapterUrl = null;
             const contentChanged = content !== originalContent;
 
-            // Nếu có file mới HOẶC nội dung bị sửa → upload lại
             if (file || contentChanged) {
-                const uploadResult = await uploadChapterFile({
-                    bookId,
-                    content
-                });
+                const uploadResult = await uploadChapterFile({ bookId, content });
                 chapterUrl = uploadResult.url;
             } else {
-                // Giữ lại url cũ
                 const oldData = await getChapterById(chapterId);
                 chapterUrl = oldData.chapterSoftUrl;
             }
 
             await updateChapter(chapterId, {
-                ChapterId: chapterId,
-                BookId: bookId,
-                ChapterTitle: title,
-                ChapterView: 0,
-                ChapterSoftUrl: chapterUrl,
-                ChapterAudioUrl: audioUrl,
-                DurationSec: duration,
-                PriceAudio: price,
-                UploadedAt: new Date().toISOString()
+                chapterId: chapterId,
+                bookId: bookId,
+                chapterTitle: title,
+                chapterView: 0,
+                chapterSoftUrl: chapterUrl,
+                chapterAudioUrl: audioUrl,
+                durationSec: duration,
+                priceAudio: price,
+                uploadedAt: new Date().toISOString(),
+                status: status,
             });
+
 
             window.dispatchEvent(
                 new CustomEvent("app:toast", {
@@ -238,10 +251,8 @@ export default function ChapterEdit() {
                             <div className="flex space-x-3">
                                 {/* Bản nháp */}
                                 <div
-                                    onClick={() => setStatus("draft")}
-                                    className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "draft"
-                                        ? "bg-purple-600 text-white"
-                                        : "bg-gray-700 text-gray-300"
+                                    onClick={() => setStatus("Draft")}
+                                    className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "Draft" ? "bg-purple-600 text-white" : "bg-gray-700 text-gray-300"
                                         }`}
                                 >
                                     Bản nháp
@@ -249,22 +260,17 @@ export default function ChapterEdit() {
 
                                 {/* Phát hành */}
                                 <div
-                                    onClick={() => setStatus("published")}
-                                    className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "published"
-                                        ? "bg-green-600 text-white"
-                                        : "bg-gray-700 text-gray-300"
+                                    onClick={() => setStatus("Active")}
+                                    className={`px-3 py-1 rounded-lg cursor-pointer transition ${status === "Active" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
                                         }`}
                                 >
                                     Phát hành
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
-
-
             {/* Upload file chương */}
             <div
                 className="bg-slate-800 p-6 rounded-lg mb-6 border-2 border-dashed border-gray-500 cursor-pointer hover:border-gray-400 flex flex-col items-center justify-center"
@@ -284,7 +290,7 @@ export default function ChapterEdit() {
                     placeholder="Nhập nội dung chương..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    rows={10}
+                    rows={30}
                     className="w-full px-3 py-2 rounded-lg bg-gray-700 focus:outline-none"
                 />
                 <div className="text-right text-xs text-gray-400 mt-2">{content.length}/50000 ký tự</div>

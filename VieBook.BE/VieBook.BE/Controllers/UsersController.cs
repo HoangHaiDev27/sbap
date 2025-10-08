@@ -105,6 +105,59 @@ namespace VieBook.BE.Controllers
             return Ok(_mapper.Map<UserDTO>(user));
         }
 
+        /// <summary>
+        /// Lấy thông tin user hiện tại với profile
+        /// </summary>
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var user = await _userService.GetByIdWithProfileAndRolesAsync(userId);
+                if (user == null) return NotFound(new { message = "Không tìm thấy người dùng" });
+
+                return Ok(new
+                {
+                    userId = user.UserId,
+                    email = user.Email,
+                    status = user.Status,
+                    createdAt = user.CreatedAt,
+                    lastLoginAt = user.LastLoginAt,
+                    wallet = user.Wallet,
+                    userProfile = user.UserProfile != null ? new
+                    {
+                        fullName = user.UserProfile.FullName,
+                        phoneNumber = user.UserProfile.PhoneNumber,
+                        dateOfBirth = user.UserProfile.DateOfBirth,
+                        avatarUrl = user.UserProfile.AvatarUrl,
+                        bankNumber = user.UserProfile.BankNumber,
+                        bankName = user.UserProfile.BankName,
+                        isPhoneVerified = user.UserProfile.IsPhoneVerified,
+                        phoneVerifiedAt = user.UserProfile.PhoneVerifiedAt,
+                        portfolioUrl = user.UserProfile.PortfolioUrl,
+                        bio = user.UserProfile.Bio,
+                        agreeTos = user.UserProfile.AgreeTos
+                    } : null,
+                    roles = user.Roles.Select(r => r.RoleName).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetCurrentUser: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
+            }
+        }
+
         [HttpPost]
         public async Task<ActionResult<UserDTO>> PostUser(UserDTO dto)
         {

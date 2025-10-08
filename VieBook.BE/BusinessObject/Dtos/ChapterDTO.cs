@@ -31,6 +31,7 @@ namespace BusinessObject.Dtos
         public string? StorageMeta { get; set; }
         public DateTime UploadedAt { get; set; }
         public string? BookTitle { get; set; }
+        public string? Status { get; set; }
     }
     public class ChapterUploadDto
     {
@@ -39,5 +40,6 @@ namespace BusinessObject.Dtos
         public int Price { get; set; }
         public bool IsFree { get; set; }
         public string Content { get; set; }
+        public string? Status { get; set; }
     }
 }

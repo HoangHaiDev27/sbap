@@ -13,6 +13,7 @@ namespace BusinessObject.Dtos
         public int StaffId { get; set; }
         public string Action { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
+        public string Reason { get; set; } = null!;
 
         // Thông tin staff
         public string StaffName { get; set; } = null!;

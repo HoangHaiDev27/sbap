@@ -17,5 +17,6 @@ namespace BusinessObject.Dtos
         public DateTime? LastLoginAt { get; set; }
         public string Roles { get; set; } = string.Empty;
         public DateOnly? DateOfBirth { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
     }
 }

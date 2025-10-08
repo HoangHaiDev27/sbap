@@ -42,8 +42,21 @@ export default function StaffManagement() {
   };
 
   useEffect(() => {
-    fetchStaffs();
-  }, []);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllStaff();
+      setStaffs(data);
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Không thể tải danh sách nhân viên');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
   // Filter và search
   const filteredStaff = useMemo(() => {

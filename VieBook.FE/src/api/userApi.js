@@ -20,6 +20,10 @@ export async function getMe() {
   }
   return data;
 }
+export async function getCurrentUser() {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/me`);
+  return res.json();
+}
 
 export async function updateUser(id, user) {
   const res = await authFetch(`${API_ENDPOINTS.USERS}/${id}`, {

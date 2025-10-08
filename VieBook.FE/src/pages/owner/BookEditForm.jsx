@@ -132,11 +132,16 @@ export default function BookEditForm() {
     const errs = {};
     if (!form.title.trim()) errs.title = "Tên sách là bắt buộc";
     if (!form.author.trim()) errs.author = "Tác giả là bắt buộc";
-    if (!form.isbn.trim()) errs.isbn = "Mã ISBN là bắt buộc";
+    if (!form.isbn.trim()) {
+      errs.isbn = "Mã ISBN là bắt buộc";
+    } else if (form.isbn.length > 20) {
+      errs.isbn = "Mã ISBN không được vượt quá 20 ký tự";
+    }
     if (!form.description.trim()) errs.description = "Mô tả là bắt buộc";
     if (!form.categoryIds.length) errs.categoryIds = "Phải chọn ít nhất 1 thể loại";
     return errs;
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -216,9 +221,6 @@ export default function BookEditForm() {
           <h1 className="text-2xl font-bold">Chỉnh sửa sách</h1>
           <p className="text-gray-400">Cập nhật thông tin sách</p>
         </div>
-        <Link to="/owner/books" className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition">
-          ← Quay lại
-        </Link>
       </div>
 
       {loading ? (
@@ -319,12 +321,19 @@ export default function BookEditForm() {
           {/* description */}
           <div className="mt-6">
             <label className="block mb-2 text-sm font-medium">Mô tả *</label>
-            <textarea name="description" value={form.description} onChange={handleChange} rows={4}
+            <textarea name="description" value={form.description} onChange={handleChange} rows={10}
               className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" />
             {errors.description && <p className="text-red-400 text-sm">{errors.description}</p>}
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-6 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 transition"
+            >
+              Hủy
+            </button>
             <button
               type="submit"
               disabled={uploading}

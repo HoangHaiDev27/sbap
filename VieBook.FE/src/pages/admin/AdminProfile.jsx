@@ -15,7 +15,7 @@ export default function AdminProfile() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const defaultAvatar =
-    "https://img5.thuthuatphanmem.vn/uploads/2021/11/22/anh-gau-nau_092901233.jpg";
+    "https://res.cloudinary.com/dwduk4vjl/image/upload/v1759596363/avatarImages/lb7harseupgw3uwprpjc.jpg";
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatar);
@@ -38,7 +38,7 @@ export default function AdminProfile() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState("");
 
-  // Lấy adminId từ localStorage và fetch thông tin admin
+  // ✅ Lấy admin info
   useEffect(() => {
     const authUserStr = localStorage.getItem("auth_user");
     if (!authUserStr) return;
@@ -73,26 +73,26 @@ export default function AdminProfile() {
     setAdminInfo((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
+  // ✅ Xử lý lưu thông tin
+  const handleSave = async (e) => {
+    e.preventDefault(); // Ngăn reload & trigger validation
     try {
       let uploadedAvatarUrl = adminInfo.avatarUrl;
 
-      // Upload avatar nếu có file mới
       if (avatarFile) {
-      // Chỉ xóa nếu avatar cũ không phải là ảnh mặc định
-      if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar) {
-        await removeOldAvatarImage(adminInfo.avatarUrl);
+        if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar) {
+          await removeOldAvatarImage(adminInfo.avatarUrl);
+        }
+
+        const formData = new FormData();
+        formData.append("file", avatarFile);
+        uploadedAvatarUrl = await uploadAvatarImage(formData);
       }
 
-      const formData = new FormData();
-      formData.append("file", avatarFile);
-      uploadedAvatarUrl = await uploadAvatarImage(formData);
-    }
-
       const updatedData = {
-        fullName: adminInfo.fullName || "",
-        email: adminInfo.email || "",
-        phoneNumber: adminInfo.phone || "",
+        fullName: adminInfo.fullName,
+        email: adminInfo.email,
+        phoneNumber: adminInfo.phone,
         address: adminInfo.address || "FPT University, Da Nang",
         avatarUrl: uploadedAvatarUrl || defaultAvatar,
       };
@@ -107,6 +107,7 @@ export default function AdminProfile() {
         address: res.data.address || updatedData.address,
         avatarUrl: uploadedAvatarUrl,
       }));
+
       setAvatarUrl(uploadedAvatarUrl || defaultAvatar);
       setAvatarFile(null);
       setShowEditModal(false);
@@ -120,12 +121,16 @@ export default function AdminProfile() {
       console.error("Update admin error:", error.message);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
-          detail: { type: "error", message: error.message || "Cập nhật thất bại" },
+          detail: {
+            type: "error",
+            message: error.message || "Cập nhật thất bại",
+          },
         })
       );
     }
   };
 
+  // ✅ Đổi mật khẩu
   const handleChangePasswordInput = (e) => {
     const { name, value } = e.target;
     setPasswords((prev) => ({ ...prev, [name]: value }));
@@ -143,6 +148,13 @@ export default function AdminProfile() {
     }
     if (passwords.newPassword.length < 6) {
       setChangePasswordError("Mật khẩu mới phải có ít nhất 6 ký tự");
+      return;
+    }
+    const strongPassRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    if (!strongPassRegex.test(passwords.newPassword)) {
+      setChangePasswordError(
+        "Mật khẩu phải có ít nhất 6 ký tự, bao gồm ít nhất 1 chữ cái và 1 số"
+      );
       return;
     }
 
@@ -226,8 +238,7 @@ export default function AdminProfile() {
           </div>
         </div>
       </div>
-
-      {/* Mô tả công việc Admin */}
+        {/* Mô tả công việc Admin */}
       <div className="bg-white p-6 rounded-lg shadow border">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
           📝 Mô tả công việc của Quản trị viên
@@ -252,12 +263,13 @@ export default function AdminProfile() {
         </div>
       </div>
 
-      {/* Modal chỉnh sửa thông tin */}
+      {/* Modal chỉnh sửa */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative text-gray-800">
             <h3 className="text-lg font-semibold mb-4">Chỉnh sửa thông tin</h3>
-            <div className="space-y-4">
+
+            <form onSubmit={handleSave} className="space-y-4">
               <div className="flex items-center gap-4">
                 <img
                   src={avatarFile ? URL.createObjectURL(avatarFile) : avatarUrl}
@@ -287,34 +299,63 @@ export default function AdminProfile() {
                 <div key={key}>
                   <label className="text-sm font-medium">
                     {key === "fullName"
-                      ? "Họ và tên"
-                      : key.charAt(0).toUpperCase() + key.slice(1)}
+                      ? "Họ và tên *"
+                      : key === "email"
+                      ? "Email *"
+                      : key === "phone"
+                      ? "Số điện thoại *"
+                      : "Địa chỉ"}
                   </label>
+
                   <input
-                    type={key === "email" ? "email" : "text"}
+                    type={
+                      key === "email"
+                        ? "email"
+                        : key === "phone"
+                        ? "tel"
+                        : "text"
+                    }
                     name={key}
                     value={adminInfo[key] || ""}
                     onChange={handleChange}
-                    className="mt-1 w-full px-3 py-2 border rounded"
+                    disabled={key === "email"}
+                    required={key === "fullName" || key === "phone"}
+                    pattern={key === "phone" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
+                    title={
+                      key === "phone"
+                        ? "Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9])"
+                        : undefined
+                    }
+                    className={`mt-1 w-full px-3 py-2 border rounded ${
+                      key === "email" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
+                    placeholder={
+                      key === "fullName"
+                        ? "Nhập họ và tên"
+                        : key === "phone"
+                        ? "0905123456"
+                        : ""
+                    }
                   />
                 </div>
               ))}
-            </div>
 
-            <div className="mt-6 flex justify-end space-x-2">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Lưu
-              </button>
-            </div>
+              <div className="mt-6 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Lưu
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

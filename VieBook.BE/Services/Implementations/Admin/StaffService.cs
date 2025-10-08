@@ -72,6 +72,7 @@ namespace Services.Implementations.Admin
             user.UserProfile.FullName = user.UserProfile.FullName;
             user.UserProfile.AvatarUrl = user.UserProfile.AvatarUrl;
             user.UserProfile.DateOfBirth = dob;
+            user.UserProfile.PhoneNumber = user.UserProfile.PhoneNumber;
 
             // Lưu xuống DB
             var newStaff = await _staffDAO.AddAsync(user);
@@ -121,6 +122,7 @@ namespace Services.Implementations.Admin
             existingUser.UserProfile.FullName = user.UserProfile?.FullName ?? existingUser.UserProfile.FullName;
             existingUser.UserProfile.AvatarUrl = user.UserProfile?.AvatarUrl ?? existingUser.UserProfile.AvatarUrl;
             existingUser.UserProfile.DateOfBirth = dob ?? existingUser.UserProfile.DateOfBirth;
+            existingUser.UserProfile.PhoneNumber = user.UserProfile?.PhoneNumber ?? existingUser.UserProfile.PhoneNumber;
 
             // Cập nhật mật khẩu nếu có
             if (!string.IsNullOrWhiteSpace(newPassword))
