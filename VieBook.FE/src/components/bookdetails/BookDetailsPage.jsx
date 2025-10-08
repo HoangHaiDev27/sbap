@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getBookDetail } from "../../api/bookApi";
+import { checkWishlist, addToWishlist, removeFromWishlist } from "../../api/wishlistApi";
+import { useNavigate } from "react-router-dom";
+import { getUserId } from "../../api/authApi";
 import RelatedBooks from "./RelatedBook";
 import PurchaseModal from "./PurchaseModal";
 import toast from "react-hot-toast";
@@ -19,8 +22,9 @@ import {
 
 export default function BookDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
-  const [showFullDescription, setShowFullDescription] = useState(false);
+  // const [showFullDescription, setShowFullDescription] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [reportText, setReportText] = useState("");
@@ -29,13 +33,25 @@ export default function BookDetailPage() {
   const [bookDetail, setBookDetail] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const toggleFavorite = () => setIsFavorite(!isFavorite);
+  // const toggleFavorite = () => setIsFavorite(!isFavorite);
 
   useEffect(() => {
     async function fetchData() {
       try {
         const data = await getBookDetail(id);
         setBookDetail(data);
+        // Load wishlist state if logged in
+        const uid = getUserId();
+        if (uid) {
+          try {
+            const wished = await checkWishlist(id);
+            setIsFavorite(!!wished);
+          } catch {
+            // ignore wishlist check errors
+          }
+        } else {
+          setIsFavorite(false);
+        }
       } catch (err) {
         console.error("Lỗi khi fetch BookDetail:", err);
       } finally {
@@ -119,7 +135,27 @@ export default function BookDetailPage() {
             <div className="flex space-x-2">
               {/* Nút Yêu thích */}
               <button
-                onClick={toggleFavorite}
+                onClick={async () => {
+                  const uid = getUserId();
+                  if (!uid) {
+                    toast.error("Vui lòng đăng nhập để sử dụng Yêu thích");
+                    navigate("/auth");
+                    return;
+                  }
+                  try {
+                    if (isFavorite) {
+                      await removeFromWishlist(id);
+                      setIsFavorite(false);
+                      toast.success("Đã gỡ khỏi Yêu thích");
+                    } else {
+                      await addToWishlist(id);
+                      setIsFavorite(true);
+                      toast.success("Đã thêm vào Yêu thích");
+                    }
+                  } catch {
+                    toast.error("Có lỗi khi cập nhật Yêu thích");
+                  }
+                }}
                 className="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2"
               >
                 {isFavorite ? (

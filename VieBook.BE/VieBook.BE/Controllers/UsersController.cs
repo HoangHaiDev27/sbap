@@ -25,7 +25,7 @@ namespace VieBook.BE.Controllers
         }
 
         [Authorize]
-        [HttpGet("me")]
+        [HttpGet("me1")]
         public async Task<IActionResult> GetMe()
         {
             try
