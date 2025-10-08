@@ -55,6 +55,7 @@ export default function BookDetailPage() {
 
   const { title, description, coverUrl, isbn, language, totalView, createdAt, ownerName, categories, chapters, reviews, totalPrice } =
     bookDetail;
+  const hasAudio = Array.isArray(chapters) && chapters.some((ch) => !!ch.chapterAudioUrl);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -89,12 +90,23 @@ export default function BookDetailPage() {
               >
                 <RiBookOpenLine /> Đọc ngay
               </Link>
-              <Link
-                to={`/player/${id}`}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                <RiPlayCircleLine /> Nghe
-              </Link>
+              {hasAudio ? (
+                <Link
+                  to={`/player/${id}`}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <RiPlayCircleLine /> Nghe
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  aria-disabled
+                  title="Sách chưa có audio"
+                  className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg text-center font-medium flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+                >
+                  <RiPlayCircleLine /> Nghe
+                </button>
+              )}
             </div>
 
             <button
