@@ -11,6 +11,15 @@ export async function getUser(id) {
   return res.json();
 }
 
+export async function getMe() {
+  const res = await authFetch(API_ENDPOINTS.USER_ME);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = data?.message || "Không thể tải hồ sơ";
+    throw new Error(message);
+  }
+  return data;
+}
 export async function getCurrentUser() {
   const res = await authFetch(`${API_ENDPOINTS.USERS}/me`);
   return res.json();
@@ -96,4 +105,28 @@ export async function purchaseOwnerPlan(planId) {
     throw new Error(data?.message || "Mua gói thất bại");
   }
   return data;
+}
+
+export async function uploadAvatar(file) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await authFetch(API_ENDPOINTS.UPLOADAVATARIMAGE, {
+    method: "POST",
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || "Upload ảnh thất bại");
+  }
+  return data?.imageUrl || data?.url || "";
+}
+
+export async function deleteImageByUrl(imageUrl) {
+  const url = `${API_ENDPOINTS.REMOVEOLDBOOKIMAGE}?imageUrl=${encodeURIComponent(imageUrl)}`;
+  const res = await authFetch(url, { method: "DELETE" });
+  if (!res.ok) {
+    // Best-effort delete; don't block caller
+    return false;
+  }
+  return true;
 }

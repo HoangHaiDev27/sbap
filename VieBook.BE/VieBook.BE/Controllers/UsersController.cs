@@ -23,6 +23,57 @@ namespace VieBook.BE.Controllers
             _userService = userService;
             _mapper = mapper;
         }
+
+        [Authorize]
+        [HttpGet("me1")]
+        public async Task<IActionResult> GetMe()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var user = await _userService.GetByIdWithProfileAndRolesAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy người dùng" });
+                }
+
+                var profile = user.UserProfile;
+                return Ok(new
+                {
+                    userId = user.UserId,
+                    email = user.Email,
+                    roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>(),
+                    wallet = user.Wallet,
+                    createdAt = user.CreatedAt,
+                    profile = profile == null ? null : new
+                    {
+                        profile.UserId,
+                        profile.FullName,
+                        profile.PhoneNumber,
+                        profile.DateOfBirth,
+                        profile.AvatarUrl,
+                        profile.BankNumber,
+                        profile.BankName,
+                        profile.PortfolioUrl,
+                        profile.Bio,
+                        profile.AgreeTos
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetMe: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
+            }
+        }
         [HttpGet]
         // [Authorize]
         // [RequirePermission(Permissions.ViewUsers)]
