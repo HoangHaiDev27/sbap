@@ -44,9 +44,20 @@ namespace VieBook.BE.Controllers
         [HttpPost]
         public async Task<ActionResult> AddChapter([FromBody] ChapterViewDTO chapterDto)
         {
-            var chapter = _mapper.Map<Chapter>(chapterDto);
-            await _chapterService.AddChapterAsync(chapter);
-            return Ok(new { message = "Chapter added successfully", chapterId = chapter.ChapterId });
+            try
+            {
+                var chapter = _mapper.Map<Chapter>(chapterDto);
+                await _chapterService.AddChapterAsync(chapter);
+                return Ok(new { message = "Chapter added successfully", chapterId = chapter.ChapterId });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while adding the chapter", error = ex.Message });
+            }
         }
 
         // PUT api/chapter/{id}
