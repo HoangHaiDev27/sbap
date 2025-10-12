@@ -23,8 +23,8 @@ namespace DataAccess.DAO.Admin
             return await _context.Users
                 .Include(u => u.UserProfile)
                 .Include(u => u.Roles)
-                .Where(u => 
-                    u.Roles.Count == 1 && 
+                .Where(u =>
+                    u.Roles.Count == 1 &&
                     u.Roles.Any(r => r.RoleName == "Staff")
                 )
                 .OrderByDescending(u => u.CreatedAt)
@@ -58,7 +58,7 @@ namespace DataAccess.DAO.Admin
         }
 
         // Xóa Staff dựa vào UserId
-       public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
             try
             {

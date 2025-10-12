@@ -1,10 +1,12 @@
 using BusinessObject;
 using BusinessObject.Dtos;
+using BusinessObject.OpenAI;
 using DataAccess;
 using DataAccess.DAO;
 using DataAccess.DAO.Admin;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Net.payOS;
 using Repositories.Implementations;
@@ -84,6 +86,7 @@ builder.Services.AddScoped<StaffDAO>();
 builder.Services.AddScoped<AdminDAO>();
 builder.Services.AddScoped<ChapterDAO>();
 builder.Services.AddScoped<RankingSummaryDAO>();
+builder.Services.AddScoped<WishlistDAO>();
 
 
 
@@ -102,6 +105,7 @@ builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IBookApprovalRepository, BookApprovalRepository>();
 builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
 builder.Services.AddScoped<IRankingRepository, RankingRepository>();
+builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -124,13 +128,21 @@ builder.Services.AddScoped<IBookApprovalService, BookApprovalService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IRankingService, RankingService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+
+//Add OpenAI service
+builder.Services.AddScoped<DataAccess.DAO.OpenAIDAO>();
+builder.Services.AddScoped<IOpenAIRepository, OpenAIRepository>();
+builder.Services.AddScoped<IOpenAIService, OpenAIService>();
 
 
 // Cloudinaary service
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<CloudinaryService>();
-
+//OpenAI service
+builder.Services.Configure<OpenAIConfig>(builder.Configuration.GetSection("OpenAI"));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<OpenAIConfig>>().Value);
 
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));

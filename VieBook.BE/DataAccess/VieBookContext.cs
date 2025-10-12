@@ -80,6 +80,13 @@ public partial class VieBookContext : DbContext
     public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
 
     public virtual DbSet<Wishlist> Wishlists { get; set; }
+
+    public virtual DbSet<BookEmbedding> BookEmbeddings { get; set; }
+
+    public virtual DbSet<ChapterContentEmbedding> ChapterContentEmbeddings { get; set; }
+
+    public virtual DbSet<ChapterChunkEmbedding> ChapterChunkEmbeddings { get; set; }
+
     private string GetConnectionString()
     {
         IConfiguration configuration = new ConfigurationBuilder()
@@ -854,6 +861,73 @@ public partial class VieBookContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Wishlists__UserI__6D0D32F4");
+        });
+        modelBuilder.Entity<BookEmbedding>(entity =>
+        {
+            entity.ToTable("BookEmbeddings");
+            entity.HasKey(e => e.BookId).HasName("PK__BookEmbed__3214EC276F685795");
+
+            // Map property names to DB columns
+            entity.Property(e => e.VectorBook).HasColumnName("Vector_Book");
+            entity.Property(e => e.Categories).HasColumnName("Categories");
+            entity.Property(e => e.UploadedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+            // FK to Books
+            entity.HasOne(e => e.Book)
+                .WithOne()
+                .HasForeignKey<BookEmbedding>(e => e.BookId)
+                .HasConstraintName("FK_BookEmbeddings_Books");
+        });
+
+        modelBuilder.Entity<ChapterContentEmbedding>(entity =>
+        {
+            entity.ToTable("ChapterContentEmbeddings");
+            entity.HasKey(e => e.ChapterId).HasName("PK__ChapterContentEmbeddings__3214EC276F685795");
+
+            // Map property names to DB columns
+            entity.Property(e => e.VectorChapterContent).HasColumnName("Vector_ChapterContent");
+            entity.Property(e => e.UploadedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+            // FKs
+            entity.HasOne(e => e.Chapter)
+                .WithMany()
+                .HasForeignKey(e => e.ChapterId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChapterContentEmbeddings_Chapters");
+
+            entity.HasOne(e => e.Book)
+                .WithMany()
+                .HasForeignKey(e => e.BookId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChapterContentEmbeddings_Books");
+        });
+
+        modelBuilder.Entity<ChapterChunkEmbedding>(entity =>
+        {
+            entity.ToTable("ChapterChunkEmbeddings");
+            entity.HasKey(e => e.ChunkId).HasName("PK__ChapterChunkEmbeddings__3214EC276F685795");
+
+            // Map property names to DB columns
+            entity.Property(e => e.VectorChunkContent).HasColumnName("Vector_ChunkContent");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+            // Unique constraint on (ChapterId, ChunkIndex)
+            entity.HasIndex(e => new { e.ChapterId, e.ChunkIndex })
+                .IsUnique()
+                .HasDatabaseName("UQ_ChapterChunkEmbeddings");
+
+            // FKs
+            entity.HasOne(e => e.Chapter)
+                .WithMany()
+                .HasForeignKey(e => e.ChapterId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChapterChunkEmbeddings_Chapters");
+
+            entity.HasOne(e => e.Book)
+                .WithMany()
+                .HasForeignKey(e => e.BookId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ChapterChunkEmbeddings_Books");
         });
 
         OnModelCreatingPartial(modelBuilder);

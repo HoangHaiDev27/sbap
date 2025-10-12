@@ -5,6 +5,7 @@ const API_BASE_URL = "http://102.37.147.127:5757";
 export const API_ENDPOINTS = {
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,
+  USER_ME: `${API_BASE_URL}/api/users/me1`,
   USER_EMAIL: `${API_BASE_URL}/api/users/email`,
   BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/${id}`,
   READ_BOOKS: `${API_BASE_URL}/api/books/read`,
@@ -36,6 +37,14 @@ export const API_ENDPOINTS = {
     VERIFY: `${API_BASE_URL}/api/webhook/verify-payment`,
   },
 
+  // OpenAI endpoints
+  OPENAI: {
+    CHECK_SPELLING: `${API_BASE_URL}/api/openai/check-spelling`,
+    MODERATION: `${API_BASE_URL}/api/openai/moderation`,
+    CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
+    GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
+  },
+
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
@@ -51,6 +60,14 @@ export const API_ENDPOINTS = {
     PURCHASE: `${API_BASE_URL}/api/chapterpurchase/purchase`,
     CHECK_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-ownership`,
     MY_PURCHASES: `${API_BASE_URL}/api/chapterpurchase/my-purchases`,
+  },
+  // Wishlist endpoints
+  WISHLIST: {
+    CHECK: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}/check`,
+    ADD: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}`,
+    REMOVE: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}`,
+    TOGGLE: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}/toggle`,
+    MY_LIST: `${API_BASE_URL}/api/wishlist/me`,
   },
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,

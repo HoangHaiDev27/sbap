@@ -17,7 +17,7 @@ namespace VieBook.BE.Controllers
         }
 
         [HttpPost("bookImage")]
-        public async Task<IActionResult> UploadImage(IFormFile file)
+        public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
         {
             var url = await _cloudinaryService.UploadBookImageAsync(file);
             if (url == null) return BadRequest("Upload thất bại");
@@ -39,7 +39,7 @@ namespace VieBook.BE.Controllers
             return Ok(new { message = "Đã xóa ảnh thành công" });
         }
         [HttpPost("avatarImage")]
-        public async Task<IActionResult> UploadAvaterImage(IFormFile file)
+        public async Task<IActionResult> UploadAvaterImage([FromForm] IFormFile file)
         {
             var url = await _cloudinaryService.UploadAvatarImageAsync(file);
             if (url == null) return BadRequest("Upload thất bại");
