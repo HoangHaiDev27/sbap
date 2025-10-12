@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   RiTrophyLine,
   RiFireLine,
@@ -9,34 +9,63 @@ import PopularBooks from "../components/ranking/PopularBooks";
 import TrendingBooks from "../components/ranking/TrendingBooks";
 import NewReleases from "../components/ranking/NewReleases";
 import TopRated from "../components/ranking/TopRated";
+import { getRankingSummary } from "../api/rankingapi";
 
 export default function RankingManager() {
   const [activeTab, setActiveTab] = useState("popular");
+  const [summary, setSummary] = useState({
+    popularCount: 0,
+    topRatedCount: 0,
+    newReleaseCount: 0,
+    trendingCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSummary() {
+      try {
+        const data = await getRankingSummary();
+        // Map đúng key theo API backend (có thể khác chữ hoa)
+        setSummary({
+          popularCount: data.popularCount,
+          topRatedCount: data.topRatedCount,
+          newReleaseCount: data.newReleaseCount,
+          trendingCount: data.trendingCount,
+        });
+      } catch (error) {
+        console.error("Failed to load ranking summary:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSummary();
+  }, []);
 
   const stats = [
     {
-      label: "Top sách hot",
-      value: 150,
+      label: "Phổ biến nhất",
+      value: summary.popularCount,
+      color: "bg-green-500",
+      icon: <RiTrophyLine size={28} />,
+    },
+    {
+      label: "Xu hướng",
+      value: summary.trendingCount,
       color: "bg-red-500",
       icon: <RiFireLine size={28} />,
     },
     {
       label: "Mới phát hành",
-      value: 23,
+      value: summary.newReleaseCount,
       color: "bg-blue-500",
       icon: <RiTimeLine size={28} />,
     },
     {
       label: "Đánh giá cao",
-      value: 89,
+      value: summary.topRatedCount,
       color: "bg-yellow-500",
       icon: <RiStarLine size={28} />,
-    },
-    {
-      label: "Phổ biến nhất",
-      value: 342,
-      color: "bg-green-500",
-      icon: <RiTrophyLine size={28} />,
     },
   ];
 
@@ -61,6 +90,12 @@ export default function RankingManager() {
         return <PopularBooks />;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="text-center text-gray-400 py-10">Đang tải dữ liệu...</div>
+    );
+  }
 
   return (
     <div className="bg-gray-900 p-6 text-white">

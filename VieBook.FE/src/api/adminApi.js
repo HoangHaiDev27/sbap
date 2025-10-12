@@ -1,28 +1,53 @@
 import { API_ENDPOINTS } from "../config/apiConfig";
 
-export async function getAdminById(adminId) {
-  const res = await fetch(API_ENDPOINTS.ADMIN.GETADMINBYID(adminId), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
-    },
-  });
-  if (!res.ok) throw new Error("Failed to fetch admin detail");
+async function handleFetch(url, options = {}, defaultError) {
+  const res = await fetch(url, options);
+
+  if (!res.ok) {
+    let errorMessage = defaultError;
+    try {
+      const data = await res.json();
+      errorMessage = data.message || errorMessage;
+    } catch {
+      if (res.status === 500) {
+        errorMessage = "Lỗi hệ thống.";
+      }
+    }
+    throw new Error(errorMessage);
+  }
+
+  if (res.status === 204) return true;
   return res.json();
 }
 
-export async function updateAdmin(adminId, data) {
-  const res = await fetch(API_ENDPOINTS.ADMIN.UPDATE(adminId), {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
+export async function getAdminById(adminId) {
+  return handleFetch(
+    API_ENDPOINTS.ADMIN.GETADMINBYID(adminId),
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
     },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error("Failed to update admin");
-  return res.json();
+    "Failed to fetch admin detail"
+  );
+}
+
+
+export async function updateAdmin(adminId, data) {
+  return handleFetch(
+    API_ENDPOINTS.ADMIN.UPDATE(adminId),
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(data),
+    },
+    "Failed to update admin"
+  );
 }
 
 export async function uploadAvatarImage(formData) {

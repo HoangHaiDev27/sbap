@@ -1,90 +1,63 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getRankingList } from "../../api/rankingapi"; 
 
 export default function NewReleases() {
   const navigate = useNavigate();
 
-  const allBooks = [
-    {
-      id: 1,
-      title: "The Atlas Six",
-      author: "Olivie Blake",
-      releaseDate: "2024-01-15",
-      category: "Fantasy",
-      duration: "12h 45m",
-      description:
-        "Six young magicians are chosen to compete for a place in an ancient society.",
-      image: "https://picsum.photos/id/1011/200/300",
-      isNew: true,
-      liked: false,
-    },
-    {
-      id: 2,
-      title: "Klara and the Sun",
-      author: "Kazuo Ishiguro",
-      releaseDate: "2024-01-12",
-      category: "Science Fiction",
-      duration: "8h 20m",
-      description: "An artificial friend observes the world with fascination.",
-      image: "https://picsum.photos/id/1025/200/300",
-      isNew: true,
-      liked: false,
-    },
-    {
-      id: 3,
-      title: "The Midnight Library",
-      author: "Matt Haig",
-      releaseDate: "2024-01-10",
-      category: "Philosophy",
-      duration: "6h 15m",
-      description:
-        "Between life and death there is a library with infinite possibilities.",
-      image: "https://picsum.photos/id/1035/200/300",
-      isNew: true,
-      liked: false,
-    },
-    {
-      id: 4,
-      title: "The Invisible Life of Addie LaRue",
-      author: "V.E. Schwab",
-      releaseDate: "2024-01-08",
-      category: "Fantasy Romance",
-      duration: "17h 30m",
-      description: "A woman cursed to be forgotten by everyone she meets.",
-      image: "https://picsum.photos/id/1041/200/300",
-      isNew: false,
-      liked: false,
-    },
-    {
-      id: 5,
-      title: "Project Hail Mary",
-      author: "Andy Weir",
-      releaseDate: "2024-01-05",
-      category: "Science Fiction",
-      duration: "16h 10m",
-      description: "A lone astronaut must save humanity from extinction.",
-      image: "https://picsum.photos/id/1056/200/300",
-      isNew: false,
-      liked: false,
-    },
-    {
-      id: 6,
-      title: "Dune",
-      author: "Frank Herbert",
-      releaseDate: "2023-12-25",
-      category: "Science Fiction",
-      duration: "21h 10m",
-      description:
-        "The classic tale of politics, power, and sandworms on Arrakis.",
-      image: "https://picsum.photos/id/1062/200/300",
-      isNew: false,
-      liked: false,
-    },
-  ];
-
-  const [books, setBooks] = useState(allBooks);
+  const [books, setBooks] = useState([]);
   const [visibleCount, setVisibleCount] = useState(3);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Gọi API khi load trang
+  useEffect(() => {
+    async function fetchNewReleases() {
+      try {
+        setLoading(true);
+        const data = await getRankingList();
+        console.log("Ranking API:", data);
+
+        // Backend có thể trả về nhiều nhóm → lọc phần NewRelease
+        const newReleaseBooks =
+          data?.newReleases || data?.newReleaseBooks || data?.new_release || [];
+
+        // Nếu API chưa có các field UI yêu cầu, thêm tạm
+        const formatted = newReleaseBooks.map((book, index) => ({
+          id: book.bookId || book.id || index + 1,
+          title: book.title || "Chưa có tiêu đề",
+          author: book.authorName || book.author || "Tác giả không xác định",
+          createdAt: book.createdAt || "2024-01-01",
+          categoryNames: book.categoryNames || "Không rõ thể loại",
+          duration: book.duration || "—",
+          description: book.description || "Không có mô tả.",
+          image: book.image || "https://picsum.photos/200/300?random=" + index,
+          isNew: true,
+          liked: false,
+        }));
+
+        setBooks(formatted);
+      } catch (err) {
+        console.error(err);
+        setError("Không thể tải danh sách sách mới phát hành.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchNewReleases();
+  }, []);
+
+  // ✅ Hàm xử lý like
+  // const toggleLike = (id) => {
+  //   setBooks((prev) =>
+  //     prev.map((book) =>
+  //       book.id === id ? { ...book, liked: !book.liked } : book
+  //     )
+  //   );
+  // };
+
+  // ✅ Format thời gian phát hành
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -97,12 +70,7 @@ export default function NewReleases() {
     return date.toLocaleDateString("vi-VN");
   };
 
-  const toggleLike = (id) => {
-    setBooks((prev) =>
-      prev.map((book) => (book.id === id ? { ...book, liked: !book.liked } : book))
-    );
-  };
-
+  // ✅ Icon component giữ nguyên (CalendarIcon, NewIcon, PlayIcon, HeartIcon)
   const CalendarIcon = ({ className }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
@@ -155,6 +123,11 @@ export default function NewReleases() {
 
   const visibleBooks = books.slice(0, visibleCount);
 
+  if (loading)
+    return <div className="text-center text-gray-400">Đang tải sách mới...</div>;
+  if (error)
+    return <div className="text-center text-red-400">{error}</div>;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -165,7 +138,7 @@ export default function NewReleases() {
         </div>
       </div>
 
-      {/* Featured New Releases */}
+      {/* --- giữ nguyên UI gốc --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {visibleBooks.slice(0, 3).map((book) => (
           <div
@@ -191,7 +164,7 @@ export default function NewReleases() {
               <p className="text-gray-400 text-sm mb-2">{book.author}</p>
               <div className="flex items-center justify-center text-xs text-gray-400 mb-3">
                 <CalendarIcon className="w-4 h-4 mr-1" />
-                <span>{formatDate(book.releaseDate)}</span>
+                <span>{formatDate(book.createdAt)}</span>
               </div>
               <button
                 onClick={() => navigate(`/bookdetails/${book.id}`)}
@@ -205,7 +178,7 @@ export default function NewReleases() {
         ))}
       </div>
 
-      {/* Complete List */}
+      {/* --- danh sách đầy đủ --- */}
       <div className="space-y-4">
         {visibleBooks.map((book) => (
           <div
@@ -213,7 +186,6 @@ export default function NewReleases() {
             className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors"
           >
             <div className="flex items-start space-x-4">
-              {/* Book Image */}
               <div className="flex-shrink-0 relative">
                 <img
                   src={book.image}
@@ -227,22 +199,21 @@ export default function NewReleases() {
                 )}
               </div>
 
-              {/* Book Info */}
               <div className="flex-grow">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="font-semibold text-white mb-1">{book.title}</h3>
+                    <h3 className="font-semibold text-white mb-1">
+                      {book.title}
+                    </h3>
                     <p className="text-gray-400 text-sm">{book.author}</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {/* Heart button */}
-                    <button
+                    {/* <button
                       onClick={() => toggleLike(book.id)}
                       className="p-2 transition-colors"
                     >
                       <HeartIcon filled={book.liked} className="w-5 h-5" />
-                    </button>
-                    {/* Navigate button */}
+                    </button> */}
                     <button
                       onClick={() => navigate(`/bookdetails/${book.id}`)}
                       className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg transition-colors text-sm"
@@ -258,11 +229,13 @@ export default function NewReleases() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 text-xs text-gray-400">
-                    <span className="bg-gray-600 px-2 py-1 rounded">{book.category}</span>
-                    <span>{book.duration}</span>
+                    <span className="bg-gray-600 px-2 py-1 rounded">
+                      {book.categoryNames}
+                    </span>
+                    {/* <span>{book.duration}</span> */}
                     <div className="flex items-center">
                       <CalendarIcon className="w-4 h-4 mr-1" />
-                      <span>{formatDate(book.releaseDate)}</span>
+                      <span>{formatDate(book.createdAt)}</span>
                     </div>
                   </div>
                 </div>
@@ -272,7 +245,6 @@ export default function NewReleases() {
         ))}
       </div>
 
-      {/* Load More */}
       {visibleCount < books.length && (
         <div className="text-center mt-6">
           <button

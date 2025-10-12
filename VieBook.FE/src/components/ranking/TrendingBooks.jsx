@@ -1,94 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getRankingList } from "../../api/rankingapi";
 
 export default function TrendingBooks() {
   const navigate = useNavigate();
-
-  const allTrendingBooks = [
-    {
-      id: 1,
-      title: "Fourth Wing",
-      author: "Rebecca Ross",
-      category: "Fantasy",
-      trendScore: 95,
-      growth: "+245%",
-      listens: 5600,
-      image: "https://picsum.photos/120/160?random=1",
-      isHot: true,
-      liked: false,
-    },
-    {
-      id: 2,
-      title: "Tomorrow, and Tomorrow, and Tomorrow",
-      author: "Gabrielle Zevin",
-      category: "Fiction",
-      trendScore: 88,
-      growth: "+189%",
-      listens: 4200,
-      image: "https://picsum.photos/120/160?random=2",
-      isHot: true,
-      liked: false,
-    },
-    {
-      id: 3,
-      title: "Lessons in Chemistry",
-      author: "Bonnie Garmus",
-      category: "Fiction",
-      trendScore: 82,
-      growth: "+156%",
-      listens: 3800,
-      image: "https://picsum.photos/120/160?random=3",
-      isHot: false,
-      liked: false,
-    },
-    {
-      id: 4,
-      title: "Dune",
-      author: "Frank Herbert",
-      category: "Sci-Fi",
-      trendScore: 90,
-      growth: "+201%",
-      listens: 6100,
-      image: "https://picsum.photos/120/160?random=4",
-      isHot: true,
-      liked: false,
-    },
-    {
-      id: 5,
-      title: "Project Hail Mary",
-      author: "Andy Weir",
-      category: "Sci-Fi",
-      trendScore: 85,
-      growth: "+167%",
-      listens: 4500,
-      image: "https://picsum.photos/120/160?random=5",
-      isHot: false,
-      liked: false,
-    },
-    {
-      id: 6,
-      title: "The Silent Patient",
-      author: "Alex Michaelides",
-      category: "Thriller",
-      trendScore: 78,
-      growth: "+132%",
-      listens: 3900,
-      image: "https://picsum.photos/120/160?random=6",
-      isHot: false,
-      liked: false,
-    },
-  ];
-
-  const [books, setBooks] = useState(allTrendingBooks);
+  const [books, setBooks] = useState([]);
   const [visibleCount, setVisibleCount] = useState(3);
 
-  const toggleLike = (id) => {
-    setBooks((prev) =>
-      prev.map((book) =>
-        book.id === id ? { ...book, liked: !book.liked } : book
-      )
-    );
-  };
+  // Gọi API khi load trang
+  useEffect(() => {
+    const fetchTrendingBooks = async () => {
+      try {
+        const response = await getRankingList();
+        // API trả về: { popularBooks, topRatedBooks, newReleaseBooks, trendingBooks }
+        setBooks(
+          response.trendingBooks?.map((b) => ({
+            id: b.bookId,
+            title: b.title,
+            author: b.author || b.ownerName || "Không rõ tác giả",
+            category: b.categoryNames?.[0] || "Chưa phân loại",
+            trendScore: b.totalView || 0, // có thể dùng totalView làm điểm hot
+            growth: "+120%", // nếu backend chưa có growth %, bạn có thể tạm set cứng
+            listens: b.totalView || 0,
+            image: b.coverUrl,
+            isHot: (b.totalView || 0) > 80,
+            liked: false,
+          })) || []
+        );
+      } catch (error) {
+        console.error("Error fetching trending books:", error);
+      }
+    };
+
+    fetchTrendingBooks();
+  }, []);
+
+  // const toggleLike = (id) => {
+  //   setBooks((prev) =>
+  //     prev.map((book) =>
+  //       book.id === id ? { ...book, liked: !book.liked } : book
+  //     )
+  //   );
+  // };
 
   const getScoreColor = (score) => {
     if (score >= 90) return "text-red-400";
@@ -150,7 +103,6 @@ export default function TrendingBooks() {
             key={book.id}
             className="bg-gray-700 rounded-lg p-4 flex items-center space-x-4 hover:bg-gray-600 transition-colors"
           >
-            {/* Rank */}
             <div className="flex flex-col items-center">
               <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-bold text-sm">
                 {index + 1}
@@ -158,7 +110,6 @@ export default function TrendingBooks() {
               <TrendingIcon className="text-green-400 mt-1" />
             </div>
 
-            {/* Book Image */}
             <div className="flex-shrink-0 relative">
               <img
                 src={book.image}
@@ -170,7 +121,6 @@ export default function TrendingBooks() {
               )}
             </div>
 
-            {/* Info */}
             <div className="flex-grow">
               <h3 className="font-semibold text-white mb-1">{book.title}</h3>
               <p className="text-gray-400 text-sm mb-2">{book.author}</p>
@@ -179,32 +129,32 @@ export default function TrendingBooks() {
                   {book.category}
                 </span>
                 <span className="text-gray-400">
-                  {book.listens.toLocaleString()} lượt nghe
+                  {book.listens.toLocaleString()} lượt xem
                 </span>
               </div>
             </div>
 
-            {/* Score */}
             <div className="text-center">
               <div
-                className={`text-2xl font-bold ${getScoreColor(book.trendScore)}`}
+                className={`text-2xl font-bold ${getScoreColor(
+                  book.trendScore
+                )}`}
               >
                 {book.trendScore}°
               </div>
-              <div className="text-green-400 text-sm font-medium">{book.growth}</div>
+              <div className="text-green-400 text-sm font-medium">
+                {book.growth}
+              </div>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center space-x-2">
-              {/* Heart button */}
-              <button
+              {/* <button
                 onClick={() => toggleLike(book.id)}
                 className="p-2 transition-colors"
               >
                 <HeartIcon filled={book.liked} />
-              </button>
+              </button> */}
 
-              {/* Play button */}
               <button
                 onClick={() => navigate(`/bookdetails/${book.id}`)}
                 className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors"
@@ -216,7 +166,6 @@ export default function TrendingBooks() {
         ))}
       </div>
 
-      {/* Xem thêm */}
       {visibleCount < books.length && (
         <div className="text-center mt-6">
           <button
