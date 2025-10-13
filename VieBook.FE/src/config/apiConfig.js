@@ -63,6 +63,13 @@ export const API_ENDPOINTS = {
     CHECK_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-ownership`,
     MY_PURCHASES: `${API_BASE_URL}/api/chapterpurchase/my-purchases`,
   },
+
+  // Order Item endpoints
+  ORDER_ITEM: {
+    PURCHASED_BOOKS: (userId) => `${API_BASE_URL}/api/OrderItem/purchased-books/${userId}`,
+    GET_BY_ID: (orderItemId) => `${API_BASE_URL}/api/OrderItem/${orderItemId}`,
+    PURCHASED_CHAPTERS: (userId, bookId) => `${API_BASE_URL}/api/OrderItem/purchased-chapters/${userId}/${bookId}`,
+  },
   // Wishlist endpoints
   WISHLIST: {
     CHECK: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}/check`,
