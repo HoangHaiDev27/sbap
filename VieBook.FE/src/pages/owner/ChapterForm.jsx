@@ -91,6 +91,8 @@ export default function ChapterForm() {
   const [spellingErrors, setSpellingErrors] = useState([]);
   const [isCheckingSpelling, setIsCheckingSpelling] = useState(false);
   const [correctedText, setCorrectedText] = useState("");
+  const [hasCheckedSpelling, setHasCheckedSpelling] = useState(false);
+  const [isSpellingValid, setIsSpellingValid] = useState(false);
   const [contentHasMeaning, setContentHasMeaning] = useState(true); // Track if content has meaningful content
   const [meaningScore, setMeaningScore] = useState(100); // Track meaning score (0-100)
   const [meaningReason, setMeaningReason] = useState(""); // Track reason for meaning assessment
@@ -142,6 +144,8 @@ export default function ChapterForm() {
     setMeaningReason("");
     setSpellingErrors([]);
     setCorrectedText("");
+    setHasCheckedSpelling(false);
+    setIsSpellingValid(false);
   }, [validationErrors.content]);
 
   // Validation functions
@@ -419,6 +423,8 @@ export default function ChapterForm() {
       setMeaningReason(meaningReasonValue);
 
       const hasErrors = normalizedErrors.length > 0 || (resultObj?.isCorrect === false);
+      setHasCheckedSpelling(true);
+      setIsSpellingValid(!hasErrors);
       if (hasErrors) {
         window.dispatchEvent(
           new CustomEvent("app:toast", {
@@ -1174,17 +1180,15 @@ export default function ChapterForm() {
           </button>
           
           {currentStep < 3 ? (
-            <button
-              onClick={nextStep}
-              disabled={currentStep === 2 && !contentHasMeaning}
-              className={`px-4 py-2 rounded-lg transition ${
-                currentStep === 2 && !contentHasMeaning
-                  ? "bg-gray-600 cursor-not-allowed opacity-50"
-                  : "bg-orange-500 hover:bg-orange-600"
-              }`}
-            >
-              Tiếp tục
-            </button>
+            // Chỉ hiện nút Tiếp tục ở bước 2 khi đã kiểm tra chính tả và không có lỗi, đồng thời nội dung có ý nghĩa
+            currentStep === 2 && hasCheckedSpelling && isSpellingValid && contentHasMeaning ? (
+              <button
+                onClick={nextStep}
+                className="px-4 py-2 rounded-lg transition bg-orange-500 hover:bg-orange-600"
+              >
+                Tiếp tục
+              </button>
+            ) : null
           ) : (
             <>
               <button
