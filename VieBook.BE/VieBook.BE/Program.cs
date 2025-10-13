@@ -145,6 +145,10 @@ builder.Services.AddScoped<DataAccess.DAO.OpenAIDAO>();
 builder.Services.AddScoped<IOpenAIRepository, OpenAIRepository>();
 builder.Services.AddScoped<IOpenAIService, OpenAIService>();
 
+//Add Bookmark service
+builder.Services.AddScoped<IBookmarkRepository, BookmarkRepository>();
+builder.Services.AddScoped<IBookmarkService, BookmarkService>();
+
 
 // Cloudinaary service
 builder.Services.Configure<CloudinarySettings>(

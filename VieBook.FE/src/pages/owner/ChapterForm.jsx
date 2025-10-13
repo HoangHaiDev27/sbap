@@ -91,6 +91,11 @@ export default function ChapterForm() {
   const [spellingErrors, setSpellingErrors] = useState([]);
   const [isCheckingSpelling, setIsCheckingSpelling] = useState(false);
   const [correctedText, setCorrectedText] = useState("");
+  const [hasCheckedSpelling, setHasCheckedSpelling] = useState(false);
+  const [isSpellingValid, setIsSpellingValid] = useState(false);
+  const [contentHasMeaning, setContentHasMeaning] = useState(true); // Track if content has meaningful content
+  const [meaningScore, setMeaningScore] = useState(100); // Track meaning score (0-100)
+  const [meaningReason, setMeaningReason] = useState(""); // Track reason for meaning assessment
   const contentAreaRef = useRef(null);
   
   // Step 3 - Approval states
@@ -133,6 +138,14 @@ export default function ChapterForm() {
     if (validationErrors.content) {
       setValidationErrors(prev => ({ ...prev, content: "" }));
     }
+    // Reset meaning assessment when content changes
+    setContentHasMeaning(true);
+    setMeaningScore(100);
+    setMeaningReason("");
+    setSpellingErrors([]);
+    setCorrectedText("");
+    setHasCheckedSpelling(false);
+    setIsSpellingValid(false);
   }, [validationErrors.content]);
 
   // Validation functions
@@ -314,6 +327,19 @@ export default function ChapterForm() {
       } else if (currentStep === 2) {
         const contentError = validateContent(content);
         
+        // Kiểm tra ý nghĩa nội dung nếu đã kiểm tra chính tả
+        if (!contentHasMeaning) {
+          window.dispatchEvent(
+            new CustomEvent("app:toast", {
+              detail: { 
+                type: "error", 
+                message: "Nội dung không có ý nghĩa. Vui lòng nhập nội dung có giá trị trước khi tiếp tục." 
+              },
+            })
+          );
+          return;
+        }
+        
         if (contentError) {
           setValidationErrors({
             title: "",
@@ -387,7 +413,18 @@ export default function ChapterForm() {
       setSpellingErrors(normalizedErrors);
       setCorrectedText(resultObj?.correctedText || "");
 
+      // Cập nhật thông tin ý nghĩa nội dung
+      const hasMeaning = resultObj?.hasMeaning !== false; // Default to true if not provided
+      const meaningScoreValue = resultObj?.meaningScore ?? 100;
+      const meaningReasonValue = resultObj?.meaningReason || "";
+      
+      setContentHasMeaning(hasMeaning);
+      setMeaningScore(meaningScoreValue);
+      setMeaningReason(meaningReasonValue);
+
       const hasErrors = normalizedErrors.length > 0 || (resultObj?.isCorrect === false);
+      setHasCheckedSpelling(true);
+      setIsSpellingValid(!hasErrors);
       if (hasErrors) {
         window.dispatchEvent(
           new CustomEvent("app:toast", {
@@ -764,6 +801,33 @@ export default function ChapterForm() {
         </div>
       </div>
 
+      {/* Hiển thị thông tin ý nghĩa nội dung */}
+      {!contentHasMeaning && (
+        <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mt-4">
+          <div className="flex items-center mb-2">
+            <span className="text-red-400 font-semibold">⚠️ Nội dung không có ý nghĩa</span>
+            <span className="ml-2 text-sm text-gray-300">(Điểm: {meaningScore}/100)</span>
+          </div>
+          {meaningReason && (
+            <p className="text-sm text-gray-300 mb-2">{meaningReason}</p>
+          )}
+          <p className="text-sm text-red-300">
+            Vui lòng nhập nội dung có ý nghĩa và có giá trị để tiếp tục.
+          </p>
+        </div>
+      )}
+
+      {/* Hiển thị thông tin ý nghĩa tích cực */}
+      {contentHasMeaning && meaningScore < 100 && meaningReason && (
+        <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 mt-4">
+          <div className="flex items-center mb-2">
+            <span className="text-green-400 font-semibold">✅ Nội dung có ý nghĩa</span>
+            <span className="ml-2 text-sm text-gray-300">(Điểm: {meaningScore}/100)</span>
+          </div>
+          <p className="text-sm text-gray-300">{meaningReason}</p>
+        </div>
+      )}
+
       {/* Hiển thị lỗi chính tả từ API và gợi ý sửa */}
       {(spellingErrors.length > 0 || correctedText) && (
         <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4 mt-4">
@@ -820,7 +884,7 @@ export default function ChapterForm() {
         </div>
       )}
     </div>
-  ), [content, file, pdfPages, spellingErrors, isCheckingSpelling, handleContentChange, handleFileChange, handleCheckSpelling, getFileTag, formatFileSize]);
+  ), [content, file, pdfPages, spellingErrors, isCheckingSpelling, contentHasMeaning, meaningScore, meaningReason, handleContentChange, handleFileChange, handleCheckSpelling, getFileTag, formatFileSize]);
 
   const Step3 = () => (
     <div className="bg-slate-800 p-6 rounded-lg shadow-md mb-6">
@@ -1116,12 +1180,15 @@ export default function ChapterForm() {
           </button>
           
           {currentStep < 3 ? (
-            <button
-              onClick={nextStep}
-              className="px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition"
-            >
-              Tiếp tục
-            </button>
+            // Chỉ hiện nút Tiếp tục ở bước 2 khi đã kiểm tra chính tả và không có lỗi, đồng thời nội dung có ý nghĩa
+            currentStep === 2 && hasCheckedSpelling && isSpellingValid && contentHasMeaning ? (
+              <button
+                onClick={nextStep}
+                className="px-4 py-2 rounded-lg transition bg-orange-500 hover:bg-orange-600"
+              >
+                Tiếp tục
+              </button>
+            ) : null
           ) : (
             <>
               <button

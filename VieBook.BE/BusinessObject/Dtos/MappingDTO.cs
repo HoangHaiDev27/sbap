@@ -64,9 +64,9 @@ namespace BusinessObject.Dtos
                         .Count()))
                 .ForMember(dest => dest.TotalRatings,
                     opt => opt.MapFrom(src => src.BookReviews.Count()))
-                .ForMember(dest => dest.TotalView, 
+                .ForMember(dest => dest.TotalView,
                     opt => opt.MapFrom(src => src.Chapters.Sum(c => (int?)c.ChapterView) ?? 0));
-                                              
+
 
 
             // Map từ RegisterRequestDto sang User
@@ -128,7 +128,7 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
                 .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
-                .ForMember(dest => dest.Roles,opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
+                .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
             // User → UserManagementDTO
             CreateMap<User, UserManagementDTO>()
@@ -185,7 +185,7 @@ namespace BusinessObject.Dtos
                            opt => opt.MapFrom(src => src.Staff.UserProfile.FullName));
             CreateMap<User, UserNameDTO>()
                 .ForMember(dest => dest.UserId,
-                    opt => opt.MapFrom(src => src.UserId)) 
+                    opt => opt.MapFrom(src => src.UserId))
                 .ForMember(dest => dest.Email,
                     opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Name,
@@ -197,6 +197,9 @@ namespace BusinessObject.Dtos
             CreateMap<ChapterViewDTO, Chapter>()
                 .ForMember(dest => dest.Book, opt => opt.Ignore());
 
+            // Bookmark mappings
+            CreateMap<Bookmark, BookmarkDTO>().ReverseMap();
+            CreateMap<CreateBookmarkDTO, Bookmark>();
             // ReadingSchedule mappings
             CreateMap<ReadingSchedule, ReadingScheduleDTO>()
                 .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))

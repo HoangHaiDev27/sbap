@@ -71,14 +71,22 @@ namespace Services.Implementations
 
             var prompt =
                 "Hãy kiểm tra lỗi chính tả và ngữ pháp tiếng Việt trong đoạn văn sau.\n" +
+                "Đồng thời đánh giá xem nội dung có ý nghĩa và có giá trị hay không.\n" +
                 "Trả kết quả theo định dạng JSON:\n" +
                 "{" +
                 "  \"isCorrect\": boolean,\n" +
+                "  \"hasMeaning\": boolean,\n" +
+                "  \"meaningScore\": number (0-100),\n" +
+                "  \"meaningReason\": string,\n" +
                 "  \"errors\": [\n" +
                 "    { \"wrong\": string, \"suggestion\": string, \"explanation\": string }\n" +
                 "  ],\n" +
                 "  \"correctedText\": string\n" +
                 "}\n" +
+                "Trong đó:\n" +
+                "- hasMeaning: true nếu nội dung có ý nghĩa, false nếu chỉ là ký tự vô nghĩa, spam, hoặc nội dung rỗng\n" +
+                "- meaningScore: điểm từ 0-100 đánh giá mức độ ý nghĩa của nội dung\n" +
+                "- meaningReason: lý do tại sao đánh giá như vậy\n" +
                 "Đừng thêm giải thích bên ngoài JSON.\n" +
                 $"Đoạn văn:\n\"\"\"{content}\"\"\"";
 
@@ -432,6 +440,67 @@ namespace Services.Implementations
             {
                 Console.WriteLine($"Failed to migrate existing chapters: {ex.Message}");
                 throw;
+            }
+        }
+
+        public async Task<string> SummarizeContentAsync(SummarizeCommand command)
+        {
+            try
+            {
+                var prompt = $@"
+Hãy tóm tắt nội dung chương '{command.ChapterTitle}' một cách chi tiết và hấp dẫn.
+
+Yêu cầu:
+1. Tóm tắt ngắn gọn nhưng đầy đủ nội dung chính
+2. Làm nổi bật các sự kiện quan trọng
+3. Giữ nguyên tính hấp dẫn của câu chuyện
+4. Sử dụng tiếng Việt tự nhiên
+5. Độ dài khoảng 200-300 từ
+
+Nội dung chương:
+{command.Content}
+
+Tóm tắt:";
+
+                var requestBody = new
+                {
+                    model = "gpt-3.5-turbo",
+                    messages = new[]
+                    {
+                        new { role = "system", content = "Bạn là một chuyên gia tóm tắt nội dung sách và truyện. Hãy tạo ra những tóm tắt hấp dẫn và chính xác." },
+                        new { role = "user", content = prompt }
+                    },
+                    max_tokens = 500,
+                    temperature = 0.7
+                };
+
+                var json = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+                var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", content);
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var responseJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
+
+                if (responseJson.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                {
+                    var firstChoice = choices[0];
+                    if (firstChoice.TryGetProperty("message", out var message) &&
+                        message.TryGetProperty("content", out var contentElement))
+                    {
+                        return contentElement.GetString()?.Trim() ?? "";
+                    }
+                }
+
+                throw new Exception("Không thể tạo tóm tắt từ phản hồi API");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error summarizing content for chapter {command.ChapterTitle}: {ex.Message}");
+                throw new Exception($"Lỗi khi tạo tóm tắt: {ex.Message}");
             }
         }
 

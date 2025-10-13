@@ -110,6 +110,7 @@ namespace DataAccess.DAO
             return await _context.ChapterContentEmbeddings
                 .Include(ce => ce.Chapter)
                 .ThenInclude(c => c.Book)
+                .Where(ce => ce.Chapter.Status == "Active")
                 .ToListAsync();
         }
 

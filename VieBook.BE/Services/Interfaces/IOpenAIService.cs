@@ -13,5 +13,6 @@ namespace Services.Interfaces
         Task<PlagiarismResult> CheckPlagiarismAsync(PlagiarismChapterContentCommand command);
         Task GenerateAndSaveEmbeddingsAsync(int chapterId, string content);
         Task MigrateExistingChaptersAsync(); // Tạo embeddings cho tất cả chapters hiện có
+        Task<string> SummarizeContentAsync(SummarizeCommand command);
     }
 }

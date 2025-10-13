@@ -60,4 +60,18 @@ export async function generateEmbeddings(chapterId, content) {
   return res.json();
 }
 
+export async function summarizeContent(content, chapterTitle) {
+  const res = await authFetch(API_ENDPOINTS.OPENAI.SUMMARIZE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, chapterTitle }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Summarize API failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
 

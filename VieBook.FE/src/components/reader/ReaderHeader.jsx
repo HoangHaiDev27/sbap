@@ -11,7 +11,7 @@ import { AiOutlinePlus } from "react-icons/ai";
 
 export default function ReaderHeader({
   book,
-  currentPage,
+  currentChapter,
   bookmarks,
   isFullscreen,
   toggleFullscreen,
@@ -20,23 +20,35 @@ export default function ReaderHeader({
   setShowContents,
   addBookmark,
 }) {
+  // Debug logs
+  console.log("ReaderHeader - book object:", book);
+  console.log("ReaderHeader - book.id:", book?.id);
+  console.log("ReaderHeader - book.bookId:", book?.bookId);
+  console.log("ReaderHeader - currentChapter:", currentChapter);
+  
+  // Calculate chapter number
+  const chapterNumber = book?.chapters?.findIndex(ch => ch.chapterId === currentChapter?.chapterId) + 1;
+  console.log("ReaderHeader - chapterNumber:", chapterNumber);
   return (
     <header className="flex justify-between items-center p-4 bg-gray-800 sticky top-0 z-50">
       {/* Left: Back + Title */}
       <div className="flex items-center space-x-2">
-        <Link to="/bookdetails/:id">
+        <Link to={`/bookdetails/${book.id || book.bookId}`} onClick={() => {
+          const bookId = book.id || book.bookId;
+          console.log("ReaderHeader - Navigating back to book details:", { bookId });
+        }}>
             <RiArrowLeftLine size={22} className="text-orange-500 hover:text-orange-600" />
         </Link>
         <div>
             <h1 className="font-semibold text-white">{book.title}</h1>
-            <p className="text-sm opacity-70">{book.author}</p>
+            <p className="text-sm opacity-70">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</p>
         </div>
         </div>
 
       {/* Right: Controls */}
       <div className="flex items-center space-x-4">
         <span className="text-sm opacity-70">
-          Trang {currentPage} / {book.totalPages}
+          Chương {chapterNumber || "N/A"}
         </span>
 
         <button
@@ -67,7 +79,10 @@ export default function ReaderHeader({
         </button>
 
         <button
-          onClick={() => setShowSettings(true)}
+          onClick={() => {
+            console.log("ReaderHeader - Settings button clicked");
+            setShowSettings(true);
+          }}
           className="hover:text-orange-500 flex items-center gap-1"
         >
           <RiSettings3Line size={20} />
