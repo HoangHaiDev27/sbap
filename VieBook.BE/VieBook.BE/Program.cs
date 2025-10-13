@@ -129,6 +129,11 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IRankingService, RankingService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository>();
+builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
+
+//Add DAO
+builder.Services.AddScoped<DataAccess.DAO.OrderItemDAO>();
 
 //Add OpenAI service
 builder.Services.AddScoped<DataAccess.DAO.OpenAIDAO>();

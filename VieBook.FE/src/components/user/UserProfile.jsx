@@ -37,9 +37,6 @@ export default function UserProfile() {
     avatarUrl: "",
     bankNumber: "",
     bankName: "",
-    portfolioUrl: "",
-    bio: "",
-    agreeTos: false,
     wallet: 0,
     isPhoneVerified: false,
     phoneVerifiedAt: null
@@ -78,9 +75,6 @@ export default function UserProfile() {
         avatarUrl: userData.userProfile?.avatarUrl || "",
         bankNumber: userData.userProfile?.bankNumber || "",
         bankName: userData.userProfile?.bankName || "",
-        portfolioUrl: userData.userProfile?.portfolioUrl || "",
-        bio: userData.userProfile?.bio || "",
-        agreeTos: userData.userProfile?.agreeTos || false,
         wallet: userData.wallet || 0,
         isPhoneVerified: userData.userProfile?.isPhoneVerified || false,
         phoneVerifiedAt: userData.userProfile?.phoneVerifiedAt
@@ -182,10 +176,7 @@ export default function UserProfile() {
         dateOfBirth: tempData.dateOfBirth ? new Date(tempData.dateOfBirth) : null,
         avatarUrl: tempData.avatarUrl,
         bankNumber: tempData.bankNumber,
-        bankName: tempData.bankName,
-        portfolioUrl: tempData.portfolioUrl,
-        bio: tempData.bio,
-        agreeTos: tempData.agreeTos
+        bankName: tempData.bankName
       };
       
       await upsertMyProfile(updateData);
@@ -469,8 +460,6 @@ export default function UserProfile() {
           { label: "Ngày sinh", key: "dateOfBirth", type: "date" },
           { label: "Số tài khoản ngân hàng", key: "bankNumber" },
           { label: "Tên ngân hàng", key: "bankName" },
-          { label: "Portfolio URL", key: "portfolioUrl", type: "url" },
-          { label: "Giới thiệu bản thân", key: "bio", colSpan: true, type: "textarea" },
         ].map((field) => (
           <div key={field.key} className={field.colSpan ? "md:col-span-2" : ""}>
             <p className="text-gray-400 flex items-center gap-1">
@@ -519,23 +508,6 @@ export default function UserProfile() {
           </div>
         ))}
 
-        {/* Terms of Service Agreement */}
-        {isEditing && (
-          <div className="md:col-span-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="agreeTos"
-                checked={tempData.agreeTos}
-                onChange={handleChange}
-                className="w-4 h-4 text-orange-500 bg-gray-700 border-gray-600 rounded focus:ring-orange-500"
-              />
-              <span className="text-sm text-gray-300">
-                Đồng ý với <span className="text-orange-400 hover:underline cursor-pointer">Điều khoản sử dụng</span>
-              </span>
-            </label>
-          </div>
-        )}
 
         {/* Profile Completion Status */}
         {!isEditing && (

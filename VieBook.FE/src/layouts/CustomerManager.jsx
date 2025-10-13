@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import {
   RiUserLine,
   RiBookReadLine,
-  RiHeadphoneLine,
   RiExchangeDollarLine,
 } from "react-icons/ri";
 import UserProfile from "../components/user/UserProfile";
 import UserReadingSchedule from "../components/user/UserReadingSchedule";
-import UserListeningSchedule from "../components/user/UserListeningSchedule";
 import UserTransactionHistory from "../components/user/UserTransactionHistory";
 export default function CustomerManager() {
   const [activeTab, setActiveTab] = useState("personal");
@@ -18,12 +16,6 @@ export default function CustomerManager() {
       value: 12,
       color: "bg-blue-500",
       icon: <RiBookReadLine size={28} />,
-    },
-    {
-      label: "Sách đang nghe",
-      value: 8,
-      color: "bg-green-500",
-      icon: <RiHeadphoneLine size={28} />,
     },
     {
       label: "Tổng giao dịch",
@@ -43,11 +35,6 @@ export default function CustomerManager() {
     { id: "personal", label: "Thông tin cá nhân", icon: <RiUserLine /> },
     { id: "reading", label: "Lịch trình đọc sách", icon: <RiBookReadLine /> },
     {
-      id: "listening",
-      label: "Lịch trình nghe sách",
-      icon: <RiHeadphoneLine />,
-    },
-    {
       id: "transactions",
       label: "Lịch sử giao dịch",
       icon: <RiExchangeDollarLine />,
@@ -57,12 +44,11 @@ export default function CustomerManager() {
   const tabComponents = {
     personal: <UserProfile />,
     reading: <UserReadingSchedule />,
-    listening: <UserListeningSchedule />,
     transactions: <UserTransactionHistory />,
   };
 
   return (
-    <div className="bg-gray-900 p-6 text-white">
+    <div className="bg-gray-900 text-white">
       {/* Title */}
       <h1 className="text-3xl font-bold mb-2">Quản lý khách hàng</h1>
       <p className="text-gray-400 mb-6">
@@ -71,7 +57,7 @@ export default function CustomerManager() {
       </p>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {stats.map((stat, index) => (
           <div
             key={index}
