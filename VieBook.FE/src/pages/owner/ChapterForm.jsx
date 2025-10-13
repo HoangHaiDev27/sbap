@@ -1180,15 +1180,24 @@ export default function ChapterForm() {
           </button>
           
           {currentStep < 3 ? (
-            // Chỉ hiện nút Tiếp tục ở bước 2 khi đã kiểm tra chính tả và không có lỗi, đồng thời nội dung có ý nghĩa
-            currentStep === 2 && hasCheckedSpelling && isSpellingValid && contentHasMeaning ? (
+            currentStep === 1 ? (
               <button
                 onClick={nextStep}
                 className="px-4 py-2 rounded-lg transition bg-orange-500 hover:bg-orange-600"
               >
                 Tiếp tục
               </button>
-            ) : null
+            ) : (
+              // Bước 2: chỉ hiện khi đã kiểm tra chính tả, không lỗi và nội dung có ý nghĩa
+              hasCheckedSpelling && isSpellingValid && contentHasMeaning ? (
+                <button
+                  onClick={nextStep}
+                  className="px-4 py-2 rounded-lg transition bg-orange-500 hover:bg-orange-600"
+                >
+                  Tiếp tục
+                </button>
+              ) : null
+            )
           ) : (
             <>
               <button
