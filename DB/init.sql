@@ -1087,17 +1087,6 @@ VALUES
   (N'Gói tháng', 'Owner',    'Tháng', 199,'VND', NULL, 60, 'Active'),
   (N'Gói năm',  'Owner',    'Năm',  1999,'VND',NULL, 800,'Active');
 
-DECLARE @ReaderPlanId INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Reader Plus');
-DECLARE @OwnerPlanId  INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Owner Month');
-
--- Subscriptions
-INSERT INTO dbo.Subscriptions(UserId, PlanId, Status, AutoRenew, StartAt, EndAt, CreatedAt)
-VALUES
-  (@AliceId, @ReaderPlanId, 'Active', 1, SYSUTCDATETIME(), DATEADD(MONTH,1,SYSUTCDATETIME()), SYSUTCDATETIME()),
-  (@OwnerId, @OwnerPlanId,  'Active', 1, SYSUTCDATETIME(), DATEADD(MONTH,1,SYSUTCDATETIME()), SYSUTCDATETIME());
-GO
-
-
 /* =========================================================
    Một số thống kê nhanh để kiểm tra dữ liệu
    ========================================================= */
