@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   RiFacebookFill,
@@ -7,22 +7,18 @@ import {
   RiMessageFill,
 } from "react-icons/ri";
 import logo from "../assets/logo.png";
-import { getAdminById } from "../api/adminApi"; 
+import { useAdminStore } from "../hooks/stores/useAdminStore";
 
 export default function Footer() {
-  const [admin, setAdmin] = useState(null);
+  // Subscribe trực tiếp, luôn re-render khi admin thay đổi
+  const admin = useAdminStore((state) => state.admin);
+  const fetchAdmin = useAdminStore((state) => state.fetchAdmin);
 
   useEffect(() => {
-    const fetchAdmin = async () => {
-      try {
-        const adminData = await getAdminById(7); 
-        setAdmin(adminData);
-      } catch (error) {
-        console.error("Failed to fetch admin info:", error);
-      }
-    };
-    fetchAdmin();
-  }, []);
+    // Lần đầu app load, fetch admin nếu null
+    if (!admin) fetchAdmin();
+  }, [admin, fetchAdmin]);
+
 
   return (
     <footer className="bg-gray-900 text-white py-12 px-6">
@@ -46,7 +42,8 @@ export default function Footer() {
                 SMART BOOK AUDIO PLATFORM
               </p>
 
-              <p>{admin?.phoneNumber || "0909000001"}</p>
+              {/* Lấy trực tiếp từ store */}
+              <p>{admin?.phone || "0909000001"}</p>
               <p>{admin?.email || "support@wewe.vn"}</p>
               <p>FPT University, Da Nang</p>
             </div>

@@ -9,7 +9,7 @@ import PopularBooks from "../components/ranking/PopularBooks";
 import TrendingBooks from "../components/ranking/TrendingBooks";
 import NewReleases from "../components/ranking/NewReleases";
 import TopRated from "../components/ranking/TopRated";
-import { getRankingSummary } from "../api/rankingapi";
+import { getRankingSummary } from "../api/rankingApi";
 
 export default function RankingManager() {
   const [activeTab, setActiveTab] = useState("popular");

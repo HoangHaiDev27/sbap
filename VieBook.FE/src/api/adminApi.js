@@ -35,41 +35,30 @@ export async function getAdminById(adminId) {
 }
 
 
-export async function updateAdmin(adminId, data) {
+export async function updateAdmin(adminId, formData) {
   return handleFetch(
     API_ENDPOINTS.ADMIN.UPDATE(adminId),
     {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify(data),
+      body: formData, // dùng FormData để upload file
     },
-    "Failed to update admin"
+    "Cập nhật thông tin admin thất bại."
   );
 }
 
-export async function uploadAvatarImage(formData) {
-  const res = await fetch(API_ENDPOINTS.UPLOADAVATARIMAGE, {
-    method: "POST",
-    body: formData,
-  });
-  if (!res.ok) throw new Error("Upload ảnh thất bại");
-  const data = await res.json();
-  return data.imageUrl;
-}
-// xóa ảnh trên Cloudinary
-export async function removeOldAvatarImage(imageUrl) {
-  const res = await fetch(
-    `${API_ENDPOINTS.REMOVEOLDBOOKIMAGE}?imageUrl=${encodeURIComponent(imageUrl)}`,
+/** 🧩 Xóa avatar trên Cloudinary (và DB) */
+export async function deleteAdminAvatar(adminId) {
+  return handleFetch(
+    API_ENDPOINTS.ADMIN.DELETE_AVATAR(adminId),
     {
       method: "DELETE",
-    }
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    },
+    "Không thể xóa avatar."
   );
-  if (!res.ok) {
-    throw new Error("Xóa ảnh thất bại");
-  }
-  const data = await res.json();
-  return data.message;
 }

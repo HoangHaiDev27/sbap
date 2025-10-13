@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getRankingList } from "../../api/rankingapi";
+import { getRankingList } from "../../api/rankingApi";
 
 export default function TrendingBooks() {
   const navigate = useNavigate();

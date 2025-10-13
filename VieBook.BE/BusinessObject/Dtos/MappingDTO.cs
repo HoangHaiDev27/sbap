@@ -63,7 +63,9 @@ namespace BusinessObject.Dtos
                         .SelectMany(c => c.OrderItems)
                         .Count()))
                 .ForMember(dest => dest.TotalRatings,
-                    opt => opt.MapFrom(src => src.BookReviews.Count()));
+                    opt => opt.MapFrom(src => src.BookReviews.Count()))
+                .ForMember(dest => dest.TotalView, 
+                    opt => opt.MapFrom(src => src.Chapters.Sum(c => (int?)c.ChapterView) ?? 0));
                                               
 
 

@@ -10,6 +10,7 @@ import {
   RiUserFollowLine,
 } from "react-icons/ri";
 import { useNotificationStore } from "../../hooks/stores/notificationStore";
+import { useAdminStore } from "../../hooks/stores/useAdminStore"; 
 
 export default function AdminHeader({ onToggleSidebar }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -18,9 +19,14 @@ export default function AdminHeader({ onToggleSidebar }) {
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
-
+  const defaultAvatar = "https://img5.thuthuatphanmem.vn/uploads/2021/11/22/anh-gau-nau_092901233.jpg";
   const { notifications, unreadCount } = useNotificationStore();
+  const { admin, fetchAdmin } = useAdminStore();
 
+  // Lần đầu mount, nếu chưa có admin thì fetch
+  useEffect(() => {
+    if (!admin) fetchAdmin();
+  }, [admin, fetchAdmin]);
   // Đóng menu/dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -34,7 +40,7 @@ export default function AdminHeader({ onToggleSidebar }) {
         setShowNotifications(false);
       }
     };
-
+    
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -183,10 +189,10 @@ export default function AdminHeader({ onToggleSidebar }) {
             className="flex items-center space-x-2 p-2 bg-gray-900 text-white rounded-lg cursor-pointer"
           >
             <img
-              className="h-8 w-8 rounded-full object-cover object-top"
-              src="https://readdy.ai/api/search-image?query=professional%20senior%20asian%20male%20administrator%20portrait%20with%20executive%20background%2C%20formal%20business%20attire&width=80&height=80&seq=adminuser&orientation=squarish"
-              alt="Admin"
-            />
+            className="h-8 w-8 rounded-full object-cover object-top"
+            src={admin?.avatarUrl || defaultAvatar} // <- dùng từ store
+            alt="Admin"
+          />
             <span className="font-medium">Admin</span>
             <i className="ri-arrow-down-s-line w-4 h-4 text-white"></i>
           </button>

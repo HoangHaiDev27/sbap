@@ -139,6 +139,7 @@ builder.Services.AddScoped<IOpenAIService, OpenAIService>();
 // Cloudinaary service
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<CloudinaryService>();
 //OpenAI service
 builder.Services.Configure<OpenAIConfig>(builder.Configuration.GetSection("OpenAI"));

@@ -105,14 +105,37 @@ export async function toggleStaffStatus(staffId) {
   }, "Failed to toggle staff status");
 }
 
-export async function uploadAvatarStaffImage(formData) {
-  const res = await fetch(API_ENDPOINTS.UPLOADAVATARIMAGE, {
-    method: "POST",
-    body: formData,
+    export async function updateStaffAvatar(staffId, formData) {
+      const res = await fetch(API_ENDPOINTS.STAFF.UPDATE_AVATAR(staffId), {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Upload avatar thất bại");
+      }
+
+      const data = await res.json();
+      return data.avatarUrl;
+    }
+  export async function deleteStaffAvatar(staffId) {
+  const res = await fetch(API_ENDPOINTS.STAFF.DELETE_AVATAR(staffId), {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
   });
-  if (!res.ok) throw new Error("Upload ảnh thất bại");
-  const data = await res.json();
-  return data.imageUrl;
+
+  if (!res.ok) {
+    const errData = await res.json();
+    throw new Error(errData.message || "Xóa avatar thất bại");
+  }
+
+  return true; // xóa thành công
 }
 // xóa ảnh trên Cloudinary
 export async function removeOldAvatarStaffImage(imageUrl) {
