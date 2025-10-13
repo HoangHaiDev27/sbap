@@ -215,5 +215,30 @@ namespace Services.Implementations
 
             return purchasedItems ?? new List<OrderItemDTO>();
         }
+
+        public async Task<List<UserPurchasedBooksDTO>> GetUserPurchasedBooksAsync(int userId)
+        {
+            // Lấy tất cả sách mà user đã mua ít nhất 1 chapter
+            var purchasedBooks = await _context.OrderItems
+                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
+                .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
+                .GroupBy(oi => oi.Chapter.BookId)
+                .Select(g => new UserPurchasedBooksDTO
+                {
+                    BookId = g.Key,
+                    Title = g.First().Chapter.Book.Title,
+                    Description = g.First().Chapter.Book.Description,
+                    CoverUrl = g.First().Chapter.Book.CoverUrl,
+                    Author = g.First().Chapter.Book.Author,
+                    PurchasedChaptersCount = g.Count(),
+                    TotalSpent = g.Sum(oi => oi.CashSpent),
+                    LastPurchasedAt = g.Max(oi => oi.PaidAt!.Value),
+                    TotalChaptersCount = _context.Chapters.Count(c => c.BookId == g.Key && c.Status == "Active")
+                })
+                .ToListAsync();
+
+            return purchasedBooks ?? new List<UserPurchasedBooksDTO>();
+        }
     }
 }

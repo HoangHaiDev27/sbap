@@ -189,6 +189,26 @@ namespace BusinessObject.Dtos
 
             CreateMap<ChapterViewDTO, Chapter>()
                 .ForMember(dest => dest.Book, opt => opt.Ignore());
+
+            // ReadingSchedule mappings
+            CreateMap<ReadingSchedule, ReadingScheduleDTO>()
+                .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))
+                .ForMember(dest => dest.BookCoverUrl, opt => opt.MapFrom(src => src.Book.CoverUrl));
+
+            CreateMap<CreateReadingScheduleDTO, ReadingSchedule>()
+                .ForMember(dest => dest.ScheduleId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            CreateMap<UpdateReadingScheduleDTO, ReadingSchedule>()
+                .ForMember(dest => dest.ScheduleId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.BookId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
         }
     }
 

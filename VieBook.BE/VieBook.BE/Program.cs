@@ -126,6 +126,8 @@ builder.Services.AddScoped<IBookApprovalService, BookApprovalService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository>();
+builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
 
 //Add OpenAI service
 builder.Services.AddScoped<DataAccess.DAO.OpenAIDAO>();
