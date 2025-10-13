@@ -1,11 +1,10 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import StaffFormModal from '../../components/admin/StaffFormModal';
-import StaffDeleteModal from '../../components/admin/StaffDeleteModal';
 import StaffToggleStatusModal from '../../components/admin/StaffToggleStatusModal';
 import { 
   getAllStaff, addStaff, updateStaff, lockStaff, unlockStaff,
-  uploadAvatarStaffImage, removeOldAvatarStaffImage
+  updateStaffAvatar, deleteStaffAvatar
 } from '../../api/staffApi';
 
 export default function StaffManagement() {
@@ -15,19 +14,16 @@ export default function StaffManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
-  //const [deleteStaff, setDeleteStaff] = useState(null);
   const [toggleStaff, setToggleStaff] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   const defaultAvatar = "https://img5.thuthuatphanmem.vn/uploads/2021/11/22/anh-gau-nau_092901233.jpg";
 
-  // Helper: bắn toast global
   const showToast = (type, message) => {
     window.dispatchEvent(new CustomEvent("app:toast", { detail: { type, message } }));
   };
 
-  // Fetch staff từ API
   const fetchStaffs = async () => {
     try {
       setLoading(true);
@@ -42,27 +38,13 @@ export default function StaffManagement() {
   };
 
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllStaff();
-      setStaffs(data);
-    } catch (error) {
-      console.error(error);
-      showToast('error', 'Không thể tải danh sách nhân viên');
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchStaffs();
+  }, []);
 
-  fetchData();
-}, []);
-
-  // Filter và search
   const filteredStaff = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return staffs.filter((s) => {
-      const matchesSearch = !q || s.fullName.toLowerCase().includes(q) || s.email.toLowerCase().includes(q);
+      const matchesSearch = !q || s.fullName.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.phoneNumber?.toLowerCase().includes(q);
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'active' && s.status === 'Active') ||
@@ -75,12 +57,10 @@ export default function StaffManagement() {
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
-
   useEffect(() => setCurrentPage(1), [searchTerm, statusFilter]);
 
   const paginatedStaff = filteredStaff.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Open modal
   const handleOpenAdd = () => {
     setEditingStaff(null);
     setIsFormOpen(true);
@@ -91,16 +71,21 @@ export default function StaffManagement() {
     setIsFormOpen(true);
   };
 
-  // Save staff (add/update)
-const handleSaveForm = async (data, id, newAvatarFile) => {
+  // Save staff (add/update) dùng staffApi + upload avatar
+  const handleSaveForm = async (data, id, newAvatarFile) => {
   try {
-    let avatarUrl = data.avatarUrl;
+    let avatarUrl = data.avatarUrl || '';
 
     if (newAvatarFile) {
-      if (data.avatarUrl) await removeOldAvatarStaffImage(data.avatarUrl);
+      // Xóa avatar cũ nếu khác mặc định
+      if (data.avatarUrl && data.avatarUrl !== defaultAvatar && data.avatarUrl.includes("cloudinary.com")) {
+        await deleteStaffAvatar(id);
+      }
+
+      // Upload avatar mới
       const formData = new FormData();
-      formData.append("file", newAvatarFile);
-      avatarUrl = await uploadAvatarStaffImage(formData);
+      formData.append("avatarFile", newAvatarFile); // backend nhận "file"
+      avatarUrl = await updateStaffAvatar(id, formData); // nhớ truyền staffId
     }
 
     const payload = { ...data, avatarUrl };
@@ -113,54 +98,38 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
     }
 
     showToast("success", res?.message || "Thao tác thành công");
-
     setIsFormOpen(false);
     setEditingStaff(null);
     await fetchStaffs();
   } catch (error) {
     console.error(error);
-    showToast("error", error.message || "Lưu nhân viên thất bại"); // ✅ sửa chỗ này
+    showToast("error", error.message || "Lưu nhân viên thất bại");
   }
 };
 
-// Delete staff
-// const handleConfirmDelete = async (staff) => {
-//   if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
-//   try {
-//     const res = await deleteStaffAPI(staff.userId);
-//     setDeleteStaff(null);
-//     showToast("success", res?.message || "Xóa nhân viên thành công");
-//     await fetchStaffs();
-//   } catch (error) {
-//     console.error(error);
-//     showToast("error", error.message || "Xóa nhân viên thất bại"); // ✅ sửa chỗ này
-//   }
-// };
 
-// Toggle status
-const handleConfirmToggle = async (staff) => {
-  if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
-  try {
-    let res;
-    if (staff.status === "Active") {
-      res = await lockStaff(staff.userId);
-    } else {
-      res = await unlockStaff(staff.userId);
+
+  const handleConfirmToggle = async (staff) => {
+    if (!staff?.userId) return showToast("error", "Nhân viên không hợp lệ");
+    try {
+      let res;
+      if (staff.status === "Active") {
+        res = await lockStaff(staff.userId);
+      } else {
+        res = await unlockStaff(staff.userId);
+      }
+      setToggleStaff(null);
+      showToast("success", res?.message || "Đổi trạng thái thành công");
+      await fetchStaffs();
+    } catch (error) {
+      console.error(error);
+      showToast("error", error.message || "Đổi trạng thái thất bại");
     }
-    setToggleStaff(null);
-    showToast("success", res?.message || "Đổi trạng thái thành công");
-    await fetchStaffs();
-  } catch (error) {
-    console.error(error);
-    showToast("error", error.message || "Đổi trạng thái thất bại"); // ✅ sửa chỗ này
-  }
-};
-
+  };
 
   const handleCancelAll = () => {
     setIsFormOpen(false);
     setEditingStaff(null);
-   // setDeleteStaff(null);
     setToggleStaff(null);
   };
 
@@ -168,11 +137,13 @@ const handleConfirmToggle = async (staff) => {
     <div className="min-h-screen bg-gray-50">
       <main className="pt-24">
         <div className="p-6">
+          {/* Header */}
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Quản lý Staff</h2>
             <p className="text-gray-700">Quản lý tài khoản nhân viên và phân quyền</p>
           </div>
 
+          {/* Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -201,7 +172,7 @@ const handleConfirmToggle = async (staff) => {
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">STT</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nhân viên</th>
-                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Vai trò</th>
+                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Số Điện Thoại</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ngày sinh</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ngày tạo</th>
@@ -220,11 +191,7 @@ const handleConfirmToggle = async (staff) => {
                             <div className="text-gray-500 text-sm">{staff.email}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-3">
-                           <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                            {staff.roles === "Staff" ? "Nhân viên" : "Không xác định"}
-                          </span>
-                        </td>
+                        <td className="px-6 py-3">{staff.phoneNumber || '-'}</td>
                         <td className="px-6 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${staff.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                             {staff.status === 'Active' ? 'Hoạt động' : 'Bị khóa'}
@@ -240,11 +207,6 @@ const handleConfirmToggle = async (staff) => {
                           <button onClick={() => setToggleStaff(staff)} className="p-2 text-green-600 hover:bg-green-50 rounded">
                             <i className={staff.status === 'Active' ? 'ri-lock-line' : 'ri-lock-unlock-line'} />
                           </button>
-                          {/* {staff.roles !== 'admin' && (
-                            <button onClick={() => setDeleteStaff(staff)} className="p-2 text-red-600 hover:bg-red-50 rounded">
-                              <i className="ri-delete-bin-line" />
-                            </button>
-                          )} */}
                         </td>
                       </tr>
                     )) : (
@@ -257,6 +219,7 @@ const handleConfirmToggle = async (staff) => {
               </div>
             )}
 
+            {/* Pagination */}
             <div className="flex justify-end items-center space-x-2 p-4">
               <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} className="px-3 py-1 rounded border bg-white text-gray-600 disabled:opacity-50">Trước</button>
               {Array.from({ length: totalPages }).map((_, i) => (
@@ -269,7 +232,6 @@ const handleConfirmToggle = async (staff) => {
       </main>
 
       {isFormOpen && <StaffFormModal staff={editingStaff} onSave={(data, _, newAvatarFile) => handleSaveForm(data, editingStaff?.userId, newAvatarFile)} onCancel={handleCancelAll} />}
-      {/* {deleteStaff && <StaffDeleteModal staff={deleteStaff} onCancel={() => setDeleteStaff(null)} onConfirm={handleConfirmDelete} />} */}
       {toggleStaff && <StaffToggleStatusModal staff={toggleStaff} onCancel={() => setToggleStaff(null)} onConfirm={handleConfirmToggle} />}
     </div>
   );

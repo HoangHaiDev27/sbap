@@ -51,11 +51,10 @@ namespace DataAccess.DAO
             return await _context.Books
                  //  .Include(b => b.Owner).ThenInclude(u => u.UserProfile) // lấy tác giả
                  .Where(b => b.Status == "Approved")
-                .Include(b => b.Categories) // lấy category
-                .Include(b => b.Chapters) // để map Price, Duration, Chapters
-                .Include(b => b.BookReviews) // để map Rating, Reviews
-                .Where(b => b.Status == "Approved" &&
-                 b.Chapters.Any(c => c.ChapterSoftUrl != null)) // chỉ sách có soft copy
+                .Include(b => b.Categories) 
+                .Include(b => b.Chapters) 
+                .Include(b => b.BookReviews) 
+                .Where(b => b.Chapters.Any(c => c.ChapterSoftUrl != null)) 
                 .ToListAsync();
         }
 

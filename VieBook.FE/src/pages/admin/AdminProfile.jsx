@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  getAdminById,
-  updateAdmin,
-  uploadAvatarImage,
-  removeOldAvatarImage,
-} from "../../api/adminApi";
+import { getAdminById, updateAdmin, deleteAdminAvatar } from "../../api/adminApi";
 import { changePassword } from "../../api/authApi";
+import { useAdminStore } from "../../hooks/stores/useAdminStore";
 
 export default function AdminProfile() {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -13,6 +9,8 @@ export default function AdminProfile() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  
+  const { updateAdmin: updateAdminStore } = useAdminStore(); // ✅ store
 
   const defaultAvatar =
     "https://res.cloudinary.com/dwduk4vjl/image/upload/v1759596363/avatarImages/lb7harseupgw3uwprpjc.jpg";
@@ -46,71 +44,71 @@ export default function AdminProfile() {
     try {
       const authUser = JSON.parse(authUserStr);
       const adminId = authUser.userId;
-      const fetchAdmin = async () => {
+
+      const fetchAdminInfo = async () => {
         try {
           const data = await getAdminById(adminId);
-          setAdminInfo({
+          const newAdminInfo = {
             id: adminId,
             fullName: data.fullName || "",
             email: data.email || "",
             phone: data.phoneNumber || "",
             address: data.address || "",
-            avatarUrl: data.avatarUrl || "",
-          });
-          setAvatarUrl(data.avatarUrl || defaultAvatar);
+            avatarUrl: data.avatarUrl || defaultAvatar,
+          };
+          setAdminInfo(newAdminInfo);
+          setAvatarUrl(newAdminInfo.avatarUrl);
+          
+          // ✅ Cập nhật Zustand store để Header/Footer tự re-render
+          updateAdminStore(newAdminInfo);
+
         } catch (err) {
           console.error("Lấy thông tin admin lỗi:", err);
         }
       };
-      fetchAdmin();
+      fetchAdminInfo();
     } catch (err) {
       console.error("Parse auth_user lỗi:", err);
     }
-  }, []);
+  }, [updateAdminStore]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setAdminInfo((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // ✅ Xử lý lưu thông tin
+  // ✅ Xử lý lưu thông tin admin
   const handleSave = async (e) => {
-    e.preventDefault(); // Ngăn reload & trigger validation
+    e.preventDefault();
     try {
-      let uploadedAvatarUrl = adminInfo.avatarUrl;
+      const formData = new FormData();
 
       if (avatarFile) {
-        if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar) {
-          await removeOldAvatarImage(adminInfo.avatarUrl);
+        if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar && adminInfo.avatarUrl.includes("cloudinary.com")) {
+          await deleteAdminAvatar(adminInfo.id);
         }
-
-        const formData = new FormData();
-        formData.append("file", avatarFile);
-        uploadedAvatarUrl = await uploadAvatarImage(formData);
+        formData.append("avatarFile", avatarFile);
       }
 
-      const updatedData = {
-        fullName: adminInfo.fullName,
-        email: adminInfo.email,
-        phoneNumber: adminInfo.phone,
-        address: adminInfo.address || "FPT University, Da Nang",
-        avatarUrl: uploadedAvatarUrl || defaultAvatar,
+      formData.append("fullName", adminInfo.fullName);
+      formData.append("email", adminInfo.email);
+      formData.append("phoneNumber", adminInfo.phone);
+      formData.append("address", adminInfo.address || "FPT University, Da Nang");
+
+      const res = await updateAdmin(adminInfo.id, formData);
+      const data = res.data;
+
+      const updatedAdmin = {
+        id: adminInfo.id,
+        fullName: data.fullName || adminInfo.fullName,
+        email: data.email || adminInfo.email,
+        phone: data.phoneNumber || adminInfo.phone,
+        address: data.address || adminInfo.address,
+        avatarUrl: data.avatarUrl || avatarUrl,
       };
 
-      const res = await updateAdmin(adminInfo.id, updatedData);
-
-      setAdminInfo((prev) => ({
-        ...prev,
-        fullName: res.data.fullName || updatedData.fullName,
-        email: res.data.email || updatedData.email,
-        phone: res.data.phoneNumber || updatedData.phoneNumber,
-        address: res.data.address || updatedData.address,
-        avatarUrl: uploadedAvatarUrl,
-      }));
-
-      setAvatarUrl(uploadedAvatarUrl || defaultAvatar);
+      setAdminInfo(updatedAdmin);
+      setAvatarUrl(updatedAdmin.avatarUrl);
       setAvatarFile(null);
       setShowEditModal(false);
+
+      // ✅ Cập nhật store để Header/Footer tự re-render
+      updateAdminStore(updatedAdmin);
 
       window.dispatchEvent(
         new CustomEvent("app:toast", {
@@ -121,13 +119,15 @@ export default function AdminProfile() {
       console.error("Update admin error:", error.message);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
-          detail: {
-            type: "error",
-            message: error.message || "Cập nhật thất bại",
-          },
+          detail: { type: "error", message: error.message || "Cập nhật thất bại" },
         })
       );
     }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setAdminInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   // ✅ Đổi mật khẩu

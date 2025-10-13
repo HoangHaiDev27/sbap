@@ -1,5 +1,6 @@
 ﻿using BusinessObject.Dtos;
 using BusinessObject.Models;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,5 +19,7 @@ namespace Services.Interfaces.Admin
         Task<bool> LockStaffAsync(int id);
         Task<bool> UnlockStaffAsync(int id);
         Task<bool> ToggleStaffStatusAsync(int id);
+        Task<User> UpdateAvatarAsync(int staffId, IFormFile avatarFile);
+        Task<User> DeleteAvatarAsync(int staffId);
     }
 }
