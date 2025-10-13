@@ -139,5 +139,42 @@ namespace VieBook.BE.Controllers.Admin
                 return StatusCode(500, new { message = "Đổi trạng thái thất bại", error = ex.Message });
             }
         }
+        [HttpPut("{id}/avatar")]
+        public async Task<IActionResult> UpdateAvatar(int id, [FromForm] IFormFile avatarFile)
+        {
+            if (avatarFile == null || avatarFile.Length == 0)
+                return BadRequest(new { message = "Chưa chọn file avatar" });
+
+            try
+            {
+                var updatedStaff = await _staffService.UpdateAvatarAsync(id, avatarFile);
+                return Ok(new
+                {
+                    message = "Cập nhật avatar thành công",
+                    avatarUrl = updatedStaff.UserProfile?.AvatarUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpDelete("{id}/avatar")]
+        public async Task<IActionResult> DeleteAvatar(int id)
+        {
+            try
+            {
+                var updatedStaff = await _staffService.DeleteAvatarAsync(id);
+                return Ok(new 
+                { 
+                    message = "Xóa avatar thành công", 
+                    avatarUrl = updatedStaff.UserProfile?.AvatarUrl 
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

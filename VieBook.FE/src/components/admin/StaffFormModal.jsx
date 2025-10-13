@@ -73,6 +73,21 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
     if (!formData.dateOfBirth) {
       return alert('Vui lòng chọn ngày sinh');
     }
+      const birthDate = new Date(formData.dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      return alert('Nhân viên phải từ 18 tuổi trở lên');
+    }
+
+     const phoneRegex = /^0(3|5|7|8|9)[0-9]{8}$/;
+      if (!phoneRegex.test(formData.phoneNumber)) {
+        return alert('Số điện thoại không hợp lệ (phải có 10 số và bắt đầu bằng 03, 05, 07, 08 hoặc 09)');
+      }
 
     onSave(formData, staff?.userId || null, newAvatarFile);
   };
@@ -129,17 +144,15 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
               Số điện thoại <span className="text-red-500">*</span>
             </label>
             <input
-              type="tel"
-              required
-              placeholder="0905123456"
-              pattern="^(0[3|5|7|8|9])[0-9]{8}$"
-              title="Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9]"
-              value={formData.phoneNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, phoneNumber: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
+            type="text"
+            required
+            placeholder="0905123456"
+            pattern="^0(3|5|7|8|9)[0-9]{8}$"
+            title="Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9]"
+            value={formData.phoneNumber}
+            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
           </div>
 
           {/* Ngày sinh */}
@@ -148,14 +161,18 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
               Ngày sinh <span className="text-red-500">*</span>
             </label>
             <input
-              type="date"
-              required
-              value={formData.dateOfBirth}
-              onChange={(e) =>
-                setFormData({ ...formData, dateOfBirth: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
+            type="date"
+            name="dateOfBirth"
+            required
+            value={formData.dateOfBirth}
+            max={new Date(
+              new Date().setFullYear(new Date().getFullYear() - 18)
+            ).toISOString().split('T')[0]}
+            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+            onInvalid={(e) => e.target.setCustomValidity("Nhân viên phải từ 18 tuổi trở lên")}
+            onInput={(e) => e.target.setCustomValidity("")}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
           </div>
 
           {/* Mật khẩu */}

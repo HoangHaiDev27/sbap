@@ -132,18 +132,26 @@ function AudiobookCard({ book }) {
       className="block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
     >
       <div className="relative">
-        <img
-          src={book.image}
-          alt={book.title}
-          className="w-full h-64 object-cover object-top group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute top-3 right-3">
-          <span className="bg-green-600 text-xs px-2 py-1 rounded-full flex items-center space-x-1">
-            <RiBookOpenLine className="w-3 h-3" />
-            <span>Đọc</span>
-          </span>
-        </div>
+         <img
+        src={book.image}
+        alt={book.title}
+        className="w-full h-64 object-cover object-top group-hover:scale-105 transition-transform duration-500"
+      />
+
+      {/* Danh mục */}
+      <div className="absolute top-3 left-3">
+        <span className="bg-gradient-to-r from-purple-600 to-purple-400 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm backdrop-blur-sm">
+          {book.category}
+        </span>
       </div>
+
+      {/* Icon Đọc */}
+      <div className="absolute top-3 right-3">
+        <span className="bg-gray/90 hover:bg-orange-500 hover:text-white text-orange-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm transition-all duration-300 cursor-pointer">
+          <RiBookOpenLine className="w-4 h-4" />
+        </span>
+      </div>
+    </div>
       <div className="p-4">
         <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-2">
           {book.title}
@@ -207,9 +215,10 @@ function Rating({ rating, reviews }) {
 }
 
 // --- Footer ---
-function BookFooter({ book, isFavorite, setIsFavorite }) {
+function BookFooter({ book }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mt-2">
+      {/* Thông tin giá và chương */}
       <div className="flex flex-col">
         <span className="text-orange-400 font-semibold flex items-center space-x-1">
           <span>{book.price.toLocaleString()}</span>
@@ -217,27 +226,28 @@ function BookFooter({ book, isFavorite, setIsFavorite }) {
         </span>
         <span className="text-xs text-gray-400">{book.chapters} chương</span>
       </div>
+
+      {/* Nút hành động */}
       <div className="flex space-x-2">
-        <button className="text-orange-400 hover:text-orange-300 transition-colors">
+        <button
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-full shadow-md transition-all duration-200"
+        >
           <RiBookOpenLine className="w-5 h-5" />
+          <span>Đọc</span>
         </button>
+
         <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setIsFavorite(!isFavorite);
+            // setIsFavorite(!isFavorite);
           }}
-          className={`transition-colors ${
-            isFavorite
-              ? "text-red-500"
-              : "text-orange-400 hover:text-orange-300"
-          }`}
         >
-          {isFavorite ? (
-            <RiHeartFill className="w-5 h-5" />
+          {/* {isFavorite ? (
+            <RiHeartFill className="w-5 h-5 text-red-500" />
           ) : (
-            <RiHeartLine className="w-5 h-5" />
-          )}
+            <RiHeartLine className="w-5 h-5 text-orange-400 hover:text-orange-300" />
+          )} */}
         </button>
       </div>
     </div>

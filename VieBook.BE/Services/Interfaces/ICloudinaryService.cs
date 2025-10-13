@@ -10,5 +10,7 @@ namespace Services.Interfaces
     public interface ICloudinaryService
     {
         Task<string> UploadBookImageAsync(IFormFile file);
+        Task<string> UploadAvatarImageAsync(IFormFile file, string oldAvatarUrl = null);
+        Task<bool> DeleteImageAsync(string fileUrl, bool isRaw = false);
     }
 }
