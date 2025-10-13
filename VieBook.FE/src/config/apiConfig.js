@@ -124,6 +124,10 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/promotions`,
     STATS_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}/stats`
   },
+  RANK: {
+    GETRANKINGSUMMARY: `${API_BASE_URL}/api/rankings`,
+    GETRANKINGLIST: `${API_BASE_URL}/api/rankings/details`,
+  },
 
 
 
@@ -137,11 +141,15 @@ export const API_ENDPOINTS = {
     DELETE: (staffId) => `${API_BASE_URL}/api/staff/delete/${staffId}`,
     LOCK: (staffId) => `${API_BASE_URL}/api/staff/lock/${staffId}`,
     UNLOCK: (staffId) => `${API_BASE_URL}/api/staff/unlock/${staffId}`,
-    TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`
+    TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`,
+    UPDATE_AVATAR: (staffId) => `${API_BASE_URL}/api/staff/${staffId}/avatar`,
+    DELETE_AVATAR: (staffId) => `${API_BASE_URL}/api/staff/${staffId}/avatar`
   },
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
-    UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`
+    UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`,
+    DELETE_AVATAR: (adminId) => `${API_BASE_URL}/api/admin/${adminId}/avatar`,   
+    UPLOAD_AVATAR: (adminId) => `${API_BASE_URL}/api/admin/${adminId}/avatar`    
   },
   BOOKAPPROVAL: {
     GET_ALL: `${API_BASE_URL}/api/BookApproval`,

@@ -1,6 +1,7 @@
 ﻿using BusinessObject.Models;
 using DataAccess;
 using DataAccess.DAO.Admin;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces.Admin;
 using Services.Interfaces;
@@ -172,6 +173,53 @@ namespace Services.Implementations.Admin
                 return await _staffRepo.LockAsync(id);
             else
                 return await _staffRepo.UnlockAsync(id);
+        }
+        public async Task<User> UpdateAvatarAsync(int staffId, IFormFile? avatarFile)
+        {
+            var staff = await _context.Users
+                .Include(u => u.UserProfile)
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.UserId == staffId);
+
+            if (staff == null)
+                throw new Exception("Staff không tồn tại");
+
+            if (avatarFile == null || avatarFile.Length == 0)
+                throw new Exception("File avatar không hợp lệ");
+
+            // Upload avatar mới và xóa ảnh cũ nếu có
+            var newAvatarUrl = await _cloudinaryService.UploadAvatarImageAsync(avatarFile, staff.UserProfile?.AvatarUrl);
+
+            // Cập nhật vào DB
+            staff.UserProfile ??= new UserProfile();
+            staff.UserProfile.AvatarUrl = newAvatarUrl;
+
+            await _staffDAO.UpdateAsync(staff);
+
+            return staff;
+        }
+        public async Task<User> DeleteAvatarAsync(int staffId)
+        {
+            var staff = await _context.Users
+                .Include(u => u.UserProfile)
+                .FirstOrDefaultAsync(u => u.UserId == staffId);
+
+            if (staff == null)
+                throw new Exception("Staff không tồn tại");
+
+            if (string.IsNullOrWhiteSpace(staff.UserProfile?.AvatarUrl))
+                throw new Exception("Chưa có avatar để xóa");
+
+            // Xóa ảnh trên Cloudinary
+            bool deleted = await _cloudinaryService.DeleteImageAsync(staff.UserProfile.AvatarUrl);
+            if (!deleted)
+                throw new Exception("Xóa avatar trên Cloudinary thất bại");
+
+            // Update DB
+            staff.UserProfile.AvatarUrl = null;
+            await _staffDAO.UpdateAsync(staff);
+
+            return staff;
         }
     }
 }
