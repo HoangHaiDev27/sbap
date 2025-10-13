@@ -59,6 +59,28 @@ namespace VieBook.BE.Controllers
             var can = await _reviewService.CanReviewAsync(userId.Value, bookId);
             return Ok(new { canReview = can });
         }
+
+        [Authorize]
+        [HttpGet("owner")]
+        public async Task<ActionResult<object>> GetOwnerReviews([FromQuery] byte? rating = null, [FromQuery] bool? hasReply = null, [FromQuery] string? search = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var userId = UserHelper.GetCurrentUserId(HttpContext);
+            if (!userId.HasValue) return Unauthorized();
+
+            var (reviews, totalCount) = await _reviewService.GetReviewsByOwnerIdAsync(userId.Value, rating, hasReply, search, page, pageSize);
+            return Ok(new { reviews, totalCount, page, pageSize, totalPages = (int)Math.Ceiling((double)totalCount / pageSize) });
+        }
+
+        [Authorize]
+        [HttpGet("owner/stats")]
+        public async Task<ActionResult<object>> GetOwnerReviewStats()
+        {
+            var userId = UserHelper.GetCurrentUserId(HttpContext);
+            if (!userId.HasValue) return Unauthorized();
+
+            var stats = await _reviewService.GetOwnerReviewStatsAsync(userId.Value);
+            return Ok(stats);
+        }
     }
 
     public class CreateReviewRequest

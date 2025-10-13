@@ -22,6 +22,12 @@ namespace Services.Implementations
         public Task<List<BookReviewDTO>> GetReviewsByBookIdAsync(int bookId, byte? ratingFilter = null, int page = 1, int pageSize = 10)
             => _reviewRepository.GetReviewsByBookIdAsync(bookId, ratingFilter, page, pageSize);
 
+        public Task<(List<BookReviewDTO> Reviews, int TotalCount)> GetReviewsByOwnerIdAsync(int ownerId, byte? ratingFilter = null, bool? hasReply = null, string? searchTerm = null, int page = 1, int pageSize = 10)
+            => _reviewRepository.GetReviewsByOwnerIdAsync(ownerId, ratingFilter, hasReply, searchTerm, page, pageSize);
+
+        public Task<object> GetOwnerReviewStatsAsync(int ownerId)
+            => _reviewRepository.GetOwnerReviewStatsAsync(ownerId);
+
         public async Task<(bool Success, string Message, BookReview? Review)> CreateAsync(int userId, int bookId, byte rating, string? comment)
         {
             var book = await _bookRepository.GetByIdAsync(bookId);

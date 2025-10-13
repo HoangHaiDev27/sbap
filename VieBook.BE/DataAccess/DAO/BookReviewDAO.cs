@@ -37,9 +37,88 @@ namespace DataAccess.DAO
                     AvatarUrl = r.User.UserProfile != null ? r.User.UserProfile.AvatarUrl : null,
                     Rating = r.Rating,
                     Comment = r.Comment,
-                    CreatedAt = r.CreatedAt
+                    CreatedAt = r.CreatedAt,
+                    OwnerReply = r.OwnerReply,
+                    OwnerReplyAt = r.OwnerReplyAt
                 })
                 .ToListAsync();
+        }
+
+        public async Task<(List<BookReviewDTO> Reviews, int TotalCount)> GetReviewsByOwnerIdAsync(int ownerId, byte? ratingFilter = null, bool? hasReply = null, string? searchTerm = null, int page = 1, int pageSize = 10)
+        {
+            var query = _context.BookReviews
+                .Where(r => r.Book.OwnerId == ownerId);
+            
+            if (ratingFilter.HasValue)
+            {
+                query = query.Where(r => r.Rating == ratingFilter.Value);
+            }
+
+            if (hasReply.HasValue)
+            {
+                if (hasReply.Value)
+                {
+                    query = query.Where(r => !string.IsNullOrEmpty(r.OwnerReply));
+                }
+                else
+                {
+                    query = query.Where(r => string.IsNullOrEmpty(r.OwnerReply));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(r => r.Book.Title.Contains(searchTerm));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var reviews = await query
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new BookReviewDTO
+                {
+                    ReviewId = r.ReviewId,
+                    BookId = r.BookId,
+                    BookTitle = r.Book.Title,
+                    UserId = r.UserId,
+                    UserName = r.User.UserProfile != null ? r.User.UserProfile.FullName : r.User.Email,
+                    AvatarUrl = r.User.UserProfile != null ? r.User.UserProfile.AvatarUrl : null,
+                    Rating = r.Rating,
+                    Comment = r.Comment,
+                    CreatedAt = r.CreatedAt,
+                    OwnerReply = r.OwnerReply,
+                    OwnerReplyAt = r.OwnerReplyAt
+                })
+                .ToListAsync();
+
+            return (reviews, totalCount);
+        }
+
+        public async Task<object> GetOwnerReviewStatsAsync(int ownerId)
+        {
+            var allReviews = await _context.BookReviews
+                .Where(r => r.Book.OwnerId == ownerId)
+                .ToListAsync();
+
+            var totalReviews = allReviews.Count;
+            var averageRating = totalReviews > 0 
+                ? Math.Round((double)allReviews.Sum(r => r.Rating) / totalReviews, 1)
+                : 0.0;
+            var unRepliedCount = allReviews.Count(r => string.IsNullOrEmpty(r.OwnerReply));
+            var fiveStarCount = allReviews.Count(r => r.Rating == 5);
+            var fiveStarPercentage = totalReviews > 0 
+                ? Math.Round((double)fiveStarCount / totalReviews * 100, 0)
+                : 0;
+
+            return new
+            {
+                totalReviews,
+                averageRating,
+                unRepliedCount,
+                fiveStarPercentage
+            };
         }
 
         public Task<BookReview?> GetByBookAndUserAsync(int bookId, int userId)

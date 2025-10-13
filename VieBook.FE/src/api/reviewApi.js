@@ -62,4 +62,37 @@ export async function canReview(bookId) {
   return res.json();
 }
 
+export async function getOwnerReviews({ rating = null, hasReply = null, search = null, page = 1, pageSize = 10 } = {}) {
+  const token = getToken();
+  const qs = new URLSearchParams();
+  if (rating != null) qs.set("rating", rating);
+  if (hasReply != null) qs.set("hasReply", hasReply);
+  if (search && search.trim()) qs.set("search", search.trim());
+  if (page) qs.set("page", page);
+  if (pageSize) qs.set("pageSize", pageSize);
+  const url = `${API_ENDPOINTS.REVIEWS.OWNER}${qs.toString() ? `?${qs.toString()}` : ""}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch owner reviews");
+  return res.json();
+}
+
+export async function getOwnerReviewStats() {
+  const token = getToken();
+  const res = await fetch(API_ENDPOINTS.REVIEWS.OWNER_STATS, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch owner review stats");
+  return res.json();
+}
+
 

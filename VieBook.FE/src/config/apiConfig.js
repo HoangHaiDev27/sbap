@@ -18,7 +18,9 @@ export const API_ENDPOINTS = {
     BY_BOOK: (bookId) => `${API_BASE_URL}/api/bookreviews/book/${bookId}`,
     CREATE: `${API_BASE_URL}/api/bookreviews`,
     OWNER_REPLY: (reviewId) => `${API_BASE_URL}/api/bookreviews/${reviewId}/reply`,
-    CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`
+    CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`,
+    OWNER: `${API_BASE_URL}/api/bookreviews/owner`,
+    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`
   },
 
 

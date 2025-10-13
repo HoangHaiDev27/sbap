@@ -1,184 +1,288 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ReviewStats from "../../components/owner/reviews/ReviewStats";
 import ReviewFilters from "../../components/owner/reviews/ReviewFilters";
 import ReviewItem from "../../components/owner/reviews/ReviewItem";
+import { getOwnerReviews, getOwnerReviewStats, ownerReply } from "../../api/reviewApi";
+import toast from "react-hot-toast";
 
-// Demo data (10 reviews)
-const reviewsData = [
-  {
-    id: 1,
-    book: "Đắc Nhân Tâm",
-    customer: "Nguyễn Minh Anh",
-    avatar: "https://i.pravatar.cc/40?img=1",
-    rating: 5,
-    date: "16/01/2025",
-    content:
-      "Cuốn sách rất hay, giúp tôi hiểu rõ hơn về cách giao tiếp và xây dựng mối quan hệ.",
-    replied: true,
-    reply: "Cảm ơn bạn đã đánh giá!",
-  },
-  {
-    id: 2,
-    book: "Tư Duy Nhanh Và Chậm",
-    customer: "Trần Văn Đức",
-    avatar: "https://i.pravatar.cc/40?img=2",
-    rating: 4,
-    date: "14/01/2025",
-    content: "Sách khá khó hiểu ở một số phần, nhưng nhìn chung rất bổ ích.",
-    replied: false,
-    reply: "",
-  },
-  {
-    id: 3,
-    book: "Nhà Giả Kim",
-    customer: "Lê Thảo Nhi",
-    avatar: "https://i.pravatar.cc/40?img=3",
-    rating: 5,
-    date: "12/01/2025",
-    content: "Một cuốn sách truyền cảm hứng tuyệt vời, đọc xong thấy nhiều động lực hơn.",
-    replied: true,
-    reply: "Rất vui vì bạn thấy hữu ích!",
-  },
-  {
-    id: 4,
-    book: "Dám Bị Ghét",
-    customer: "Phạm Hồng Quân",
-    avatar: "https://i.pravatar.cc/40?img=4",
-    rating: 3,
-    date: "10/01/2025",
-    content: "Nội dung có phần lặp lại, nhưng tư tưởng khá mới mẻ.",
-    replied: false,
-    reply: "",
-  },
-  {
-    id: 5,
-    book: "Không Gia Đình",
-    customer: "Vũ Thanh Hằng",
-    avatar: "https://i.pravatar.cc/40?img=5",
-    rating: 5,
-    date: "08/01/2025",
-    content: "Câu chuyện cảm động, nhiều đoạn làm mình rơi nước mắt.",
-    replied: true,
-    reply: "Cảm ơn bạn đã chia sẻ cảm xúc!",
-  },
-  {
-    id: 6,
-    book: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-    customer: "Ngô Hải Long",
-    avatar: "https://i.pravatar.cc/40?img=6",
-    rating: 4,
-    date: "06/01/2025",
-    content: "Có nhiều lời khuyên thực tế cho giới trẻ, nhưng đôi chỗ hơi sáo rỗng.",
-    replied: false,
-    reply: "",
-  },
-  {
-    id: 7,
-    book: "Khéo Ăn Nói Sẽ Có Được Thiên Hạ",
-    customer: "Đỗ Mai Lan",
-    avatar: "https://i.pravatar.cc/40?img=7",
-    rating: 5,
-    date: "04/01/2025",
-    content: "Rất hữu ích cho công việc bán hàng của mình.",
-    replied: true,
-    reply: "Chúc bạn áp dụng thành công!",
-  },
-  {
-    id: 8,
-    book: "7 Thói Quen Hiệu Quả",
-    customer: "Hoàng Văn Bình",
-    avatar: "https://i.pravatar.cc/40?img=8",
-    rating: 4,
-    date: "02/01/2025",
-    content: "Thực sự đáng đọc, giúp mình thay đổi thói quen tích cực hơn.",
-    replied: true,
-    reply: "Cảm ơn bạn đã phản hồi!",
-  },
-  {
-    id: 9,
-    book: "Cha Giàu Cha Nghèo",
-    customer: "Nguyễn Hải Yến",
-    avatar: "https://i.pravatar.cc/40?img=9",
-    rating: 5,
-    date: "30/12/2024",
-    content: "Kiến thức tài chính dễ hiểu, phù hợp cho người mới bắt đầu.",
-    replied: false,
-    reply: "",
-  },
-  {
-    id: 10,
-    book: "Quẳng Gánh Lo Đi Và Vui Sống",
-    customer: "Trịnh Văn Lộc",
-    avatar: "https://i.pravatar.cc/40?img=10",
-    rating: 4,
-    date: "28/12/2024",
-    content: "Cuốn sách nhẹ nhàng, giúp mình suy nghĩ tích cực hơn.",
-    replied: true,
-    reply: "Cảm ơn bạn đã đọc sách!",
-  },
-];
 
 
 export default function OwnerReviews() {
   const [page, setPage] = useState(1);
+  const [ratingFilter, setRatingFilter] = useState(null);
+  const [replyStatusFilter, setReplyStatusFilter] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [reviewsData, setReviewsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   const pageSize = 6;
 
-  const totalPages = Math.ceil(reviewsData.length / pageSize);
-  const paginated = reviewsData.slice((page - 1) * pageSize, page * pageSize);
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch stats data (không bị ảnh hưởng bởi filter)
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        setStatsLoading(true);
+        const statsData = await getOwnerReviewStats();
+        setStats(statsData);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        toast.error("Không thể tải thống kê");
+        setStats(null);
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  // Fetch reviews data
+  useEffect(() => {
+    async function fetchReviews() {
+      try {
+        setLoading(true);
+        const response = await getOwnerReviews({ 
+          rating: ratingFilter, 
+          hasReply: replyStatusFilter,
+          search: debouncedSearchTerm,
+          page, 
+          pageSize 
+        });
+        setReviewsData(response.reviews || []);
+        setTotalCount(response.totalCount || 0);
+        setTotalPages(response.totalPages || 1);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        toast.error("Không thể tải đánh giá");
+        setReviewsData([]);
+        setTotalCount(0);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchReviews();
+  }, [page, ratingFilter, replyStatusFilter, debouncedSearchTerm, pageSize]);
+
+  const handleReply = async (reviewId, reply) => {
+    try {
+      await ownerReply(reviewId, reply);
+      toast.success("Đã gửi phản hồi");
+      
+      // Refresh reviews data
+      const response = await getOwnerReviews({ 
+        rating: ratingFilter, 
+        hasReply: replyStatusFilter,
+        search: debouncedSearchTerm,
+        page, 
+        pageSize 
+      });
+      setReviewsData(response.reviews || []);
+      setTotalCount(response.totalCount || 0);
+      setTotalPages(response.totalPages || 1);
+      
+      // Refresh stats data
+      const statsData = await getOwnerReviewStats();
+      setStats(statsData);
+    } catch (error) {
+      console.error("Error replying to review:", error);
+      toast.error("Không thể gửi phản hồi");
+    }
+  };
 
   return (
     <div className="p-6 text-white">
       <h1 className="text-2xl font-bold mb-6">Đánh giá & Phản hồi</h1>
 
-      <ReviewStats />
-      <ReviewFilters />
+      <ReviewStats stats={stats} loading={statsLoading} />
+      <ReviewFilters 
+        ratingFilter={ratingFilter} 
+        replyStatusFilter={replyStatusFilter}
+        searchTerm={searchTerm}
+        onRatingFilterChange={setRatingFilter}
+        onReplyStatusFilterChange={setReplyStatusFilter}
+        onSearchTermChange={setSearchTerm}
+        onFilterChange={() => setPage(1)}
+      />
 
-      <div className="space-y-4">
-        {paginated.map((r) => (
-          <ReviewItem key={r.id} review={r} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center text-gray-400 py-8">Đang tải...</div>
+      ) : reviewsData.length === 0 ? (
+        <div className="text-center text-gray-400 py-8">Chưa có đánh giá nào</div>
+      ) : (
+        <div className="space-y-4">
+          {reviewsData.map((review) => (
+            <ReviewItem 
+              key={review.reviewId} 
+              review={review} 
+              onReply={handleReply}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-6 space-x-2">
-          {/* Nút Trước */}
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className={`px-3 py-1 rounded text-sm ${page === 1
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-          >
-            Trước
-          </button>
-
-          {/* Các số trang */}
-          {[...Array(totalPages)].map((_, i) => (
+        <div className="mt-6">
+          <div className="text-center text-gray-400 text-sm mb-4">
+            Hiển thị {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, totalCount)} trong tổng số {totalCount} đánh giá
+          </div>
+          <div className="flex justify-center space-x-2">
+            {/* Nút Trước */}
             <button
-              key={i}
-              onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 rounded text-sm ${page === i + 1
-                  ? "bg-orange-500 text-white"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+              className={`px-3 py-1 rounded text-sm ${page === 1
+                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                 }`}
             >
-              {i + 1}
+              Trước
             </button>
-          ))}
 
-          {/* Nút Sau */}
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage(page + 1)}
-            className={`px-3 py-1 rounded text-sm ${page === totalPages
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-          >
-            Sau
-          </button>
+            {/* Các số trang - Smart pagination */}
+            {(() => {
+              const maxVisiblePages = 5;
+              const pages = [];
+              
+              if (totalPages <= maxVisiblePages) {
+                // Hiển thị tất cả nếu ít hơn hoặc bằng 5 trang
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(
+                    <button
+                      key={i}
+                      onClick={() => setPage(i)}
+                      className={`px-3 py-1 rounded text-sm ${page === i
+                          ? "bg-orange-500 text-white"
+                          : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                        }`}
+                    >
+                      {i}
+                    </button>
+                  );
+                }
+              } else {
+                // Logic cho nhiều trang
+                if (page <= 3) {
+                  // Trang đầu: 1, 2, 3, 4, ..., last
+                  for (let i = 1; i <= 4; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setPage(i)}
+                        className={`px-3 py-1 rounded text-sm ${page === i
+                            ? "bg-orange-500 text-white"
+                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                          }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  pages.push(<span key="ellipsis1" className="px-2 text-gray-400">...</span>);
+                  pages.push(
+                    <button
+                      key={totalPages}
+                      onClick={() => setPage(totalPages)}
+                      className="px-3 py-1 rounded text-sm bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    >
+                      {totalPages}
+                    </button>
+                  );
+                } else if (page >= totalPages - 2) {
+                  // Trang cuối: 1, ..., last-3, last-2, last-1, last
+                  pages.push(
+                    <button
+                      key={1}
+                      onClick={() => setPage(1)}
+                      className="px-3 py-1 rounded text-sm bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    >
+                      1
+                    </button>
+                  );
+                  pages.push(<span key="ellipsis1" className="px-2 text-gray-400">...</span>);
+                  for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setPage(i)}
+                        className={`px-3 py-1 rounded text-sm ${page === i
+                            ? "bg-orange-500 text-white"
+                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                          }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                } else {
+                  // Trang giữa: 1, ..., current-1, current, current+1, ..., last
+                  pages.push(
+                    <button
+                      key={1}
+                      onClick={() => setPage(1)}
+                      className="px-3 py-1 rounded text-sm bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    >
+                      1
+                    </button>
+                  );
+                  pages.push(<span key="ellipsis1" className="px-2 text-gray-400">...</span>);
+                  
+                  for (let i = page - 1; i <= page + 1; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setPage(i)}
+                        className={`px-3 py-1 rounded text-sm ${page === i
+                            ? "bg-orange-500 text-white"
+                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                          }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  
+                  pages.push(<span key="ellipsis2" className="px-2 text-gray-400">...</span>);
+                  pages.push(
+                    <button
+                      key={totalPages}
+                      onClick={() => setPage(totalPages)}
+                      className="px-3 py-1 rounded text-sm bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    >
+                      {totalPages}
+                    </button>
+                  );
+                }
+              }
+              
+              return pages;
+            })()}
+
+            {/* Nút Sau */}
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+              className={`px-3 py-1 rounded text-sm ${page === totalPages
+                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+            >
+              Sau
+            </button>
+          </div>
         </div>
       )}
     </div>
