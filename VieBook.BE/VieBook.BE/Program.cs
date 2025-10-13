@@ -1,10 +1,12 @@
 using BusinessObject;
 using BusinessObject.Dtos;
+using BusinessObject.OpenAI;
 using DataAccess;
 using DataAccess.DAO;
 using DataAccess.DAO.Admin;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Net.payOS;
 using Repositories.Implementations;
@@ -131,12 +133,19 @@ builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IBookReviewService, BookReviewService>();
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 
+//Add OpenAI service
+builder.Services.AddScoped<DataAccess.DAO.OpenAIDAO>();
+builder.Services.AddScoped<IOpenAIRepository, OpenAIRepository>();
+builder.Services.AddScoped<IOpenAIService, OpenAIService>();
+
 
 // Cloudinaary service
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<CloudinaryService>();
-
+//OpenAI service
+builder.Services.Configure<OpenAIConfig>(builder.Configuration.GetSection("OpenAI"));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<OpenAIConfig>>().Value);
 
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));

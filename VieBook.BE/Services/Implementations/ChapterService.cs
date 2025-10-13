@@ -12,17 +12,29 @@ namespace Services.Implementations
     public class ChapterService : IChapterService
     {
         private readonly IChapterRepository _chapterRepository;
+        private readonly IBookRepository _bookRepository;
 
-        public ChapterService(IChapterRepository chapterRepository)
+        public ChapterService(IChapterRepository chapterRepository, IBookRepository bookRepository)
         {
             _chapterRepository = chapterRepository;
+            _bookRepository = bookRepository;
         }
 
         public async Task<List<Chapter>> GetAllChaptersAsync() => await _chapterRepository.GetAllChaptersAsync();
 
         public async Task<Chapter?> GetChapterByIdAsync(int chapterId) => await _chapterRepository.GetChapterByIdAsync(chapterId);
 
-        public async Task AddChapterAsync(Chapter chapter) => await _chapterRepository.AddChapterAsync(chapter);
+        public async Task AddChapterAsync(Chapter chapter)
+        {
+            // Validate that the book exists
+            var book = await _bookRepository.GetByIdAsync(chapter.BookId);
+            if (book == null)
+            {
+                throw new ArgumentException($"Book with ID {chapter.BookId} does not exist.");
+            }
+
+            await _chapterRepository.AddChapterAsync(chapter);
+        }
 
         public async Task UpdateChapterAsync(Chapter chapter) => await _chapterRepository.UpdateChapterAsync(chapter);
 

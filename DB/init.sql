@@ -160,6 +160,61 @@ CREATE TABLE dbo.BookApprovals (
   Reason     NVARCHAR(1000) NULL,
   CreatedAt  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+-- OpenAI Entities
+-- Bảng 1: Lưu trữ Embeddings cấp Sách
+CREATE TABLE dbo.BookEmbeddings (
+    BookId INT NOT NULL PRIMARY KEY, -- BookId là khóa chính và tham chiếu tới dbo.Books
+    
+    -- LƯU VECTOR DƯỚI DẠNG CHUỖI JSON
+    -- Ví dụ: "[0.1234, -0.5678, ...]"
+    Vector_Book NVARCHAR(MAX) NOT NULL, 
+    
+    -- LƯU TAGS DƯỚI DẠNG CHUỖI JSON
+    -- Ví dụ: "[\"Fantasy\", \"Magic\", \"Adventure\"]"
+    Categories NVARCHAR(MAX) NOT NULL, 
+    
+    UploadedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    
+    -- Khóa ngoại tới bảng Books
+    CONSTRAINT FK_BookEmbeddings_Books FOREIGN KEY (BookId) REFERENCES dbo.Books(BookId)
+);
+
+-- Bảng 2: Lưu trữ Embeddings cấp Chương (Full Content)
+CREATE TABLE dbo.ChapterContentEmbeddings (
+    ChapterId INT NOT NULL PRIMARY KEY, -- ChapterId là khóa chính và tham chiếu tới dbo.Chapters
+    BookId INT NOT NULL, 
+    
+    -- LƯU VECTOR DƯỚI DẠNG CHUỖI JSON
+    Vector_ChapterContent NVARCHAR(MAX) NOT NULL,
+    
+    UploadedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    -- Khóa ngoại tới bảng Chapters
+    CONSTRAINT FK_ChapterContentEmbeddings_Chapters FOREIGN KEY (ChapterId) REFERENCES dbo.Chapters(ChapterId),
+    -- Khóa ngoại tới bảng Books
+    CONSTRAINT FK_ChapterContentEmbeddings_Books FOREIGN KEY (BookId) REFERENCES dbo.Books(BookId)
+);
+
+-- Bảng 3: Lưu trữ Embeddings cấp Chunks (Các đoạn nhỏ)
+CREATE TABLE dbo.ChapterChunkEmbeddings (
+    ChunkId INT IDENTITY(1,1) PRIMARY KEY,
+    ChapterId INT NOT NULL,
+    BookId INT NOT NULL, 
+    ChunkIndex INT NOT NULL,
+    
+    -- LƯU VECTOR DƯỚI DẠNG CHUỖI JSON
+    Vector_ChunkContent NVARCHAR(MAX) NOT NULL,
+    
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    -- Khóa ngoại tới bảng Chapters
+    CONSTRAINT FK_ChapterChunkEmbeddings_Chapters FOREIGN KEY (ChapterId) REFERENCES dbo.Chapters(ChapterId),
+    -- Khóa ngoại tới bảng Books
+    CONSTRAINT FK_ChapterChunkEmbeddings_Books FOREIGN KEY (BookId) REFERENCES dbo.Books(BookId),
+    
+    -- Đảm bảo mỗi chunk trong một chương là duy nhất
+    CONSTRAINT UQ_ChapterChunkEmbeddings UNIQUE (ChapterId, ChunkIndex) 
+);
 
 -- =========================================================
 -- Owner Applications Workflow

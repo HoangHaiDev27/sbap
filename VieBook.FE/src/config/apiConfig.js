@@ -47,6 +47,14 @@ export const API_ENDPOINTS = {
     VERIFY: `${API_BASE_URL}/api/webhook/verify-payment`,
   },
 
+  // OpenAI endpoints
+  OPENAI: {
+    CHECK_SPELLING: `${API_BASE_URL}/api/openai/check-spelling`,
+    MODERATION: `${API_BASE_URL}/api/openai/moderation`,
+    CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
+    GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
+  },
+
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
