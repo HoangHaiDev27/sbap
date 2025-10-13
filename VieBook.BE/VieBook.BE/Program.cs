@@ -129,6 +129,9 @@ builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository>();
 builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
 
+//Add DAO
+builder.Services.AddScoped<DataAccess.DAO.OrderItemDAO>();
+
 //Add OpenAI service
 builder.Services.AddScoped<DataAccess.DAO.OpenAIDAO>();
 builder.Services.AddScoped<IOpenAIRepository, OpenAIRepository>();
