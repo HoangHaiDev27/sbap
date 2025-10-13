@@ -25,8 +25,7 @@ export const useCoinsStore = create((set) => ({
         }
       });
       if (!res.ok) {
-        console.error("Failed to fetch user data:", res.status, res.statusText);
-        return;
+        throw new Error(`Failed to fetch user data: ${res.status}`);
       }
       const data = await res.json();
       console.log("CoinStore - Fetched user data:", data);
@@ -35,6 +34,7 @@ export const useCoinsStore = create((set) => ({
       set({ coins: walletAmount });
     } catch (error) {
       console.error("Error fetching coins:", error);
+      set({ coins: 0 });
     }
   },
 }));

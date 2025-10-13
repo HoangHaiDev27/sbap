@@ -94,7 +94,7 @@ export async function toggleAccountStatus(userId) {
 
 // Lấy thông tin subscription của user
 export async function getUserSubscription(userId) {
-  return handleFetch(API_ENDPOINTS.USER_MANAGEMENT.GET_USER_SUBSCRIPTION(userId), {
+  return await handleFetch(API_ENDPOINTS.USER_MANAGEMENT.GET_USER_SUBSCRIPTION(userId), {
     method: "GET",
   }, "Lấy thông tin subscription thất bại");
 }

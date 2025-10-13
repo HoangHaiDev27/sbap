@@ -43,12 +43,22 @@ export const API_ENDPOINTS = {
     MODERATION: `${API_BASE_URL}/api/openai/moderation`,
     CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
     GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
+    SUMMARIZE: `${API_BASE_URL}/api/openai/summarize`,
   },
 
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
   USER_UNREAD_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}/unread`,
+
+  // Bookmark endpoints
+  BOOKMARKS: {
+    USER_BOOKMARKS: `${API_BASE_URL}/api/bookmark/user`,
+    CHAPTER: `${API_BASE_URL}/api/bookmark/chapter`,
+    CREATE_UPDATE: `${API_BASE_URL}/api/bookmark`,
+    DELETE: `${API_BASE_URL}/api/bookmark`,
+    DELETE_CHAPTER: `${API_BASE_URL}/api/bookmark/chapter`,
+  },
   USER_UNREAD_COUNT: (userId) => `${API_BASE_URL}/api/notification/user/${userId}/unread-count`,
   USER_RECENT_NOTIFICATIONS: (userId, count = 10) => `${API_BASE_URL}/api/notification/user/${userId}/recent?count=${count}`,
   NOTIFICATION_MARK_READ: (id) => `${API_BASE_URL}/api/notification/${id}/mark-read`,

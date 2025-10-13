@@ -3,29 +3,141 @@ import ReaderHeader from "./ReaderHeader";
 import ReaderSettings from "./ReaderSettings";
 import ReaderBookmarks from "./ReaderBookmarks";
 import ReaderContents from "./ReaderContents";
-import {
-  RiArrowLeftSLine,
-  RiArrowRightSLine,
-} from "react-icons/ri";
+import ReaderSummary from "./ReaderSummary";
+import { 
+  getUserBookmarks, 
+  createOrUpdateBookmark, 
+  deleteBookmarkByChapter,
+  deleteBookmark,
+  getBookmarkByChapter 
+} from "../../api/bookmarkApi";
+import { getUserId } from "../../api/authApi";
+import toast from "react-hot-toast";
 
-export default function BookReader({ bookId }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [fontSize, setFontSize] = useState(16);
-  const [fontFamily, setFontFamily] = useState("serif");
-  const [theme, setTheme] = useState("dark");
+export default function BookReader({ book, fontSize, setFontSize, fontFamily, setFontFamily, theme, setTheme, chapterId }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showContents, setShowContents] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [chapterContent, setChapterContent] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [lastScrollPosition, setLastScrollPosition] = useState(0);
 
-  const book = {
-    id: parseInt(bookId),
-    title: "Đắc Nhân Tâm",
-    author: "Dale Carnegie",
-    totalPages: 320,
-    currentChapter: "Chương 1: Những Nguyên Tắc Cơ Bản Trong Giao Tiếp",
-  };
+  // Tìm chương hiện tại
+  const currentChapter = book?.chapters?.find(ch => ch.chapterId === parseInt(chapterId));
+  
+  // Debug logs
+  console.log("BookReader - book:", book);
+  console.log("BookReader - chapterId:", chapterId);
+  console.log("BookReader - currentChapter:", currentChapter);
+
+  // Tải nội dung từ Cloudinary
+  useEffect(() => {
+    async function fetchChapterContent() {
+      if (!currentChapter?.chapterSoftUrl) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await fetch(currentChapter.chapterSoftUrl);
+        if (response.ok) {
+          const text = await response.text();
+          setChapterContent(text);
+          
+          // Scroll to saved position after content is loaded
+          setTimeout(async () => {
+            try {
+              const savedBookmark = await getBookmarkByChapter(parseInt(chapterId));
+              if (savedBookmark && savedBookmark.pagePosition > 0) {
+                const contentElement = document.querySelector('.prose');
+                if (contentElement) {
+                  contentElement.scrollTop = savedBookmark.pagePosition;
+                  console.log("BookReader - Scrolled to saved position:", savedBookmark.pagePosition);
+                  
+                  // Update local bookmarks state with the loaded bookmark
+                  const existingBookmark = bookmarks.find(b => 
+                    b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)
+                  );
+                  
+                  if (!existingBookmark) {
+                    const newBookmark = {
+                      bookmarkId: savedBookmark.bookmarkId,
+                      chapterReadId: parseInt(chapterId),
+                      bookId: book.bookId,
+                      pagePosition: savedBookmark.pagePosition,
+                      createdAt: savedBookmark.createdAt
+                    };
+                    setBookmarks(prev => [...prev, newBookmark]);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error("Error loading bookmark position:", error);
+            }
+          }, 100); // Small delay to ensure content is rendered
+        }
+      } catch (error) {
+        console.error("Error fetching chapter content:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchChapterContent();
+  }, [currentChapter?.chapterSoftUrl, chapterId, bookmarks]);
+
+  // Auto-update bookmark when user scrolls
+  useEffect(() => {
+    const contentElement = document.querySelector('.prose');
+    if (!contentElement) return;
+
+    const handleScroll = async () => {
+      const scrollPosition = contentElement.scrollTop;
+      const scrollDifference = Math.abs(scrollPosition - lastScrollPosition);
+      
+      // Only update if scroll difference is significant (more than 100px)
+      if (scrollDifference > 100) {
+        setLastScrollPosition(scrollPosition);
+        
+        // Update existing bookmark for this chapter (only if bookmark exists)
+        const existingBookmark = bookmarks.find(b => 
+          b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)
+        );
+        
+        if (existingBookmark) {
+          try {
+            const bookmarkData = {
+              bookId: book.bookId,
+              chapterReadId: parseInt(chapterId),
+              pagePosition: scrollPosition
+            };
+            
+            await createOrUpdateBookmark(bookmarkData);
+            
+            // Update local state
+            const updatedBookmarks = bookmarks.map(b => 
+              (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId))
+                ? { ...b, pagePosition: scrollPosition, createdAt: new Date().toISOString() }
+                : b
+            );
+            setBookmarks(updatedBookmarks);
+            
+            console.log("BookReader - Auto-updated bookmark position:", scrollPosition);
+          } catch (error) {
+            console.error("Error auto-updating bookmark:", error);
+          }
+        }
+      }
+    };
+
+    contentElement.addEventListener('scroll', handleScroll);
+    return () => contentElement.removeEventListener('scroll', handleScroll);
+  }, [chapterId, bookmarks, lastScrollPosition]);
 
   // Theme setup
   const themes = {
@@ -59,133 +171,208 @@ export default function BookReader({ bookId }) {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Add/remove bookmarks
-  const addBookmark = () => {
-    if (!bookmarks.includes(currentPage)) {
-      setBookmarks([...bookmarks, currentPage].sort((a, b) => a - b));
+  // Load bookmarks from API
+  useEffect(() => {
+    const loadBookmarks = async () => {
+      try {
+        setLoadingBookmarks(true);
+        const userBookmarks = await getUserBookmarks();
+        setBookmarks(userBookmarks);
+        console.log("BookReader - Loaded bookmarks from API:", userBookmarks);
+      } catch (error) {
+        console.error("Error loading bookmarks:", error);
+        setBookmarks([]);
+      } finally {
+        setLoadingBookmarks(false);
+      }
+    };
+
+    loadBookmarks();
+  }, []);
+
+  // Add/remove bookmarks with scroll position
+  const addBookmark = async () => {
+    try {
+      // Check if bookmark already exists for this chapter
+      const existingBookmark = bookmarks.find(b => 
+        b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)
+      );
+      
+      if (existingBookmark) {
+        // If bookmark exists, show message instead of creating new one
+        toast("Bookmark đã tồn tại cho chương này. Vị trí đã được cập nhật.", {
+          icon: "ℹ️",
+          style: {
+            background: "#3b82f6",
+            color: "#fff",
+          },
+        });
+        return;
+      }
+      
+      // Get current scroll position
+      const contentElement = document.querySelector('.prose');
+      const scrollPosition = contentElement ? contentElement.scrollTop : 0;
+      
+      const bookmarkData = {
+        bookId: book.bookId,
+        chapterReadId: parseInt(chapterId),
+        pagePosition: scrollPosition
+      };
+      
+      const result = await createOrUpdateBookmark(bookmarkData);
+      console.log("BookReader - Bookmark saved to API:", result);
+      
+      // Update local state
+      const updatedBookmarks = bookmarks.filter(b => 
+        b.chapterReadId !== parseInt(chapterId) && b.chapterListenId !== parseInt(chapterId)
+      );
+      updatedBookmarks.push({
+        bookmarkId: result.bookmarkId,
+        chapterReadId: parseInt(chapterId),
+        bookId: book.bookId,
+        pagePosition: scrollPosition,
+        createdAt: result.createdAt
+      });
+      setBookmarks(updatedBookmarks);
+      
+      toast.success("Đã thêm bookmark thành công");
+      
+    } catch (error) {
+      console.error("Error saving bookmark:", error);
+      toast.error("Không thể thêm bookmark. Vui lòng thử lại.");
     }
   };
-  const removeBookmark = (page) => {
-    setBookmarks(bookmarks.filter((p) => p !== page));
+  
+  const removeBookmark = async (bookmarkId) => {
+    try {
+      // Delete bookmark from database using bookmarkId
+      await deleteBookmark(bookmarkId);
+      
+      // Update local state
+      const newBookmarks = bookmarks.filter((b) => b.bookmarkId !== bookmarkId);
+      setBookmarks(newBookmarks);
+      
+      console.log("BookReader - Bookmark deleted from database and local state");
+      toast.success("Đã xóa bookmark thành công");
+    } catch (error) {
+      console.error("Error deleting bookmark:", error);
+      // Show error message to user
+      toast.error("Không thể xóa bookmark. Vui lòng thử lại.");
+    }
   };
 
-  return (
-    <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text}`}>
-      {/* Header */}
-      <ReaderHeader
-        book={book}
-        currentPage={currentPage}
-        bookmarks={bookmarks}
-        isFullscreen={isFullscreen}
-        toggleFullscreen={toggleFullscreen}
-        setShowSettings={setShowSettings}
-        setShowBookmarks={setShowBookmarks}
-        setShowContents={setShowContents}
-        addBookmark={addBookmark}
-      />
-
-      {/* Nội dung chính (sample) */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-4">{book.currentChapter}</h2>
-        <p style={{ fontSize: `${fontSize}px` }} className={fontFamily}>
-          Chương 1: Những Nguyên Tắc Cơ Bản Trong Giao Tiếp...
-
-Nếu bạn muốn thu thập mật ong, đừng đá đổ tổ ong. Tương tự, nếu bạn muốn khiến con người thích bạn, đừng chỉ trích, đừng kết án, đừng than phiền về họ.
-
-Khi chúng ta phải đối phó với con người, hãy nhớ rằng chúng ta không đối phó với những sinh vật có lý trí, mà chúng ta đang đối phó với những sinh vật cảm xúc, những sinh vật được thúc đẩy bởi niềm kiêu hãnh và tự ái.
-
----
-
-### Nguyên Tắc Thứ Nhất: Đừng Chỉ Trích, Kết Án Hay Than Phiền
-Việc chỉ trích là vô ích vì nó khiến người ta phải phòng thủ và thường khiến họ cố gắng biện minh cho mình.  
-Việc chỉ trích cũng nguy hiểm vì nó làm tổn thương lòng tự trọng quý báu của một người, làm tổn hại đến cảm giác quan trọng của họ và gây ra sự phẫn nộ.
-
-*"Tôi sẽ không nói điều xấu về bất kỳ ai... và tôi sẽ nói tất cả điều tốt mà tôi biết về mọi người."*  
-— Benjamin Franklin
-
-Thay vì chỉ trích, hãy cố gắng hiểu họ. Hãy tìm hiểu **tại sao** họ làm những gì họ làm.  
-Điều này mang lại lợi ích và thú vị hơn nhiều so với việc chỉ trích; và nó sẽ tạo ra **sự cảm thông, kiên nhẫn và lòng tốt**.
-
----
-
-### Câu Chuyện Thực Tế
-Bob Hoover, một phi công thử nghiệm nổi tiếng và người biểu diễn acrobatic thường xuyên, đang bay trở về Los Angeles từ một buổi biểu diễn hàng không ở San Diego.  
-Như được báo cáo trong tạp chí *Reader's Digest*, ở độ cao 300 feet, **cả hai động cơ của máy bay đột nhiên dừng hoạt động**.
-
-Bằng kỹ năng và kinh nghiệm tuyệt vời, Bob đã hạ cánh máy bay an toàn, mặc dù máy bay bị hư hại nặng.  
-May mắn là **không có ai bị thương**.
-
-Điều đầu tiên Bob làm sau khi hạ cánh khẩn cấp là **kiểm tra bình nhiên liệu của máy bay**.  
-Đúng như dự đoán, chiếc máy bay World War II với động cơ piston **đã bị đổ nhầm nhiên liệu máy bay phản lực**.
-
-Khi trở lại sân bay, Bob gặp người thợ máy trẻ tuổi đã mắc lỗi này.  
-Người thợ máy **đang khóc nức nở** — anh ta biết mình vừa khiến một chiếc máy bay đắt tiền bị hỏng và có thể đã khiến **ba người thiệt mạng**.
-
-Bạn nghĩ Bob Hoover đã phản ứng như thế nào?  
-Anh ta có **la mắng hoặc chỉ trích** người thợ máy không? **Không!**
-
-Thay vào đó, Bob ôm lấy người thợ máy và nói:
-
-"Để chứng minh cho anh biết rằng tôi chắc chắn anh sẽ không bao giờ mắc sai lầm này nữa,  
-tôi muốn chính anh tiếp nhiên liệu cho máy bay của tôi vào ngày mai.
-          {/* (đoạn text mô tả giữ nguyên như bạn viết) */}
-        </p>
-
-        {/* Navigation */}
-        <div className="flex justify-between mt-8 items-center">
-          <button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-700 hover:bg-gray-600 rounded"
-          >
-            <RiArrowLeftSLine />
-            Trang trước
-          </button>
-
-          <span>
-            {currentPage} / {book.totalPages}
-          </span>
-
-          <button
-            onClick={() =>
-              setCurrentPage(Math.min(book.totalPages, currentPage + 1))
-            }
-            className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-gray-600 rounded"
-          >
-            Trang sau
-            <RiArrowRightSLine />
-          </button>
+  if (!book || !currentChapter) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <div className="text-center">
+          <p className="text-red-500">Không tìm thấy sách hoặc chương</p>
         </div>
-      </main>
-
-      {/* Panels */}
-      {showSettings && (
-        <ReaderSettings
-          fontSize={fontSize}
-          setFontSize={setFontSize}
-          fontFamily={fontFamily}
-          setFontFamily={setFontFamily}
-          theme={theme}
-          setTheme={setTheme}
-          close={() => setShowSettings(false)}
-        />
-      )}
-
-      {showBookmarks && (
-        <ReaderBookmarks
+      </div>
+    );
+  }
+    return (
+      <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text}`}>
+        {/* Header */}
+        <ReaderHeader
+          book={book}
+          currentChapter={currentChapter}
           bookmarks={bookmarks}
-          removeBookmark={removeBookmark}
-          setCurrentPage={setCurrentPage}
-          close={() => setShowBookmarks(false)}
+          isFullscreen={isFullscreen}
+          toggleFullscreen={toggleFullscreen}
+          setShowSettings={setShowSettings}
+          setShowBookmarks={setShowBookmarks}
+          setShowContents={setShowContents}
+          addBookmark={addBookmark}
         />
-      )}
 
-      {showContents && (
-        <ReaderContents
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-          close={() => setShowContents(false)}
-        />
-      )}
-    </div>
-  );
+        {/* Nội dung chính */}
+        <main className="max-w-4xl mx-auto px-4 py-8">
+          <h2 className="text-2xl font-bold mb-6">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
+          
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+              <span className="ml-3">Đang tải nội dung...</span>
+            </div>
+          ) : (
+            <>
+              <div 
+                className={`${currentTheme.contentBg} rounded-lg p-6 max-h-[70vh] overflow-y-auto`}
+                style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
+              >
+                <div 
+                  className="prose prose-lg max-w-none"
+                  dangerouslySetInnerHTML={{ __html: chapterContent }}
+                />
+              </div>
+              
+              {/* Nút tóm tắt nội dung */}
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => {
+                    console.log("BookReader - Summarize button clicked");
+                    setShowSummary(true);
+                  }}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Tóm tắt nội dung
+                </button>
+              </div>
+            </>
+          )}
+        </main>
+
+        {/* Panels */}
+        {showSettings && (
+          <>
+            {console.log("BookReader - Rendering ReaderSettings")}
+            <ReaderSettings
+              fontSize={fontSize}
+              setFontSize={setFontSize}
+              fontFamily={fontFamily}
+              setFontFamily={setFontFamily}
+              theme={theme}
+              setTheme={setTheme}
+              close={() => setShowSettings(false)}
+            />
+          </>
+        )}
+
+        {showBookmarks && (
+          <ReaderBookmarks
+            bookmarks={bookmarks}
+            removeBookmark={removeBookmark}
+            close={() => setShowBookmarks(false)}
+            onBookmarkClick={(bookmark) => {
+              // Scroll to the bookmark position
+              const contentElement = document.querySelector('.prose');
+              if (contentElement) {
+                contentElement.scrollTop = bookmark.pagePosition || 0;
+                console.log("BookReader - Scrolled to bookmark position:", bookmark.pagePosition);
+              }
+            }}
+            book={book}
+          />
+        )}
+
+        {showContents && (
+          <ReaderContents
+            book={book}
+            onClose={() => setShowContents(false)}
+          />
+        )}
+
+        {showSummary && (
+          <ReaderSummary
+            chapterContent={chapterContent}
+            chapterTitle={currentChapter?.chapterTitle}
+            onClose={() => setShowSummary(false)}
+          />
+        )}
+      </div>
+    );
 }
