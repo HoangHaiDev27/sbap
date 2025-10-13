@@ -13,6 +13,14 @@ export const API_ENDPOINTS = {
   AUDIO_BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/audio/${id}`,
   RELATED_BOOKS: (id) => `${API_BASE_URL}/api/books/${id}/related`,
 
+  // Reviews
+  REVIEWS: {
+    BY_BOOK: (bookId) => `${API_BASE_URL}/api/bookreviews/book/${bookId}`,
+    CREATE: `${API_BASE_URL}/api/bookreviews`,
+    OWNER_REPLY: (reviewId) => `${API_BASE_URL}/api/bookreviews/${reviewId}/reply`,
+    CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`
+  },
+
 
 
   // Auth endpoints

@@ -286,6 +286,10 @@ CREATE TABLE dbo.BookReviews (
   Rating    TINYINT NOT NULL,
   Comment   NVARCHAR(2000) NULL,
   CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  -- Trả lời từ chủ sách
+  OwnerReply   NVARCHAR(2000) NULL,
+  OwnerReplyAt DATETIME2 NULL,
+  OwnerReplyBy INT NULL REFERENCES dbo.Users(UserId),
   CONSTRAINT UQ_BookReviews UNIQUE(BookId, UserId)
 );
 CREATE INDEX IX_BookReviews_Book ON dbo.BookReviews(BookId);
@@ -453,7 +457,7 @@ CREATE TABLE dbo.Plans (
   PlanId           INT IDENTITY(1,1) PRIMARY KEY,
   Name             NVARCHAR(200) NOT NULL,
   ForRole          VARCHAR(10) NOT NULL,       -- Owner/Customer (không CHECK)
-  Period           VARCHAR(10) NOT NULL,       -- Weekly/Monthly/Yearly
+  Period           NVARCHAR(100) NOT NULL,       -- Weekly/Monthly/Yearly
   Price            DECIMAL(18,2) NOT NULL,
   Currency         VARCHAR(10) NOT NULL DEFAULT('VND'),
   TrialDays        INT NULL,
@@ -913,6 +917,47 @@ IF @Book1Id IS NOT NULL
   INSERT INTO dbo.BookReviews(BookId, UserId, Rating, Comment)
   VALUES (@Book1Id, @AliceId, 5, N'Rất hữu ích để xây thói quen đọc!');
 
+-- Seed a demo book with multiple reviews for pagination/filter demo
+DECLARE @DemoBookId INT;
+IF NOT EXISTS (SELECT 1 FROM dbo.Books WHERE Title=N'Demo Feedback Book')
+BEGIN
+  INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView)
+  VALUES (@OwnerId, N'Demo Feedback Book', N'Cuốn sách dùng để demo phân trang và lọc đánh giá.',
+    'https://picsum.photos/seed/demo-book/400/600', '9780000000999', 'VIE', 'Approved', 10);
+END
+SET @DemoBookId = (SELECT BookId FROM dbo.Books WHERE Title=N'Demo Feedback Book');
+
+-- Ensure a few extra users exist for reviews
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user1@viebook.local')
+  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user1@viebook.local', NULL, 'Active');
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user2@viebook.local')
+  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user2@viebook.local', NULL, 'Active');
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user3@viebook.local')
+  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user3@viebook.local', NULL, 'Active');
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user4@viebook.local')
+  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user4@viebook.local', NULL, 'Active');
+
+DECLARE @U1 INT = (SELECT UserId FROM dbo.Users WHERE Email='user1@viebook.local');
+DECLARE @U2 INT = (SELECT UserId FROM dbo.Users WHERE Email='user2@viebook.local');
+DECLARE @U3 INT = (SELECT UserId FROM dbo.Users WHERE Email='user3@viebook.local');
+DECLARE @U4 INT = (SELECT UserId FROM dbo.Users WHERE Email='user4@viebook.local');
+
+IF @DemoBookId IS NOT NULL
+BEGIN
+  -- Insert ~8 reviews with various stars
+  IF NOT EXISTS (SELECT 1 FROM dbo.BookReviews WHERE BookId=@DemoBookId)
+  BEGIN
+    INSERT INTO dbo.BookReviews(BookId, UserId, Rating, Comment) VALUES
+      (@DemoBookId, @AliceId, 5, N'Rất tuyệt vời, đáng đọc!'),
+      (@DemoBookId, @BobId,   4, N'Nội dung hay, trình bày ổn.'),
+      (@DemoBookId, @U1,      3, N'Ổn nhưng còn vài điểm cần cải thiện.'),
+      (@DemoBookId, @U2,      5, N'Xuất sắc!'),
+      (@DemoBookId, @U3,      2, N'Chưa đúng kỳ vọng của mình.'),
+      (@DemoBookId, @U4,      1, N'Không phù hợp với nhu cầu.'),
+      (@DemoBookId, @StaffId, 4, N'Khá ổn.');
+  END
+END
+
 -- Feedbacks
 INSERT INTO dbo.UserFeedbacks(FromUserId, Content, TargetType, TargetId)
 VALUES
@@ -1083,9 +1128,9 @@ END
    ========================================================= */
 INSERT INTO dbo.Plans(Name, ForRole, Period, Price, Currency, TrialDays, ConversionLimit, Status)
 VALUES
-  (N'Gói tuần',  'Owner',    'Tuần',  69, 'VND', NULL, 10, 'Active'),
-  (N'Gói tháng', 'Owner',    'Tháng', 199,'VND', NULL, 60, 'Active'),
-  (N'Gói năm',  'Owner',    'Năm',  1999,'VND',NULL, 800,'Active');
+  (N'Gói tuần',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
+  (N'Gói tháng', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
+  (N'Gói năm',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
 
 /* =========================================================
    Một số thống kê nhanh để kiểm tra dữ liệu
