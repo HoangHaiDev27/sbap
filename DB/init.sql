@@ -982,36 +982,7 @@ BEGIN
 END
 SET @DemoBookId = (SELECT BookId FROM dbo.Books WHERE Title=N'Demo Feedback Book');
 
--- Ensure a few extra users exist for reviews
-IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user1@viebook.local')
-  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user1@viebook.local', NULL, 'Active');
-IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user2@viebook.local')
-  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user2@viebook.local', NULL, 'Active');
-IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user3@viebook.local')
-  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user3@viebook.local', NULL, 'Active');
-IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email='user4@viebook.local')
-  INSERT INTO dbo.Users(Email, PasswordHash, Status) VALUES ('user4@viebook.local', NULL, 'Active');
 
-DECLARE @U1 INT = (SELECT UserId FROM dbo.Users WHERE Email='user1@viebook.local');
-DECLARE @U2 INT = (SELECT UserId FROM dbo.Users WHERE Email='user2@viebook.local');
-DECLARE @U3 INT = (SELECT UserId FROM dbo.Users WHERE Email='user3@viebook.local');
-DECLARE @U4 INT = (SELECT UserId FROM dbo.Users WHERE Email='user4@viebook.local');
-
-IF @DemoBookId IS NOT NULL
-BEGIN
-  -- Insert ~8 reviews with various stars
-  IF NOT EXISTS (SELECT 1 FROM dbo.BookReviews WHERE BookId=@DemoBookId)
-  BEGIN
-    INSERT INTO dbo.BookReviews(BookId, UserId, Rating, Comment) VALUES
-      (@DemoBookId, @AliceId, 5, N'Rất tuyệt vời, đáng đọc!'),
-      (@DemoBookId, @BobId,   4, N'Nội dung hay, trình bày ổn.'),
-      (@DemoBookId, @U1,      3, N'Ổn nhưng còn vài điểm cần cải thiện.'),
-      (@DemoBookId, @U2,      5, N'Xuất sắc!'),
-      (@DemoBookId, @U3,      2, N'Chưa đúng kỳ vọng của mình.'),
-      (@DemoBookId, @U4,      1, N'Không phù hợp với nhu cầu.'),
-      (@DemoBookId, @StaffId, 4, N'Khá ổn.');
-  END
-END
 
 -- Feedbacks
 INSERT INTO dbo.UserFeedbacks(FromUserId, Content, TargetType, TargetId)
@@ -1525,4 +1496,4 @@ VALUES
 (9, 3), --Book Owner
 (9, 4), --Customer
 (10, 4), --Customer
-(11, 3); --Customer
+(11, 3); --owner
