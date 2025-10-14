@@ -1180,24 +1180,21 @@ export default function ChapterForm() {
           </button>
           
           {currentStep < 3 ? (
-            currentStep === 1 ? (
-              <button
-                onClick={nextStep}
-                className="px-4 py-2 rounded-lg transition bg-orange-500 hover:bg-orange-600"
-              >
-                Tiếp tục
-              </button>
-            ) : (
-              // Bước 2: chỉ hiện khi đã kiểm tra chính tả, không lỗi và nội dung có ý nghĩa
-              hasCheckedSpelling && isSpellingValid && contentHasMeaning ? (
-                <button
-                  onClick={nextStep}
-                  className="px-4 py-2 rounded-lg transition bg-orange-500 hover:bg-orange-600"
-                >
-                  Tiếp tục
-                </button>
-              ) : null
-            )
+            <button
+              onClick={nextStep}
+              disabled={
+                (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) || // Step 1 validation
+                (currentStep === 2 && (!hasCheckedSpelling || !isSpellingValid || !contentHasMeaning)) // Step 2 validation
+              }
+              className={`px-4 py-2 rounded-lg transition ${
+                ((currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) ||
+                (currentStep === 2 && (!hasCheckedSpelling || !isSpellingValid || !contentHasMeaning)))
+                  ? "bg-gray-600 cursor-not-allowed opacity-50"
+                  : "bg-orange-500 hover:bg-orange-600"
+              }`}
+            >
+              Tiếp tục
+            </button>
           ) : (
             <>
               <button

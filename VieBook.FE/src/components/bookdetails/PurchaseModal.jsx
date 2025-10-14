@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   RiCloseLine, 
   RiShoppingCartLine, 
@@ -6,13 +6,14 @@ import {
   RiCheckLine,
   RiPlayCircleLine,
   RiBookOpenLine,
-  RiAddLine
+  RiAddLine,
+  RiCheckboxCircleLine
 } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
 import { useNotificationStore } from "../../hooks/stores/notificationStore";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-import { purchaseChapters } from "../../api/chapterPurchaseApi";
+import { purchaseChapters, getMyPurchases } from "../../api/chapterPurchaseApi";
 import toast from "react-hot-toast";
 
 export default function PurchaseModal({ 
@@ -25,11 +26,48 @@ export default function PurchaseModal({
 }) {
   const [selectedChapters, setSelectedChapters] = useState([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [purchasedChapters, setPurchasedChapters] = useState([]);
+  const [loadingPurchases, setLoadingPurchases] = useState(false);
+  const [buttonState, setButtonState] = useState('normal'); // Track button state: 'normal', 'selecting', 'deselecting'
   
   const { coins, setCoins } = useCoinsStore();
   const { addNotification } = useNotificationStore();
   const { userId } = useCurrentUser();
   const navigate = useNavigate();
+
+  // Load purchased chapters when modal opens
+  useEffect(() => {
+    if (isOpen && userId) {
+      loadPurchasedChapters();
+    }
+  }, [isOpen, userId]);
+
+  const loadPurchasedChapters = async () => {
+    try {
+      setLoadingPurchases(true);
+      const response = await getMyPurchases();
+      console.log("All purchases response:", response);
+      
+      // Backend trả về format: { code: 0, message: "Success", data: [...] }
+      const purchases = response?.data || [];
+      console.log("All purchases data:", purchases);
+      
+      // Lấy tất cả chương đã mua (không filter theo bookId)
+      const purchasedChapterIds = [];
+      
+      if (Array.isArray(purchases)) {
+        // Lấy tất cả chapterIds đã mua
+        purchasedChapterIds.push(...purchases.map(p => p.chapterId));
+      }
+      
+      console.log("Purchased chapter IDs for all books:", purchasedChapterIds);
+      setPurchasedChapters(purchasedChapterIds);
+    } catch (error) {
+      console.error("Error loading purchased chapters:", error);
+    } finally {
+      setLoadingPurchases(false);
+    }
+  };
 
   // Tính tổng giá
   const totalPrice = selectedChapters.reduce((sum, chapterId) => {
@@ -39,6 +77,11 @@ export default function PurchaseModal({
 
   // Xử lý chọn/bỏ chọn chapter
   const toggleChapter = (chapterId) => {
+    // Không cho phép chọn chương đã mua
+    if (purchasedChapters.includes(chapterId)) {
+      return;
+    }
+    
     setSelectedChapters(prev => 
       prev.includes(chapterId) 
         ? prev.filter(id => id !== chapterId)
@@ -90,6 +133,9 @@ export default function PurchaseModal({
         onClose();
         setSelectedChapters([]);
         
+        // Reload purchased chapters after successful purchase
+        await loadPurchasedChapters();
+        
         if (onPurchaseSuccess) {
           onPurchaseSuccess(selectedChapters);
         }
@@ -107,14 +153,31 @@ export default function PurchaseModal({
     }
   };
 
-  // Chọn tất cả
-  const selectAll = () => {
-    setSelectedChapters(chapters.map(ch => ch.chapterId));
-  };
-
-  // Bỏ chọn tất cả
-  const deselectAll = () => {
-    setSelectedChapters([]);
+  // Toggle chọn tất cả / bỏ chọn tất cả
+  const toggleSelectAll = () => {
+    const availableChapters = chapters
+      .filter(ch => {
+        const isPurchased = purchasedChapters.includes(ch.chapterId);
+        const isFree = !ch.priceAudio || ch.priceAudio === 0;
+        return !isPurchased && !isFree;
+      })
+      .map(ch => ch.chapterId);
+    
+    const allAvailableSelected = availableChapters.length > 0 && 
+      availableChapters.every(chapterId => selectedChapters.includes(chapterId));
+    
+    if (allAvailableSelected) {
+      // Nếu đã chọn tất cả -> bỏ chọn tất cả
+      setSelectedChapters([]);
+      setButtonState('deselecting');
+    } else {
+      // Nếu chưa chọn tất cả -> chọn tất cả
+      setSelectedChapters(availableChapters);
+      setButtonState('selecting');
+    }
+    
+    // Reset button state after 1.5 seconds
+    setTimeout(() => setButtonState('normal'), 1500);
   };
 
   // Xử lý nạp xu
@@ -178,45 +241,78 @@ export default function PurchaseModal({
           </div>
 
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <div className="flex justify-between items-center mb-4">
             <button
-              onClick={selectAll}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex-1 sm:flex-none"
+              onClick={toggleSelectAll}
+              className={`px-6 py-2 text-white text-sm rounded-lg transition-all duration-300 ${
+                buttonState === 'selecting'
+                  ? "bg-green-600 scale-105 shadow-lg"
+                  : buttonState === 'deselecting'
+                  ? "bg-red-600 scale-105 shadow-lg"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
             >
-              Chọn tất cả
+              {buttonState === 'selecting' 
+                ? "✓ Đã chọn tất cả" 
+                : buttonState === 'deselecting'
+                ? "✓ Đã bỏ chọn"
+                : selectedChapters.length > 0 
+                  ? "Bỏ chọn tất cả" 
+                  : "Chọn tất cả"
+              }
             </button>
-            <button
-              onClick={deselectAll}
-              className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors flex-1 sm:flex-none"
-            >
-              Bỏ chọn tất cả
-            </button>
+            
+            {/* Debug info */}
+            <div className="text-xs text-gray-400">
+              {loadingPurchases ? (
+                <span>Đang tải...</span>
+              ) : (
+                <span>Đã mua: {purchasedChapters.length} chương</span>
+              )}
+            </div>
           </div>
 
           {/* Danh sách chương */}
           <div className="space-y-2">
-            {chapters.map((chapter) => {
+            {chapters.map((chapter, index) => {
               const isSelected = selectedChapters.includes(chapter.chapterId);
+              const isPurchased = purchasedChapters.includes(chapter.chapterId);
+              const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
               const duration = Math.round((chapter.durationSec || 0) / 60);
+              const chapterNumber = index + 1;
+              const isDisabled = isPurchased || isFree;
+              
+              // Debug log
+              console.log(`Chapter ${chapterNumber}: isPurchased=${isPurchased}, purchasedChapters=`, purchasedChapters, 'chapterId=', chapter.chapterId);
+              if (isPurchased) {
+                console.log(`✓ Chapter ${chapterNumber} (${chapter.chapterTitle}) is purchased`);
+              }
               
               return (
                 <div
                   key={chapter.chapterId}
-                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                    isSelected
-                      ? "border-orange-500 bg-orange-500/10"
-                      : "border-gray-600 hover:border-gray-500 bg-gray-700/50"
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all ${
+                    isPurchased
+                      ? "border-green-500 bg-green-500/10 cursor-not-allowed opacity-75"
+                      : isFree
+                      ? "border-gray-600 bg-gray-700/50 cursor-not-allowed opacity-60"
+                      : isSelected
+                      ? "border-orange-500 bg-orange-500/10 cursor-pointer"
+                      : "border-gray-600 hover:border-gray-500 bg-gray-700/50 cursor-pointer"
                   }`}
-                  onClick={() => toggleChapter(chapter.chapterId)}
+                  onClick={() => !isDisabled && toggleChapter(chapter.chapterId)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium text-white text-sm sm:text-base truncate">
-                          {chapter.chapterTitle}
+                          Chương {chapterNumber}: {chapter.chapterTitle?.replace(/chuogn/g, 'chương') || ''}
                         </h3>
-                        {isSelected && (
+                        {isSelected && !isPurchased && (
                           <RiCheckLine className="text-orange-500 text-lg flex-shrink-0" />
+                        )}
+                        {isPurchased && (
+                          <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
                         )}
                       </div>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
@@ -228,12 +324,35 @@ export default function PurchaseModal({
                           <RiBookOpenLine className="text-sm" />
                           {chapter.chapterView} lượt xem
                         </span>
+                        {isPurchased && (
+                          <span className="flex items-center gap-1 text-green-400 font-medium">
+                            <RiCheckboxCircleLine className="text-sm" />
+                            Đã mua
+                          </span>
+                        )}
+                        {isFree && !isPurchased && (
+                          <span className="flex items-center gap-1 text-blue-400 font-medium">
+                            <RiCheckboxCircleLine className="text-sm" />
+                            Miễn phí
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-left sm:text-right">
-                      <div className="text-orange-500 font-bold text-base sm:text-lg">
-                        {chapter.priceAudio?.toLocaleString() || 0} xu
-                      </div>
+                      {isPurchased ? (
+                        <div className="text-green-500 font-bold text-base sm:text-lg">
+                          Đã mua
+                        </div>
+                      ) : isFree ? (
+                        <div className="text-blue-500 font-bold text-base sm:text-lg">
+                          Miễn phí
+                        </div>
+                      ) : (
+                        <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
+                          {chapter.priceAudio?.toLocaleString() || 0}
+                          <RiCoinLine className="w-4 h-4 text-yellow-400" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -252,8 +371,9 @@ export default function PurchaseModal({
             </div>
             <div className="text-left sm:text-right">
               <div className="text-gray-400 text-xs sm:text-sm">Tổng cộng</div>
-              <div className="text-orange-500 font-bold text-lg sm:text-xl">
-                {totalPrice.toLocaleString()} xu
+              <div className="text-orange-500 font-bold text-lg sm:text-xl flex items-center gap-1">
+                {totalPrice.toLocaleString()}
+                <RiCoinLine className="w-5 h-5 text-yellow-400" />
               </div>
             </div>
           </div>

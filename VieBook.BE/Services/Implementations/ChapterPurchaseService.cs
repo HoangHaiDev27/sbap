@@ -67,7 +67,9 @@ namespace Services.Implementations
 
                 // Kiểm tra xem user đã mua chapter nào chưa
                 var existingPurchases = await GetUserPurchasedChaptersAsync(userId);
-                var alreadyPurchasedChapterIds = existingPurchases.Select(p => p.ChapterId).ToList();
+                var alreadyPurchasedChapterIds = existingPurchases
+                    .Select(p => p.ChapterId)
+                    .ToList();
                 var newChaptersToPurchase = chaptersToPurchase.Where(c => !alreadyPurchasedChapterIds.Contains(c.ChapterId)).ToList();
 
                 if (newChaptersToPurchase.Count == 0)
@@ -199,13 +201,15 @@ namespace Services.Implementations
         public async Task<List<OrderItemDTO>> GetUserPurchasedChaptersAsync(int userId)
         {
             var purchasedItems = await _context.OrderItems
-                .Where(oi => oi.CustomerId == userId)
+                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
                 .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
                 .Select(oi => new OrderItemDTO
                 {
                     OrderItemId = oi.OrderItemId,
                     ChapterId = oi.ChapterId,
                     ChapterTitle = oi.Chapter.ChapterTitle,
+                    BookId = oi.Chapter.BookId,
                     UnitPrice = oi.UnitPrice,
                     CashSpent = oi.CashSpent,
                     PaidAt = oi.PaidAt ?? DateTime.UtcNow,

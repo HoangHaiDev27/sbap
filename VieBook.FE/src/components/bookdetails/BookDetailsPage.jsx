@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { getUserId } from "../../api/authApi";
 import RelatedBooks from "./RelatedBook";
 import PurchaseModal from "./PurchaseModal";
-import { checkChapterOwnership } from "../../api/chapterPurchaseApi";
+import { getMyPurchases } from "../../api/chapterPurchaseApi";
 import toast from "react-hot-toast";
 import {
   RiArrowRightSLine,
@@ -18,6 +18,8 @@ import {
   RiStarFill,
   RiHeartFill,
   RiStarLine,
+  RiCloseLine,
+  RiCheckboxCircleLine,
   RiCoinLine,
 } from "react-icons/ri";
 
@@ -34,7 +36,7 @@ export default function BookDetailPage() {
 
   const [bookDetail, setBookDetail] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [chapterOwnership, setChapterOwnership] = useState({}); // Lưu trạng thái sở hữu chương
+  const [purchasedChapters, setPurchasedChapters] = useState([]); // Lưu danh sách chương đã mua
 
   // const toggleFavorite = () => setIsFavorite(!isFavorite);
 
@@ -54,26 +56,34 @@ export default function BookDetailPage() {
             const wished = await checkWishlist(id);
             setIsFavorite(!!wished);
             
-            // Kiểm tra quyền sở hữu chương nếu user đã đăng nhập
+            // Load purchased chapters nếu user đã đăng nhập
             if (data.chapters && data.chapters.length > 0) {
-              const ownershipPromises = data.chapters.map(async (chapter) => {
-                const result = await checkChapterOwnership(chapter.chapterId);
-                return { chapterId: chapter.chapterId, isOwned: result.isOwned || false };
-              });
-              
-              const ownershipResults = await Promise.all(ownershipPromises);
-              const ownershipMap = {};
-              ownershipResults.forEach(result => {
-                ownershipMap[result.chapterId] = result.isOwned;
-              });
-              setChapterOwnership(ownershipMap);
+              try {
+                console.log("BookDetailsPage - Loading purchased chapters");
+                const response = await getMyPurchases();
+                console.log("BookDetailsPage - Full API response:", response);
+                console.log("BookDetailsPage - Response type:", typeof response);
+                console.log("BookDetailsPage - Response.data:", response?.data);
+                console.log("BookDetailsPage - Response.data type:", typeof response?.data);
+                console.log("BookDetailsPage - Response.data length:", response?.data?.length);
+                
+                const purchases = response?.data || [];
+                console.log("BookDetailsPage - Purchases array:", purchases);
+                const purchasedChapterIds = purchases.map(p => p.chapterId);
+                console.log("BookDetailsPage - Purchased chapter IDs:", purchasedChapterIds);
+                setPurchasedChapters(purchasedChapterIds);
+              } catch (error) {
+                console.error("BookDetailsPage - Error loading purchased chapters:", error);
+                console.error("BookDetailsPage - Error details:", error.message);
+                setPurchasedChapters([]);
+              }
             }
           } catch {
             // ignore wishlist check errors
           }
         } else {
           setIsFavorite(false);
-          setChapterOwnership({});
+          setPurchasedChapters([]);
         }
       } catch (err) {
         console.error("Lỗi khi fetch BookDetail:", err);
@@ -378,47 +388,54 @@ export default function BookDetailPage() {
 
       {/* Chapter Modal - Mục lục chương */}
       {showChapterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
           {/* Overlay */}
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowChapterModal(false)}></div>
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowChapterModal(false)}
+          ></div>
 
-          {/* Popup */}
-          <div className="relative bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] shadow-2xl z-10 overflow-hidden">
+          {/* Modal */}
+          <div className="relative bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden shadow-2xl">
+            
             {/* Header */}
-            <div className="bg-gray-700 px-6 py-4 border-b border-gray-600">
+            <div className="bg-gray-700 px-4 sm:px-6 py-4 border-b border-gray-600">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <RiBookOpenLine /> Mục lục - {title}
+                <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-white">
+                  <RiBookOpenLine className="text-orange-500" />
+                  Mục lục - {title}
                 </h3>
                 <button
                   onClick={() => setShowChapterModal(false)}
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className="text-gray-300 hover:text-white transition-colors p-1 rounded-lg hover:bg-gray-600"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <RiCloseLine size={24} />
                 </button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="p-6">
-              <div className="max-h-[400px] overflow-y-auto space-y-3">
+            <div className="p-4 sm:p-6">
+              {/* Danh sách chương */}
+              <div className="space-y-2">
                 {chapters?.map((chapter, index) => {
                   const hasSoftUrl = chapter.chapterSoftUrl && chapter.chapterSoftUrl.trim() !== "";
                   const isLoggedIn = getUserId() !== null;
-                  const isOwned = chapterOwnership[chapter.chapterId] || false;
+                  const isOwned = purchasedChapters.includes(chapter.chapterId);
                   const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
                   const isDisabled = !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
                   const chapterNumber = index + 1;
                   
+                  // Debug log
+                  console.log(`Chapter ${chapterNumber}: isOwned=${isOwned}, isFree=${isFree}, isLoggedIn=${isLoggedIn}, hasSoftUrl=${hasSoftUrl}, purchasedChapters=`, purchasedChapters);
+                  
                   return (
                     <div
                       key={chapter.chapterId || index}
-                      className={`p-4 rounded-lg border transition-all duration-200 ${
+                      className={`p-3 sm:p-4 rounded-lg border-2 transition-all ${
                         isDisabled
-                          ? "bg-gray-700 border-gray-600 opacity-60 cursor-not-allowed"
-                          : "bg-gray-700 border-gray-600 hover:bg-gray-600 hover:border-orange-500 cursor-pointer"
+                          ? "border-gray-600 bg-gray-700/50 cursor-not-allowed opacity-60"
+                          : "border-gray-600 hover:border-orange-500 bg-gray-700/50 hover:bg-gray-600 cursor-pointer"
                       }`}
                       onClick={() => {
                         if (!isLoggedIn) {
@@ -436,67 +453,69 @@ export default function BookDetailPage() {
                         window.location.href = `/reader/${id}/chapter/${chapter.chapterId}`;
                       }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          {/* Số thứ tự chương */}
-                          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                            isDisabled 
-                              ? "bg-gray-600 text-gray-400" 
-                              : "bg-orange-600 text-white"
-                          }`}>
-                            {chapterNumber}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-white mb-1 truncate">
-                              {chapter.chapterTitle}
-                            </h4>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium text-white text-sm sm:text-base truncate">
+                              Chương {chapterNumber}: {chapter.chapterTitle?.replace(/chuogn/g, 'chương') || ''}
+                            </h3>
+                            {isOwned && (
+                              <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
+                            )}
                             {!isLoggedIn && (
-                              <p className="text-xs text-red-400 mb-1">
-                                Vui lòng đăng nhập để đọc chương
-                              </p>
+                              <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
                             )}
                             {isLoggedIn && !isOwned && !isFree && (
-                              <p className="text-xs text-orange-400 mb-1">
+                              <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
+                            {!isLoggedIn && (
+                              <span className="flex items-center gap-1 text-red-400 font-medium">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                                Bạn phải đăng nhập để đọc chương
+                              </span>
+                            )}
+                            {isLoggedIn && !isOwned && !isFree && (
+                              <span className="flex items-center gap-1 text-orange-400 font-medium">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
                                 Cần mua chương này để đọc
-                              </p>
+                              </span>
                             )}
                             {isLoggedIn && isOwned && !hasSoftUrl && (
-                              <p className="text-xs text-gray-400 mb-1">
+                              <span className="flex items-center gap-1 text-gray-400 font-medium">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                </svg>
                                 Chương không có bản mềm
-                              </p>
+                              </span>
                             )}
-                            <div className="flex items-center gap-4 text-sm text-gray-300">
-                              {isFree ? (
-                                <span className="text-green-400 font-medium">
-                                  Miễn phí
-                                </span>
-                              ) : chapter.priceAudio && (
-                                <span className="text-orange-400 flex items-center gap-1">
-                                  {chapter.priceAudio.toLocaleString()}
-                                  <RiCoinLine className="w-4 h-4" />
-                                </span>
-                              )}
-                            </div>
+                            {isLoggedIn && isOwned && hasSoftUrl && (
+                              <span className="flex items-center gap-1 text-green-400 font-medium">
+                                <RiCheckboxCircleLine className="w-4 h-4" />
+                                Đã mua
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="ml-4">
-                          {!isLoggedIn ? (
-                            <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          ) : !isOwned && !isFree ? (
-                            <svg className="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          ) : hasSoftUrl ? (
-                            <svg className="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
+                        <div className="text-left sm:text-right">
+                          {isFree ? (
+                            <div className="text-green-500 font-bold text-base sm:text-lg">
+                              Miễn phí
+                            </div>
                           ) : (
-                            <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                            </svg>
+                            <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
+                              {chapter.priceAudio?.toLocaleString() || 0}
+                              <RiCoinLine className="w-4 h-4 text-yellow-400" />
+                            </div>
                           )}
                         </div>
                       </div>
