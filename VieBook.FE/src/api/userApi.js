@@ -25,6 +25,16 @@ export async function getCurrentUser() {
   return res.json();
 }
 
+export async function getCurrentUserSubscription() {
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/me/subscription`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = data?.message || "Không thể tải thông tin subscription";
+    throw new Error(message);
+  }
+  return data;
+}
+
 export async function updateUser(id, user) {
   const res = await authFetch(`${API_ENDPOINTS.USERS}/${id}`, {
     method: "PUT",

@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { getBookDetail } from "../../api/bookApi";
-import { checkWishlist, addToWishlist, removeFromWishlist } from "../../api/wishlistApi";
-import { useNavigate } from "react-router-dom";
+import {
+  checkWishlist,
+  addToWishlist,
+  removeFromWishlist,
+} from "../../api/wishlistApi";
 import { getUserId } from "../../api/authApi";
+import {
+  getReviewsByBook,
+  createReview,
+  canReview as apiCanReview,
+} from "../../api/reviewApi";
 import RelatedBooks from "./RelatedBook";
 import PurchaseModal from "./PurchaseModal";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
@@ -26,8 +34,8 @@ import {
 export default function BookDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("overview");
-  // const [showFullDescription, setShowFullDescription] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
@@ -37,44 +45,71 @@ export default function BookDetailPage() {
   const [bookDetail, setBookDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchasedChapters, setPurchasedChapters] = useState([]); // Lưu danh sách chương đã mua
+  const [reviewsData, setReviewsData] = useState([]);
+  const [ratingFilter, setRatingFilter] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(5);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
+  const [canReview, setCanReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [chapterOwnership, setChapterOwnership] = useState({}); // Lưu trạng thái sở hữu chương
 
-  // const toggleFavorite = () => setIsFavorite(!isFavorite);
-
+  // fetch dữ liệu sách và wishlist
   useEffect(() => {
     // Scroll to top when component mounts or id changes
     window.scrollTo(0, 0);
-    
+
     async function fetchData() {
       try {
         const data = await getBookDetail(id);
         setBookDetail(data);
-        
+
         // Load wishlist state if logged in
         const uid = getUserId();
         if (uid) {
           try {
             const wished = await checkWishlist(id);
             setIsFavorite(!!wished);
-            
+
             // Load purchased chapters nếu user đã đăng nhập
             if (data.chapters && data.chapters.length > 0) {
               try {
                 console.log("BookDetailsPage - Loading purchased chapters");
                 const response = await getMyPurchases();
                 console.log("BookDetailsPage - Full API response:", response);
-                console.log("BookDetailsPage - Response type:", typeof response);
+                console.log(
+                  "BookDetailsPage - Response type:",
+                  typeof response
+                );
                 console.log("BookDetailsPage - Response.data:", response?.data);
-                console.log("BookDetailsPage - Response.data type:", typeof response?.data);
-                console.log("BookDetailsPage - Response.data length:", response?.data?.length);
-                
+                console.log(
+                  "BookDetailsPage - Response.data type:",
+                  typeof response?.data
+                );
+                console.log(
+                  "BookDetailsPage - Response.data length:",
+                  response?.data?.length
+                );
+
                 const purchases = response?.data || [];
                 console.log("BookDetailsPage - Purchases array:", purchases);
-                const purchasedChapterIds = purchases.map(p => p.chapterId);
-                console.log("BookDetailsPage - Purchased chapter IDs:", purchasedChapterIds);
+                const purchasedChapterIds = purchases.map((p) => p.chapterId);
+                console.log(
+                  "BookDetailsPage - Purchased chapter IDs:",
+                  purchasedChapterIds
+                );
                 setPurchasedChapters(purchasedChapterIds);
               } catch (error) {
-                console.error("BookDetailsPage - Error loading purchased chapters:", error);
-                console.error("BookDetailsPage - Error details:", error.message);
+                console.error(
+                  "BookDetailsPage - Error loading purchased chapters:",
+                  error
+                );
+                console.error(
+                  "BookDetailsPage - Error details:",
+                  error.message
+                );
                 setPurchasedChapters([]);
               }
             }
@@ -94,17 +129,86 @@ export default function BookDetailPage() {
     fetchData();
   }, [id]);
 
+  // fetch review theo filter / phân trang
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await getReviewsByBook(id, {
+          rating: ratingFilter,
+          page,
+          pageSize,
+        });
+        setReviewsData(list || []);
+
+        const uid = getUserId();
+        if (uid && Array.isArray(list)) {
+          const userHasReview = list.some(
+            (r) => String(r?.userId || r?.UserId || "") === String(uid)
+          );
+          // không reset về false nếu trước đó đã true
+          setHasReviewed((prev) => prev || userHasReview);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, [id, ratingFilter, page, pageSize]);
+
+  // kiểm tra quyền đánh giá
+  useEffect(() => {
+    (async () => {
+      try {
+        const uid = getUserId();
+        if (!uid) {
+          setCanReview(false);
+          return;
+        }
+        const res = await apiCanReview(id);
+        const flag =
+          typeof res?.canReview === "boolean" ? res.canReview : false;
+        setCanReview(flag);
+      } catch {
+        setCanReview(false);
+      }
+    })();
+  }, [id]);
+
   if (loading) {
     return <div className="text-center text-white p-6">Đang tải...</div>;
   }
 
   if (!bookDetail) {
-    return <div className="text-center text-red-500 p-6">Không tìm thấy sách.</div>;
+    return (
+      <div className="text-center text-red-500 p-6">Không tìm thấy sách.</div>
+    );
   }
 
-  const { title, description, coverUrl, isbn, language, totalView, createdAt, ownerName, categories, chapters, reviews, totalPrice } =
-    bookDetail;
-  const hasAudio = Array.isArray(chapters) && chapters.some((ch) => !!ch.chapterAudioUrl);
+  const {
+    title,
+    description,
+    coverUrl,
+    isbn,
+    language,
+    totalView,
+    createdAt,
+    ownerName,
+    categories,
+    chapters,
+    reviews,
+    totalPrice,
+  } = bookDetail;
+
+  const hasAudio =
+    Array.isArray(chapters) && chapters.some((ch) => !!ch.chapterAudioUrl);
+
+  // Logic cắt ngắn description
+  const maxDescriptionLength = 200;
+  const shouldTruncate =
+    description && description.length > maxDescriptionLength;
+  const displayDescription =
+    shouldTruncate && !isDescriptionExpanded
+      ? description.substring(0, maxDescriptionLength) + "..."
+      : description;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -213,8 +317,7 @@ export default function BookDetailPage() {
           <h1 className="text-3xl font-bold mb-2">{title}</h1>
           <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
           <p className="text-yellow-400 font-bold text-xl mb-4 flex items-center gap-1">
-            {totalPrice.toLocaleString()}
-            <RiCoinLine className="w-5 h-5" />
+            {totalPrice.toLocaleString()} <RiCoinLine className="w-5 h-5" />
           </p>
 
           {/* Rating */}
@@ -222,9 +325,9 @@ export default function BookDetailPage() {
             <span className="text-white font-medium">
               {reviews && reviews.length > 0
                 ? (
-                  reviews.reduce((sum, r) => sum + r.rating, 0) /
-                  reviews.length
-                ).toFixed(1)
+                    reviews.reduce((sum, r) => sum + r.rating, 0) /
+                    reviews.length
+                  ).toFixed(1)
                 : "Chưa có"}
             </span>
             <RiStarFill className="text-yellow-400" />
@@ -235,39 +338,41 @@ export default function BookDetailPage() {
 
           {/* Tabs */}
           <div className="border-b border-gray-700 mb-6 flex space-x-6">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`pb-2 ${activeTab === "overview"
-                ? "border-b-2 border-orange-500 text-orange-400"
-                : "text-gray-400"
+            {["overview", "details", "reviews"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-2 ${
+                  activeTab === tab
+                    ? "border-b-2 border-orange-500 text-orange-400"
+                    : "text-gray-400"
                 }`}
-            >
-              Tổng quan
-            </button>
-            <button
-              onClick={() => setActiveTab("details")}
-              className={`pb-2 ${activeTab === "details"
-                ? "border-b-2 border-orange-500 text-orange-400"
-                : "text-gray-400"
-                }`}
-            >
-              Chi tiết
-            </button>
-            <button
-              onClick={() => setActiveTab("reviews")}
-              className={`pb-2 ${activeTab === "reviews"
-                ? "border-b-2 border-orange-500 text-orange-400"
-                : "text-gray-400"
-                }`}
-            >
-              Đánh giá
-            </button>
+              >
+                {tab === "overview"
+                  ? "Tổng quan"
+                  : tab === "details"
+                  ? "Chi tiết"
+                  : "Đánh giá"}
+              </button>
+            ))}
           </div>
 
           {/* Nội dung Tab */}
           {activeTab === "overview" && (
             <div>
-              <p className="text-gray-300 mb-4">{description}</p>
+              <div className="mb-4">
+                <p className="text-gray-300">{displayDescription}</p>
+                {shouldTruncate && (
+                  <button
+                    onClick={() =>
+                      setIsDescriptionExpanded(!isDescriptionExpanded)
+                    }
+                    className="text-orange-400 hover:text-orange-300 text-sm mt-2 font-medium transition-colors"
+                  >
+                    {isDescriptionExpanded ? "Xem ít hơn" : "Xem thêm"}
+                  </button>
+                )}
+              </div>
               <div className="mt-4">
                 <h3 className="font-semibold mb-2">Chương</h3>
                 <ul className="list-disc list-inside text-gray-300">
@@ -293,33 +398,152 @@ export default function BookDetailPage() {
 
           {activeTab === "reviews" && (
             <div className="space-y-6">
-              {reviews?.map((review) => (
-                <div key={review.reviewId} className="bg-gray-800 rounded-lg p-6">
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={review.avatarUrl}
-                      alt={review.userName}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div>
-                      <h4 className="font-medium">{review.userName}</h4>
-                      <span className="text-gray-400 text-sm">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </span>
+              {/* Filter + Pagination Controls */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Lọc theo sao:</span>
+                  {[null, 5, 4, 3, 2, 1].map((v) => (
+                    <button
+                      key={String(v)}
+                      className={`px-2 py-1 rounded ${
+                        ratingFilter === v
+                          ? "bg-orange-600"
+                          : "bg-gray-700 hover:bg-gray-600"
+                      }`}
+                      onClick={() => {
+                        setPage(1);
+                        setRatingFilter(v);
+                      }}
+                    >
+                      {v === null ? "Tất cả" : `${v}★`}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="px-2 py-1 bg-gray-700 rounded disabled:opacity-50"
+                    onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page === 1}
+                  >
+                    Trang trước
+                  </button>
+                  <span className="text-sm text-gray-400">Trang {page}</span>
+                  <button
+                    className="px-2 py-1 bg-gray-700 rounded disabled:opacity-50"
+                    onClick={() => setPage(page + 1)}
+                    disabled={reviewsData.length < pageSize}
+                  >
+                    Trang sau
+                  </button>
+                </div>
+              </div>
+
+              {/* Form tạo đánh giá */}
+              {canReview && !hasReviewed && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-300">
+                      Đánh giá của bạn:
+                    </span>
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <button key={i} onClick={() => setNewRating(i + 1)}>
+                          {i < newRating ? (
+                            <RiStarFill className="text-yellow-400" />
+                          ) : (
+                            <RiStarLine className="text-yellow-400" />
+                          )}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex mt-2">
-                    {[...Array(5)].map((_, i) =>
-                      i < review.rating ? (
-                        <RiStarFill key={i} className="text-yellow-400" />
-                      ) : (
-                        <RiStarLine key={i} className="text-yellow-400" />
-                      )
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Viết cảm nhận của bạn (chỉ người đã mua chương mới có thể gửi)"
+                    className="mt-3 w-full bg-gray-700 rounded p-3 text-sm"
+                  />
+                  <div className="text-right mt-3">
+                    <button
+                      className="px-4 py-2 bg-orange-600 rounded hover:bg-orange-500"
+                      onClick={async () => {
+                        const uid = getUserId();
+                        if (!uid) {
+                          toast.error("Vui lòng đăng nhập để đánh giá");
+                          navigate("/auth");
+                          return;
+                        }
+                        if (hasReviewed) {
+                          toast.error("Bạn đã đánh giá sách này rồi");
+                          return;
+                        }
+                        try {
+                          const created = await createReview(
+                            parseInt(id, 10),
+                            newRating,
+                            newComment
+                          );
+                          toast.success("Đã gửi đánh giá");
+                          setReviewsData([created, ...reviewsData]);
+                          setNewComment("");
+                          setNewRating(5);
+                          setHasReviewed(true);
+                        } catch (e) {
+                          toast.error(e.message);
+                        }
+                      }}
+                    >
+                      Gửi đánh giá
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Danh sách đánh giá */}
+              {(reviewsData?.length ? reviewsData : reviews)?.length === 0 ? (
+                <div className="text-gray-400 text-sm">
+                  Sách chưa được đánh giá.
+                </div>
+              ) : (
+                (reviewsData?.length ? reviewsData : reviews)?.map((review) => (
+                  <div
+                    key={review.reviewId}
+                    className="bg-gray-800 rounded-lg p-6"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={review.avatarUrl}
+                        alt={review.userName}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div>
+                        <h4 className="font-medium">{review.userName}</h4>
+                        <span className="text-gray-400 text-sm">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex mt-2">
+                      {[...Array(5)].map((_, i) =>
+                        i < review.rating ? (
+                          <RiStarFill key={i} className="text-yellow-400" />
+                        ) : (
+                          <RiStarLine key={i} className="text-yellow-400" />
+                        )
+                      )}
+                    </div>
+                    <p className="text-gray-300 mt-2">{review.comment}</p>
+                    {review.ownerReply && (
+                      <div className="mt-3 border-t border-gray-700 pt-3 text-sm">
+                        <div className="text-gray-400">
+                          Phản hồi của tác giả:
+                        </div>
+                        <div className="text-gray-200">{review.ownerReply}</div>
+                      </div>
                     )}
                   </div>
-                  <p className="text-gray-300 mt-2">{review.comment}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
         </div>
@@ -330,17 +554,13 @@ export default function BookDetailPage() {
         <RelatedBooks currentBookId={id} />
       </div>
 
-
       {/* Report Modal */}
       {showReportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Overlay mờ */}
           <div
             className="fixed inset-0 bg-black/30"
             onClick={() => setShowReportModal(false)}
           ></div>
-
-          {/* Popup */}
           <div className="relative bg-gray-800 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl z-10">
             <h2 className="text-lg font-bold mb-4">Báo cáo sách</h2>
             <textarea
@@ -382,7 +602,6 @@ export default function BookDetailPage() {
         chapters={chapters}
         onPurchaseSuccess={(purchasedChapters) => {
           console.log("Purchased chapters:", purchasedChapters);
-          // Có thể thêm logic xử lý sau khi mua thành công
         }}
       />
 
@@ -390,14 +609,13 @@ export default function BookDetailPage() {
       {showChapterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
           {/* Overlay */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowChapterModal(false)}
           ></div>
 
           {/* Modal */}
           <div className="relative bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden shadow-2xl">
-            
             {/* Header */}
             <div className="bg-gray-700 px-4 sm:px-6 py-4 border-b border-gray-600">
               <div className="flex items-center justify-between">
@@ -419,16 +637,23 @@ export default function BookDetailPage() {
               {/* Danh sách chương */}
               <div className="space-y-2">
                 {chapters?.map((chapter, index) => {
-                  const hasSoftUrl = chapter.chapterSoftUrl && chapter.chapterSoftUrl.trim() !== "";
+                  const hasSoftUrl =
+                    chapter.chapterSoftUrl &&
+                    chapter.chapterSoftUrl.trim() !== "";
                   const isLoggedIn = getUserId() !== null;
                   const isOwned = purchasedChapters.includes(chapter.chapterId);
-                  const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
-                  const isDisabled = !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
+                  const isFree =
+                    !chapter.priceAudio || chapter.priceAudio === 0;
+                  const isDisabled =
+                    !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
                   const chapterNumber = index + 1;
-                  
+
                   // Debug log
-                  console.log(`Chapter ${chapterNumber}: isOwned=${isOwned}, isFree=${isFree}, isLoggedIn=${isLoggedIn}, hasSoftUrl=${hasSoftUrl}, purchasedChapters=`, purchasedChapters);
-                  
+                  console.log(
+                    `Chapter ${chapterNumber}: isOwned=${isOwned}, isFree=${isFree}, isLoggedIn=${isLoggedIn}, hasSoftUrl=${hasSoftUrl}, purchasedChapters=`,
+                    purchasedChapters
+                  );
+
                   return (
                     <div
                       key={chapter.chapterId || index}
@@ -457,43 +682,87 @@ export default function BookDetailPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-medium text-white text-sm sm:text-base truncate">
-                              Chương {chapterNumber}: {chapter.chapterTitle?.replace(/chuogn/g, 'chương') || ''}
+                              Chương {chapterNumber}:{" "}
+                              {chapter.chapterTitle?.replace(
+                                /chuogn/g,
+                                "chương"
+                              ) || ""}
                             </h3>
                             {isOwned && (
                               <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
                             )}
                             {!isLoggedIn && (
-                              <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              <svg
+                                className="w-5 h-5 text-red-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                             )}
                             {isLoggedIn && !isOwned && !isFree && (
-                              <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              <svg
+                                className="w-5 h-5 text-orange-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                             )}
                           </div>
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
                             {!isLoggedIn && (
                               <span className="flex items-center gap-1 text-red-400 font-medium">
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                                 Bạn phải đăng nhập để đọc chương
                               </span>
                             )}
                             {isLoggedIn && !isOwned && !isFree && (
                               <span className="flex items-center gap-1 text-orange-400 font-medium">
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                                 Cần mua chương này để đọc
                               </span>
                             )}
                             {isLoggedIn && isOwned && !hasSoftUrl && (
                               <span className="flex items-center gap-1 text-gray-400 font-medium">
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                                 Chương không có bản mềm
                               </span>

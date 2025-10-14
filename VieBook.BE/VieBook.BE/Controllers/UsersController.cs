@@ -162,6 +162,68 @@ namespace VieBook.BE.Controllers
             }
         }
 
+        /// <summary>
+        /// Lấy thông tin subscription của user hiện tại
+        /// </summary>
+        [Authorize]
+        [HttpGet("me/subscription")]
+        public async Task<IActionResult> GetCurrentUserSubscription()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var subscription = await _userService.GetUserActiveSubscriptionAsync(userId);
+                if (subscription == null)
+                {
+                    return Ok(new { 
+                        message = "User không có subscription active", 
+                        subscription = (object?)null,
+                        memberType = "Thành viên bình thường"
+                    });
+                }
+
+                return Ok(new
+                {
+                    subscriptionId = subscription.SubscriptionId,
+                    userId = subscription.UserId,
+                    planId = subscription.PlanId,
+                    status = subscription.Status,
+                    autoRenew = subscription.AutoRenew,
+                    startAt = subscription.StartAt,
+                    endAt = subscription.EndAt,
+                    remainingConversions = subscription.RemainingConversions,
+                    cancelAt = subscription.CancelAt,
+                    createdAt = subscription.CreatedAt,
+                    memberType = "Thành viên có gói",
+                    plan = new
+                    {
+                        planId = subscription.Plan.PlanId,
+                        name = subscription.Plan.Name,
+                        forRole = subscription.Plan.ForRole,
+                        period = subscription.Plan.Period,
+                        price = subscription.Plan.Price,
+                        currency = subscription.Plan.Currency,
+                        trialDays = subscription.Plan.TrialDays,
+                        conversionLimit = subscription.Plan.ConversionLimit,
+                        status = subscription.Plan.Status
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetCurrentUserSubscription: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
+            }
+        }
+
         [HttpPost]
         public async Task<ActionResult<UserDTO>> PostUser(UserDTO dto)
         {

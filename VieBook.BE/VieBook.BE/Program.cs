@@ -87,6 +87,8 @@ builder.Services.AddScoped<AdminDAO>();
 builder.Services.AddScoped<ChapterDAO>();
 builder.Services.AddScoped<RankingSummaryDAO>();
 builder.Services.AddScoped<WishlistDAO>();
+builder.Services.AddScoped<BookReviewDAO>();
+builder.Services.AddScoped<OrderItemDAO>();
 
 
 
@@ -106,6 +108,8 @@ builder.Services.AddScoped<IBookApprovalRepository, BookApprovalRepository>();
 builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
 builder.Services.AddScoped<IRankingRepository, RankingRepository>();
 builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
+builder.Services.AddScoped<IBookReviewRepository, BookReviewRepository>();
+builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -129,11 +133,12 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
 builder.Services.AddScoped<IRankingService, RankingService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IBookReviewService, BookReviewService>();
+builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository>();
 builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
 
-//Add DAO
-builder.Services.AddScoped<DataAccess.DAO.OrderItemDAO>();
+
 
 //Add OpenAI service
 builder.Services.AddScoped<DataAccess.DAO.OpenAIDAO>();

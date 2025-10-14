@@ -341,6 +341,10 @@ CREATE TABLE dbo.BookReviews (
   Rating    TINYINT NOT NULL,
   Comment   NVARCHAR(2000) NULL,
   CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  -- Trả lời từ chủ sách
+  OwnerReply   NVARCHAR(2000) NULL,
+  OwnerReplyAt DATETIME2 NULL,
+  OwnerReplyBy INT NULL REFERENCES dbo.Users(UserId),
   CONSTRAINT UQ_BookReviews UNIQUE(BookId, UserId)
 );
 CREATE INDEX IX_BookReviews_Book ON dbo.BookReviews(BookId);
@@ -508,7 +512,7 @@ CREATE TABLE dbo.Plans (
   PlanId           INT IDENTITY(1,1) PRIMARY KEY,
   Name             NVARCHAR(200) NOT NULL,
   ForRole          VARCHAR(10) NOT NULL,       -- Owner/Customer (không CHECK)
-  Period           VARCHAR(10) NOT NULL,       -- Weekly/Monthly/Yearly
+  Period           NVARCHAR(100) NOT NULL,       -- Weekly/Monthly/Yearly
   Price            DECIMAL(18,2) NOT NULL,
   Currency         VARCHAR(10) NOT NULL DEFAULT('VND'),
   TrialDays        INT NULL,
@@ -968,6 +972,18 @@ IF @Book1Id IS NOT NULL
   INSERT INTO dbo.BookReviews(BookId, UserId, Rating, Comment)
   VALUES (@Book1Id, @AliceId, 5, N'Rất hữu ích để xây thói quen đọc!');
 
+-- Seed a demo book with multiple reviews for pagination/filter demo
+DECLARE @DemoBookId INT;
+IF NOT EXISTS (SELECT 1 FROM dbo.Books WHERE Title=N'Demo Feedback Book')
+BEGIN
+  INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView)
+  VALUES (@OwnerId, N'Demo Feedback Book', N'Cuốn sách dùng để demo phân trang và lọc đánh giá.',
+    'https://picsum.photos/seed/demo-book/400/600', '9780000000999', 'VIE', 'Approved', 10);
+END
+SET @DemoBookId = (SELECT BookId FROM dbo.Books WHERE Title=N'Demo Feedback Book');
+
+
+
 -- Feedbacks
 INSERT INTO dbo.UserFeedbacks(FromUserId, Content, TargetType, TargetId)
 VALUES
@@ -1138,20 +1154,9 @@ END
    ========================================================= */
 INSERT INTO dbo.Plans(Name, ForRole, Period, Price, Currency, TrialDays, ConversionLimit, Status)
 VALUES
-  (N'Gói tuần',  'Owner',    'Tuần',  69, 'VND', NULL, 10, 'Active'),
-  (N'Gói tháng', 'Owner',    'Tháng', 199,'VND', NULL, 60, 'Active'),
-  (N'Gói năm',  'Owner',    'Năm',  1999,'VND',NULL, 800,'Active');
-
-DECLARE @ReaderPlanId INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Reader Plus');
-DECLARE @OwnerPlanId  INT = (SELECT PlanId FROM dbo.Plans WHERE Name=N'Owner Month');
-
--- Subscriptions
-INSERT INTO dbo.Subscriptions(UserId, PlanId, Status, AutoRenew, StartAt, EndAt, CreatedAt)
-VALUES
-  (@AliceId, @ReaderPlanId, 'Active', 1, SYSUTCDATETIME(), DATEADD(MONTH,1,SYSUTCDATETIME()), SYSUTCDATETIME()),
-  (@OwnerId, @OwnerPlanId,  'Active', 1, SYSUTCDATETIME(), DATEADD(MONTH,1,SYSUTCDATETIME()), SYSUTCDATETIME());
-GO
-
+  (N'Gói tuần',  'Owner',    'Weekly',  69, 'VND', NULL, 10, 'Active'),
+  (N'Gói tháng', 'Owner',    'Monthly', 199,'VND', NULL, 60, 'Active'),
+  (N'Gói năm',  'Owner',    'Yearly',  1999,'VND',NULL, 800,'Active');
 
 /* =========================================================
    Một số thống kê nhanh để kiểm tra dữ liệu
@@ -1491,4 +1496,4 @@ VALUES
 (9, 3), --Book Owner
 (9, 4), --Customer
 (10, 4), --Customer
-(11, 3); --Customer
+(11, 3); --owner

@@ -1,19 +1,33 @@
 import { useEffect, useState } from "react";
-import { getMe, uploadAvatar, deleteImageByUrl, upsertMyProfile } from "../../../api/userApi";
+import { getMe, uploadAvatar, deleteImageByUrl, upsertMyProfile, getCurrentUserSubscription } from "../../../api/userApi";
 
 export default function ProfileOverview() {
   const [data, setData] = useState(null);
+  const [subscriptionData, setSubscriptionData] = useState(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [avatarTs, setAvatarTs] = useState(0);
 
   useEffect(() => {
     let mounted = true;
+    
+    // Lấy thông tin user
     getMe()
       .then((res) => {
         if (mounted) setData(res);
       })
       .catch((e) => mounted && setError(e.message || "Lỗi tải hồ sơ"));
+    
+    // Lấy thông tin subscription
+    getCurrentUserSubscription()
+      .then((res) => {
+        if (mounted) setSubscriptionData(res);
+      })
+      .catch((e) => {
+        // Không hiển thị lỗi nếu không có subscription
+        if (mounted) setSubscriptionData({ memberType: "Thành viên bình thường" });
+      });
+    
     return () => {
       mounted = false;
     };
@@ -32,6 +46,10 @@ export default function ProfileOverview() {
   const createdAt = data?.createdAt || data?.CreatedAt
     ? new Date(data.createdAt).toLocaleDateString()
     : "";
+  
+  // Xác định loại thành viên dựa trên subscription
+  const memberType = subscriptionData?.memberType || "Thành viên bình thường";
+  const planName = subscriptionData?.plan?.name || "";
 
   return (
     <div className="bg-slate-800 rounded-xl p-6 shadow">
@@ -90,6 +108,10 @@ export default function ProfileOverview() {
           {createdAt && (
             <p className="text-sm text-gray-500">Thành viên từ: {createdAt}</p>
           )}
+          <p className="text-sm text-gray-500">
+            {memberType}
+            {planName && ` - ${planName}`}
+          </p>
         </div>
       </div>
 
@@ -97,10 +119,6 @@ export default function ProfileOverview() {
         <div className="bg-slate-700 p-4 rounded-lg">
           <p className="text-gray-400">Số dư ví</p>
           <h3 className="text-2xl font-bold text-orange-500">{data?.wallet ?? 0}</h3>
-        </div>
-        <div className="bg-slate-700 p-4 rounded-lg">
-          <p className="text-gray-400">Quyền</p>
-          <h3 className="text-2xl font-bold text-orange-500">{(data?.roles || []).join(", ")}</h3>
         </div>
         <div className="bg-slate-700 p-4 rounded-lg">
           <p className="text-gray-400">Email</p>
