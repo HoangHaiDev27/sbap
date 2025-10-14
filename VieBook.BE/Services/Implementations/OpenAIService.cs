@@ -71,22 +71,14 @@ namespace Services.Implementations
 
             var prompt =
                 "Hãy kiểm tra lỗi chính tả và ngữ pháp tiếng Việt trong đoạn văn sau.\n" +
-                "Đồng thời đánh giá xem nội dung có ý nghĩa và có giá trị hay không.\n" +
                 "Trả kết quả theo định dạng JSON:\n" +
                 "{" +
                 "  \"isCorrect\": boolean,\n" +
-                "  \"hasMeaning\": boolean,\n" +
-                "  \"meaningScore\": number (0-100),\n" +
-                "  \"meaningReason\": string,\n" +
                 "  \"errors\": [\n" +
                 "    { \"wrong\": string, \"suggestion\": string, \"explanation\": string }\n" +
                 "  ],\n" +
                 "  \"correctedText\": string\n" +
                 "}\n" +
-                "Trong đó:\n" +
-                "- hasMeaning: true nếu nội dung có ý nghĩa, false nếu chỉ là ký tự vô nghĩa, spam, hoặc nội dung rỗng\n" +
-                "- meaningScore: điểm từ 0-100 đánh giá mức độ ý nghĩa của nội dung\n" +
-                "- meaningReason: lý do tại sao đánh giá như vậy\n" +
                 "Đừng thêm giải thích bên ngoài JSON.\n" +
                 $"Đoạn văn:\n\"\"\"{content}\"\"\"";
 
@@ -110,6 +102,61 @@ namespace Services.Implementations
             };
 
             var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var responseText = await response.Content.ReadAsStringAsync();
+            var parsed = JObject.Parse(responseText);
+            var text = parsed["choices"]?.First?["message"]?["content"]?.ToString()?.Trim();
+            return string.IsNullOrEmpty(text) ? "{}" : text;
+        }
+
+        public async Task<string> CheckMeaningAsync(CheckMeaningDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            var content = dto.Content;
+            if (string.IsNullOrWhiteSpace(content))
+                throw new ArgumentException("Nội dung không được để trống.");
+
+            var prompt =
+                "Hãy đánh giá xem nội dung sau có ý nghĩa và có giá trị hay không.\n" +
+                "Trả kết quả theo định dạng JSON:\n" +
+                "{" +
+                "  \"hasMeaning\": boolean,\n" +
+                "  \"meaningScore\": number (0-100),\n" +
+                "  \"meaningReason\": string\n" +
+                "}\n" +
+                "Trong đó:\n" +
+                "- hasMeaning: true nếu nội dung có ý nghĩa, false nếu chỉ là ký tự vô nghĩa, spam, hoặc nội dung rỗng\n" +
+                "- meaningScore: điểm từ 0-100 đánh giá mức độ ý nghĩa của nội dung\n" +
+                "- meaningReason: lý do tại sao đánh giá như vậy\n" +
+                "Đừng thêm giải thích bên ngoài JSON.\n" +
+                $"Nội dung:\n\"\"\"{content}\"\"\"";
+
+            var url = string.IsNullOrWhiteSpace(_config.SummaryUrl)
+                ? "https://api.openai.com/v1/chat/completions"
+                : _config.SummaryUrl;
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _config.ApiKey);
+
+            var model = string.IsNullOrWhiteSpace(_config.SummaryModel) ? "gpt-4o-mini" : _config.SummaryModel;
+            var payload = new
+            {
+                model,
+                messages = new object[]
+                {
+                    new { role = "system", content = "Bạn là trợ lý đánh giá ý nghĩa nội dung. Chỉ phản hồi JSON hợp lệ." },
+                    new { role = "user", content = prompt }
+                },
+                temperature = 0.2
+            };
+
+            var json = JsonSerializer.Serialize(payload);
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.SendAsync(request);

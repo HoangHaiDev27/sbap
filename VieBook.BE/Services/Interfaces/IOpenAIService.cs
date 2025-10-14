@@ -9,6 +9,7 @@ namespace Services.Interfaces
     public interface IOpenAIService
     {
         Task<string> CheckSpellingAsync(CheckSpellingDto dto);
+        Task<string> CheckMeaningAsync(CheckMeaningDto dto);
         Task<ModerationResult> ModerationAsync(ModerationDto dto);
         Task<PlagiarismResult> CheckPlagiarismAsync(PlagiarismChapterContentCommand command);
         Task GenerateAndSaveEmbeddingsAsync(int chapterId, string content);

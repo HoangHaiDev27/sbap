@@ -23,6 +23,13 @@ namespace VieBook.BE.Controllers
             var result = await _openAIService.CheckSpellingAsync(dto);
             return Ok(result);
         }
+
+        [HttpPost("check-meaning")]
+        public async Task<IActionResult> CheckMeaning([FromBody] CheckMeaningDto dto)
+        {
+            var result = await _openAIService.CheckMeaningAsync(dto);
+            return Ok(result);
+        }
         [HttpPost("moderation")]
         public async Task<IActionResult> Moderation([FromBody] ModerationDto dto)
         {

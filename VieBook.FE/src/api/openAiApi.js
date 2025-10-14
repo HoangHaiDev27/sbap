@@ -18,6 +18,23 @@ export async function checkSpelling(content) {
   }
 }
 
+export async function checkMeaning(content) {
+  const res = await authFetch(API_ENDPOINTS.OPENAI.CHECK_MEANING, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+
+  // The backend returns JSON text string. Try parse, else return raw
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Not a valid JSON, return as string fallback
+    return text || {};
+  }
+}
+
 export async function moderation(content) {
   const res = await authFetch(API_ENDPOINTS.OPENAI.MODERATION, {
     method: "POST",
