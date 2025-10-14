@@ -17,6 +17,13 @@ public partial class BookReview
 
     public DateTime CreatedAt { get; set; }
 
+    // Owner reply fields
+    public string? OwnerReply { get; set; }
+
+    public DateTime? OwnerReplyAt { get; set; }
+
+    public int? OwnerReplyBy { get; set; }
+
     public virtual Book Book { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;

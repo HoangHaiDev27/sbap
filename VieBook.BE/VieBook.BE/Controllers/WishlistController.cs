@@ -7,7 +7,7 @@ namespace VieBook.BE.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    //[Authorize]
     public class WishlistController : ControllerBase
     {
         private readonly IWishlistService _wishlistService;

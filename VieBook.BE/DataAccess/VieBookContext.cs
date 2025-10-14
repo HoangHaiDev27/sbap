@@ -251,6 +251,7 @@ public partial class VieBookContext : DbContext
             entity.HasIndex(e => new { e.BookId, e.UserId }, "UQ_BookReviews").IsUnique();
 
             entity.Property(e => e.Comment).HasMaxLength(2000);
+            entity.Property(e => e.OwnerReply).HasMaxLength(2000);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
 
             entity.HasOne(d => d.Book).WithMany(p => p.BookReviews)

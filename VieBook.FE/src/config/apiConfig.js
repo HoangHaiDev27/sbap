@@ -13,6 +13,16 @@ export const API_ENDPOINTS = {
   AUDIO_BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/audio/${id}`,
   RELATED_BOOKS: (id) => `${API_BASE_URL}/api/books/${id}/related`,
 
+  // Reviews
+  REVIEWS: {
+    BY_BOOK: (bookId) => `${API_BASE_URL}/api/bookreviews/book/${bookId}`,
+    CREATE: `${API_BASE_URL}/api/bookreviews`,
+    OWNER_REPLY: (reviewId) => `${API_BASE_URL}/api/bookreviews/${reviewId}/reply`,
+    CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`,
+    OWNER: `${API_BASE_URL}/api/bookreviews/owner`,
+    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`
+  },
+
 
 
   // Auth endpoints
@@ -70,6 +80,13 @@ export const API_ENDPOINTS = {
     PURCHASE: `${API_BASE_URL}/api/chapterpurchase/purchase`,
     CHECK_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-ownership`,
     MY_PURCHASES: `${API_BASE_URL}/api/chapterpurchase/my-purchases`,
+  },
+
+  // Order Item endpoints
+  ORDER_ITEM: {
+    PURCHASED_BOOKS: (userId) => `${API_BASE_URL}/api/OrderItem/purchased-books/${userId}`,
+    GET_BY_ID: (orderItemId) => `${API_BASE_URL}/api/OrderItem/${orderItemId}`,
+    PURCHASED_CHAPTERS: (userId, bookId) => `${API_BASE_URL}/api/OrderItem/purchased-chapters/${userId}/${bookId}`,
   },
   // Wishlist endpoints
   WISHLIST: {
