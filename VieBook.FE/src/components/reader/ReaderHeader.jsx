@@ -7,6 +7,7 @@ import {
   RiFullscreenLine,
   RiFullscreenExitLine
 } from "react-icons/ri";
+import { RiFileTextLine, RiRobotLine } from "react-icons/ri";
 import { AiOutlinePlus } from "react-icons/ai";
 
 export default function ReaderHeader({
@@ -19,6 +20,7 @@ export default function ReaderHeader({
   setShowBookmarks,
   setShowContents,
   addBookmark,
+  setShowSummary,
 }) {
   // Debug logs
   console.log("ReaderHeader - book object:", book);
@@ -58,6 +60,7 @@ export default function ReaderHeader({
           <RiFileList3Line size={20} />
           <span className="hidden sm:inline">Mục lục</span>
         </button>
+
 
         <button
           onClick={() => setShowBookmarks(true)}

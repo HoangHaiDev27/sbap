@@ -13,6 +13,7 @@ import {
 } from "../../api/bookmarkApi";
 import { getUserId } from "../../api/authApi";
 import toast from "react-hot-toast";
+import { RiRobotLine } from "react-icons/ri";
 
 export default function BookReader({ book, fontSize, setFontSize, fontFamily, setFontFamily, theme, setTheme, chapterId }) {
   const [showSettings, setShowSettings] = useState(false);
@@ -48,16 +49,15 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         if (response.ok) {
           const text = await response.text();
           setChapterContent(text);
-          
-          // Scroll to saved position after content is loaded
+
+          // Scroll to saved position after content is loaded (page scroll)
           setTimeout(async () => {
             try {
               const savedBookmark = await getBookmarkByChapter(parseInt(chapterId));
               if (savedBookmark && savedBookmark.pagePosition > 0) {
-                const contentElement = document.querySelector('.prose');
-                if (contentElement) {
-                  contentElement.scrollTop = savedBookmark.pagePosition;
-                  console.log("BookReader - Scrolled to saved position:", savedBookmark.pagePosition);
+                // window-level scroll
+                window.scrollTo({ top: savedBookmark.pagePosition, behavior: 'auto' });
+                console.log("BookReader - Scrolled to saved position:", savedBookmark.pagePosition);
                   
                   // Update local bookmarks state with the loaded bookmark
                   const existingBookmark = bookmarks.find(b => 
@@ -74,7 +74,6 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                     };
                     setBookmarks(prev => [...prev, newBookmark]);
                   }
-                }
               }
             } catch (error) {
               console.error("Error loading bookmark position:", error);
@@ -91,13 +90,10 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
     fetchChapterContent();
   }, [currentChapter?.chapterSoftUrl, chapterId, bookmarks]);
 
-  // Auto-update bookmark when user scrolls
+  // Auto-update bookmark when user scrolls (page scroll)
   useEffect(() => {
-    const contentElement = document.querySelector('.prose');
-    if (!contentElement) return;
-
     const handleScroll = async () => {
-      const scrollPosition = contentElement.scrollTop;
+      const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
       const scrollDifference = Math.abs(scrollPosition - lastScrollPosition);
       
       // Only update if scroll difference is significant (more than 100px)
@@ -135,8 +131,8 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       }
     };
 
-    contentElement.addEventListener('scroll', handleScroll);
-    return () => contentElement.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [chapterId, bookmarks, lastScrollPosition]);
 
   // Theme setup
@@ -210,9 +206,8 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         return;
       }
       
-      // Get current scroll position
-      const contentElement = document.querySelector('.prose');
-      const scrollPosition = contentElement ? contentElement.scrollTop : 0;
+      // Get current window scroll position
+      const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
       
       const bookmarkData = {
         bookId: book.bookId,
@@ -286,9 +281,25 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
           addBookmark={addBookmark}
         />
 
+
         {/* Nội dung chính */}
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <h2 className="text-2xl font-bold mb-6">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
+        <main className="max-w-4xl mx-auto px-4 py-8 relative">
+          <div className="flex justify-between items-start mb-6">
+            <h2 className="text-2xl font-bold">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
+            
+            {/* AI Summary Button - Top right of content area */}
+            <button
+              onClick={() => {
+                console.log("AI Summary button clicked");
+                setShowSummary(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 transition-colors flex items-center gap-2 shadow-lg"
+              title="Tóm tắt bằng AI"
+            >
+              <RiRobotLine size={18} />
+              <span className="font-medium text-sm">Tóm tắt AI</span>
+            </button>
+          </div>
           
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -297,30 +308,14 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
             </div>
           ) : (
             <>
-              <div 
-                className={`${currentTheme.contentBg} rounded-lg p-6 max-h-[70vh] overflow-y-auto`}
+              <div
+                className={`${currentTheme.contentBg} rounded-lg p-6`}
                 style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
               >
-                <div 
+                <div
                   className="prose prose-lg max-w-none"
                   dangerouslySetInnerHTML={{ __html: chapterContent }}
                 />
-              </div>
-              
-              {/* Nút tóm tắt nội dung */}
-              <div className="mt-6 flex justify-center">
-                <button
-                  onClick={() => {
-                    console.log("BookReader - Summarize button clicked");
-                    setShowSummary(true);
-                  }}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Tóm tắt nội dung
-                </button>
               </div>
             </>
           )}
@@ -349,11 +344,9 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
             close={() => setShowBookmarks(false)}
             onBookmarkClick={(bookmark) => {
               // Scroll to the bookmark position
-              const contentElement = document.querySelector('.prose');
-              if (contentElement) {
-                contentElement.scrollTop = bookmark.pagePosition || 0;
-                console.log("BookReader - Scrolled to bookmark position:", bookmark.pagePosition);
-              }
+              const y = bookmark.pagePosition || 0;
+              window.scrollTo({ top: y, behavior: 'auto' });
+              console.log("BookReader - Scrolled to bookmark position:", y);
             }}
             book={book}
           />
