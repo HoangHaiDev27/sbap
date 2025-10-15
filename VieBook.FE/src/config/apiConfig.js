@@ -96,6 +96,11 @@ export const API_ENDPOINTS = {
     TOGGLE: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}/toggle`,
     MY_LIST: `${API_BASE_URL}/api/wishlist/me`,
   },
+
+  // Feedback endpoints
+  FEEDBACK: {
+    BOOK_REPORT: `${API_BASE_URL}/api/feedback/book-report`,
+  },
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,
   // ORDERS: `${API_BASE_URL}/api/orders`,
