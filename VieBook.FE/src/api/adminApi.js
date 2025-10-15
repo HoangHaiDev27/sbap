@@ -49,16 +49,3 @@ export async function updateAdmin(adminId, formData) {
   );
 }
 
-/** 🧩 Xóa avatar trên Cloudinary (và DB) */
-export async function deleteAdminAvatar(adminId) {
-  return handleFetch(
-    API_ENDPOINTS.ADMIN.DELETE_AVATAR(adminId),
-    {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`,
-      },
-    },
-    "Không thể xóa avatar."
-  );
-}

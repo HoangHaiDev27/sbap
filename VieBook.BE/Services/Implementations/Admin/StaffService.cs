@@ -19,14 +19,12 @@ namespace Services.Implementations.Admin
     {
         private readonly IStaffRepository _staffRepo;
         private readonly VieBookContext _context;
-        private readonly StaffDAO _staffDAO;
         private readonly IEmailService _emailService;
         private readonly CloudinaryService _cloudinaryService;
-        public StaffService(IStaffRepository staffRepo, VieBookContext context, StaffDAO staffDAO, IEmailService emailService, CloudinaryService cloudinaryService)
+        public StaffService(IStaffRepository staffRepo, VieBookContext context, IEmailService emailService, CloudinaryService cloudinaryService)
         {
             _staffRepo = staffRepo;
             _context = context;
-            _staffDAO = staffDAO;
             _emailService = emailService;
             _cloudinaryService = cloudinaryService;
         }
@@ -76,7 +74,7 @@ namespace Services.Implementations.Admin
             user.UserProfile.PhoneNumber = user.UserProfile.PhoneNumber;
 
             // Lưu xuống DB
-            var newStaff = await _staffDAO.AddAsync(user);
+            var newStaff = await _staffRepo.AddAsync(user);
 
             // Gửi email thông báo
             var subject = "Tài khoản Staff của bạn trên VieBook";
@@ -146,7 +144,7 @@ namespace Services.Implementations.Admin
                 await _emailService.SendEmailAsync(existingUser.Email, subject, body);
             }
 
-            await _staffDAO.UpdateAsync(existingUser);
+            await _staffRepo.UpdateAsync(existingUser);
             return existingUser;
         }
 
@@ -174,52 +172,42 @@ namespace Services.Implementations.Admin
             else
                 return await _staffRepo.UnlockAsync(id);
         }
-        public async Task<User> UpdateAvatarAsync(int staffId, IFormFile? avatarFile)
+        // Upload avatar mới cho staff (và tự động xóa ảnh cũ)
+        public async Task<string> UploadAvatarAsync(int staffId, IFormFile file)
         {
             var staff = await _context.Users
                 .Include(u => u.UserProfile)
-                .Include(u => u.Roles)
                 .FirstOrDefaultAsync(u => u.UserId == staffId);
 
             if (staff == null)
-                throw new Exception("Staff không tồn tại");
+                throw new Exception("Không tìm thấy Staff.");
 
-            if (avatarFile == null || avatarFile.Length == 0)
-                throw new Exception("File avatar không hợp lệ");
+            var oldUrl = staff.UserProfile?.AvatarUrl;
 
-            // Upload avatar mới và xóa ảnh cũ nếu có
-            var newAvatarUrl = await _cloudinaryService.UploadAvatarImageAsync(avatarFile, staff.UserProfile?.AvatarUrl);
+            // Upload ảnh mới và xóa ảnh cũ nếu có
+            var newUrl = await _cloudinaryService.UploadAvatarImageAsync(file, oldUrl);
 
-            // Cập nhật vào DB
+            // Cập nhật DB
             staff.UserProfile ??= new UserProfile();
-            staff.UserProfile.AvatarUrl = newAvatarUrl;
+            staff.UserProfile.AvatarUrl = newUrl;
 
-            await _staffDAO.UpdateAsync(staff);
+            await _staffRepo.UpdateAsync(staff);
 
-            return staff;
+            return newUrl;
         }
-        public async Task<User> DeleteAvatarAsync(int staffId)
+        public async Task UpdateAvatarUrlAsync(int staffId, string? newUrl)
         {
-            var staff = await _context.Users
-                .Include(u => u.UserProfile)
-                .FirstOrDefaultAsync(u => u.UserId == staffId);
-
+            var staff = await _staffRepo.GetByIdAsync(staffId);
             if (staff == null)
-                throw new Exception("Staff không tồn tại");
+                throw new Exception("Không tìm thấy staff.");
 
-            if (string.IsNullOrWhiteSpace(staff.UserProfile?.AvatarUrl))
-                throw new Exception("Chưa có avatar để xóa");
+            if (staff.UserProfile == null)
+                staff.UserProfile = new UserProfile();
 
-            // Xóa ảnh trên Cloudinary
-            bool deleted = await _cloudinaryService.DeleteImageAsync(staff.UserProfile.AvatarUrl);
-            if (!deleted)
-                throw new Exception("Xóa avatar trên Cloudinary thất bại");
+            staff.UserProfile.AvatarUrl = newUrl;
 
-            // Update DB
-            staff.UserProfile.AvatarUrl = null;
-            await _staffDAO.UpdateAsync(staff);
-
-            return staff;
+            await _staffRepo.UpdateAsync(staff);
         }
+    
     }
 }

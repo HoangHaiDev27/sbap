@@ -125,14 +125,10 @@ export const API_ENDPOINTS = {
     LOCK: (staffId) => `${API_BASE_URL}/api/staff/lock/${staffId}`,
     UNLOCK: (staffId) => `${API_BASE_URL}/api/staff/unlock/${staffId}`,
     TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`,
-    UPDATE_AVATAR: (staffId) => `${API_BASE_URL}/api/staff/${staffId}/avatar`,
-    DELETE_AVATAR: (staffId) => `${API_BASE_URL}/api/staff/${staffId}/avatar`
   },
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
     UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`,
-    DELETE_AVATAR: (adminId) => `${API_BASE_URL}/api/admin/${adminId}/avatar`,   
-    UPLOAD_AVATAR: (adminId) => `${API_BASE_URL}/api/admin/${adminId}/avatar`    
   },
   BOOKAPPROVAL: {
     GET_ALL: `${API_BASE_URL}/api/BookApproval`,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAdminById, updateAdmin, deleteAdminAvatar } from "../../api/adminApi";
+import { getAdminById, updateAdmin } from "../../api/adminApi";
 import { changePassword } from "../../api/authApi";
 import { useAdminStore } from "../../hooks/stores/useAdminStore";
 
@@ -77,46 +77,35 @@ export default function AdminProfile() {
     e.preventDefault();
     try {
       const formData = new FormData();
-
-      if (avatarFile) {
-        if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar && adminInfo.avatarUrl.includes("cloudinary.com")) {
-          await deleteAdminAvatar(adminInfo.id);
-        }
-        formData.append("avatarFile", avatarFile);
-      }
-
       formData.append("fullName", adminInfo.fullName);
       formData.append("email", adminInfo.email);
-      formData.append("phoneNumber", adminInfo.phone);
+      formData.append("phoneNumber", adminInfo.phoneNumber);
       formData.append("address", adminInfo.address || "FPT University, Da Nang");
 
-      const res = await updateAdmin(adminInfo.id, formData);
-      const data = res.data;
+      if (avatarFile) formData.append("avatarFile", avatarFile);
 
-      const updatedAdmin = {
-        id: adminInfo.id,
-        fullName: data.fullName || adminInfo.fullName,
-        email: data.email || adminInfo.email,
-        phone: data.phoneNumber || adminInfo.phone,
-        address: data.address || adminInfo.address,
-        avatarUrl: data.avatarUrl || avatarUrl,
+      const res = await updateAdmin(adminInfo.id, formData);
+      const updated = res.data;
+
+      const newAdmin = {
+        ...adminInfo,
+        ...updated,
+        avatarUrl: updated.avatarUrl || avatarUrl,
       };
 
-      setAdminInfo(updatedAdmin);
-      setAvatarUrl(updatedAdmin.avatarUrl);
-      setAvatarFile(null);
+      setAdminInfo(newAdmin);
+      setAvatarUrl(newAdmin.avatarUrl);
       setShowEditModal(false);
+      setAvatarFile(null);
 
-      // ✅ Cập nhật store để Header/Footer tự re-render
-      updateAdminStore(updatedAdmin);
-
+      updateAdminStore(newAdmin);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "success", message: "Cập nhật thông tin thành công" },
         })
       );
     } catch (error) {
-      console.error("Update admin error:", error.message);
+      console.error(error);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "error", message: error.message || "Cập nhật thất bại" },

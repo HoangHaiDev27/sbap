@@ -68,35 +68,5 @@ namespace VieBook.BE.Controllers.Admin
             }
         }
 
-        // ✅ DELETE: api/admin/{id}/avatar
-        [HttpDelete("{id}/avatar")]
-        public async Task<IActionResult> DeleteAvatar(int id)
-        {
-            var user = await _service.GetProfileAsync(id);
-            if (user == null)
-                return NotFound(new { message = "Không tìm thấy admin." });
-
-            var profile = user.UserProfile;
-            if (profile == null)
-                return BadRequest(new { message = "User chưa có profile." });
-
-            if (string.IsNullOrWhiteSpace(profile.AvatarUrl))
-                return BadRequest(new { message = "Chưa có avatar để xóa." });
-
-            try
-            {
-                bool deleted = await _cloudService.DeleteImageAsync(profile.AvatarUrl);
-                if (!deleted)
-                    return BadRequest(new { message = "Không thể xóa ảnh trên Cloudinary." });
-
-                await _service.UpdateAvatarUrlAsync(id, null);
-                return Ok(new { message = "Đã xóa avatar thành công." });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
     }
 }

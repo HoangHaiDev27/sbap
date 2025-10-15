@@ -87,27 +87,5 @@ namespace Services.Implementations.Admin
             return newUrl;
         }
 
-        // ✅ 5. Xóa avatar (Cloudinary + DB)
-        public async Task<bool> DeleteAvatarAsync(int adminId)
-        {
-            var user = await _repo.GetAdminByIdAsync(adminId);
-            if (user == null)
-                throw new Exception("Không tìm thấy admin.");
-
-            var avatarUrl = user.UserProfile?.AvatarUrl;
-            if (string.IsNullOrWhiteSpace(avatarUrl))
-                throw new Exception("Chưa có avatar để xóa.");
-
-            // Xóa ảnh trên Cloudinary
-            bool deleted = await _cloudinaryService.DeleteImageAsync(avatarUrl);
-            if (!deleted)
-                throw new Exception("Không thể xóa ảnh trên Cloudinary.");
-
-            // Cập nhật DB
-            await UpdateAvatarUrlAsync(adminId, null);
-            return true;
-        }
-
-
     }
 }

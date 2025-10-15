@@ -19,7 +19,7 @@ namespace Services.Interfaces.Admin
         Task<bool> LockStaffAsync(int id);
         Task<bool> UnlockStaffAsync(int id);
         Task<bool> ToggleStaffStatusAsync(int id);
-        Task<User> UpdateAvatarAsync(int staffId, IFormFile avatarFile);
-        Task<User> DeleteAvatarAsync(int staffId);
+        Task<string> UploadAvatarAsync(int staffId, IFormFile file);
+        Task UpdateAvatarUrlAsync(int staffId, string? newUrl);
     }
 }

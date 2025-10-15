@@ -3,8 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import StaffFormModal from '../../components/admin/StaffFormModal';
 import StaffToggleStatusModal from '../../components/admin/StaffToggleStatusModal';
 import { 
-  getAllStaff, addStaff, updateStaff, lockStaff, unlockStaff,
-  updateStaffAvatar, deleteStaffAvatar
+  getAllStaff, addStaff, updateStaff, lockStaff, unlockStaff
 } from '../../api/staffApi';
 
 export default function StaffManagement() {
@@ -24,7 +23,8 @@ export default function StaffManagement() {
     window.dispatchEvent(new CustomEvent("app:toast", { detail: { type, message } }));
   };
 
-  const fetchStaffs = async () => {
+  // Lấy danh sách staff
+ const fetchStaffs = async () => {
     try {
       setLoading(true);
       const data = await getAllStaff();
@@ -44,7 +44,7 @@ export default function StaffManagement() {
   const filteredStaff = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return staffs.filter((s) => {
-      const matchesSearch = !q || s.fullName.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.phoneNumber?.toLowerCase().includes(q);
+      const matchesSearch = !q || s.fullName?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.phoneNumber?.toLowerCase().includes(q);
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'active' && s.status === 'Active') ||
@@ -70,43 +70,54 @@ export default function StaffManagement() {
     setEditingStaff(staff);
     setIsFormOpen(true);
   };
-
-  // Save staff (add/update) dùng staffApi + upload avatar
-  const handleSaveForm = async (data, id, newAvatarFile) => {
+// Thêm/cập nhật staff, gửi avatar qua FormData
+const handleSaveForm = async (data, id, newAvatarFile) => {
   try {
-    let avatarUrl = data.avatarUrl || '';
+    const formData = new FormData();
+    formData.append("FullName", data.fullName);
+    formData.append("Email", data.email);
+    formData.append("PhoneNumber", data.phoneNumber);
+    formData.append(
+      "DateOfBirth",
+      data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : ""
+    );
+    formData.append("AvatarUrl", data.avatarUrl || defaultAvatar);
 
-    if (newAvatarFile) {
-      // Xóa avatar cũ nếu khác mặc định
-      if (data.avatarUrl && data.avatarUrl !== defaultAvatar && data.avatarUrl.includes("cloudinary.com")) {
-        await deleteStaffAvatar(id);
-      }
-
-      // Upload avatar mới
-      const formData = new FormData();
-      formData.append("avatarFile", newAvatarFile); // backend nhận "file"
-      avatarUrl = await updateStaffAvatar(id, formData); // nhớ truyền staffId
-    }
-
-    const payload = { ...data, avatarUrl };
+    if (data.newPassword) formData.append("NewPassword", data.newPassword);
+    if (newAvatarFile) formData.append("avatarFile", newAvatarFile);
 
     let res;
-    if (id) {
-      res = await updateStaff(id, payload);
+
+    if (!id) {
+      // Thêm staff
+      formData.append("Password", data.password || "");
+      res = await addStaff(formData);
+      showToast("success",  "Thêm nhân viên thành công");
+
+      // Thêm staff mới vào state ngay lập tức
+      await fetchStaffs();
     } else {
-      res = await addStaff(payload);
+      // Cập nhật staff
+      res = await updateStaff(id, formData);
+      showToast("success",  "Cập nhật nhân viên thành công");
+
+      // Cập nhật staff trong state
+      setStaffs(prev =>
+        prev.map(s => (s.userId === id ? { ...s, ...res.data } : s))
+      );
     }
 
-    showToast("success", res?.message || "Thao tác thành công");
+    // Đóng modal
     setIsFormOpen(false);
     setEditingStaff(null);
-    await fetchStaffs();
   } catch (error) {
-    console.error(error);
-    showToast("error", error.message || "Lưu nhân viên thất bại");
+    if (!id) {
+      showToast("error", error.message || "Thêm nhân viên thất bại");
+    } else {
+      showToast("error", error.message || "Cập nhật nhân viên thất bại");
+    }
   }
 };
-
 
 
   const handleConfirmToggle = async (staff) => {
@@ -122,7 +133,6 @@ export default function StaffManagement() {
       showToast("success", res?.message || "Đổi trạng thái thành công");
       await fetchStaffs();
     } catch (error) {
-      console.error(error);
       showToast("error", error.message || "Đổi trạng thái thất bại");
     }
   };
@@ -231,7 +241,13 @@ export default function StaffManagement() {
         </div>
       </main>
 
-      {isFormOpen && <StaffFormModal staff={editingStaff} onSave={(data, _, newAvatarFile) => handleSaveForm(data, editingStaff?.userId, newAvatarFile)} onCancel={handleCancelAll} />}
+      {isFormOpen && <StaffFormModal
+  staff={editingStaff}
+  onSave={(data, _, newAvatarFile) =>
+    handleSaveForm(data, editingStaff?.userId, newAvatarFile)
+  }
+  onCancel={handleCancelAll}
+/>}
       {toggleStaff && <StaffToggleStatusModal staff={toggleStaff} onCancel={() => setToggleStaff(null)} onConfirm={handleConfirmToggle} />}
     </div>
   );
