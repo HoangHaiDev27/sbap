@@ -43,9 +43,9 @@ export default function Footer() {
               </p>
 
               {/* Lấy trực tiếp từ store */}
-              <p>{admin?.phone || "0909000001"}</p>
+              <p>{admin?.phoneNumber || "0909000001"}</p>
               <p>{admin?.email || "support@wewe.vn"}</p>
-              <p>FPT University, Da Nang</p>
+              <p>{admin?.address || "FPT University, Da Nang"}</p>
             </div>
           </div>
 

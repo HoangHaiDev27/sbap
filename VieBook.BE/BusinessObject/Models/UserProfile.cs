@@ -30,6 +30,7 @@ public partial class UserProfile
     public string? Bio { get; set; }
 
     public bool AgreeTos { get; set; }
+    public string? Address { get; set; }
 
     // Removed owner review workflow fields per requirements
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAdminById, updateAdmin, deleteAdminAvatar } from "../../api/adminApi";
+import { getAdminById, updateAdmin } from "../../api/adminApi";
 import { changePassword } from "../../api/authApi";
 import { useAdminStore } from "../../hooks/stores/useAdminStore";
 
@@ -22,7 +22,7 @@ export default function AdminProfile() {
     id: null,
     fullName: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     address: "",
     avatarUrl: "",
   });
@@ -52,7 +52,7 @@ export default function AdminProfile() {
             id: adminId,
             fullName: data.fullName || "",
             email: data.email || "",
-            phone: data.phoneNumber || "",
+            phoneNumber: data.phoneNumber || "",
             address: data.address || "",
             avatarUrl: data.avatarUrl || defaultAvatar,
           };
@@ -77,46 +77,35 @@ export default function AdminProfile() {
     e.preventDefault();
     try {
       const formData = new FormData();
+      formData.append("FullName", adminInfo.fullName);
+      formData.append("Email", adminInfo.email);
+      formData.append("PhoneNumber", adminInfo.phoneNumber);
+      formData.append("Address", adminInfo.address);
 
-      if (avatarFile) {
-        if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar && adminInfo.avatarUrl.includes("cloudinary.com")) {
-          await deleteAdminAvatar(adminInfo.id);
-        }
-        formData.append("avatarFile", avatarFile);
-      }
-
-      formData.append("fullName", adminInfo.fullName);
-      formData.append("email", adminInfo.email);
-      formData.append("phoneNumber", adminInfo.phone);
-      formData.append("address", adminInfo.address || "FPT University, Da Nang");
+      if (avatarFile) formData.append("avatarFile", avatarFile);
 
       const res = await updateAdmin(adminInfo.id, formData);
-      const data = res.data;
+      const updated = res.data;
 
-      const updatedAdmin = {
-        id: adminInfo.id,
-        fullName: data.fullName || adminInfo.fullName,
-        email: data.email || adminInfo.email,
-        phone: data.phoneNumber || adminInfo.phone,
-        address: data.address || adminInfo.address,
-        avatarUrl: data.avatarUrl || avatarUrl,
+      const newAdmin = {
+        ...adminInfo,
+        ...updated,
+        avatarUrl: updated.avatarUrl || avatarUrl,
       };
 
-      setAdminInfo(updatedAdmin);
-      setAvatarUrl(updatedAdmin.avatarUrl);
-      setAvatarFile(null);
+      setAdminInfo(newAdmin);
+      setAvatarUrl(newAdmin.avatarUrl);
       setShowEditModal(false);
+      setAvatarFile(null);
 
-      // ✅ Cập nhật store để Header/Footer tự re-render
-      updateAdminStore(updatedAdmin);
-
+      updateAdminStore(newAdmin);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "success", message: "Cập nhật thông tin thành công" },
         })
       );
     } catch (error) {
-      console.error("Update admin error:", error.message);
+      console.error(error);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "error", message: error.message || "Cập nhật thất bại" },
@@ -228,7 +217,7 @@ export default function AdminProfile() {
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Số điện thoại</p>
-            <p className="text-base text-gray-800">{adminInfo.phone || "0345 510 055"}</p>
+            <p className="text-base text-gray-800">{adminInfo.phoneNumber || "0345 510 055"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Địa chỉ</p>
@@ -295,14 +284,14 @@ export default function AdminProfile() {
                 </div>
               </div>
 
-              {["fullName", "email", "phone", "address"].map((key) => (
+              {["fullName", "email", "phoneNumber", "address"].map((key) => (
                 <div key={key}>
                   <label className="text-sm font-medium">
                     {key === "fullName"
                       ? "Họ và tên *"
                       : key === "email"
                       ? "Email *"
-                      : key === "phone"
+                      : key === "phoneNumber"
                       ? "Số điện thoại *"
                       : "Địa chỉ"}
                   </label>
@@ -311,7 +300,7 @@ export default function AdminProfile() {
                     type={
                       key === "email"
                         ? "email"
-                        : key === "phone"
+                        : key === "phoneNumber"
                         ? "tel"
                         : "text"
                     }
@@ -319,10 +308,10 @@ export default function AdminProfile() {
                     value={adminInfo[key] || ""}
                     onChange={handleChange}
                     disabled={key === "email"}
-                    required={key === "fullName" || key === "phone"}
-                    pattern={key === "phone" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
+                    required={key === "fullName" || key === "phoneNumber"}
+                    pattern={key === "phoneNumber" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
                     title={
-                      key === "phone"
+                      key === "phoneNumber"
                         ? "Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9])"
                         : undefined
                     }
@@ -332,7 +321,7 @@ export default function AdminProfile() {
                     placeholder={
                       key === "fullName"
                         ? "Nhập họ và tên"
-                        : key === "phone"
+                        : key === "phoneNumber"
                         ? "0905123456"
                         : ""
                     }

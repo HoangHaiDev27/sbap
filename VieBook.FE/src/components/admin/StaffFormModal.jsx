@@ -19,7 +19,8 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
     newPassword: '',
     avatarUrl: '',
     dateOfBirth: '',
-    phoneNumber: '', // ✅ thêm phoneNumber
+    phoneNumber: '',
+    address: '', 
   });
 
   const [newAvatarFile, setNewAvatarFile] = useState(null);
@@ -35,7 +36,8 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
         newPassword: '',
         avatarUrl: staff.avatarUrl || '',
         dateOfBirth: formatDate(staff.dateOfBirth),
-        phoneNumber: staff.phoneNumber || '', // ✅ thêm
+        phoneNumber: staff.phoneNumber || '', 
+        address: staff.address || '',
       });
       setPreviewAvatar(staff.avatarUrl || '');
     } else {
@@ -47,6 +49,7 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
         avatarUrl: '',
         dateOfBirth: '',
         phoneNumber: '',
+        address: '',
       });
       setPreviewAvatar('');
     }
@@ -174,6 +177,19 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           />
           </div>
+          <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Địa chỉ { !isEdit && <span className="text-red-500">*</span> }
+          </label>
+          <input
+            type="text"
+            required={!isEdit} 
+            placeholder={isEdit ? "Nhập địa chỉ (không bắt buộc)" : "Nhập địa chỉ"}
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
           {/* Mật khẩu */}
           <div>
