@@ -8,5 +8,6 @@ namespace Services.Interfaces
         Task<WalletTransaction> ProcessPaymentAsync(PayOSWebhookDTO webhookData);
         Task<List<WalletTransaction>> GetUserTransactionsAsync(int userId);
         Task<WalletTransaction?> GetTransactionByIdAsync(long transactionId);
+        Task<List<object>> GetUserTransactionHistoryAsync(int userId);
     }
 }

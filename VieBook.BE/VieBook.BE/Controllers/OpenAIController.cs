@@ -23,6 +23,13 @@ namespace VieBook.BE.Controllers
             var result = await _openAIService.CheckSpellingAsync(dto);
             return Ok(result);
         }
+
+        [HttpPost("check-meaning")]
+        public async Task<IActionResult> CheckMeaning([FromBody] CheckMeaningDto dto)
+        {
+            var result = await _openAIService.CheckMeaningAsync(dto);
+            return Ok(result);
+        }
         [HttpPost("moderation")]
         public async Task<IActionResult> Moderation([FromBody] ModerationDto dto)
         {
@@ -42,6 +49,20 @@ namespace VieBook.BE.Controllers
         {
             await _openAIService.GenerateAndSaveEmbeddingsAsync(command.ChapterId, command.Content);
             return Ok(new { message = "Embeddings generated and saved successfully" });
+        }
+
+        [HttpPost("summarize")]
+        public async Task<IActionResult> Summarize([FromBody] SummarizeCommand command)
+        {
+            try
+            {
+                var summary = await _openAIService.SummarizeContentAsync(command);
+                return Ok(new { summary });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

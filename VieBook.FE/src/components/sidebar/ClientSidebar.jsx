@@ -60,12 +60,6 @@ export default function ClientSidebar({ isOpen, onClose }) {
       icon: RiTrophyLine,
       href: "/ranking",
     },
-    {
-      id: "listening",
-      label: "Đang nghe",
-      icon: RiHeadphoneLine,
-      href: "/listening",
-    },
     { id: "forum", label: "Diễn đàn sách", icon: RiChat3Line, href: "/forum" },
     {
       id: "audiobook",
@@ -110,20 +104,20 @@ export default function ClientSidebar({ isOpen, onClose }) {
 
         {/* menu */}
         <nav className="px-4 flex-1">
-          <ul className="space-y-2">
+          <ul className="space-y-4">
             {menuItems.map((item) => (
               <li key={item.id}>
                 <Link
                   to={item.href}
-                  className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
+                  className={`flex items-center px-4 py-4 rounded-lg transition-colors whitespace-nowrap ${
                     pathname === item.href || activeMenu === item.id
                       ? "bg-orange-600 text-white"
                       : "text-gray-300 hover:bg-gray-800 hover:text-white"
                   }`}
                   onClick={() => setActiveMenu(item.id)}
                 >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  <span className="text-sm">{item.label}</span>
+                  <item.icon className="w-5 h-5 mr-4" />
+                  <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               </li>
             ))}
@@ -136,10 +130,10 @@ export default function ClientSidebar({ isOpen, onClose }) {
             <div className="border-t border-gray-700 pt-4">
               <button
                 onClick={handleRoleSwitch}
-                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
+                className="w-full flex items-center space-x-3 px-4 py-4 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
               >
                 {getSwitchButtonIcon()}
-                <span>{getSwitchButtonText()}</span>
+                <span className="font-medium">{getSwitchButtonText()}</span>
               </button>
             </div>
           </div>

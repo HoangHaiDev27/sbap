@@ -14,6 +14,7 @@ function App() {
   const location = useLocation();
   const [role, setRole] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [authKey, setAuthKey] = useState(0); // Force re-render key
   const noLayoutRoutes = ["/auth", "/auth/verify-email", "/access-denied"];
   const hideLayout = noLayoutRoutes.includes(location.pathname);
   const fetchCoins = useCoinsStore((state) => state.fetchCoins);
@@ -24,17 +25,32 @@ function App() {
     }
     const r = getCurrentRole();
     if (r) setRole(String(r).toLowerCase());
+    
     const onAuthChanged = (e) => {
       const { role: newRole, user } = e.detail || {};
-      if (newRole) {
+      console.log("App - Auth changed event:", e.detail);
+      console.log("App - Current role before change:", role);
+      
+      if (newRole !== undefined && newRole !== null) {
+        console.log("App - Setting role from event:", newRole);
         setRole(String(newRole).toLowerCase());
       } else {
         // Nếu không có role trong event, lấy từ localStorage
         const currentRole = getCurrentRole();
+        console.log("App - Current role from localStorage:", currentRole);
         if (currentRole) {
           setRole(String(currentRole).toLowerCase());
+        } else {
+          // Nếu không có role, set về empty string để hiển thị GuestHeader
+          console.log("App - No role found, setting to empty string for GuestHeader");
+          setRole("");
         }
       }
+      
+      // Force re-render header by updating authKey
+      console.log("App - Updating authKey to force re-render");
+      setAuthKey(prev => prev + 1);
+      
       // Fetch coins when user logs in
       if (user) {
         const userId = user.userId || user.UserId || user.id || user.Id;
@@ -48,6 +64,7 @@ function App() {
         useCoinsStore.getState().setCoins(0);
       }
     };
+    
     window.addEventListener("auth:changed", onAuthChanged);
     return () => window.removeEventListener("auth:changed", onAuthChanged);
   }, [fetchCoins]);
@@ -64,12 +81,13 @@ function App() {
   const isReaderPage = location.pathname.startsWith("/reader");
   const isPlayerPage = location.pathname.startsWith("/player");
 
-  // Nếu là trang Reader
+  // Nếu là trang Reader - chỉ render AppRoutes, ReaderManager sẽ được render bên trong ReaderPage
   if (isReaderPage) {
     return (
-      <ReaderManager>
+      <>
         <AppRoutes />
-      </ReaderManager>
+        <Toast />
+      </>
     );
   }
 
@@ -87,6 +105,7 @@ function App() {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <SidebarManager
+        key={authKey}
         role={role}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -96,6 +115,7 @@ function App() {
       <div className="flex flex-col flex-1 bg-gray-900 text-white lg:ml-64 overflow-x-hidden min-h-screen">
         {/* Header */}
         <HeaderManager
+          key={authKey}
           role={role}
           onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
         />

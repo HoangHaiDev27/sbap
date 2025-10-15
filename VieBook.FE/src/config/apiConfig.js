@@ -13,6 +13,16 @@ export const API_ENDPOINTS = {
   AUDIO_BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/audio/${id}`,
   RELATED_BOOKS: (id) => `${API_BASE_URL}/api/books/${id}/related`,
 
+  // Reviews
+  REVIEWS: {
+    BY_BOOK: (bookId) => `${API_BASE_URL}/api/bookreviews/book/${bookId}`,
+    CREATE: `${API_BASE_URL}/api/bookreviews`,
+    OWNER_REPLY: (reviewId) => `${API_BASE_URL}/api/bookreviews/${reviewId}/reply`,
+    CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`,
+    OWNER: `${API_BASE_URL}/api/bookreviews/owner`,
+    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`
+  },
+
 
 
   // Auth endpoints
@@ -43,12 +53,22 @@ export const API_ENDPOINTS = {
     MODERATION: `${API_BASE_URL}/api/openai/moderation`,
     CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
     GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
+    SUMMARIZE: `${API_BASE_URL}/api/openai/summarize`,
   },
 
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
   USER_UNREAD_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}/unread`,
+
+  // Bookmark endpoints
+  BOOKMARKS: {
+    USER_BOOKMARKS: `${API_BASE_URL}/api/bookmark/user`,
+    CHAPTER: `${API_BASE_URL}/api/bookmark/chapter`,
+    CREATE_UPDATE: `${API_BASE_URL}/api/bookmark`,
+    DELETE: `${API_BASE_URL}/api/bookmark`,
+    DELETE_CHAPTER: `${API_BASE_URL}/api/bookmark/chapter`,
+  },
   USER_UNREAD_COUNT: (userId) => `${API_BASE_URL}/api/notification/user/${userId}/unread-count`,
   USER_RECENT_NOTIFICATIONS: (userId, count = 10) => `${API_BASE_URL}/api/notification/user/${userId}/recent?count=${count}`,
   NOTIFICATION_MARK_READ: (id) => `${API_BASE_URL}/api/notification/${id}/mark-read`,
@@ -60,6 +80,13 @@ export const API_ENDPOINTS = {
     PURCHASE: `${API_BASE_URL}/api/chapterpurchase/purchase`,
     CHECK_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-ownership`,
     MY_PURCHASES: `${API_BASE_URL}/api/chapterpurchase/my-purchases`,
+  },
+
+  // Order Item endpoints
+  ORDER_ITEM: {
+    PURCHASED_BOOKS: (userId) => `${API_BASE_URL}/api/OrderItem/purchased-books/${userId}`,
+    GET_BY_ID: (orderItemId) => `${API_BASE_URL}/api/OrderItem/${orderItemId}`,
+    PURCHASED_CHAPTERS: (userId, bookId) => `${API_BASE_URL}/api/OrderItem/purchased-chapters/${userId}/${bookId}`,
   },
   // Wishlist endpoints
   WISHLIST: {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { RiStarFill } from "react-icons/ri";
 
-export default function ReviewItem({ review }) {
+export default function ReviewItem({ review, onReply }) {
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
 
@@ -9,13 +9,13 @@ export default function ReviewItem({ review }) {
     <div className="bg-slate-800 p-4 rounded-lg">
       <div className="flex items-start space-x-3">
         <img
-          src={review.avatar}
-          alt={review.customer}
+          src={review.avatarUrl || "https://i.pravatar.cc/40"}
+          alt={review.userName}
           className="w-10 h-10 rounded-full"
         />
         <div className="flex-1">
           <p className="font-semibold">
-            {review.book}{" "}
+            {review.bookTitle}{" "}
             <span className="text-yellow-400 ml-2">
               {Array(review.rating)
                 .fill(0)
@@ -25,15 +25,20 @@ export default function ReviewItem({ review }) {
             </span>
           </p>
           <p className="text-sm text-gray-400">
-            {review.customer} • {review.date}
+            {review.userName} • {new Date(review.createdAt).toLocaleDateString()}
           </p>
-          <p className="mt-2">{review.content}</p>
+          <p className="mt-2">{review.comment}</p>
 
           {/* Reply */}
-          {review.replied ? (
+          {review.ownerReply ? (
             <div className="mt-2 p-2 bg-slate-700 rounded text-sm">
               <strong className="text-orange-400">Phản hồi: </strong>
-              {review.reply}
+              {review.ownerReply}
+              {review.ownerReplyAt && (
+                <div className="text-xs text-gray-400 mt-1">
+                  {new Date(review.ownerReplyAt).toLocaleDateString()}
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -54,10 +59,12 @@ export default function ReviewItem({ review }) {
                       Hủy
                     </button>
                     <button
-                      onClick={() => {
-                        console.log("Reply gửi:", replyText);
-                        setReplying(false);
-                        setReplyText("");
+                      onClick={async () => {
+                        if (replyText.trim() && onReply) {
+                          await onReply(review.reviewId, replyText);
+                          setReplying(false);
+                          setReplyText("");
+                        }
                       }}
                       className="px-3 py-1 bg-orange-500 hover:bg-orange-600 rounded"
                     >
@@ -77,7 +84,7 @@ export default function ReviewItem({ review }) {
           )}
         </div>
         <div>
-          {review.replied ? (
+          {review.ownerReply ? (
             <span className="text-green-400 text-sm">Đã phản hồi</span>
           ) : (
             <span className="text-red-400 text-sm">Chưa phản hồi</span>

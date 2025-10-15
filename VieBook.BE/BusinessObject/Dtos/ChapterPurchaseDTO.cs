@@ -23,6 +23,7 @@ namespace BusinessObject.Dtos
         public long OrderItemId { get; set; }
         public int ChapterId { get; set; }
         public string ChapterTitle { get; set; } = string.Empty;
+        public int BookId { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal CashSpent { get; set; }
         public DateTime PaidAt { get; set; }

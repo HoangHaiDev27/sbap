@@ -67,7 +67,9 @@ namespace Services.Implementations
 
                 // Kiểm tra xem user đã mua chapter nào chưa
                 var existingPurchases = await GetUserPurchasedChaptersAsync(userId);
-                var alreadyPurchasedChapterIds = existingPurchases.Select(p => p.ChapterId).ToList();
+                var alreadyPurchasedChapterIds = existingPurchases
+                    .Select(p => p.ChapterId)
+                    .ToList();
                 var newChaptersToPurchase = chaptersToPurchase.Where(c => !alreadyPurchasedChapterIds.Contains(c.ChapterId)).ToList();
 
                 if (newChaptersToPurchase.Count == 0)
@@ -199,13 +201,15 @@ namespace Services.Implementations
         public async Task<List<OrderItemDTO>> GetUserPurchasedChaptersAsync(int userId)
         {
             var purchasedItems = await _context.OrderItems
-                .Where(oi => oi.CustomerId == userId)
+                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
                 .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
                 .Select(oi => new OrderItemDTO
                 {
                     OrderItemId = oi.OrderItemId,
                     ChapterId = oi.ChapterId,
                     ChapterTitle = oi.Chapter.ChapterTitle,
+                    BookId = oi.Chapter.BookId,
                     UnitPrice = oi.UnitPrice,
                     CashSpent = oi.CashSpent,
                     PaidAt = oi.PaidAt ?? DateTime.UtcNow,
@@ -214,6 +218,31 @@ namespace Services.Implementations
                 .ToListAsync();
 
             return purchasedItems ?? new List<OrderItemDTO>();
+        }
+
+        public async Task<List<UserPurchasedBooksDTO>> GetUserPurchasedBooksAsync(int userId)
+        {
+            // Lấy tất cả sách mà user đã mua ít nhất 1 chapter
+            var purchasedBooks = await _context.OrderItems
+                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
+                .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
+                .GroupBy(oi => oi.Chapter.BookId)
+                .Select(g => new UserPurchasedBooksDTO
+                {
+                    BookId = g.Key,
+                    Title = g.First().Chapter.Book.Title,
+                    Description = g.First().Chapter.Book.Description,
+                    CoverUrl = g.First().Chapter.Book.CoverUrl,
+                    Author = g.First().Chapter.Book.Author,
+                    PurchasedChaptersCount = g.Count(),
+                    TotalSpent = g.Sum(oi => oi.CashSpent),
+                    LastPurchasedAt = g.Max(oi => oi.PaidAt!.Value),
+                    TotalChaptersCount = _context.Chapters.Count(c => c.BookId == g.Key && c.Status == "Active")
+                })
+                .ToListAsync();
+
+            return purchasedBooks ?? new List<UserPurchasedBooksDTO>();
         }
     }
 }
