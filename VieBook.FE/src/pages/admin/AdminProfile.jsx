@@ -308,7 +308,7 @@ export default function AdminProfile() {
                     value={adminInfo[key] || ""}
                     onChange={handleChange}
                     disabled={key === "email"}
-                    required={key === "fullName" || key === "phoneNumber"}
+                    required={key === "fullName" || key === "phoneNumber" || key === "address"}
                     pattern={key === "phoneNumber" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
                     title={
                       key === "phoneNumber"
