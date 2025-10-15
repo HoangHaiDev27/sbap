@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BusinessObject.Models;
+using BusinessObject.Dtos;
 using DataAccess.DAO;
 using Repositories.Interfaces;
 
@@ -30,7 +31,7 @@ namespace Repositories.Implementations
             return await _wishlistDao.RemoveAsync(userId, bookId);
         }
 
-        public async Task<List<Book>> GetUserWishlistBooksAsync(int userId)
+        public async Task<List<WishlistBookDTO>> GetUserWishlistBooksAsync(int userId)
         {
             return await _wishlistDao.GetUserWishlistBooksAsync(userId);
         }

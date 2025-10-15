@@ -41,23 +41,19 @@ export default function FavoriteBook() {
         const books = await getMyWishlist();
         // Map backend Book -> UI fields
         const mapped = (books || []).map((b) => ({
-          id: b.bookId,
-          title: b.title,
-          author: b.author || b.owner?.userProfile?.fullName || b.owner?.email || "Tác giả",
-          cover: b.coverUrl,
-          categories: Array.isArray(b.categories) ? b.categories.map(c => c.name) : [],
-          rating: Array.isArray(b.bookReviews) && b.bookReviews.length > 0
-            ? (b.bookReviews.reduce((s, r) => s + (r.rating || 0), 0) / b.bookReviews.length).toFixed(1)
-            : "-",
-          duration: Array.isArray(b.chapters) && b.chapters.length > 0
-            ? `${Math.round((b.chapters.reduce((s, c) => s + (c.durationSec || 0), 0) / 60))} phút`
-            : "",
-          dateAdded: new Date(b.createdAt).toLocaleDateString(),
-          lastAccessed: new Date(b.updatedAt || b.createdAt).toLocaleDateString(),
-          progress: 0,
-          isPremium: false,
-          isOwned: false,
-          status: "wishlist",
+            id: b.bookId,
+            title: b.title,
+            author: b.author || b.owner?.userProfile?.fullName || b.owner?.email || "Tác giả",
+            cover: b.coverUrl,
+            categories: Array.isArray(b.categories) ? b.categories.map(c => c.name) : [],
+            rating: b.averageRating > 0 ? b.averageRating.toFixed(1) : "0.0",
+            duration: "", // Xóa hiển thị duration
+            dateAdded: new Date(b.createdAt).toLocaleDateString(),
+            lastAccessed: new Date(b.updatedAt || b.createdAt).toLocaleDateString(),
+            progress: 0,
+            isPremium: false,
+            isOwned: false,
+            status: "wishlist",
         }));
         setFavoriteBooks(mapped);
       } catch {
@@ -220,10 +216,11 @@ export default function FavoriteBook() {
                   </div>
                 )}
 
-                {/* Thời lượng – rating – ngày thêm */}
+                {/* Rating – ngày thêm */}
                 <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
-                  <span className="truncate">{book.duration}</span>
-                  <span className="truncate">⭐ {book.rating}</span>
+                  <span className="truncate">
+                    {book.rating === "0.0" ? "⭐ Chưa có đánh giá" : `⭐ ${book.rating}`}
+                  </span>
                   <span className="truncate">{book.dateAdded}</span>
                 </div>
               </div>
