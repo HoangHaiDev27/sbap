@@ -13,8 +13,19 @@ export default function ReportBookModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    // Validation
     if (!reportText.trim()) {
       toast.error("Vui lòng nhập nội dung báo cáo");
+      return;
+    }
+
+    if (reportText.trim().length < 10) {
+      toast.error("Nội dung báo cáo phải có ít nhất 10 ký tự");
+      return;
+    }
+
+    if (reportText.trim().length > 2000) {
+      toast.error("Nội dung báo cáo không được vượt quá 2000 ký tự");
       return;
     }
 
@@ -62,13 +73,24 @@ export default function ReportBookModal({
           </p>
         </div>
 
-        <textarea
-          value={reportText}
-          onChange={(e) => setReportText(e.target.value)}
-          placeholder="Nhập lý do báo cáo..."
-          className="w-full h-32 p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 mb-4 resize-none"
-          disabled={isSubmitting}
-        />
+        <div className="mb-4">
+          <textarea
+            value={reportText}
+            onChange={(e) => setReportText(e.target.value)}
+            placeholder="Nhập lý do báo cáo..."
+            className="w-full h-32 p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+            disabled={isSubmitting}
+            maxLength={2000}
+          />
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span className={reportText.length < 10 ? "text-red-400" : ""}>
+              Tối thiểu 10 ký tự
+            </span>
+            <span className={reportText.length > 2000 ? "text-red-400" : ""}>
+              {reportText.length}/2000
+            </span>
+          </div>
+        </div>
         
         <div className="flex justify-end space-x-3">
           <button
