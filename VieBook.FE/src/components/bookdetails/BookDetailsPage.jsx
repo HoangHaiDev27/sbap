@@ -14,6 +14,7 @@ import DetailsTab from "./DetailsTab";
 import ReviewsTab from "./ReviewsTab";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
 import toast from "react-hot-toast";
+import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
 import {
   RiArrowRightSLine,
   RiBookOpenLine,
@@ -226,6 +227,8 @@ export default function BookDetailPage() {
                       setIsFavorite(true);
                       toast.success("Đã thêm vào Yêu thích");
                     }
+                    // Dispatch event to update wishlist count
+                    dispatchWishlistChangeDelayed();
                   } catch {
                     toast.error("Có lỗi khi cập nhật Yêu thích");
                   }

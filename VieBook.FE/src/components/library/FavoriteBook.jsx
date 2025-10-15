@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getUserId } from "../../api/authApi";
 import { RiCloseLine } from "react-icons/ri";
 import toast from "react-hot-toast";
+import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
 
 export default function FavoriteBook() {
   const [filter] = useState("all");
@@ -21,6 +22,8 @@ export default function FavoriteBook() {
       await removeFromWishlist(bookId);
       setFavoriteBooks(prev => prev.filter(b => b.id !== bookId));
       toast.success("Đã gỡ khỏi danh sách yêu thích");
+      // Dispatch event to update wishlist count
+      dispatchWishlistChangeDelayed();
     } catch {
       toast.error("Có lỗi khi gỡ khỏi danh sách yêu thích");
     }
