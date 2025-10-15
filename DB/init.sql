@@ -1497,3 +1497,4 @@ VALUES
 (9, 4), --Customer
 (10, 4), --Customer
 (11, 3); --owner
+ALTER TABLE dbo.UserProfiles ADD Address VARCHAR(200) NULL;

@@ -22,7 +22,7 @@ export default function AdminProfile() {
     id: null,
     fullName: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     address: "",
     avatarUrl: "",
   });
@@ -52,7 +52,7 @@ export default function AdminProfile() {
             id: adminId,
             fullName: data.fullName || "",
             email: data.email || "",
-            phone: data.phoneNumber || "",
+            phoneNumber: data.phoneNumber || "",
             address: data.address || "",
             avatarUrl: data.avatarUrl || defaultAvatar,
           };
@@ -77,10 +77,10 @@ export default function AdminProfile() {
     e.preventDefault();
     try {
       const formData = new FormData();
-      formData.append("fullName", adminInfo.fullName);
-      formData.append("email", adminInfo.email);
-      formData.append("phoneNumber", adminInfo.phoneNumber);
-      formData.append("address", adminInfo.address || "FPT University, Da Nang");
+      formData.append("FullName", adminInfo.fullName);
+      formData.append("Email", adminInfo.email);
+      formData.append("PhoneNumber", adminInfo.phoneNumber);
+      formData.append("Address", adminInfo.address);
 
       if (avatarFile) formData.append("avatarFile", avatarFile);
 
@@ -217,7 +217,7 @@ export default function AdminProfile() {
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Số điện thoại</p>
-            <p className="text-base text-gray-800">{adminInfo.phone || "0345 510 055"}</p>
+            <p className="text-base text-gray-800">{adminInfo.phoneNumber || "0345 510 055"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Địa chỉ</p>
@@ -284,14 +284,14 @@ export default function AdminProfile() {
                 </div>
               </div>
 
-              {["fullName", "email", "phone", "address"].map((key) => (
+              {["fullName", "email", "phoneNumber", "address"].map((key) => (
                 <div key={key}>
                   <label className="text-sm font-medium">
                     {key === "fullName"
                       ? "Họ và tên *"
                       : key === "email"
                       ? "Email *"
-                      : key === "phone"
+                      : key === "phoneNumber"
                       ? "Số điện thoại *"
                       : "Địa chỉ"}
                   </label>
@@ -300,7 +300,7 @@ export default function AdminProfile() {
                     type={
                       key === "email"
                         ? "email"
-                        : key === "phone"
+                        : key === "phoneNumber"
                         ? "tel"
                         : "text"
                     }
@@ -308,10 +308,10 @@ export default function AdminProfile() {
                     value={adminInfo[key] || ""}
                     onChange={handleChange}
                     disabled={key === "email"}
-                    required={key === "fullName" || key === "phone"}
-                    pattern={key === "phone" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
+                    required={key === "fullName" || key === "phoneNumber"}
+                    pattern={key === "phoneNumber" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
                     title={
-                      key === "phone"
+                      key === "phoneNumber"
                         ? "Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9])"
                         : undefined
                     }
@@ -321,7 +321,7 @@ export default function AdminProfile() {
                     placeholder={
                       key === "fullName"
                         ? "Nhập họ và tên"
-                        : key === "phone"
+                        : key === "phoneNumber"
                         ? "0905123456"
                         : ""
                     }

@@ -44,7 +44,7 @@ export default function StaffManagement() {
   const filteredStaff = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return staffs.filter((s) => {
-      const matchesSearch = !q || s.fullName?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.phoneNumber?.toLowerCase().includes(q);
+      const matchesSearch = !q || s.fullName?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) || s.phoneNumber?.toLowerCase().includes(q) || s.address?.toLowerCase().includes(q);
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'active' && s.status === 'Active') ||
@@ -82,6 +82,7 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
       data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : ""
     );
     formData.append("AvatarUrl", data.avatarUrl || defaultAvatar);
+    formData.append("Address", data.address);
 
     if (data.newPassword) formData.append("NewPassword", data.newPassword);
     if (newAvatarFile) formData.append("avatarFile", newAvatarFile);
@@ -185,6 +186,7 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Số Điện Thoại</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ngày sinh</th>
+                      <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Địa chỉ</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ngày tạo</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Đăng nhập cuối</th>
                       <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
@@ -208,6 +210,7 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.dateOfBirth || '-'}</td>
+                        <td className="px-6 py-3 text-sm text-gray-500">{staff.address || '-'}</td>
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.createdAt}</td>
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.lastLoginAt || '-'}</td>
                         <td className="px-6 py-3 flex space-x-2">

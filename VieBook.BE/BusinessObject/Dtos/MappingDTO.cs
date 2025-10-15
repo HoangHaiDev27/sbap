@@ -128,6 +128,7 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address!= null ? src.UserProfile.Address : ""))
                 .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
                 .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
@@ -148,7 +149,8 @@ namespace BusinessObject.Dtos
                     FullName = src.FullName,
                     AvatarUrl = src.AvatarUrl,
                     DateOfBirth = src.DateOfBirth,
-                    PhoneNumber = src.PhoneNumber
+                    PhoneNumber = src.PhoneNumber,
+                    Address = src.Address
 
                 }))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Active"))
@@ -163,7 +165,8 @@ namespace BusinessObject.Dtos
                     FullName = src.FullName,
                     AvatarUrl = src.AvatarUrl,
                     DateOfBirth = src.DateOfBirth,
-                    PhoneNumber = src.PhoneNumber
+                    PhoneNumber = src.PhoneNumber,
+                    Address = src.Address
                 }))
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // nếu cập nhật mật khẩu, xử lý riêng
                 .ForMember(dest => dest.Roles, opt => opt.Ignore()); // giữ nguyên roles
@@ -172,11 +175,13 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile.FullName))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile.AvatarUrl))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile.PhoneNumber))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ReverseMap()
                 .ForPath(dest => dest.UserProfile.FullName, opt => opt.MapFrom(src => src.FullName))
                 .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl))
                 .ForPath(dest => dest.UserProfile.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+                .ForPath(dest => dest.UserProfile.Address, opt => opt.MapFrom(src => src.Address))
                 .ForPath(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
 
 

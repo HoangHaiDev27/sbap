@@ -37,22 +37,25 @@ namespace Services.Implementations.Admin
             if (user.UserProfile == null)
                 user.UserProfile = new UserProfile();
 
-            // Cập nhật các trường có giá trị
             if (!string.IsNullOrEmpty(dto.FullName))
                 user.UserProfile.FullName = dto.FullName;
 
             if (!string.IsNullOrEmpty(dto.PhoneNumber))
                 user.UserProfile.PhoneNumber = dto.PhoneNumber;
 
+            if (!string.IsNullOrEmpty(dto.Address))
+                user.UserProfile.Address = dto.Address;
+
             if (!string.IsNullOrEmpty(dto.Email))
                 user.Email = dto.Email;
 
-            // Nếu có avatarUrl truyền vào (ví dụ khi upload ảnh xong)
             if (!string.IsNullOrEmpty(dto.AvatarUrl))
                 user.UserProfile.AvatarUrl = dto.AvatarUrl;
+
             await _repo.UpdateAdminAsync(user);
             return await _repo.GetAdminByIdAsync(id);
         }
+
 
         // ✅ 3. Cập nhật riêng avatar (dùng cho xóa hoặc upload)
         public async Task UpdateAvatarUrlAsync(int adminId, string? newUrl)
