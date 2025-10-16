@@ -89,6 +89,10 @@ builder.Services.AddScoped<RankingSummaryDAO>();
 builder.Services.AddScoped<WishlistDAO>();
 builder.Services.AddScoped<BookReviewDAO>();
 builder.Services.AddScoped<OrderItemDAO>();
+builder.Services.AddScoped<BookmarkDAO>();
+builder.Services.AddScoped<NotificationDAO>();
+builder.Services.AddScoped<ReadingScheduleDAO>();
+builder.Services.AddScoped<WalletTransactionDAO>();
 
 
 

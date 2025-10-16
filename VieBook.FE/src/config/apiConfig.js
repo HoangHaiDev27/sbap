@@ -50,6 +50,7 @@ export const API_ENDPOINTS = {
   // OpenAI endpoints
   OPENAI: {
     CHECK_SPELLING: `${API_BASE_URL}/api/openai/check-spelling`,
+    CHECK_MEANING: `${API_BASE_URL}/api/openai/check-meaning`,
     MODERATION: `${API_BASE_URL}/api/openai/moderation`,
     CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
     GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
