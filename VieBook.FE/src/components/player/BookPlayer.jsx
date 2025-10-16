@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PlayerHeader from "./PlayerHeader";
 import PlayerContents from "./PlayerContents";
 import BookChapter from "./BookChapter"; // 👈 nhớ import
+import { saveReadingProgress } from "../../api/readingHistoryApi";
 
 export default function BookPlayer({ bookId }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -54,6 +55,54 @@ export default function BookPlayer({ bookId }) {
       setIsFullscreen(false);
     }
   };
+
+  // Lưu lịch sử nghe khi vào trang
+  useEffect(() => {
+    const saveListeningHistory = async () => {
+      if (!bookId) return;
+      
+      try {
+        const listeningData = {
+          bookId: parseInt(bookId),
+          chapterId: chapters[currentChapter]?.id,
+          readingType: 'Listening',
+          audioPosition: currentTime
+        };
+        
+        await saveReadingProgress(listeningData);
+        console.log("BookPlayer - Listening history saved:", listeningData);
+      } catch (error) {
+        console.error("Error saving listening history:", error);
+      }
+    };
+
+    saveListeningHistory();
+  }, [bookId, currentChapter]);
+
+  // Lưu lịch sử nghe khi thay đổi thời gian
+  useEffect(() => {
+    const saveProgress = async () => {
+      if (!bookId || currentTime === 0) return;
+      
+      try {
+        const progressData = {
+          bookId: parseInt(bookId),
+          chapterId: chapters[currentChapter]?.id,
+          readingType: 'Listening',
+          audioPosition: currentTime
+        };
+        
+        await saveReadingProgress(progressData);
+        console.log("BookPlayer - Progress saved:", progressData);
+      } catch (error) {
+        console.error("Error saving progress:", error);
+      }
+    };
+
+    // Debounce để tránh gọi API quá nhiều
+    const timeoutId = setTimeout(saveProgress, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [currentTime, bookId, currentChapter]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReaderHeader from "./ReaderHeader";
 import ReaderSettings from "./ReaderSettings";
 import ReaderBookmarks from "./ReaderBookmarks";
@@ -12,6 +12,7 @@ import {
   getBookmarkByChapter 
 } from "../../api/bookmarkApi";
 import { getUserId } from "../../api/authApi";
+import { saveReadingProgress, getCurrentReadingProgress } from "../../api/readingHistoryApi";
 import toast from "react-hot-toast";
 import { RiRobotLine } from "react-icons/ri";
 
@@ -26,14 +27,52 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   const [chapterContent, setChapterContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [lastScrollPosition, setLastScrollPosition] = useState(0);
+  const [hasSavedReadingHistory, setHasSavedReadingHistory] = useState(false);
+  const saveHistoryTimeoutRef = useRef(null);
 
   // Tìm chương hiện tại
   const currentChapter = book?.chapters?.find(ch => ch.chapterId === parseInt(chapterId));
   
-  // Debug logs
-  console.log("BookReader - book:", book);
-  console.log("BookReader - chapterId:", chapterId);
-  console.log("BookReader - currentChapter:", currentChapter);
+
+  // Lưu lịch sử đọc khi vào trang (với debounce để tránh gọi nhiều lần)
+  useEffect(() => {
+    // Clear timeout cũ nếu có
+    if (saveHistoryTimeoutRef.current) {
+      clearTimeout(saveHistoryTimeoutRef.current);
+    }
+
+    // Chỉ save nếu chưa save cho bookId + chapterId này
+    if (hasSavedReadingHistory) {
+      return;
+    }
+
+    const saveReadingHistory = async () => {
+      if (!book?.bookId || !chapterId) return;
+      
+      try {
+        const readingData = {
+          bookId: book.bookId,
+          chapterId: parseInt(chapterId),
+          readingType: 'Reading'
+        };
+        
+        await saveReadingProgress(readingData);
+        setHasSavedReadingHistory(true);
+      } catch (error) {
+        console.error("Error saving reading history:", error);
+      }
+    };
+
+    // Debounce 500ms để tránh gọi nhiều lần
+    saveHistoryTimeoutRef.current = setTimeout(saveReadingHistory, 500);
+
+    // Cleanup function
+    return () => {
+      if (saveHistoryTimeoutRef.current) {
+        clearTimeout(saveHistoryTimeoutRef.current);
+      }
+    };
+  }, [book?.bookId, chapterId, hasSavedReadingHistory]);
 
   // Tải nội dung từ Cloudinary
   useEffect(() => {

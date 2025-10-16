@@ -101,6 +101,14 @@ export const API_ENDPOINTS = {
   FEEDBACK: {
     BOOK_REPORT: `${API_BASE_URL}/api/feedback/book-report`,
   },
+
+  // Reading History endpoints
+  READING_HISTORY: {
+    BASE: `${API_BASE_URL}/api/ReadingHistory`,
+    SAVE_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/save-progress`,
+    CURRENT_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/current-progress`,
+    PAGINATED: `${API_BASE_URL}/api/ReadingHistory/paginated`,
+  },
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,
   // ORDERS: `${API_BASE_URL}/api/orders`,

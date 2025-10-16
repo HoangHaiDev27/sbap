@@ -90,6 +90,7 @@ builder.Services.AddScoped<WishlistDAO>();
 builder.Services.AddScoped<BookReviewDAO>();
 builder.Services.AddScoped<OrderItemDAO>();
 builder.Services.AddScoped<UserFeedbackDAO>();
+builder.Services.AddScoped<ReadingHistoryDAO>();
 
 
 
@@ -112,6 +113,7 @@ builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 builder.Services.AddScoped<IBookReviewRepository, BookReviewRepository>();
 builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 builder.Services.AddScoped<IUserFeedbackRepository, UserFeedbackRepository>();
+builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -140,6 +142,7 @@ builder.Services.AddScoped<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<IUserFeedbackService, UserFeedbackService>();
 builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository>();
 builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
+builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
 
 
 
