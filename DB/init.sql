@@ -120,7 +120,7 @@ CREATE TABLE dbo.Books (
   Title       NVARCHAR(300) NOT NULL,
   Description NVARCHAR(MAX) NULL,
   CoverUrl    VARCHAR(1000) NULL,
-  ISBN        VARCHAR(20) NULL UNIQUE,
+  ISBN        VARCHAR(20) NULL,
   Language    VARCHAR(20) NULL,
   Status      VARCHAR(20) NOT NULL,              -- KHÔNG đặt CHECK/DEFAULT
   TotalView   INT NOT NULL DEFAULT(0),
@@ -1500,13 +1500,7 @@ VALUES
 
 ALTER TABLE Chapters
 ADD VoiceName NVARCHAR(200) NULL;
--- 1️Xóa constraint UNIQUE cũ
-ALTER TABLE dbo.Books DROP CONSTRAINT UQ__Books__447D36EAA586E297;
 
--- 2️Tạo lại UNIQUE INDEX chỉ áp dụng cho ISBN không NULL
-CREATE UNIQUE INDEX IX_Books_ISBN_Unique
-ON dbo.Books(ISBN)
-WHERE ISBN IS NOT NULL;
 -- Hương//////////
 ALTER TABLE dbo.UserProfiles ADD Address VARCHAR(200) NULL;
 ---------------------------
