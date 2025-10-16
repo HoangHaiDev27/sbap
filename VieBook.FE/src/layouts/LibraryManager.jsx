@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   RiBookReadLine,
   RiHeadphoneLine,
@@ -11,7 +12,16 @@ import PurchasedBook from "../components/library/PurchasedBook";
 import FavoriteBook from "../components/library/FavoriteBook";
 
 export default function LibraryManager() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("reading");
+
+  // Check for tab parameter in URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['reading', 'listening', 'purchased', 'favorites'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const stats = [
     {
@@ -46,6 +56,11 @@ export default function LibraryManager() {
     { id: "purchased", label: "Đã mua", icon: <RiShoppingBagLine /> },
     { id: "favorites", label: "Yêu thích", icon: <RiHeartLine /> },
   ];
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -92,7 +107,7 @@ export default function LibraryManager() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center space-x-2 px-6 py-4 whitespace-nowrap font-medium transition-colors border-b-2 flex-1 justify-center ${
                 activeTab === tab.id
                   ? "text-orange-500 border-orange-500 bg-gray-750"

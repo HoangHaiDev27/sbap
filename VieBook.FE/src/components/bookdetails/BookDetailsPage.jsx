@@ -7,15 +7,15 @@ import {
   removeFromWishlist,
 } from "../../api/wishlistApi";
 import { getUserId } from "../../api/authApi";
-import {
-  getReviewsByBook,
-  createReview,
-  canReview as apiCanReview,
-} from "../../api/reviewApi";
 import RelatedBooks from "./RelatedBook";
 import PurchaseModal from "./PurchaseModal";
+import ReportBookModal from "./ReportBookModal";
+import OverviewTab from "./OverviewTab";
+import DetailsTab from "./DetailsTab";
+import ReviewsTab from "./ReviewsTab";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
 import toast from "react-hot-toast";
+import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
 import {
   RiArrowRightSLine,
   RiBookOpenLine,
@@ -39,21 +39,11 @@ export default function BookDetailPage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
-  const [reportText, setReportText] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
 
   const [bookDetail, setBookDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchasedChapters, setPurchasedChapters] = useState([]); // Lưu danh sách chương đã mua
-  const [reviewsData, setReviewsData] = useState([]);
-  const [ratingFilter, setRatingFilter] = useState(null);
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(5);
-  const [newRating, setNewRating] = useState(5);
-  const [newComment, setNewComment] = useState("");
-  const [canReview, setCanReview] = useState(false);
-  const [hasReviewed, setHasReviewed] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [chapterOwnership, setChapterOwnership] = useState({}); // Lưu trạng thái sở hữu chương
 
   // fetch dữ liệu sách và wishlist
@@ -129,49 +119,6 @@ export default function BookDetailPage() {
     fetchData();
   }, [id]);
 
-  // fetch review theo filter / phân trang
-  useEffect(() => {
-    (async () => {
-      try {
-        const list = await getReviewsByBook(id, {
-          rating: ratingFilter,
-          page,
-          pageSize,
-        });
-        setReviewsData(list || []);
-
-        const uid = getUserId();
-        if (uid && Array.isArray(list)) {
-          const userHasReview = list.some(
-            (r) => String(r?.userId || r?.UserId || "") === String(uid)
-          );
-          // không reset về false nếu trước đó đã true
-          setHasReviewed((prev) => prev || userHasReview);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-  }, [id, ratingFilter, page, pageSize]);
-
-  // kiểm tra quyền đánh giá
-  useEffect(() => {
-    (async () => {
-      try {
-        const uid = getUserId();
-        if (!uid) {
-          setCanReview(false);
-          return;
-        }
-        const res = await apiCanReview(id);
-        const flag =
-          typeof res?.canReview === "boolean" ? res.canReview : false;
-        setCanReview(flag);
-      } catch {
-        setCanReview(false);
-      }
-    })();
-  }, [id]);
 
   if (loading) {
     return <div className="text-center text-white p-6">Đang tải...</div>;
@@ -200,15 +147,6 @@ export default function BookDetailPage() {
 
   const hasAudio =
     Array.isArray(chapters) && chapters.some((ch) => !!ch.chapterAudioUrl);
-
-  // Logic cắt ngắn description
-  const maxDescriptionLength = 200;
-  const shouldTruncate =
-    description && description.length > maxDescriptionLength;
-  const displayDescription =
-    shouldTruncate && !isDescriptionExpanded
-      ? description.substring(0, maxDescriptionLength) + "..."
-      : description;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -289,6 +227,8 @@ export default function BookDetailPage() {
                       setIsFavorite(true);
                       toast.success("Đã thêm vào Yêu thích");
                     }
+                    // Dispatch event to update wishlist count
+                    dispatchWishlistChangeDelayed();
                   } catch {
                     toast.error("Có lỗi khi cập nhật Yêu thích");
                   }
@@ -358,194 +298,9 @@ export default function BookDetailPage() {
           </div>
 
           {/* Nội dung Tab */}
-          {activeTab === "overview" && (
-            <div>
-              <div className="mb-4">
-                <p className="text-gray-300">{displayDescription}</p>
-                {shouldTruncate && (
-                  <button
-                    onClick={() =>
-                      setIsDescriptionExpanded(!isDescriptionExpanded)
-                    }
-                    className="text-orange-400 hover:text-orange-300 text-sm mt-2 font-medium transition-colors"
-                  >
-                    {isDescriptionExpanded ? "Xem ít hơn" : "Xem thêm"}
-                  </button>
-                )}
-              </div>
-              <div className="mt-4">
-                <h3 className="font-semibold mb-2">Chương</h3>
-                <ul className="list-disc list-inside text-gray-300">
-                  {chapters?.map((ch) => (
-                    <li key={ch.chapterId}>
-                      {ch.chapterTitle} ({Math.round(ch.durationSec / 60)} phút)
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "details" && (
-            <ul className="text-gray-300 space-y-2">
-              <li>ISBN: {isbn}</li>
-              <li>Ngôn ngữ: {language}</li>
-              <li>Lượt xem: {totalView}</li>
-              <li>Ngày tạo: {new Date(createdAt).toLocaleDateString()}</li>
-              <li>Thể loại: {categories?.join(", ")}</li>
-            </ul>
-          )}
-
-          {activeTab === "reviews" && (
-            <div className="space-y-6">
-              {/* Filter + Pagination Controls */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-400">Lọc theo sao:</span>
-                  {[null, 5, 4, 3, 2, 1].map((v) => (
-                    <button
-                      key={String(v)}
-                      className={`px-2 py-1 rounded ${
-                        ratingFilter === v
-                          ? "bg-orange-600"
-                          : "bg-gray-700 hover:bg-gray-600"
-                      }`}
-                      onClick={() => {
-                        setPage(1);
-                        setRatingFilter(v);
-                      }}
-                    >
-                      {v === null ? "Tất cả" : `${v}★`}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    className="px-2 py-1 bg-gray-700 rounded disabled:opacity-50"
-                    onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page === 1}
-                  >
-                    Trang trước
-                  </button>
-                  <span className="text-sm text-gray-400">Trang {page}</span>
-                  <button
-                    className="px-2 py-1 bg-gray-700 rounded disabled:opacity-50"
-                    onClick={() => setPage(page + 1)}
-                    disabled={reviewsData.length < pageSize}
-                  >
-                    Trang sau
-                  </button>
-                </div>
-              </div>
-
-              {/* Form tạo đánh giá */}
-              {canReview && !hasReviewed && (
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-300">
-                      Đánh giá của bạn:
-                    </span>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <button key={i} onClick={() => setNewRating(i + 1)}>
-                          {i < newRating ? (
-                            <RiStarFill className="text-yellow-400" />
-                          ) : (
-                            <RiStarLine className="text-yellow-400" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Viết cảm nhận của bạn (chỉ người đã mua chương mới có thể gửi)"
-                    className="mt-3 w-full bg-gray-700 rounded p-3 text-sm"
-                  />
-                  <div className="text-right mt-3">
-                    <button
-                      className="px-4 py-2 bg-orange-600 rounded hover:bg-orange-500"
-                      onClick={async () => {
-                        const uid = getUserId();
-                        if (!uid) {
-                          toast.error("Vui lòng đăng nhập để đánh giá");
-                          navigate("/auth");
-                          return;
-                        }
-                        if (hasReviewed) {
-                          toast.error("Bạn đã đánh giá sách này rồi");
-                          return;
-                        }
-                        try {
-                          const created = await createReview(
-                            parseInt(id, 10),
-                            newRating,
-                            newComment
-                          );
-                          toast.success("Đã gửi đánh giá");
-                          setReviewsData([created, ...reviewsData]);
-                          setNewComment("");
-                          setNewRating(5);
-                          setHasReviewed(true);
-                        } catch (e) {
-                          toast.error(e.message);
-                        }
-                      }}
-                    >
-                      Gửi đánh giá
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Danh sách đánh giá */}
-              {(reviewsData?.length ? reviewsData : reviews)?.length === 0 ? (
-                <div className="text-gray-400 text-sm">
-                  Sách chưa được đánh giá.
-                </div>
-              ) : (
-                (reviewsData?.length ? reviewsData : reviews)?.map((review) => (
-                  <div
-                    key={review.reviewId}
-                    className="bg-gray-800 rounded-lg p-6"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={review.avatarUrl}
-                        alt={review.userName}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div>
-                        <h4 className="font-medium">{review.userName}</h4>
-                        <span className="text-gray-400 text-sm">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex mt-2">
-                      {[...Array(5)].map((_, i) =>
-                        i < review.rating ? (
-                          <RiStarFill key={i} className="text-yellow-400" />
-                        ) : (
-                          <RiStarLine key={i} className="text-yellow-400" />
-                        )
-                      )}
-                    </div>
-                    <p className="text-gray-300 mt-2">{review.comment}</p>
-                    {review.ownerReply && (
-                      <div className="mt-3 border-t border-gray-700 pt-3 text-sm">
-                        <div className="text-gray-400">
-                          Phản hồi của tác giả:
-                        </div>
-                        <div className="text-gray-200">{review.ownerReply}</div>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+          {activeTab === "overview" && <OverviewTab bookDetail={bookDetail} />}
+          {activeTab === "details" && <DetailsTab bookDetail={bookDetail} />}
+          {activeTab === "reviews" && <ReviewsTab bookId={id} reviews={reviews} />}
         </div>
       </div>
 
@@ -555,43 +310,12 @@ export default function BookDetailPage() {
       </div>
 
       {/* Report Modal */}
-      {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="fixed inset-0 bg-black/30"
-            onClick={() => setShowReportModal(false)}
-          ></div>
-          <div className="relative bg-gray-800 backdrop-blur-sm p-6 rounded-lg max-w-md w-full shadow-xl z-10">
-            <h2 className="text-lg font-bold mb-4">Báo cáo sách</h2>
-            <textarea
-              value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
-              placeholder="Nhập lý do báo cáo..."
-              className="w-full h-32 p-3 rounded-lg bg-gray-700 text-white focus:outline-none mb-4"
-            />
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowReportModal(false)}
-                className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => {
-                  if (reportText.trim()) {
-                    toast.success(`📨 Đã gửi báo cáo: ${reportText}`);
-                    setReportText("");
-                    setShowReportModal(false);
-                  }
-                }}
-                className="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500"
-              >
-                Gửi báo cáo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ReportBookModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        bookId={id}
+        bookTitle={title}
+      />
 
       {/* Purchase Modal */}
       <PurchaseModal

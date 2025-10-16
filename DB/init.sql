@@ -1498,3 +1498,27 @@ VALUES
 (10, 4), --Customer
 (11, 3); --owner
 ALTER TABLE dbo.UserProfiles ADD Address VARCHAR(200) NULL;
+
+-- =========================================================
+-- Reading History - Lịch sử đọc/nghe
+-- =========================================================
+CREATE TABLE dbo.ReadingHistory (
+    ReadingHistoryId BIGINT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL REFERENCES dbo.Users(UserId),
+    BookId INT NOT NULL REFERENCES dbo.Books(BookId),
+    ChapterId INT NULL REFERENCES dbo.Chapters(ChapterId),
+    ReadingType VARCHAR(20) NOT NULL, -- 'Reading' hoặc 'Listening'
+    AudioPosition INT NULL, -- Vị trí audio hiện tại (giây) (chỉ cho Listening)
+    LastReadAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+-- Indexes để tối ưu performance
+CREATE INDEX IX_ReadingHistory_User ON dbo.ReadingHistory(UserId, LastReadAt DESC);
+CREATE INDEX IX_ReadingHistory_Book ON dbo.ReadingHistory(BookId);
+CREATE INDEX IX_ReadingHistory_Chapter ON dbo.ReadingHistory(ChapterId);
+CREATE INDEX IX_ReadingHistory_Type ON dbo.ReadingHistory(ReadingType);
+
+-- Constraint để đảm bảo ReadingType hợp lệ
+ALTER TABLE dbo.ReadingHistory
+ADD CONSTRAINT CK_ReadingHistory_Type
+CHECK (ReadingType IN ('Reading', 'Listening'));

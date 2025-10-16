@@ -87,6 +87,8 @@ public partial class VieBookContext : DbContext
 
     public virtual DbSet<ChapterChunkEmbedding> ChapterChunkEmbeddings { get; set; }
 
+    public virtual DbSet<ReadingHistory> ReadingHistories { get; set; }
+
     private string GetConnectionString()
     {
         IConfiguration configuration = new ConfigurationBuilder()
@@ -929,6 +931,40 @@ public partial class VieBookContext : DbContext
                 .HasForeignKey(e => e.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ChapterChunkEmbeddings_Books");
+        });
+
+        modelBuilder.Entity<ReadingHistory>(entity =>
+        {
+            entity.ToTable("ReadingHistory");
+            entity.HasKey(e => e.ReadingHistoryId).HasName("PK_ReadingHistory");
+
+            entity.HasIndex(e => new { e.UserId, e.LastReadAt }, "IX_ReadingHistory_User").IsDescending(false, true);
+            entity.HasIndex(e => e.BookId, "IX_ReadingHistory_Book");
+            entity.HasIndex(e => e.ChapterId, "IX_ReadingHistory_Chapter");
+            entity.HasIndex(e => e.ReadingType, "IX_ReadingHistory_Type");
+            
+            // Unique constraint để tránh duplicate records
+            entity.HasIndex(e => new { e.UserId, e.BookId, e.ReadingType }, "UQ_ReadingHistory_UserBookType").IsUnique();
+
+            entity.Property(e => e.ReadingType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.LastReadAt).HasDefaultValueSql("(sysutcdatetime())");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReadingHistory_Users");
+
+            entity.HasOne(d => d.Book).WithMany()
+                .HasForeignKey(d => d.BookId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReadingHistory_Books");
+
+            entity.HasOne(d => d.Chapter).WithMany()
+                .HasForeignKey(d => d.ChapterId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReadingHistory_Chapters");
         });
 
         OnModelCreatingPartial(modelBuilder);
