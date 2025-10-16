@@ -11,6 +11,7 @@ import {
   RiMessage3Line,
   RiFeedbackLine,
   RiUserLine,
+  RiMoneyDollarCircleLine,
 } from "react-icons/ri";
 
 export default function BookOwnerSidebar({ isOpen, onClose }) {
@@ -33,6 +34,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
     { id: "sales", label: "Lịch sử bán hàng", icon: RiFileListLine, href: "/owner/sales-history" },
     { id: "promotion", label: "Quản lý Khuyến mãi", icon: RiCoupon2Line, href: "/owner/promotions" },
     { id: "articles", label: "Quản lý Bài viết", icon: RiArticleLine, href: "/owner/articles" },
+    { id: "withdrawal", label: "Rút tiền", icon: RiMoneyDollarCircleLine, href: "/owner/withdraw" },
     { id: "chat", label: "Chat với Staff", icon: RiMessage3Line, href: "/owner/chat" },
     { id: "feedback", label: "Đánh giá & phản hồi", icon: RiFeedbackLine, href: "/owner/feedback" },
   ];

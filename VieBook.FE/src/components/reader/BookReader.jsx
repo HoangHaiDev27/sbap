@@ -351,10 +351,9 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                 className={`${currentTheme.contentBg} rounded-lg p-6`}
                 style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
               >
-                <div
-                  className="prose prose-lg max-w-none"
-                  dangerouslySetInnerHTML={{ __html: chapterContent }}
-                />
+                <pre className="whitespace-pre-wrap break-words prose prose-lg max-w-none">
+                  {chapterContent}
+                </pre>
               </div>
             </>
           )}
