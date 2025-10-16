@@ -137,6 +137,8 @@ builder.Services.AddScoped<IOpenAIService, OpenAIService>();
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<CloudinaryService>();
+//FPT AI service
+builder.Services.AddScoped<IAudioService, AudioService>();
 //OpenAI service
 builder.Services.Configure<OpenAIConfig>(builder.Configuration.GetSection("OpenAI"));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<OpenAIConfig>>().Value);

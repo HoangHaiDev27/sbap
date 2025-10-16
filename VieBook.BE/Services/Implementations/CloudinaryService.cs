@@ -138,8 +138,36 @@ namespace Services.Implementations
 
             return null;
         }
-        
 
+        // upload file audio lên Cloudinary
+        public async Task<string> UploadAudioAsync(Stream audioStream, string fileName)
+        {
+            if (audioStream == null || audioStream.Length == 0)
+                return null;
+
+            var uploadParams = new RawUploadParams
+            {
+                File = new FileDescription($"{fileName}.mp3", audioStream),
+                Folder = "chapterAudios"
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+            if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                return uploadResult.SecureUrl.ToString();
+
+            return null;
+        }
+
+        // thêm nếu muốn upload file audio trực tiếp từ IFormFile
+        public async Task<string> UploadAudioFileAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return null;
+
+            await using var stream = file.OpenReadStream();
+            return await UploadAudioAsync(stream, Path.GetFileNameWithoutExtension(file.FileName));
+        }
     }
 
     public class CloudinarySettings

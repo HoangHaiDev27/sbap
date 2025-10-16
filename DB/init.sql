@@ -1492,3 +1492,13 @@ VALUES
 (9, 4), --Customer
 (10, 4), --Customer
 (11, 3); --Customer
+
+ALTER TABLE Chapters
+ADD VoiceName NVARCHAR(200) NULL;
+-- 1️Xóa constraint UNIQUE cũ
+ALTER TABLE dbo.Books DROP CONSTRAINT UQ__Books__447D36EAA586E297;
+
+-- 2️Tạo lại UNIQUE INDEX chỉ áp dụng cho ISBN không NULL
+CREATE UNIQUE INDEX IX_Books_ISBN_Unique
+ON dbo.Books(ISBN)
+WHERE ISBN IS NOT NULL;
