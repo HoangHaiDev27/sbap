@@ -19,7 +19,8 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
     newPassword: '',
     avatarUrl: '',
     dateOfBirth: '',
-    phoneNumber: '', // ✅ thêm phoneNumber
+    phoneNumber: '',
+    address: '', 
   });
 
   const [newAvatarFile, setNewAvatarFile] = useState(null);
@@ -35,7 +36,8 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
         newPassword: '',
         avatarUrl: staff.avatarUrl || '',
         dateOfBirth: formatDate(staff.dateOfBirth),
-        phoneNumber: staff.phoneNumber || '', // ✅ thêm
+        phoneNumber: staff.phoneNumber || '', 
+        address: staff.address || '',
       });
       setPreviewAvatar(staff.avatarUrl || '');
     } else {
@@ -47,6 +49,7 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
         avatarUrl: '',
         dateOfBirth: '',
         phoneNumber: '',
+        address: '',
       });
       setPreviewAvatar('');
     }
@@ -96,13 +99,16 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl text-gray-800 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl w-full max-w-md shadow-xl text-gray-800 flex flex-col max-h-[90vh]"
       >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 border-b pb-2 sticky top-0 bg-white pt-3">
-          {isEdit ? 'Cập nhật Staff' : 'Thêm Staff mới'}
-        </h3>
+        {/* Header cố định */}
+        <div className="p-6 border-b sticky top-0 bg-white rounded-t-2xl z-10">
+          <h3 className="text-xl font-semibold text-gray-900">
+            {isEdit ? 'Cập nhật Staff' : 'Thêm Staff mới'}
+          </h3>
+        </div>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
           {/* Họ và tên */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -160,20 +166,50 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
             <label className="block mb-1 text-sm font-medium text-gray-700">
               Ngày sinh <span className="text-red-500">*</span>
             </label>
-            <input
+           <input
             type="date"
             name="dateOfBirth"
             required
             value={formData.dateOfBirth}
+            min="1700-01-01"
             max={new Date(
               new Date().setFullYear(new Date().getFullYear() - 18)
             ).toISOString().split('T')[0]}
-            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-            onInvalid={(e) => e.target.setCustomValidity("Nhân viên phải từ 18 tuổi trở lên")}
-            onInput={(e) => e.target.setCustomValidity("")}
+            onChange={(e) =>
+              setFormData({ ...formData, dateOfBirth: e.target.value })
+            }
+            onInvalid={(e) => {
+              const target = e.target;
+              // Nếu rỗng thì dùng message mặc định của HTML5
+              if (target.validity.valueMissing) {
+                target.setCustomValidity('');
+              }
+              // Nếu chọn ngày nhưng chưa đủ 18 tuổi
+              else if (target.validity.rangeOverflow) {
+                target.setCustomValidity('Nhân viên phải từ 18 tuổi trở lên');
+              }
+              // Các lỗi khác
+              else {
+                target.setCustomValidity('');
+              }
+            }}
+            onInput={(e) => e.target.setCustomValidity('')}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
           />
           </div>
+          <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Địa chỉ { !isEdit && <span className="text-red-500">*</span> }
+          </label>
+          <input
+            type="text"
+            required 
+            placeholder={isEdit ? "Nhập địa chỉ (không bắt buộc)" : "Nhập địa chỉ"}
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
           {/* Mật khẩu */}
           <div>
@@ -238,22 +274,22 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2 mt-6">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200"
-          >
-            Hủy
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-          >
-            {isEdit ? 'Cập nhật' : 'Thêm mới'}
-          </button>
-        </div>
-      </form>
+        <div className="border-t p-4 bg-white sticky bottom-0 rounded-b-2xl flex justify-end space-x-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200"
+        >
+          Hủy
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+        >
+          {isEdit ? 'Cập nhật' : 'Thêm mới'}
+        </button>
+      </div>
+    </form>
     </div>
   );
 }

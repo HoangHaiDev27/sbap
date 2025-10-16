@@ -127,45 +127,65 @@ export default function AudiobookGrid({
 function AudiobookCard({ book }) {
   const [isFavorite, setIsFavorite] = useState(false);
   return (
-    <Link
+   <Link
       to={`/bookdetails/${book.id}`}
-      className="block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
+      className="block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group h-full"
     >
-      <div className="relative">
-         <img
-        src={book.image}
-        alt={book.title}
-        className="w-full h-64 object-cover object-top group-hover:scale-105 transition-transform duration-500"
-      />
+      {/* Hình ảnh */}
+      <div className="relative h-64">
+        <img
+          src={book.image}
+          alt={book.title}
+          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+        />
 
-      {/* Danh mục */}
-      <div className="absolute top-3 left-3">
-        <span className="bg-gradient-to-r from-purple-600 to-purple-400 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm backdrop-blur-sm">
-          {book.category}
-        </span>
+        {/* Danh mục */}
+        <div className="absolute top-3 left-3">
+          <span className="bg-gradient-to-r from-purple-600 to-purple-400 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm backdrop-blur-sm">
+            {book.category}
+          </span>
+        </div>
+
+        {/* Icon Đọc */}
+        <div className="absolute top-3 right-3">
+          <span className="bg-gray/90 hover:bg-orange-500 hover:text-white text-orange-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm transition-all duration-300 cursor-pointer">
+            <RiBookOpenLine className="w-4 h-4" />
+          </span>
+        </div>
       </div>
 
-      {/* Icon Đọc */}
-      <div className="absolute top-3 right-3">
-        <span className="bg-gray/90 hover:bg-orange-500 hover:text-white text-orange-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm transition-all duration-300 cursor-pointer">
-          <RiBookOpenLine className="w-4 h-4" />
-        </span>
-      </div>
-    </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-2">
+      {/* Nội dung text */}
+      <div className="p-4 flex flex-col h-[260px]"> 
+        {/* h-[260px] = tổng chiều cao cố định phần nội dung */}
+        
+        {/* Title */}
+        <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors h-12 overflow-hidden line-clamp-2">
           {book.title}
         </h3>
-        <p className="text-gray-400 text-sm mb-1">bởi {book.author}</p>
-        <Rating rating={book.rating} reviews={book.reviews} />
-        <p className="text-gray-300 text-sm mb-3 line-clamp-2">
+
+        {/* Author */}
+        <p className="text-gray-400 text-sm mb-1 h-5 truncate">
+          bỏi {book.author}
+        </p>
+
+        {/* Rating */}
+        <div className="h-5 mb-2">
+          <Rating rating={book.rating} reviews={book.reviews} />
+        </div>
+
+        {/* Description */}
+        <p className="text-gray-300 text-sm mb-3 line-clamp-2 overflow-hidden">
           {book.description}
         </p>
-        <BookFooter
-          isFavorite={isFavorite}
-          setIsFavorite={setIsFavorite}
-          book={book}
-        />
+
+        {/* Footer luôn cố định dưới */}
+        <div className="mt-auto">
+          <BookFooter
+            isFavorite={isFavorite}
+            setIsFavorite={setIsFavorite}
+            book={book}
+          />
+        </div>
       </div>
     </Link>
   );

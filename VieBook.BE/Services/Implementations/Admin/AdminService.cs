@@ -37,22 +37,25 @@ namespace Services.Implementations.Admin
             if (user.UserProfile == null)
                 user.UserProfile = new UserProfile();
 
-            // Cập nhật các trường có giá trị
             if (!string.IsNullOrEmpty(dto.FullName))
                 user.UserProfile.FullName = dto.FullName;
 
             if (!string.IsNullOrEmpty(dto.PhoneNumber))
                 user.UserProfile.PhoneNumber = dto.PhoneNumber;
 
+            if (!string.IsNullOrEmpty(dto.Address))
+                user.UserProfile.Address = dto.Address;
+
             if (!string.IsNullOrEmpty(dto.Email))
                 user.Email = dto.Email;
 
-            // Nếu có avatarUrl truyền vào (ví dụ khi upload ảnh xong)
             if (!string.IsNullOrEmpty(dto.AvatarUrl))
                 user.UserProfile.AvatarUrl = dto.AvatarUrl;
+
             await _repo.UpdateAdminAsync(user);
             return await _repo.GetAdminByIdAsync(id);
         }
+
 
         // ✅ 3. Cập nhật riêng avatar (dùng cho xóa hoặc upload)
         public async Task UpdateAvatarUrlAsync(int adminId, string? newUrl)
@@ -86,28 +89,6 @@ namespace Services.Implementations.Admin
 
             return newUrl;
         }
-
-        // ✅ 5. Xóa avatar (Cloudinary + DB)
-        public async Task<bool> DeleteAvatarAsync(int adminId)
-        {
-            var user = await _repo.GetAdminByIdAsync(adminId);
-            if (user == null)
-                throw new Exception("Không tìm thấy admin.");
-
-            var avatarUrl = user.UserProfile?.AvatarUrl;
-            if (string.IsNullOrWhiteSpace(avatarUrl))
-                throw new Exception("Chưa có avatar để xóa.");
-
-            // Xóa ảnh trên Cloudinary
-            bool deleted = await _cloudinaryService.DeleteImageAsync(avatarUrl);
-            if (!deleted)
-                throw new Exception("Không thể xóa ảnh trên Cloudinary.");
-
-            // Cập nhật DB
-            await UpdateAvatarUrlAsync(adminId, null);
-            return true;
-        }
-
 
     }
 }
