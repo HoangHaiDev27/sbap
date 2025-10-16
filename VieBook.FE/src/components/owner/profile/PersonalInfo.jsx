@@ -10,9 +10,9 @@ export default function PersonalInfo() {
     BankName: "",
     PortfolioUrl: "",
     Bio: "",
-    AgreeTos: true,
   });
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -23,6 +23,7 @@ export default function PersonalInfo() {
         if (!mounted) return;
         setEmail(res?.email || res?.Email || "");
         const p = res?.profile || {};
+        setPhone(p.PhoneNumber || p.phoneNumber || "");
         setForm({
           FullName: p.FullName || p.fullName || "",
           DateOfBirth: (p.DateOfBirth || p.dateOfBirth) ? String(p.DateOfBirth || p.dateOfBirth).slice(0, 10) : "",
@@ -31,7 +32,6 @@ export default function PersonalInfo() {
           BankName: p.BankName || p.bankName || "",
           PortfolioUrl: p.PortfolioUrl || p.portfolioUrl || "",
           Bio: p.Bio || p.bio || "",
-          AgreeTos: typeof (p.AgreeTos ?? p.agreeTos) === "boolean" ? (p.AgreeTos ?? p.agreeTos) : true,
         });
       })
       .catch(() => {});
@@ -57,7 +57,6 @@ export default function PersonalInfo() {
         BankName: form.BankName || null,
         PortfolioUrl: form.PortfolioUrl || null,
         Bio: form.Bio || null,
-        AgreeTos: form.AgreeTos,
       };
       await upsertMyProfile(payload);
       setMsg("Lưu thay đổi thành công");
@@ -100,7 +99,15 @@ export default function PersonalInfo() {
             className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white opacity-70"
           />
         </div>
-        {/* Số điện thoại sẽ được cập nhật qua luồng SMS OTP riêng */}
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">Số điện thoại</label>
+          <input
+            type="tel"
+            value={phone || "Chưa cập nhật"}
+            readOnly
+            className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white opacity-70"
+          />
+        </div>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Ngày sinh</label>
           <input
@@ -112,7 +119,14 @@ export default function PersonalInfo() {
           />
         </div>
         <div>
-          {/* Ẩn trường AvatarUrl vì đã có mục đổi avatar riêng */}
+          <label className="block text-sm text-gray-400 mb-1">Ngân hàng</label>
+          <input
+            type="text"
+            name="BankName"
+            value={form.BankName}
+            onChange={onChange}
+            className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
+          />
         </div>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Số tài khoản</label>
@@ -120,16 +134,6 @@ export default function PersonalInfo() {
             type="text"
             name="BankNumber"
             value={form.BankNumber}
-            onChange={onChange}
-            className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">Ngân hàng</label>
-          <input
-            type="text"
-            name="BankName"
-            value={form.BankName}
             onChange={onChange}
             className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
           />
@@ -153,17 +157,6 @@ export default function PersonalInfo() {
             className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
             rows={4}
           />
-        </div>
-        <div className="col-span-2 flex items-center space-x-2">
-          <input
-            id="agree"
-            type="checkbox"
-            name="AgreeTos"
-            checked={!!form.AgreeTos}
-            onChange={onChange}
-            className="h-4 w-4"
-          />
-          <label htmlFor="agree" className="text-sm text-gray-300">Tôi đồng ý với điều khoản</label>
         </div>
       </div>
 

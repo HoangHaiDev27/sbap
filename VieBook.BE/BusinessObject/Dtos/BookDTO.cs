@@ -28,5 +28,7 @@ namespace BusinessObject.Dtos
 
         // Categories
         public List<int> CategoryIds { get; set; } = new();
+        public List<string> CategoryNames { get; set; } = new();
+        public int TotalRatings { get; set; }
     }
 }

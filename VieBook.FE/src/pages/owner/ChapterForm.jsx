@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { uploadChapterFile, createChapter } from "../../api/ownerBookApi";
-import { checkSpelling as checkSpellingApi, moderation as moderationApi, checkPlagiarism as checkPlagiarismApi, generateEmbeddings as generateEmbeddingsApi } from "../../api/openAiApi";
+import { checkSpelling as checkSpellingApi, checkMeaning as checkMeaningApi, moderation as moderationApi, checkPlagiarism as checkPlagiarismApi, generateEmbeddings as generateEmbeddingsApi } from "../../api/openAiApi";
 import { useLocation } from "react-router-dom";
 
 // Real API for content policy check
@@ -91,14 +91,21 @@ export default function ChapterForm() {
   const [spellingErrors, setSpellingErrors] = useState([]);
   const [isCheckingSpelling, setIsCheckingSpelling] = useState(false);
   const [correctedText, setCorrectedText] = useState("");
+  const [hasCheckedSpelling, setHasCheckedSpelling] = useState(false);
+  const [isSpellingValid, setIsSpellingValid] = useState(false);
+  const [contentHasMeaning, setContentHasMeaning] = useState(null); // Track if content has meaningful content (null: not checked, true: meaningful, false: not meaningful)
+  const [meaningScore, setMeaningScore] = useState(null); // Track meaning score (0-100)
+  const [meaningReason, setMeaningReason] = useState(""); // Track reason for meaning assessment
   const contentAreaRef = useRef(null);
   
   // Step 3 - Approval states
+  const [isCheckingMeaning, setIsCheckingMeaning] = useState(false);
   const [isCheckingPolicy, setIsCheckingPolicy] = useState(false);
   const [isCheckingPlagiarism, setIsCheckingPlagiarism] = useState(false);
   const [policyResult, setPolicyResult] = useState(null);
   const [plagiarismResult, setPlagiarismResult] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [meaningProgress, setMeaningProgress] = useState(0);
   const [policyProgress, setPolicyProgress] = useState(0);
   const [plagiarismProgress, setPlagiarismProgress] = useState(0);
   const [hasAutoChecked, setHasAutoChecked] = useState(false);
@@ -133,6 +140,14 @@ export default function ChapterForm() {
     if (validationErrors.content) {
       setValidationErrors(prev => ({ ...prev, content: "" }));
     }
+    // Reset meaning assessment when content changes
+    setContentHasMeaning(null);
+    setMeaningScore(null);
+    setMeaningReason("");
+    setSpellingErrors([]);
+    setCorrectedText("");
+    setHasCheckedSpelling(false);
+    setIsSpellingValid(false);
   }, [validationErrors.content]);
 
   // Validation functions
@@ -312,14 +327,14 @@ export default function ChapterForm() {
           return;
         }
       } else if (currentStep === 2) {
-        const contentError = validateContent(content);
-        
-        if (contentError) {
-          setValidationErrors({
-            title: "",
-            price: "",
-            content: contentError
-          });
+        // Bước 2: Không kiểm tra validation - luôn cho phép tiếp tục
+        // Chỉ cần có nội dung cơ bản
+        if (!content.trim()) {
+          window.dispatchEvent(
+            new CustomEvent("app:toast", {
+              detail: { type: "error", message: "Vui lòng nhập nội dung chương" },
+            })
+          );
           return;
         }
       }
@@ -387,7 +402,18 @@ export default function ChapterForm() {
       setSpellingErrors(normalizedErrors);
       setCorrectedText(resultObj?.correctedText || "");
 
+      // Cập nhật thông tin ý nghĩa nội dung
+      const hasMeaning = resultObj?.hasMeaning !== false; // Default to true if not provided
+      const meaningScoreValue = resultObj?.meaningScore ?? 100;
+      const meaningReasonValue = resultObj?.meaningReason || "";
+      
+      setContentHasMeaning(hasMeaning);
+      setMeaningScore(meaningScoreValue);
+      setMeaningReason(meaningReasonValue);
+
       const hasErrors = normalizedErrors.length > 0 || (resultObj?.isCorrect === false);
+      setHasCheckedSpelling(true);
+      setIsSpellingValid(!hasErrors);
       if (hasErrors) {
         window.dispatchEvent(
           new CustomEvent("app:toast", {
@@ -412,7 +438,7 @@ export default function ChapterForm() {
     }
   }, [content]);
 
-  // Auto-run both checks with real APIs
+  // Auto-run all checks sequentially
   const runAutoChecks = async () => {
     if (!content.trim()) return;
 
@@ -421,22 +447,112 @@ export default function ChapterForm() {
     setPlagiarismResult(null);
     setPolicyProgress(0);
     setPlagiarismProgress(0);
+    setMeaningProgress(0);
+    setContentHasMeaning(null);
 
-    // Start policy check
-    setIsCheckingPolicy(true);
+    let shouldStop = false; // Flag to stop execution
+
     try {
-      await checkPolicyWithProgress(content);
+      // Bước 1: Kiểm tra ý nghĩa nội dung
+      console.log("Bắt đầu kiểm tra ý nghĩa nội dung...");
+      const meaningResult = await checkMeaningWithProgress(content);
+      console.log("Kết quả kiểm tra ý nghĩa:", meaningResult);
       
-      // Start plagiarism check after policy check completes
-      setIsCheckingPlagiarism(true);
-      await checkPlagiarismWithProgress(bookId, content);
+      // Nếu nội dung không có ý nghĩa, dừng lại
+      if (meaningResult && !meaningResult.hasMeaning) {
+        console.log("❌ Dừng kiểm duyệt: Nội dung không có ý nghĩa");
+        shouldStop = true;
+        return; // Dừng kiểm duyệt
+      }
+      console.log("✅ Bước 1 pass: Nội dung có ý nghĩa");
+
+      // Bước 2: Kiểm tra chính sách (chỉ chạy nếu bước 1 pass)
+      if (!shouldStop) {
+        console.log("Bắt đầu kiểm tra chính sách...");
+        setIsCheckingPolicy(true);
+        const policyCheckResult = await checkPolicyWithProgress(content);
+        console.log("Kết quả kiểm tra chính sách:", policyCheckResult);
+        
+        // Nếu chính sách không pass, dừng lại
+        if (policyCheckResult && !policyCheckResult.passed) {
+          console.log("❌ Dừng kiểm duyệt: Chính sách không đạt yêu cầu");
+          setIsCheckingPolicy(false);
+          shouldStop = true;
+          return; // Dừng kiểm duyệt
+        }
+        console.log("✅ Bước 2 pass: Chính sách đạt yêu cầu");
+      }
+
+      // Bước 3: Kiểm tra đạo văn (chỉ chạy nếu bước 1 và 2 pass)
+      if (!shouldStop) {
+        console.log("Bắt đầu kiểm tra đạo văn...");
+        setIsCheckingPlagiarism(true);
+        await checkPlagiarismWithProgress(bookId, content);
+        console.log("✅ Bước 3 hoàn thành: Kiểm tra đạo văn");
+      }
       
       setLastCheckedContent(content);
     } catch (error) {
       console.error("Auto checks failed:", error);
+      setIsCheckingMeaning(false);
       setIsCheckingPolicy(false);
       setIsCheckingPlagiarism(false);
     }
+  };
+
+  // Meaning check with progress simulation
+  const checkMeaningWithProgress = async (content) => {
+    return new Promise((resolve, reject) => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 20 + 10; // 10-30% increments
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+        }
+        setMeaningProgress(progress);
+      }, 150);
+
+      setTimeout(async () => {
+        try {
+          setIsCheckingMeaning(true);
+          const meaningResult = await checkMeaningApi(content);
+          let resultObj = meaningResult;
+          if (typeof meaningResult === "string") {
+            try { resultObj = JSON.parse(meaningResult); } catch { resultObj = {}; }
+          }
+
+          const hasMeaning = resultObj?.hasMeaning !== false;
+          const meaningScore = resultObj?.meaningScore ?? 100;
+          const meaningReason = resultObj?.meaningReason || "";
+          
+          setContentHasMeaning(hasMeaning);
+          setMeaningScore(meaningScore);
+          setMeaningReason(meaningReason);
+
+          // Nếu nội dung không có ý nghĩa, hiển thị lỗi
+          if (!hasMeaning) {
+            window.dispatchEvent(
+              new CustomEvent("app:toast", {
+                detail: { 
+                  type: "error", 
+                  message: "Nội dung không có ý nghĩa. Vui lòng nhập nội dung có giá trị." 
+                },
+              })
+            );
+          }
+
+          setIsCheckingMeaning(false);
+          clearInterval(interval);
+          setMeaningProgress(100);
+          resolve({ hasMeaning, meaningScore, meaningReason });
+        } catch (error) {
+          clearInterval(interval);
+          setIsCheckingMeaning(false);
+          reject(error);
+        }
+      }, 1500);
+    });
   };
 
   // Policy check with progress simulation
@@ -506,6 +622,8 @@ export default function ChapterForm() {
     setPlagiarismResult(null);
     setPolicyProgress(0);
     setPlagiarismProgress(0);
+    setMeaningProgress(0);
+    setContentHasMeaning(null); // Reset meaning state
     runAutoChecks();
   };
 
@@ -516,6 +634,34 @@ export default function ChapterForm() {
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "error", message: "Vui lòng kiểm tra lại các trường bắt buộc" },
+        })
+      );
+      return;
+    }
+
+    // Kiểm tra tất cả bước kiểm duyệt phải pass
+    if (contentHasMeaning !== true) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Nội dung chưa được kiểm tra ý nghĩa hoặc không đạt yêu cầu" },
+        })
+      );
+      return;
+    }
+
+    if (!policyResult || !policyResult.passed) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Nội dung chưa được kiểm tra chính sách hoặc không đạt yêu cầu" },
+        })
+      );
+      return;
+    }
+
+    if (!plagiarismResult || !plagiarismResult.passed) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Nội dung chưa được kiểm tra đạo văn hoặc không đạt yêu cầu" },
         })
       );
       return;
@@ -730,7 +876,7 @@ export default function ChapterForm() {
 
       {/* Nội dung có thể chỉnh sửa */}
       <div>
-        <label className="block text-sm mb-1">Nội dung chương (có thể chỉnh sửa)</label>
+        <label className="block text-sm mb-1">Nội dung chương</label>
         <textarea
           placeholder="Nội dung sẽ được trích xuất từ file hoặc bạn có thể nhập trực tiếp..."
           value={content}
@@ -758,11 +904,13 @@ export default function ChapterForm() {
                 ? "bg-gray-600 cursor-not-allowed"
                 : "bg-purple-600 hover:bg-purple-700"
             }`}
+            title="Kiểm tra chính tả"
           >
             {isCheckingSpelling ? "Đang kiểm tra..." : "Kiểm tra chính tả"}
           </button>
         </div>
       </div>
+
 
       {/* Hiển thị lỗi chính tả từ API và gợi ý sửa */}
       {(spellingErrors.length > 0 || correctedText) && (
@@ -820,7 +968,7 @@ export default function ChapterForm() {
         </div>
       )}
     </div>
-  ), [content, file, pdfPages, spellingErrors, isCheckingSpelling, handleContentChange, handleFileChange, handleCheckSpelling, getFileTag, formatFileSize]);
+  ), [content, file, pdfPages, spellingErrors, isCheckingSpelling, contentHasMeaning, meaningScore, meaningReason, handleContentChange, handleFileChange, handleCheckSpelling, getFileTag, formatFileSize]);
 
   const Step3 = () => (
     <div className="bg-slate-800 p-6 rounded-lg shadow-md mb-6">
@@ -839,10 +987,77 @@ export default function ChapterForm() {
         </div>
       )}
       
+      {/* Kiểm tra ý nghĩa nội dung */}
+      <div className="mb-6">
+        <h3 className="text-md font-semibold mb-3">1. Kiểm tra ý nghĩa nội dung</h3>
+        
+        {isCheckingMeaning && (
+          <div className="mb-3">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-300">Đang kiểm tra ý nghĩa nội dung...</span>
+              <span className="text-sm text-blue-400 font-semibold">{Math.round(meaningProgress)}%</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-3">
+              <div 
+                className="bg-blue-500 h-3 rounded-full transition-all duration-300 ease-out" 
+                style={{ width: `${meaningProgress}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
+        
+        {!isCheckingMeaning && contentHasMeaning === false && (
+          <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
+            <div className="flex items-center mb-2">
+              <span className="text-red-400 font-semibold text-lg">❌ Nội dung không có ý nghĩa</span>
+              <span className="ml-2 text-sm text-gray-300">(Điểm: {meaningScore}/100)</span>
+            </div>
+            {meaningReason && (
+              <p className="text-sm text-gray-300 mb-2">{meaningReason}</p>
+            )}
+            <p className="text-sm text-red-300">
+              Vui lòng quay lại Bước 2 và nhập nội dung có ý nghĩa để tiếp tục.
+            </p>
+            <div className="mt-3 p-3 bg-red-800/30 rounded-lg border border-red-500/30">
+              <p className="text-sm text-red-200 font-semibold">
+                ⚠️ Kiểm duyệt đã dừng lại do bước 1 không đạt yêu cầu
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!isCheckingMeaning && contentHasMeaning === true && (
+          <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+            <div className="flex items-center mb-2">
+              <span className="text-green-400 font-semibold text-lg">✅ Nội dung có ý nghĩa</span>
+              <span className="ml-2 text-sm text-gray-300">(Điểm: {meaningScore}/100)</span>
+            </div>
+            {meaningReason && (
+              <p className="text-sm text-gray-300">{meaningReason}</p>
+            )}
+            <p className="text-sm text-green-300">
+              Nội dung đạt yêu cầu, tiếp tục kiểm duyệt chính sách và đạo văn.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Kiểm duyệt chính sách nội dung */}
       <div className="mb-6">
-        <h3 className="text-md font-semibold mb-3">1. Kiểm duyệt chính sách nội dung</h3>
+        <h3 className="text-md font-semibold mb-3">2. Kiểm duyệt chính sách nội dung</h3>
         
+        {/* Hiển thị trạng thái chưa kiểm tra */}
+        {!isCheckingPolicy && !policyResult && (
+          <div className="bg-gray-700/30 border border-gray-500/50 rounded-lg p-4">
+            <div className="flex items-center mb-2">
+              <span className="text-gray-400 font-semibold text-lg">⏳ Chưa kiểm tra</span>
+            </div>
+            <p className="text-sm text-gray-300">
+              Bước kiểm tra này sẽ chạy sau khi bước 1 hoàn thành.
+            </p>
+          </div>
+        )}
+          
         {isCheckingPolicy && (
           <div className="mb-3">
             <div className="flex justify-between items-center mb-2">
@@ -880,6 +1095,13 @@ export default function ChapterForm() {
                   </div>
                 </div>
               )}
+              {!policyResult.passed && (
+                <div className="mt-3 p-3 bg-red-800/30 rounded-lg border border-red-500/30">
+                  <p className="text-sm text-red-200 font-semibold">
+                    ⚠️ Kiểm duyệt đã dừng lại do bước 2 không đạt yêu cầu
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -887,7 +1109,19 @@ export default function ChapterForm() {
 
       {/* Kiểm duyệt đạo văn */}
       <div className="mb-6">
-        <h3 className="text-md font-semibold mb-3">2. Kiểm duyệt đạo văn</h3>
+        <h3 className="text-md font-semibold mb-3">3. Kiểm duyệt đạo văn</h3>
+        
+        {/* Hiển thị trạng thái chưa kiểm tra */}
+        {!isCheckingPlagiarism && !plagiarismResult && (
+          <div className="bg-gray-700/30 border border-gray-500/50 rounded-lg p-4">
+            <div className="flex items-center mb-2">
+              <span className="text-gray-400 font-semibold text-lg">⏳ Chưa kiểm tra</span>
+            </div>
+            <p className="text-sm text-gray-300">
+              Bước kiểm tra này sẽ chạy sau khi bước 1 và 2 hoàn thành.
+            </p>
+          </div>
+        )}
         
         {isCheckingPlagiarism && (
           <div className="mb-3">
@@ -1001,6 +1235,66 @@ export default function ChapterForm() {
               ? "✅ Chương đã vượt qua tất cả kiểm duyệt và sẵn sàng để thêm"
               : "❌ Chương chưa đạt yêu cầu kiểm duyệt, vui lòng chỉnh sửa nội dung"
             }
+          </p>
+        </div>
+      )}
+
+      {/* Thông báo trạng thái kiểm duyệt */}
+      {currentStep === 3 && (
+        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mt-4">
+          <h4 className="text-blue-400 font-semibold mb-2">Trạng thái kiểm duyệt</h4>
+          <div className="space-y-1 text-sm">
+            <div className={`flex items-center gap-2 ${
+              contentHasMeaning === true ? "text-green-400" : 
+              contentHasMeaning === false ? "text-red-400" : 
+              isCheckingMeaning ? "text-blue-400" : "text-gray-400"
+            }`}>
+              <span>{
+                contentHasMeaning === true ? "✅" : 
+                contentHasMeaning === false ? "❌" : 
+                isCheckingMeaning ? "🔄" : "⏳"
+              }</span>
+              <span>Kiểm tra ý nghĩa: {
+                contentHasMeaning === true ? "Đạt yêu cầu" : 
+                contentHasMeaning === false ? "Không đạt yêu cầu" : 
+                isCheckingMeaning ? "Đang kiểm tra..." : "Chưa kiểm tra"
+              }</span>
+            </div>
+            <div className={`flex items-center gap-2 ${
+              policyResult?.passed ? "text-green-400" : 
+              policyResult?.passed === false ? "text-red-400" : 
+              isCheckingPolicy ? "text-orange-400" : "text-gray-400"
+            }`}>
+              <span>{
+                policyResult?.passed ? "✅" : 
+                policyResult?.passed === false ? "❌" : 
+                isCheckingPolicy ? "🔄" : "⏳"
+              }</span>
+              <span>Kiểm tra chính sách: {
+                policyResult?.passed ? "Đạt yêu cầu" : 
+                policyResult?.passed === false ? "Không đạt yêu cầu" : 
+                isCheckingPolicy ? "Đang kiểm tra..." : "Chưa kiểm tra"
+              }</span>
+            </div>
+            <div className={`flex items-center gap-2 ${
+              plagiarismResult?.passed ? "text-green-400" : 
+              plagiarismResult?.passed === false ? "text-red-400" : 
+              isCheckingPlagiarism ? "text-purple-400" : "text-gray-400"
+            }`}>
+              <span>{
+                plagiarismResult?.passed ? "✅" : 
+                plagiarismResult?.passed === false ? "❌" : 
+                isCheckingPlagiarism ? "🔄" : "⏳"
+              }</span>
+              <span>Kiểm tra đạo văn: {
+                plagiarismResult?.passed ? "Đạt yêu cầu" : 
+                plagiarismResult?.passed === false ? "Không đạt yêu cầu" : 
+                isCheckingPlagiarism ? "Đang kiểm tra..." : "Chưa kiểm tra"
+              }</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Tất cả 3 bước kiểm duyệt phải đạt yêu cầu mới có thể thêm chương.
           </p>
         </div>
       )}
@@ -1118,7 +1412,15 @@ export default function ChapterForm() {
           {currentStep < 3 ? (
             <button
               onClick={nextStep}
-              className="px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition"
+              disabled={
+                (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) // Step 1 validation
+                // Step 2: Không disable nút "Tiếp tục" - luôn có thể bấm
+              }
+              className={`px-4 py-2 rounded-lg transition ${
+                (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree)))
+                  ? "bg-gray-600 cursor-not-allowed opacity-50"
+                  : "bg-orange-500 hover:bg-orange-600"
+              }`}
             >
               Tiếp tục
             </button>
@@ -1134,6 +1436,7 @@ export default function ChapterForm() {
                 onClick={handleSaveChapter}
                 disabled={
                   isSaving || 
+                  contentHasMeaning !== true ||
                   !policyResult?.passed || 
                   !plagiarismResult?.passed ||
                   !title.trim() ||
@@ -1141,6 +1444,7 @@ export default function ChapterForm() {
                 }
                 className={`px-4 py-2 rounded-lg transition ${
                   isSaving || 
+                  contentHasMeaning !== true ||
                   !policyResult?.passed || 
                   !plagiarismResult?.passed ||
                   !title.trim() ||

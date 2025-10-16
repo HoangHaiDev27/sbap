@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BusinessObject.Models;
+using BusinessObject.Dtos;
 using Repositories.Interfaces;
 using Services.Interfaces;
 
@@ -43,7 +44,7 @@ namespace Services.Implementations
             return true;
         }
 
-        public Task<List<Book>> GetUserWishlistBooksAsync(int userId)
+        public Task<List<WishlistBookDTO>> GetUserWishlistBooksAsync(int userId)
         {
             return _wishlistRepository.GetUserWishlistBooksAsync(userId);
         }

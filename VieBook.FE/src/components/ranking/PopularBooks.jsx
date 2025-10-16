@@ -1,106 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getRankingList } from "../../api/rankingApi";
 
 export default function PopularBooks() {
   const navigate = useNavigate();
-
-  const popularBooks = [
-    {
-      id: 1,
-      rank: 1,
-      title: "Nhà Giả Kim",
-      author: "Paulo Coelho",
-      listens: 12500,
-      rating: 4.8,
-      duration: "4h 30m",
-      image: "https://picsum.photos/120/160?random=1",
-      trend: "up",
-      liked: false,
-    },
-    {
-      id: 2,
-      rank: 2,
-      title: "Atomic Habits",
-      author: "James Clear",
-      listens: 11200,
-      rating: 4.9,
-      duration: "5h 15m",
-      image: "https://picsum.photos/120/160?random=2",
-      trend: "up",
-      liked: false,
-    },
-    {
-      id: 3,
-      rank: 3,
-      title: "Sapiens",
-      author: "Yuval Noah Harari",
-      listens: 9800,
-      rating: 4.7,
-      duration: "15h 20m",
-      image: "https://picsum.photos/120/160?random=3",
-      trend: "down",
-      liked: false,
-    },
-    {
-      id: 4,
-      rank: 4,
-      title: "Thinking, Fast and Slow",
-      author: "Daniel Kahneman",
-      listens: 8900,
-      rating: 4.6,
-      duration: "20h 45m",
-      image: "https://picsum.photos/120/160?random=4",
-      trend: "same",
-      liked: false,
-    },
-    {
-      id: 5,
-      rank: 5,
-      title: "The Psychology of Money",
-      author: "Morgan Housel",
-      listens: 8200,
-      rating: 4.8,
-      duration: "5h 50m",
-      image: "https://picsum.photos/120/160?random=5",
-      trend: "up",
-      liked: false,
-    },
-    {
-      id: 6,
-      rank: 6,
-      title: "Deep Work",
-      author: "Cal Newport",
-      listens: 7400,
-      rating: 4.5,
-      duration: "7h 30m",
-      image: "https://picsum.photos/120/160?random=6",
-      trend: "up",
-      liked: false,
-    },
-    {
-      id: 7,
-      rank: 7,
-      title: "Rich Dad Poor Dad",
-      author: "Robert Kiyosaki",
-      listens: 6900,
-      rating: 4.4,
-      duration: "6h 40m",
-      image: "https://picsum.photos/120/160?random=7",
-      trend: "down",
-      liked: false,
-    },
-  ];
-
-  const [books, setBooks] = useState(popularBooks);
+  const [books, setBooks] = useState([]);
   const [visibleCount, setVisibleCount] = useState(3);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const toggleLike = (id) => {
-    setBooks((prev) =>
-      prev.map((book) =>
-        book.id === id ? { ...book, liked: !book.liked } : book
-      )
-    );
-  };
+  // Gọi API lấy top sách phổ biến
+   useEffect(() => {
+  async function fetchPopularBooks() {
+    try {
+      setLoading(true);
+      const data = await getRankingList("popular");
+      console.log("Ranking API data:", data);
+
+      const booksWithTrend = (data?.popularBooks || []).map((book, index) => ({
+        ...book,
+        trend:
+          index % 3 === 0
+            ? "up"
+            : index % 3 === 1
+            ? "down"
+            : "same", // 3 trạng thái: ↑ ↓ -
+        liked: false,
+      }));
+
+      setBooks(booksWithTrend);
+    } catch (err) {
+      console.error(err);
+      setError("Không thể tải danh sách sách phổ biến.");
+    } finally {
+      setLoading(false);
+    }
+  }
+  fetchPopularBooks();
+}, []);
+
+
+
+
+  // const toggleLike = (id) => {
+  //   setBooks((prev) =>
+  //     prev.map((book) =>
+  //       book.bookId === id ? { ...book, liked: !book.liked } : book
+  //     )
+  //   );
+  // };
 
   const getRankColor = (rank) => {
     switch (rank) {
@@ -114,7 +62,6 @@ export default function PopularBooks() {
         return "bg-gray-600 text-white";
     }
   };
-
   const getTrendIcon = (trend) => {
     switch (trend) {
       case "up":
@@ -126,24 +73,32 @@ export default function PopularBooks() {
     }
   };
 
+  if (loading) {
+    return <p className="text-gray-400">Đang tải dữ liệu...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-400">{error}</p>;
+  }
+
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Top sách được nghe nhiều nhất</h2>
+      <h2 className="text-xl font-bold mb-4">Top sách phổ biến nhất</h2>
 
       <div className="space-y-4">
-        {books.slice(0, visibleCount).map((book) => (
+        {Array.isArray(books) && books.slice(0, visibleCount).map((book, index) => (
           <div
-            key={book.id}
+            key={book.bookId}
             className="bg-gray-700 rounded-lg p-4 flex items-center space-x-4 hover:bg-gray-600 transition-colors"
           >
             {/* Rank */}
             <div className="flex flex-col items-center">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${getRankColor(
-                  book.rank
+                  index + 1
                 )}`}
               >
-                {book.rank}
+                {index + 1}
               </div>
               {getTrendIcon(book.trend)}
             </div>
@@ -151,7 +106,7 @@ export default function PopularBooks() {
             {/* Book Image */}
             <div className="flex-shrink-0">
               <img
-                src={book.image}
+                src={book.coverUrl || "https://via.placeholder.com/120x160"}
                 alt={book.title}
                 className="w-12 h-16 object-cover rounded"
               />
@@ -160,10 +115,11 @@ export default function PopularBooks() {
             {/* Book Info */}
             <div className="flex-grow">
               <h3 className="font-semibold text-white mb-1">{book.title}</h3>
-              <p className="text-gray-400 text-sm mb-2">{book.author}</p>
+              <p className="text-gray-400 text-sm mb-2">
+                {book.ownerName || "Không rõ tác giả"}
+              </p>
               <div className="flex items-center space-x-4 text-xs text-gray-400">
-                <span>{book.listens.toLocaleString()} lượt nghe</span>
-                <span>{book.duration}</span>
+                <span>{book.totalView?.toLocaleString() || 0} lượt xem</span>
                 <div className="flex items-center space-x-1">
                   <svg
                     className="w-4 h-4 text-yellow-400"
@@ -172,16 +128,16 @@ export default function PopularBooks() {
                   >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.262 3.887a1 1 0 00.95.69h4.084c.969 0 1.371 1.24.588 1.81l-3.305 2.4a1 1 0 00-.364 1.118l1.262 3.887c.3.921-.755 1.688-1.538 1.118l-3.305-2.4a1 1 0 00-1.176 0l-3.305 2.4c-.783.57-1.838-.197-1.538-1.118l1.262-3.887a1 1 0 00-.364-1.118l-3.305-2.4c-.783-.57-.38-1.81.588-1.81h4.084a1 1 0 00.95-.69l1.262-3.887z" />
                   </svg>
-                  <span>{book.rating}</span>
+                  <span>{book.rating?.toFixed(1) || "N/A"}</span>
                 </div>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center space-x-2">
-              {/* Heart button */}
-              <button
-                onClick={() => toggleLike(book.id)}
+              {/* Like button */}
+              {/* <button
+                onClick={() => toggleLike(book.bookId)}
                 className="p-2 transition-colors"
               >
                 <svg
@@ -200,11 +156,11 @@ export default function PopularBooks() {
                       4.5 0 010-6.364z"
                   />
                 </svg>
-              </button>
+              </button> */}
 
-              {/* Play button */}
+              {/* Play / View details */}
               <button
-                onClick={() => navigate(`/bookdetails/${book.id}`)}
+                onClick={() => navigate(`/bookdetails/${book.bookId}`)}
                 className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-full transition-colors"
               >
                 <svg

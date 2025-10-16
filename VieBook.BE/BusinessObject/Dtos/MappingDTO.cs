@@ -50,6 +50,8 @@ namespace BusinessObject.Dtos
                     opt => opt.MapFrom(src => src.Owner.UserProfile.FullName))
                 .ForMember(dest => dest.CategoryIds,
                     opt => opt.MapFrom(src => src.Categories.Select(c => c.CategoryId).ToList()))
+                .ForMember(dest => dest.CategoryNames,                 // ✅ thêm dòng này
+                    opt => opt.MapFrom(src => src.Categories.Select(c => c.Name).ToList()))
                 .ForMember(dest => dest.TotalPrice,
                     opt => opt.MapFrom(src => src.Chapters.Sum(c => c.PriceAudio ?? 0)))
                 .ForMember(dest => dest.Rating,
@@ -58,8 +60,13 @@ namespace BusinessObject.Dtos
                         : 0))
                 .ForMember(dest => dest.Sold,
                     opt => opt.MapFrom(src => src.Chapters
-                        .SelectMany(c => c.OrderItems)   
-                        .Count()));                        
+                        .SelectMany(c => c.OrderItems)
+                        .Count()))
+                .ForMember(dest => dest.TotalRatings,
+                    opt => opt.MapFrom(src => src.BookReviews.Count()))
+                .ForMember(dest => dest.TotalView,
+                    opt => opt.MapFrom(src => src.Chapters.Sum(c => (int?)c.ChapterView) ?? 0));
+
 
 
             // Map từ RegisterRequestDto sang User
@@ -117,11 +124,13 @@ namespace BusinessObject.Dtos
                         .FirstOrDefault()));
 
             CreateMap<User, StaffDTO>()
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address!= null ? src.UserProfile.Address : ""))
                 .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
-                .ForMember(dest => dest.Roles,opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
+                .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
             // User → UserManagementDTO
             CreateMap<User, UserManagementDTO>()
@@ -140,7 +149,8 @@ namespace BusinessObject.Dtos
                     FullName = src.FullName,
                     AvatarUrl = src.AvatarUrl,
                     DateOfBirth = src.DateOfBirth,
-                    PhoneNumber = src.PhoneNumber
+                    PhoneNumber = src.PhoneNumber,
+                    Address = src.Address
 
                 }))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Active"))
@@ -155,7 +165,8 @@ namespace BusinessObject.Dtos
                     FullName = src.FullName,
                     AvatarUrl = src.AvatarUrl,
                     DateOfBirth = src.DateOfBirth,
-                    PhoneNumber = src.PhoneNumber
+                    PhoneNumber = src.PhoneNumber,
+                    Address = src.Address
                 }))
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // nếu cập nhật mật khẩu, xử lý riêng
                 .ForMember(dest => dest.Roles, opt => opt.Ignore()); // giữ nguyên roles
@@ -164,11 +175,13 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile.FullName))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile.AvatarUrl))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile.PhoneNumber))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ReverseMap()
                 .ForPath(dest => dest.UserProfile.FullName, opt => opt.MapFrom(src => src.FullName))
                 .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl))
                 .ForPath(dest => dest.UserProfile.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+                .ForPath(dest => dest.UserProfile.Address, opt => opt.MapFrom(src => src.Address))
                 .ForPath(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
 
 
@@ -178,7 +191,7 @@ namespace BusinessObject.Dtos
                            opt => opt.MapFrom(src => src.Staff.UserProfile.FullName));
             CreateMap<User, UserNameDTO>()
                 .ForMember(dest => dest.UserId,
-                    opt => opt.MapFrom(src => src.UserId)) 
+                    opt => opt.MapFrom(src => src.UserId))
                 .ForMember(dest => dest.Email,
                     opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Name,
@@ -189,6 +202,29 @@ namespace BusinessObject.Dtos
 
             CreateMap<ChapterViewDTO, Chapter>()
                 .ForMember(dest => dest.Book, opt => opt.Ignore());
+
+            // Bookmark mappings
+            CreateMap<Bookmark, BookmarkDTO>().ReverseMap();
+            CreateMap<CreateBookmarkDTO, Bookmark>();
+            // ReadingSchedule mappings
+            CreateMap<ReadingSchedule, ReadingScheduleDTO>()
+                .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))
+                .ForMember(dest => dest.BookCoverUrl, opt => opt.MapFrom(src => src.Book.CoverUrl));
+
+            CreateMap<CreateReadingScheduleDTO, ReadingSchedule>()
+                .ForMember(dest => dest.ScheduleId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            CreateMap<UpdateReadingScheduleDTO, ReadingSchedule>()
+                .ForMember(dest => dest.ScheduleId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.BookId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
         }
     }
 

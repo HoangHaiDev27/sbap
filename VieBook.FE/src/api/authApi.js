@@ -123,6 +123,7 @@ export async function logout() {
 export async function refreshToken() {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
+    console.warn("No refresh token available");
     throw new Error("Không tìm thấy refresh token");
   }
 
@@ -135,6 +136,7 @@ export async function refreshToken() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
+      console.warn(`Refresh token failed: ${res.status} - ${err.message}`);
       throw new Error(err.message || "Refresh token thất bại");
     }
 
@@ -175,8 +177,7 @@ export async function authFetch(input, init = {}) {
         response = await fetch(input, { ...init, headers });
       }
     } catch (error) {
-      // Refresh failed, let the 401 response through
-      console.error("Token refresh failed:", error);
+      // Refresh failed, continue with original response
     }
   }
   

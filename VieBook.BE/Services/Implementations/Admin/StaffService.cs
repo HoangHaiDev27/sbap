@@ -1,6 +1,7 @@
 ﻿using BusinessObject.Models;
 using DataAccess;
 using DataAccess.DAO.Admin;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces.Admin;
 using Services.Interfaces;
@@ -18,14 +19,12 @@ namespace Services.Implementations.Admin
     {
         private readonly IStaffRepository _staffRepo;
         private readonly VieBookContext _context;
-        private readonly StaffDAO _staffDAO;
         private readonly IEmailService _emailService;
         private readonly CloudinaryService _cloudinaryService;
-        public StaffService(IStaffRepository staffRepo, VieBookContext context, StaffDAO staffDAO, IEmailService emailService, CloudinaryService cloudinaryService)
+        public StaffService(IStaffRepository staffRepo, VieBookContext context, IEmailService emailService, CloudinaryService cloudinaryService)
         {
             _staffRepo = staffRepo;
             _context = context;
-            _staffDAO = staffDAO;
             _emailService = emailService;
             _cloudinaryService = cloudinaryService;
         }
@@ -73,9 +72,10 @@ namespace Services.Implementations.Admin
             user.UserProfile.AvatarUrl = user.UserProfile.AvatarUrl;
             user.UserProfile.DateOfBirth = dob;
             user.UserProfile.PhoneNumber = user.UserProfile.PhoneNumber;
+            user.UserProfile.Address = user.UserProfile.Address;
 
             // Lưu xuống DB
-            var newStaff = await _staffDAO.AddAsync(user);
+            var newStaff = await _staffRepo.AddAsync(user);
 
             // Gửi email thông báo
             var subject = "Tài khoản Staff của bạn trên VieBook";
@@ -123,6 +123,7 @@ namespace Services.Implementations.Admin
             existingUser.UserProfile.AvatarUrl = user.UserProfile?.AvatarUrl ?? existingUser.UserProfile.AvatarUrl;
             existingUser.UserProfile.DateOfBirth = dob ?? existingUser.UserProfile.DateOfBirth;
             existingUser.UserProfile.PhoneNumber = user.UserProfile?.PhoneNumber ?? existingUser.UserProfile.PhoneNumber;
+            existingUser.UserProfile.Address = user.UserProfile?.Address ?? existingUser.UserProfile.Address;
 
             // Cập nhật mật khẩu nếu có
             if (!string.IsNullOrWhiteSpace(newPassword))
@@ -145,7 +146,7 @@ namespace Services.Implementations.Admin
                 await _emailService.SendEmailAsync(existingUser.Email, subject, body);
             }
 
-            await _staffDAO.UpdateAsync(existingUser);
+            await _staffRepo.UpdateAsync(existingUser);
             return existingUser;
         }
 
@@ -173,5 +174,42 @@ namespace Services.Implementations.Admin
             else
                 return await _staffRepo.UnlockAsync(id);
         }
+        // Upload avatar mới cho staff (và tự động xóa ảnh cũ)
+        public async Task<string> UploadAvatarAsync(int staffId, IFormFile file)
+        {
+            var staff = await _context.Users
+                .Include(u => u.UserProfile)
+                .FirstOrDefaultAsync(u => u.UserId == staffId);
+
+            if (staff == null)
+                throw new Exception("Không tìm thấy Staff.");
+
+            var oldUrl = staff.UserProfile?.AvatarUrl;
+
+            // Upload ảnh mới và xóa ảnh cũ nếu có
+            var newUrl = await _cloudinaryService.UploadAvatarImageAsync(file, oldUrl);
+
+            // Cập nhật DB
+            staff.UserProfile ??= new UserProfile();
+            staff.UserProfile.AvatarUrl = newUrl;
+
+            await _staffRepo.UpdateAsync(staff);
+
+            return newUrl;
+        }
+        public async Task UpdateAvatarUrlAsync(int staffId, string? newUrl)
+        {
+            var staff = await _staffRepo.GetByIdAsync(staffId);
+            if (staff == null)
+                throw new Exception("Không tìm thấy staff.");
+
+            if (staff.UserProfile == null)
+                staff.UserProfile = new UserProfile();
+
+            staff.UserProfile.AvatarUrl = newUrl;
+
+            await _staffRepo.UpdateAsync(staff);
+        }
+    
     }
 }

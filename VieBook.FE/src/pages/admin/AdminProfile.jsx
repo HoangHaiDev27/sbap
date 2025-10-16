@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  getAdminById,
-  updateAdmin,
-  uploadAvatarImage,
-  removeOldAvatarImage,
-} from "../../api/adminApi";
+import { getAdminById, updateAdmin } from "../../api/adminApi";
 import { changePassword } from "../../api/authApi";
+import { useAdminStore } from "../../hooks/stores/useAdminStore";
 
 export default function AdminProfile() {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -13,6 +9,8 @@ export default function AdminProfile() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  
+  const { updateAdmin: updateAdminStore } = useAdminStore(); // ✅ store
 
   const defaultAvatar =
     "https://res.cloudinary.com/dwduk4vjl/image/upload/v1759596363/avatarImages/lb7harseupgw3uwprpjc.jpg";
@@ -24,7 +22,7 @@ export default function AdminProfile() {
     id: null,
     fullName: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     address: "",
     avatarUrl: "",
   });
@@ -46,88 +44,79 @@ export default function AdminProfile() {
     try {
       const authUser = JSON.parse(authUserStr);
       const adminId = authUser.userId;
-      const fetchAdmin = async () => {
+
+      const fetchAdminInfo = async () => {
         try {
           const data = await getAdminById(adminId);
-          setAdminInfo({
+          const newAdminInfo = {
             id: adminId,
             fullName: data.fullName || "",
             email: data.email || "",
-            phone: data.phoneNumber || "",
+            phoneNumber: data.phoneNumber || "",
             address: data.address || "",
-            avatarUrl: data.avatarUrl || "",
-          });
-          setAvatarUrl(data.avatarUrl || defaultAvatar);
+            avatarUrl: data.avatarUrl || defaultAvatar,
+          };
+          setAdminInfo(newAdminInfo);
+          setAvatarUrl(newAdminInfo.avatarUrl);
+          
+          // ✅ Cập nhật Zustand store để Header/Footer tự re-render
+          updateAdminStore(newAdminInfo);
+
         } catch (err) {
           console.error("Lấy thông tin admin lỗi:", err);
         }
       };
-      fetchAdmin();
+      fetchAdminInfo();
     } catch (err) {
       console.error("Parse auth_user lỗi:", err);
     }
-  }, []);
+  }, [updateAdminStore]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setAdminInfo((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // ✅ Xử lý lưu thông tin
+  // ✅ Xử lý lưu thông tin admin
   const handleSave = async (e) => {
-    e.preventDefault(); // Ngăn reload & trigger validation
+    e.preventDefault();
     try {
-      let uploadedAvatarUrl = adminInfo.avatarUrl;
+      const formData = new FormData();
+      formData.append("FullName", adminInfo.fullName);
+      formData.append("Email", adminInfo.email);
+      formData.append("PhoneNumber", adminInfo.phoneNumber);
+      formData.append("Address", adminInfo.address);
 
-      if (avatarFile) {
-        if (adminInfo.avatarUrl && adminInfo.avatarUrl !== defaultAvatar) {
-          await removeOldAvatarImage(adminInfo.avatarUrl);
-        }
+      if (avatarFile) formData.append("avatarFile", avatarFile);
 
-        const formData = new FormData();
-        formData.append("file", avatarFile);
-        uploadedAvatarUrl = await uploadAvatarImage(formData);
-      }
+      const res = await updateAdmin(adminInfo.id, formData);
+      const updated = res.data;
 
-      const updatedData = {
-        fullName: adminInfo.fullName,
-        email: adminInfo.email,
-        phoneNumber: adminInfo.phone,
-        address: adminInfo.address || "FPT University, Da Nang",
-        avatarUrl: uploadedAvatarUrl || defaultAvatar,
+      const newAdmin = {
+        ...adminInfo,
+        ...updated,
+        avatarUrl: updated.avatarUrl || avatarUrl,
       };
 
-      const res = await updateAdmin(adminInfo.id, updatedData);
-
-      setAdminInfo((prev) => ({
-        ...prev,
-        fullName: res.data.fullName || updatedData.fullName,
-        email: res.data.email || updatedData.email,
-        phone: res.data.phoneNumber || updatedData.phoneNumber,
-        address: res.data.address || updatedData.address,
-        avatarUrl: uploadedAvatarUrl,
-      }));
-
-      setAvatarUrl(uploadedAvatarUrl || defaultAvatar);
-      setAvatarFile(null);
+      setAdminInfo(newAdmin);
+      setAvatarUrl(newAdmin.avatarUrl);
       setShowEditModal(false);
+      setAvatarFile(null);
 
+      updateAdminStore(newAdmin);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "success", message: "Cập nhật thông tin thành công" },
         })
       );
     } catch (error) {
-      console.error("Update admin error:", error.message);
+      console.error(error);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
-          detail: {
-            type: "error",
-            message: error.message || "Cập nhật thất bại",
-          },
+          detail: { type: "error", message: error.message || "Cập nhật thất bại" },
         })
       );
     }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setAdminInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   // ✅ Đổi mật khẩu
@@ -228,7 +217,7 @@ export default function AdminProfile() {
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Số điện thoại</p>
-            <p className="text-base text-gray-800">{adminInfo.phone || "0345 510 055"}</p>
+            <p className="text-base text-gray-800">{adminInfo.phoneNumber || "0345 510 055"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500 font-medium">Địa chỉ</p>
@@ -295,14 +284,14 @@ export default function AdminProfile() {
                 </div>
               </div>
 
-              {["fullName", "email", "phone", "address"].map((key) => (
+              {["fullName", "email", "phoneNumber", "address"].map((key) => (
                 <div key={key}>
                   <label className="text-sm font-medium">
                     {key === "fullName"
                       ? "Họ và tên *"
                       : key === "email"
                       ? "Email *"
-                      : key === "phone"
+                      : key === "phoneNumber"
                       ? "Số điện thoại *"
                       : "Địa chỉ"}
                   </label>
@@ -311,7 +300,7 @@ export default function AdminProfile() {
                     type={
                       key === "email"
                         ? "email"
-                        : key === "phone"
+                        : key === "phoneNumber"
                         ? "tel"
                         : "text"
                     }
@@ -319,10 +308,10 @@ export default function AdminProfile() {
                     value={adminInfo[key] || ""}
                     onChange={handleChange}
                     disabled={key === "email"}
-                    required={key === "fullName" || key === "phone"}
-                    pattern={key === "phone" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
+                    required={key === "fullName" || key === "phoneNumber" || key === "address"}
+                    pattern={key === "phoneNumber" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
                     title={
-                      key === "phone"
+                      key === "phoneNumber"
                         ? "Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9])"
                         : undefined
                     }
@@ -332,7 +321,7 @@ export default function AdminProfile() {
                     placeholder={
                       key === "fullName"
                         ? "Nhập họ và tên"
-                        : key === "phone"
+                        : key === "phoneNumber"
                         ? "0905123456"
                         : ""
                     }

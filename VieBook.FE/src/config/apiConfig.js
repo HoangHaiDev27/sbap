@@ -13,6 +13,16 @@ export const API_ENDPOINTS = {
   AUDIO_BOOK_DETAIL: (id) => `${API_BASE_URL}/api/books/audio/${id}`,
   RELATED_BOOKS: (id) => `${API_BASE_URL}/api/books/${id}/related`,
 
+  // Reviews
+  REVIEWS: {
+    BY_BOOK: (bookId) => `${API_BASE_URL}/api/bookreviews/book/${bookId}`,
+    CREATE: `${API_BASE_URL}/api/bookreviews`,
+    OWNER_REPLY: (reviewId) => `${API_BASE_URL}/api/bookreviews/${reviewId}/reply`,
+    CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`,
+    OWNER: `${API_BASE_URL}/api/bookreviews/owner`,
+    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`
+  },
+
 
 
   // Auth endpoints
@@ -40,15 +50,26 @@ export const API_ENDPOINTS = {
   // OpenAI endpoints
   OPENAI: {
     CHECK_SPELLING: `${API_BASE_URL}/api/openai/check-spelling`,
+    CHECK_MEANING: `${API_BASE_URL}/api/openai/check-meaning`,
     MODERATION: `${API_BASE_URL}/api/openai/moderation`,
     CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
     GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
+    SUMMARIZE: `${API_BASE_URL}/api/openai/summarize`,
   },
 
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
   USER_UNREAD_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}/unread`,
+
+  // Bookmark endpoints
+  BOOKMARKS: {
+    USER_BOOKMARKS: `${API_BASE_URL}/api/bookmark/user`,
+    CHAPTER: `${API_BASE_URL}/api/bookmark/chapter`,
+    CREATE_UPDATE: `${API_BASE_URL}/api/bookmark`,
+    DELETE: `${API_BASE_URL}/api/bookmark`,
+    DELETE_CHAPTER: `${API_BASE_URL}/api/bookmark/chapter`,
+  },
   USER_UNREAD_COUNT: (userId) => `${API_BASE_URL}/api/notification/user/${userId}/unread-count`,
   USER_RECENT_NOTIFICATIONS: (userId, count = 10) => `${API_BASE_URL}/api/notification/user/${userId}/recent?count=${count}`,
   NOTIFICATION_MARK_READ: (id) => `${API_BASE_URL}/api/notification/${id}/mark-read`,
@@ -61,6 +82,13 @@ export const API_ENDPOINTS = {
     CHECK_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-ownership`,
     MY_PURCHASES: `${API_BASE_URL}/api/chapterpurchase/my-purchases`,
   },
+
+  // Order Item endpoints
+  ORDER_ITEM: {
+    PURCHASED_BOOKS: (userId) => `${API_BASE_URL}/api/OrderItem/purchased-books/${userId}`,
+    GET_BY_ID: (orderItemId) => `${API_BASE_URL}/api/OrderItem/${orderItemId}`,
+    PURCHASED_CHAPTERS: (userId, bookId) => `${API_BASE_URL}/api/OrderItem/purchased-chapters/${userId}/${bookId}`,
+  },
   // Wishlist endpoints
   WISHLIST: {
     CHECK: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}/check`,
@@ -68,6 +96,19 @@ export const API_ENDPOINTS = {
     REMOVE: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}`,
     TOGGLE: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}/toggle`,
     MY_LIST: `${API_BASE_URL}/api/wishlist/me`,
+  },
+
+  // Feedback endpoints
+  FEEDBACK: {
+    BOOK_REPORT: `${API_BASE_URL}/api/feedback/book-report`,
+  },
+
+  // Reading History endpoints
+  READING_HISTORY: {
+    BASE: `${API_BASE_URL}/api/ReadingHistory`,
+    SAVE_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/save-progress`,
+    CURRENT_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/current-progress`,
+    PAGINATED: `${API_BASE_URL}/api/ReadingHistory/paginated`,
   },
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,
@@ -112,6 +153,10 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/promotions`,
     STATS_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}/stats`
   },
+  RANK: {
+    GETRANKINGSUMMARY: `${API_BASE_URL}/api/rankings`,
+    GETRANKINGLIST: `${API_BASE_URL}/api/rankings/details`,
+  },
 
 
 
@@ -125,11 +170,11 @@ export const API_ENDPOINTS = {
     DELETE: (staffId) => `${API_BASE_URL}/api/staff/delete/${staffId}`,
     LOCK: (staffId) => `${API_BASE_URL}/api/staff/lock/${staffId}`,
     UNLOCK: (staffId) => `${API_BASE_URL}/api/staff/unlock/${staffId}`,
-    TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`
+    TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`,
   },
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
-    UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`
+    UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`,
   },
   BOOKAPPROVAL: {
     GET_ALL: `${API_BASE_URL}/api/BookApproval`,

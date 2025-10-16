@@ -7,11 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using DataAccess;
+using Services.Interfaces;
 
 
 namespace Services.Implementations
 {
-    public class CloudinaryService
+    public class CloudinaryService : ICloudinaryService
     {
         private readonly Cloudinary _cloudinary;
 
@@ -168,6 +170,30 @@ namespace Services.Implementations
             await using var stream = file.OpenReadStream();
             return await UploadAudioAsync(stream, Path.GetFileNameWithoutExtension(file.FileName));
         }
+          // --- Upload avatar mới và xóa ảnh cũ nếu có ---
+        public async Task<string> UploadAvatarImageAsync(IFormFile file, string oldAvatarUrl = null)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File không hợp lệ.");
+
+            // Nếu có ảnh cũ thì xóa trước
+            if (!string.IsNullOrWhiteSpace(oldAvatarUrl))
+                await DeleteImageAsync(oldAvatarUrl);
+
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = "avatarImages"
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                return uploadResult.SecureUrl.ToString();
+
+            throw new Exception("Upload avatar thất bại.");
+        }
+        
     }
 
     public class CloudinarySettings

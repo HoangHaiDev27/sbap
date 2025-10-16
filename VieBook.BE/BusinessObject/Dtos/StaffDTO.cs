@@ -18,5 +18,6 @@ namespace BusinessObject.Dtos
         public string Roles { get; set; } = string.Empty;
         public DateOnly? DateOfBirth { get; set; }
         public string PhoneNumber { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
     }
 }

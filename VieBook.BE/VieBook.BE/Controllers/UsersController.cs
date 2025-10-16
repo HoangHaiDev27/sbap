@@ -9,6 +9,7 @@ using Services.Interfaces;
 using VieBook.BE.Attributes;
 using VieBook.BE.Constants;
 using BusinessObject.Dtos;
+using BusinessObject.PayOs;
 
 namespace VieBook.BE.Controllers
 {
@@ -18,10 +19,13 @@ namespace VieBook.BE.Controllers
     {
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
-        public UsersController(IUserService userService, IMapper mapper)
+        private readonly IWalletTransactionService _walletTransactionService;
+        
+        public UsersController(IUserService userService, IMapper mapper, IWalletTransactionService walletTransactionService)
         {
             _userService = userService;
             _mapper = mapper;
+            _walletTransactionService = walletTransactionService;
         }
 
         [Authorize]
@@ -154,6 +158,68 @@ namespace VieBook.BE.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] GetCurrentUser: {ex}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
+            }
+        }
+
+        /// <summary>
+        /// Lấy thông tin subscription của user hiện tại
+        /// </summary>
+        [Authorize]
+        [HttpGet("me/subscription")]
+        public async Task<IActionResult> GetCurrentUserSubscription()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var subscription = await _userService.GetUserActiveSubscriptionAsync(userId);
+                if (subscription == null)
+                {
+                    return Ok(new { 
+                        message = "User không có subscription active", 
+                        subscription = (object?)null,
+                        memberType = "Thành viên bình thường"
+                    });
+                }
+
+                return Ok(new
+                {
+                    subscriptionId = subscription.SubscriptionId,
+                    userId = subscription.UserId,
+                    planId = subscription.PlanId,
+                    status = subscription.Status,
+                    autoRenew = subscription.AutoRenew,
+                    startAt = subscription.StartAt,
+                    endAt = subscription.EndAt,
+                    remainingConversions = subscription.RemainingConversions,
+                    cancelAt = subscription.CancelAt,
+                    createdAt = subscription.CreatedAt,
+                    memberType = "Thành viên có gói",
+                    plan = new
+                    {
+                        planId = subscription.Plan.PlanId,
+                        name = subscription.Plan.Name,
+                        forRole = subscription.Plan.ForRole,
+                        period = subscription.Plan.Period,
+                        price = subscription.Plan.Price,
+                        currency = subscription.Plan.Currency,
+                        trialDays = subscription.Plan.TrialDays,
+                        conversionLimit = subscription.Plan.ConversionLimit,
+                        status = subscription.Plan.Status
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetCurrentUserSubscription: {ex}");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
             }
         }
@@ -424,5 +490,62 @@ namespace VieBook.BE.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Có lỗi xảy ra" });
             }
         }
+
+        /// <summary>
+        /// Lấy lịch sử giao dịch của user hiện tại (kết hợp WalletTransaction và OrderItem)
+        /// </summary>
+        [Authorize]
+        [HttpGet("transaction-history")]
+        public async Task<IActionResult> GetUserTransactionHistory()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var history = await _walletTransactionService.GetUserTransactionHistoryAsync(userId);
+                return Ok(new Response(0, "Success", history));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetUserTransactionHistory: {ex}");
+                return BadRequest(new Response(-1, ex.Message, null));
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách giao dịch ví của user hiện tại
+        /// </summary>
+        [Authorize]
+        [HttpGet("wallet-transactions")]
+        public async Task<IActionResult> GetUserWalletTransactions()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var transactions = await _walletTransactionService.GetUserTransactionsAsync(userId);
+                return Ok(new Response(0, "Success", transactions));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetUserWalletTransactions: {ex}");
+                return BadRequest(new Response(-1, ex.Message, null));
+            }
+        }
+
     }
 }

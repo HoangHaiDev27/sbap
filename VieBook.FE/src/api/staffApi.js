@@ -1,25 +1,34 @@
 import { API_ENDPOINTS } from "../config/apiConfig";
 
 async function handleFetch(url, options = {}, defaultError) {
-  const res = await fetch(url, options);
+  try {
+    const res = await fetch(url, options);
 
-  if (!res.ok) {
-    let errorMessage = defaultError;
-    try {
-      const data = await res.json();
-      errorMessage = data.message || errorMessage;
-    } catch {
-      if (res.status === 500) {
-        errorMessage = "Lỗi hệ thống.";
+    if (!res.ok) {
+      let errorMessage = defaultError;
+      try {
+        const data = await res.json();
+        errorMessage = data.message || errorMessage;
+      } catch {
+        if (res.status === 500) errorMessage = "Lỗi hệ thống.";
       }
+      throw new Error(errorMessage);
     }
-    throw new Error(errorMessage);
+
+    // Nếu là 204 No Content hoặc response không có body
+    const contentLength = res.headers.get("content-length");
+    if (res.status === 204 || contentLength === "0") return true;
+
+    // Parse JSON, nếu fail trả true để tránh lỗi chunked
+    try {
+      return await res.json();
+    } catch {
+      return true;
+    }
+  } catch (err) {
+    // Catch network / chunked encoding errors
+    throw new Error(err.message || defaultError);
   }
-
-  // Nếu là 204 No Content thì không parse JSON
-  if (res.status === 204) return true;
-
-  return res.json();
 }
 
 // ================= STAFF API =================
@@ -43,25 +52,23 @@ export async function getStaffById(staffId) {
   }, "Failed to fetch staff detail");
 }
 
-export async function addStaff(data) {
+export async function addStaff(formData) {
   return handleFetch(API_ENDPOINTS.STAFF.ADD, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-    body: JSON.stringify(data),
+    body: formData,
   }, "Failed to add staff");
 }
 
-export async function updateStaff(staffId, data) {
+export async function updateStaff(staffId, formData) {
   return handleFetch(API_ENDPOINTS.STAFF.UPDATE(staffId), {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
       "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
-    body: JSON.stringify(data),
+    body: formData,
   }, "Failed to update staff");
 }
 
@@ -105,15 +112,24 @@ export async function toggleStaffStatus(staffId) {
   }, "Failed to toggle staff status");
 }
 
-export async function uploadAvatarStaffImage(formData) {
-  const res = await fetch(API_ENDPOINTS.UPLOADAVATARIMAGE, {
-    method: "POST",
-    body: formData,
-  });
-  if (!res.ok) throw new Error("Upload ảnh thất bại");
-  const data = await res.json();
-  return data.imageUrl;
-}
+    export async function updateStaffAvatar(staffId, formData) {
+      const res = await fetch(API_ENDPOINTS.STAFF.UPDATE_AVATAR(staffId), {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Upload avatar thất bại");
+      }
+
+      const data = await res.json();
+      return data.avatarUrl;
+    }
+  
 // xóa ảnh trên Cloudinary
 export async function removeOldAvatarStaffImage(imageUrl) {
   const res = await fetch(
