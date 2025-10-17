@@ -122,11 +122,10 @@ export default function OwnerChapters() {
 
       window.dispatchEvent(
         new CustomEvent("app:toast", {
-          detail: { type: "success", message: "Đã chuyển chapter sang trạng thái InActive" },
+          detail: { type: "success", message: "Đã chuyển chương sang trạng thái tạm dừng" },
         })
       );
     } catch (err) {
-      console.error("Failed to update chapter status:", err);
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "error", message: "Cập nhật trạng thái thất bại" },
