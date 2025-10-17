@@ -246,7 +246,7 @@ export default function BookEditForm() {
 
             {/* isbn */}
             <div>
-              <label className="block mb-2 text-sm font-medium">Mã ISBN *</label>
+              <label className="block mb-2 text-sm font-medium">Mã ISBN</label>
               <input
                 name="isbn"
                 value={form.isbn}
@@ -294,7 +294,7 @@ export default function BookEditForm() {
 
             {/* cover preview (giống bên Add) */}
             <div className="md:col-span-2 mt-6">
-              <label className="block mb-2 text-sm font-medium">Ảnh bìa</label>
+              <label className="block mb-2 text-sm font-medium">Ảnh bìa*</label>
               <div
                 className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-700 cursor-pointer hover:border-orange-500"
                 onClick={() => document.getElementById("coverInput").click()}

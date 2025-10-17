@@ -120,7 +120,7 @@ CREATE TABLE dbo.Books (
   Title       NVARCHAR(300) NOT NULL,
   Description NVARCHAR(MAX) NULL,
   CoverUrl    VARCHAR(1000) NULL,
-  ISBN        VARCHAR(20) NULL UNIQUE,
+  ISBN        VARCHAR(20) NULL,
   Language    VARCHAR(20) NULL,
   Status      VARCHAR(20) NOT NULL,              -- KHÔNG đặt CHECK/DEFAULT
   TotalView   INT NOT NULL DEFAULT(0),
@@ -1496,9 +1496,14 @@ VALUES
 (9, 3), --Book Owner
 (9, 4), --Customer
 (10, 4), --Customer
-(11, 3); --owner
-ALTER TABLE dbo.UserProfiles ADD Address VARCHAR(200) NULL;
+(11, 3); --Customer
 
+ALTER TABLE Chapters
+ADD VoiceName NVARCHAR(200) NULL;
+
+-- Hương//////////
+ALTER TABLE dbo.UserProfiles ADD Address VARCHAR(200) NULL;
+---------------------------
 -- =========================================================
 -- Reading History - Lịch sử đọc/nghe
 -- =========================================================
