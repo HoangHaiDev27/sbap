@@ -65,6 +65,8 @@ public partial class VieBookContext : DbContext
 
     public virtual DbSet<ReadingSchedule> ReadingSchedules { get; set; }
 
+    public virtual DbSet<ReminderSettings> ReminderSettings { get; set; }
+
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Subscription> Subscriptions { get; set; }

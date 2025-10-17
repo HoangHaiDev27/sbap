@@ -39,6 +39,5 @@ namespace DataAccess.DAO
                 .FirstOrDefaultAsync(el => el.Provider == provider && el.ProviderKey == providerKey);
         }
 
-        // nếu cần thêm Create/Delete...
     }
 }
