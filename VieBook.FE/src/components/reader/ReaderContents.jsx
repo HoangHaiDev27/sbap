@@ -4,7 +4,7 @@ import { getUserId } from "../../api/authApi";
 import { checkChapterOwnership } from "../../api/chapterPurchaseApi";
 import toast from "react-hot-toast";
 
-export default function ReaderContents({ book, onClose }) {
+export default function ReaderContents({ book, purchasedChapters = [], onClose, onRefreshPurchases }) {
   // Sử dụng dữ liệu thật từ book prop thay vì mock data
   const chapters = book?.chapters || [];
   const [chapterOwnership, setChapterOwnership] = useState({}); // Lưu trạng thái sở hữu chương
@@ -14,29 +14,67 @@ export default function ReaderContents({ book, onClose }) {
   console.log("ReaderContents - book.id:", book?.id);
   console.log("ReaderContents - book.bookId:", book?.bookId);
   console.log("ReaderContents - chapters:", chapters);
+  console.log("ReaderContents - purchasedChapters:", purchasedChapters);
 
-  // Kiểm tra quyền sở hữu chương khi component mount
+  // Kiểm tra quyền sở hữu chương khi component mount hoặc khi chapters thay đổi
   useEffect(() => {
     async function checkOwnership() {
       const isLoggedIn = getUserId() !== null;
       if (isLoggedIn && chapters.length > 0) {
-        const ownershipPromises = chapters.map(async (chapter) => {
-          const result = await checkChapterOwnership(chapter.chapterId);
-          return { chapterId: chapter.chapterId, isOwned: result.isOwned || false };
-        });
-        
-        const ownershipResults = await Promise.all(ownershipPromises);
-        const ownershipMap = {};
-        ownershipResults.forEach(result => {
-          ownershipMap[result.chapterId] = result.isOwned;
-        });
-        setChapterOwnership(ownershipMap);
+        console.log("ReaderContents - Checking ownership for chapters:", chapters.map(c => c.chapterId));
+        try {
+          const ownershipPromises = chapters.map(async (chapter) => {
+            const result = await checkChapterOwnership(chapter.chapterId);
+            console.log(`ReaderContents - Chapter ${chapter.chapterId} ownership:`, result);
+            return { chapterId: chapter.chapterId, isOwned: result.isOwned || false };
+          });
+          
+          const ownershipResults = await Promise.all(ownershipPromises);
+          const ownershipMap = {};
+          ownershipResults.forEach(result => {
+            ownershipMap[result.chapterId] = result.isOwned;
+          });
+          setChapterOwnership(ownershipMap);
+          console.log("ReaderContents - Updated ownership map:", ownershipMap);
+        } catch (error) {
+          console.error("ReaderContents - Error checking ownership:", error);
+        }
       } else {
         setChapterOwnership({});
       }
     }
     checkOwnership();
-  }, [chapters]);
+  }, [chapters]); // Chạy khi chapters thay đổi
+
+  // Refresh ownership mỗi khi component được mount (modal mở)
+  useEffect(() => {
+    if (chapters.length > 0) {
+      async function refreshOwnership() {
+        const isLoggedIn = getUserId() !== null;
+        if (isLoggedIn) {
+          console.log("ReaderContents - Refreshing ownership on modal open");
+          try {
+            const ownershipPromises = chapters.map(async (chapter) => {
+              const result = await checkChapterOwnership(chapter.chapterId);
+              console.log(`ReaderContents - Modal open - Chapter ${chapter.chapterId} ownership:`, result);
+              return { chapterId: chapter.chapterId, isOwned: result.isOwned || false };
+            });
+            
+            const ownershipResults = await Promise.all(ownershipPromises);
+            const ownershipMap = {};
+            ownershipResults.forEach(result => {
+              ownershipMap[result.chapterId] = result.isOwned;
+            });
+            setChapterOwnership(ownershipMap);
+            console.log("ReaderContents - Refreshed ownership map on open:", ownershipMap);
+          } catch (error) {
+            console.error("ReaderContents - Error refreshing ownership:", error);
+          }
+        }
+      }
+      refreshOwnership();
+    }
+  }, []); // Empty dependency - chỉ chạy khi component mount
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -66,7 +104,8 @@ export default function ReaderContents({ book, onClose }) {
             {chapters.map((chapter, index) => {
               const hasSoftUrl = chapter.chapterSoftUrl && chapter.chapterSoftUrl.trim() !== "";
               const isLoggedIn = getUserId() !== null;
-              const isOwned = chapterOwnership[chapter.chapterId] || false;
+              // Ưu tiên sử dụng purchasedChapters prop, fallback về chapterOwnership
+              const isOwned = purchasedChapters.includes(chapter.chapterId) || chapterOwnership[chapter.chapterId] || false;
               const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
               const isDisabled = !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
               const chapterNumber = index + 1;
@@ -76,7 +115,15 @@ export default function ReaderContents({ book, onClose }) {
                 chapterId: chapter.chapterId,
                 chapterTitle: chapter.chapterTitle,
                 chapterNumber: chapterNumber,
-                index: index
+                index: index,
+                isOwned: isOwned,
+                isFree: isFree,
+                isDisabled: isDisabled,
+                purchasedChapters: purchasedChapters,
+                chapterOwnership: chapterOwnership,
+                priceAudio: chapter.priceAudio,
+                purchasedChaptersIncludes: purchasedChapters.includes(chapter.chapterId),
+                chapterOwnershipValue: chapterOwnership[chapter.chapterId]
               });
               
               return (

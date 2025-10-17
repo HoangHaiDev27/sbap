@@ -68,7 +68,7 @@ export default function ReaderHeader({
         >
           <RiBookmarkLine size={20} />
           <span className="hidden sm:inline">
-            Dấu trang ({bookmarks.length})
+            Dấu chương ({bookmarks.length})
           </span>
         </button>
 

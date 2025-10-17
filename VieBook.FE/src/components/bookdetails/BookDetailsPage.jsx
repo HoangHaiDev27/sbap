@@ -324,8 +324,25 @@ export default function BookDetailPage() {
         bookTitle={title}
         bookId={id}
         chapters={chapters}
-        onPurchaseSuccess={(purchasedChapters) => {
-          console.log("Purchased chapters:", purchasedChapters);
+        onPurchaseSuccess={async (newlyPurchasedChapters) => {
+          console.log("Newly purchased chapters:", newlyPurchasedChapters);
+          // Cập nhật state ngay lập tức bằng cách thêm các chương vừa mua
+          setPurchasedChapters(prevPurchased => {
+            const updatedPurchased = [...new Set([...prevPurchased, ...newlyPurchasedChapters])];
+            console.log("BookDetailsPage - Updated purchased chapters immediately:", updatedPurchased);
+            return updatedPurchased;
+          });
+          
+          // Cũng reload từ API để đảm bảo sync (chạy ngầm)
+          try {
+            const response = await getMyPurchases();
+            const purchases = response?.data || [];
+            const purchasedChapterIds = purchases.map((p) => p.chapterId);
+            setPurchasedChapters(purchasedChapterIds);
+            console.log("BookDetailsPage - Synced with API:", purchasedChapterIds);
+          } catch (error) {
+            console.error("Error syncing purchased chapters:", error);
+          }
         }}
       />
 
@@ -366,6 +383,15 @@ export default function BookDetailPage() {
                     chapter.chapterSoftUrl.trim() !== "";
                   const isLoggedIn = getUserId() !== null;
                   const isOwned = purchasedChapters.includes(chapter.chapterId);
+                  // Debug log để theo dõi trạng thái sở hữu
+                  if (index === 0) {
+                    console.log("BookDetailsPage - Chapter ownership check:", {
+                      chapterId: chapter.chapterId,
+                      isOwned,
+                      purchasedChapters,
+                      totalPurchased: purchasedChapters.length
+                    });
+                  }
                   const isFree =
                     !chapter.priceAudio || chapter.priceAudio === 0;
                   const isDisabled =
