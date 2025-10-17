@@ -146,7 +146,7 @@ export async function updateChapter(chapterId, payload) {
     if (res.status === 404) {
       throw new Error("Chapter not found");
     }
-    throw new Error("Failed to update chapter");
+    throw new Error("Cập nhật chương thất bại");
   }
 
   return res.json();
@@ -200,3 +200,22 @@ export async function getWordCountFromUrl(url) {
 }
 
 ////////////////////////////
+// Gọi API chuyển văn bản thành audio (TTS)
+export async function generateChapterAudio(chapterId, voiceName = "banmai", speed = 1.0) {
+  const res = await fetch(
+    API_ENDPOINTS.AUDIO_CONVERSION.GENERATE(chapterId, voiceName, speed),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error("Không tìm thấy chương cần chuyển audio");
+    }
+    throw new Error("Tạo audio thất bại");
+  }
+
+  return res.json();
+}

@@ -27,6 +27,7 @@ public partial class Chapter
 
     public DateTime UploadedAt { get; set; }
     public string? Status { get; set; }
+    public string? VoiceName { get; set; }
 
     public virtual Book Book { get; set; } = null!;
 

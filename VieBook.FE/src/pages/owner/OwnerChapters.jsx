@@ -158,7 +158,15 @@ export default function OwnerChapters() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Quản lý Chương</h1>
+          <div className="mb-4">
+            <button
+              onClick={() => navigate("/owner/books")}
+              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm mb-2"
+            >
+              ← Quay lại
+            </button>
+            <h1 className="text-2xl font-bold">Quản lý Chương</h1>
+          </div>
           <p className="text-gray-400 text-xl">{bookTitle}</p>
         </div>
 
@@ -211,108 +219,116 @@ export default function OwnerChapters() {
       {/* Chapter list */}
       <div className="bg-slate-800 rounded-lg shadow-lg p-4">
         <h2 className="text-lg font-semibold mb-4">Danh sách chương</h2>
-        <div className="space-y-3">
-          {paginatedChapters.map((ch, index) => {
-            const globalIndex = (currentPage - 1) * pageSize + index + 1;
-            const isFree = ch.priceAudio === 0;
-            const hasAudio = !!ch.chapterAudioUrl;
+        {chapters.length === 0 ? (
+          <p className="text-center text-gray-400 py-10">
+            Sách này chưa có chương nào.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {
+              paginatedChapters.map((ch, index) => {
+                const globalIndex = (currentPage - 1) * pageSize + index + 1;
+                const isFree = ch.priceAudio === 0;
+                const hasAudio = !!ch.chapterAudioUrl;
 
-            // status badge
-            let statusBadge = null;
-            switch (ch.status) {
-              case "Draft":
-                statusBadge = (
-                  <span className="ml-2 px-2 py-0.5 bg-purple-500 text-white rounded text-xs">Bản nháp</span>
+                // status badge
+                let statusBadge = null;
+                switch (ch.status) {
+                  case "Draft":
+                    statusBadge = (
+                      <span className="ml-2 px-2 py-0.5 bg-purple-500 text-white rounded text-xs">Bản nháp</span>
+                    );
+                    break;
+                  case "Active":
+                    statusBadge = (
+                      <span className="ml-2 px-2 py-0.5 bg-green-500 text-white rounded text-xs">Phát hành</span>
+                    );
+                    break;
+                  case "InActive":
+                    statusBadge = (
+                      <span className="ml-2 px-2 py-0.5 bg-red-500 text-white rounded text-xs">Tạm dừng</span>
+                    );
+                    break;
+                  default:
+                    statusBadge = (
+                      <span className="ml-2 px-2 py-0.5 bg-slate-500 text-white rounded text-xs">Không rõ</span>
+                    );
+                }
+
+                return (
+                  <div key={ch.chapterId} className="flex items-center justify-between bg-slate-700 p-3 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white">
+                        Chương {globalIndex}
+                      </span>
+
+                      <div>
+                        <p className="font-semibold">{ch.chapterTitle}</p>
+
+                        <p className="text-xs text-gray-400 mt-2 flex items-center flex-wrap gap-2">
+                          <span className="inline-block min-w-[90px]">
+                            {wordCounts[ch.chapterId] !== undefined
+                              ? `${wordCounts[ch.chapterId]} từ`
+                              : "Đang đếm..."}
+                          </span>
+                          {statusBadge}
+                          {hasAudio && (
+                            <>
+                              <span className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs">Audio</span>
+                              <span className="text-xs text-gray-300">{formatDuration(ch.durationSec)}</span>
+                            </>
+                          )}
+                        </p>
+
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      {/* Giá / Miễn phí */}
+                      {isFree ? (
+                        <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">Miễn phí</span>
+                      ) : (
+                        <span className="text-orange-400 font-semibold">{ch.priceAudio.toLocaleString()} xu</span>
+                      )}
+
+                      <span className="text-sm text-gray-400">{formatDateSafe(ch.uploadedAt)}</span>
+
+                      {/* CHỨC NĂNG: Sửa / Xem / Xóa */}
+                      <div className="flex space-x-2">
+                        <Link
+                          to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
+                          state={{ bookTitle }}
+                          className="px-2 py-1 min-w-[50px] text-center bg-green-500 rounded text-xs text-white hover:bg-green-600"
+                          aria-label={`Sửa chương ${ch.chapterTitle}`}
+                        >
+                          Sửa
+                        </Link>
+
+                        <Link
+                          to={`/owner/books/${bookId}/chapters/view/${ch.chapterId}`}
+                          state={{ bookTitle }}
+                          className="px-2 py-1 min-w-[50px] text-center bg-purple-500 rounded text-xs text-white hover:bg-purple-600"
+                          aria-label={`Xem chương ${ch.chapterTitle}`}
+                        >
+                          Xem
+                        </Link>
+
+                        <button
+                          onClick={() => setChapterToDelete(ch.chapterId)}
+                          className="px-2 py-1 min-w-[50px] text-center bg-red-500 rounded text-xs text-white hover:bg-red-600"
+                          aria-label={`Xóa chương ${ch.chapterTitle}`}
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 );
-                break;
-              case "Active":
-                statusBadge = (
-                  <span className="ml-2 px-2 py-0.5 bg-green-500 text-white rounded text-xs">Phát hành</span>
-                );
-                break;
-              case "InActive":
-                statusBadge = (
-                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white rounded text-xs">Tạm dừng</span>
-                );
-                break;
-              default:
-                statusBadge = (
-                  <span className="ml-2 px-2 py-0.5 bg-slate-500 text-white rounded text-xs">Không rõ</span>
-                );
+              })
             }
 
-            return (
-              <div key={ch.chapterId} className="flex items-center justify-between bg-slate-700 p-3 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white">
-                    Chương {globalIndex}
-                  </span>
-
-                  <div>
-                    <p className="font-semibold">{ch.chapterTitle}</p>
-
-                    <p className="text-xs text-gray-400 mt-2 flex items-center flex-wrap gap-2">
-                      <span className="inline-block min-w-[90px]">
-                        {wordCounts[ch.chapterId] !== undefined
-                          ? `${wordCounts[ch.chapterId]} từ`
-                          : "Đang đếm..."}
-                      </span>
-                      {statusBadge}
-                      {hasAudio && (
-                        <>
-                          <span className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs">Audio</span>
-                          <span className="text-xs text-gray-300">{formatDuration(ch.durationSec)}</span>
-                        </>
-                      )}
-                    </p>
-
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  {/* Giá / Miễn phí */}
-                  {isFree ? (
-                    <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">Miễn phí</span>
-                  ) : (
-                    <span className="text-orange-400 font-semibold">{ch.priceAudio.toLocaleString()} xu</span>
-                  )}
-
-                  <span className="text-sm text-gray-400">{formatDateSafe(ch.uploadedAt)}</span>
-
-                  {/* CHỨC NĂNG: Sửa / Xem / Xóa */}
-                  <div className="flex space-x-2">
-                    <Link
-                      to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
-                      state={{ bookTitle }}
-                      className="px-2 py-1 min-w-[50px] text-center bg-green-500 rounded text-xs text-white hover:bg-green-600"
-                      aria-label={`Sửa chương ${ch.chapterTitle}`}
-                    >
-                      Sửa
-                    </Link>
-
-                    <Link
-                      to={`/owner/books/${bookId}/chapters/view/${ch.chapterId}`}
-                      state={{ bookTitle }}
-                      className="px-2 py-1 min-w-[50px] text-center bg-purple-500 rounded text-xs text-white hover:bg-purple-600"
-                      aria-label={`Xem chương ${ch.chapterTitle}`}
-                    >
-                      Xem
-                    </Link>
-
-                    <button
-                      onClick={() => setChapterToDelete(ch.chapterId)}
-                      className="px-2 py-1 min-w-[50px] text-center bg-red-500 rounded text-xs text-white hover:bg-red-600"
-                      aria-label={`Xóa chương ${ch.chapterTitle}`}
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-        </div>
+          </div>
+        )}
         {totalPages > 1 && (
           <div className="flex justify-center mt-4 space-x-2">
             <button

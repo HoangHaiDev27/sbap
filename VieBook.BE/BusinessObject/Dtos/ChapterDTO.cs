@@ -32,6 +32,7 @@ namespace BusinessObject.Dtos
         public DateTime UploadedAt { get; set; }
         public string? BookTitle { get; set; }
         public string? Status { get; set; }
+        public string? VoiceName { get; set; }
     }
     public class ChapterUploadDto
     {

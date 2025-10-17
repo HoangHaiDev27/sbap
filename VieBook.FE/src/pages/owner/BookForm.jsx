@@ -84,10 +84,8 @@ export default function BookForm() {
     if (!form.author.trim()) errs.author = "Tác giả là bắt buộc";
     if (!form.categoryIds.length) errs.categoryIds = "Phải chọn ít nhất 1 thể loại";
     if (!form.description.trim()) errs.description = "Mô tả là bắt buộc";
-    if (!file) errs.coverUri = "Ảnh bìa là bắt buộc";
-    if (!form.isbn.trim()) {
-      errs.isbn = "Mã ISBN là bắt buộc";
-    } else if (form.isbn.length > 20) {
+    if (!file) errs.cover = "Ảnh bìa là bắt buộc";
+    if (form.isbn && form.isbn.length > 20) {
       errs.isbn = "Mã ISBN không được vượt quá 20 ký tự";
     }
     return errs;
@@ -125,7 +123,7 @@ export default function BookForm() {
         title: form.title,
         description: form.description,
         coverUrl,
-        isbn: form.isbn,
+        isbn: form.isbn?.trim() || null,
         language: null,
         ownerId,
         categoryIds: form.categoryIds,
@@ -198,7 +196,7 @@ export default function BookForm() {
 
           {/* ISBN */}
           <div>
-            <label className="block mb-2 text-sm font-medium">Mã ISBN *</label>
+            <label className="block mb-2 text-sm font-medium">Mã ISBN </label>
             <input
               type="text"
               name="isbn"
@@ -251,7 +249,7 @@ export default function BookForm() {
 
         {/* Ảnh bìa */}
         <div className="md:col-span-2 mt-6">
-          <label className="block mb-2 text-sm font-medium">Ảnh bìa</label>
+          <label className="block mb-2 text-sm font-medium">Ảnh bìa*</label>
           <div
             className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-700 cursor-pointer hover:border-orange-500"
             onClick={() => document.getElementById("coverInput").click()}
@@ -272,6 +270,7 @@ export default function BookForm() {
               className="hidden"
             />
           </div>
+          {errors.cover && <p className="text-red-400 text-sm mt-2">{errors.cover}</p>}
         </div>
 
         {/* Mô tả */}
@@ -299,9 +298,8 @@ export default function BookForm() {
           <button
             onClick={handleSubmit}
             disabled={uploading}
-            className={`px-6 py-2 rounded-lg transition ${
-              uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-            }`}
+            className={`px-6 py-2 rounded-lg transition ${uploading ? "bg-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+              }`}
           >
             {uploading ? "Đang tạo..." : "Tạo sách"}
           </button>
