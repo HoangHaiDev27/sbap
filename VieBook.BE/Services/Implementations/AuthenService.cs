@@ -52,6 +52,17 @@ namespace Services.Implementations
             if (!BCrypt.Net.BCrypt.Verify(request.Password, storedHash))
                 throw new Exception("Email hoặc mật khẩu không đúng");
 
+            // Kiểm tra trạng thái user - chỉ cho phép user có status "Active" đăng nhập
+            if (user.Status != "Active")
+            {
+                if (user.Status == "Pending")
+                    throw new Exception("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và bấm vào link xác thực.");
+                else if (user.Status == "Banned" || user.Status == "Locked" || user.Status == "NotActive")
+                    throw new Exception("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                else
+                    throw new Exception("Tài khoản không được phép đăng nhập. Vui lòng liên hệ quản trị viên.");
+            }
+
             var jwtService = new JwtService(_config);
             var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
             var token = jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);

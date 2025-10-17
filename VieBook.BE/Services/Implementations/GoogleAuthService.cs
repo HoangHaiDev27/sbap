@@ -71,8 +71,15 @@ namespace Services.Implementations
                         Console.WriteLine($"GoogleLoginAsync - Added Google login to existing user");
                     }
                     
-                    // Tự động active account khi login bằng Google
+                    // Kiểm tra trạng thái user trước khi cho phép đăng nhập
                     Console.WriteLine($"GoogleLoginAsync - Checking status: {existingUser.Status}");
+                    if (existingUser.Status == "Banned" || existingUser.Status == "Locked" || existingUser.Status == "NotActive")
+                    {
+                        Console.WriteLine($"GoogleLoginAsync - User is banned/locked, denying access");
+                        throw new Exception("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                    }
+                    
+                    // Tự động active account khi login bằng Google (chỉ nếu status là Pending)
                     if (existingUser.Status == "Pending" || existingUser.Status == "pending")
                     {
                         Console.WriteLine($"GoogleLoginAsync - Status is Pending, changing to Active");
