@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { RiBookmarkLine } from "react-icons/ri";
+import { RiHeartLine, RiHeartFill } from "react-icons/ri";
 import { getMyWishlist } from "../../api/wishlistApi";
 import { getUserId } from "../../api/authApi";
 
@@ -64,7 +64,7 @@ export default function UserWishlistIcon() {
       className="relative hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-gray-800"
       title="Sách yêu thích"
     >
-      <RiBookmarkLine className="text-2xl text-white" />
+      <RiHeartLine className="text-2xl text-white" />
       {wishlistCount > 0 && (
         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center font-bold shadow-lg border-2 border-white">
           {wishlistCount > 99 ? '99+' : wishlistCount}
