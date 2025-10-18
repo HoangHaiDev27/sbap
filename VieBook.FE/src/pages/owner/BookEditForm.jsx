@@ -132,9 +132,7 @@ export default function BookEditForm() {
     const errs = {};
     if (!form.title.trim()) errs.title = "Tên sách là bắt buộc";
     if (!form.author.trim()) errs.author = "Tác giả là bắt buộc";
-    if (!form.isbn.trim()) {
-      errs.isbn = "Mã ISBN là bắt buộc";
-    } else if (form.isbn.length > 20) {
+    if (form.isbn.length > 20) {
       errs.isbn = "Mã ISBN không được vượt quá 20 ký tự";
     }
     if (!form.description.trim()) errs.description = "Mô tả là bắt buộc";
