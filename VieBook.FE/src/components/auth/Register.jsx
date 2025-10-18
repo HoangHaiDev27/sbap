@@ -17,6 +17,7 @@ export default function Register({ setActiveTab }) {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [fullNameError, setFullNameError] = useState("");
   const navigate = useNavigate();
 
   // Debounce function để tránh gọi API quá nhiều lần
@@ -26,6 +27,54 @@ export default function Register({ setActiveTab }) {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => func.apply(null, args), delay);
     };
+  }, []);
+
+  // Function kiểm tra full name (username)
+  const validateFullName = useCallback((fullName) => {
+    if (!fullName || fullName.trim().length === 0) {
+      setFullNameError("");
+      return;
+    }
+
+    const trimmedName = fullName.trim();
+    
+    // Kiểm tra độ dài
+    if (trimmedName.length < 2) {
+      setFullNameError("Họ tên phải có ít nhất 2 ký tự");
+      return;
+    }
+    
+    if (trimmedName.length > 50) {
+      setFullNameError("Họ tên không được vượt quá 50 ký tự");
+      return;
+    }
+
+    // Kiểm tra ký tự hợp lệ (chỉ cho phép chữ cái, dấu cách, dấu gạch ngang và dấu chấm)
+    const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂÂĐÊÔƠƯăâđêôơư\s\-\.]+$/;
+    if (!nameRegex.test(trimmedName)) {
+      setFullNameError("Họ tên chỉ được chứa chữ cái, dấu cách, dấu gạch ngang và dấu chấm");
+      return;
+    }
+
+    // Kiểm tra không được bắt đầu hoặc kết thúc bằng dấu cách
+    if (trimmedName !== fullName) {
+      setFullNameError("Họ tên không được bắt đầu hoặc kết thúc bằng dấu cách");
+      return;
+    }
+
+    // Kiểm tra không được có nhiều dấu cách liên tiếp
+    if (/\s{2,}/.test(trimmedName)) {
+      setFullNameError("Họ tên không được có nhiều dấu cách liên tiếp");
+      return;
+    }
+
+    // Kiểm tra không được chỉ có dấu cách hoặc ký tự đặc biệt
+    if (/^[\s\-\.]+$/.test(trimmedName)) {
+      setFullNameError("Họ tên phải chứa ít nhất một chữ cái");
+      return;
+    }
+
+    setFullNameError("");
   }, []);
 
   // Function kiểm tra email
@@ -57,12 +106,24 @@ export default function Register({ setActiveTab }) {
     [debounce, checkEmail]
   );
 
+  // Debounced version của validateFullName
+  const debouncedValidateFullName = useCallback(
+    debounce(validateFullName, 300),
+    [debounce, validateFullName]
+  );
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
+
+    // Kiểm tra full name khi user nhập
+    if (name === "fullName") {
+      setFullNameError(""); // Clear error trước khi check
+      debouncedValidateFullName(value);
+    }
 
     // Kiểm tra email khi user nhập
     if (name === "email") {
@@ -79,6 +140,18 @@ export default function Register({ setActiveTab }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Kiểm tra full name error trước
+    if (fullNameError) {
+      showToast("error", fullNameError);
+      return;
+    }
+
+    // Kiểm tra full name không được rỗng
+    if (!formData.fullName || formData.fullName.trim().length === 0) {
+      showToast("error", "Vui lòng nhập họ tên");
+      return;
+    }
 
     // Kiểm tra email error trước
     if (emailError) {
@@ -152,15 +225,46 @@ export default function Register({ setActiveTab }) {
         {/* Full Name */}
         <div>
           <label className="block text-sm text-gray-400 mb-1">Họ tên</label>
-          <input
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder="Nhập họ tên của bạn"
-            className="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            required
-          />
+          <div className="relative">
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Nhập họ tên của bạn"
+              className={`w-full px-4 py-2.5 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 pr-10 ${
+                fullNameError 
+                  ? "border-red-500 focus:ring-red-500" 
+                  : "border-gray-600 focus:ring-orange-500"
+              }`}
+              required
+            />
+            {/* Success icon */}
+            {formData.fullName && !fullNameError && formData.fullName.trim().length >= 2 && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg className="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+            {/* Error icon */}
+            {fullNameError && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg className="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
+          {/* Error message */}
+          {fullNameError && (
+            <p className="mt-1 text-sm text-red-500 flex items-center">
+              <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {fullNameError}
+            </p>
+          )}
         </div>
 
         {/* Email */}
