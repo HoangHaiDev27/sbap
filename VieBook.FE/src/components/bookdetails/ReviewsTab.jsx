@@ -15,6 +15,8 @@ export default function ReviewsTab({ bookId, reviews }) {
   const [newComment, setNewComment] = useState("");
   const [canReview, setCanReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   // Kiểm tra hasReviewed khi component mount
   useEffect(() => {
@@ -78,6 +80,48 @@ export default function ReviewsTab({ bookId, reviews }) {
     })();
   }, [bookId]);
 
+  // Function validate comment
+  const validateComment = (comment) => {
+    if (!comment || comment.trim().length === 0) {
+      setCommentError("Vui lòng nhập nội dung đánh giá");
+      return false;
+    }
+
+    const trimmedComment = comment.trim();
+    
+    // Kiểm tra độ dài tối thiểu
+    if (trimmedComment.length < 10) {
+      setCommentError("Nội dung đánh giá phải có ít nhất 10 ký tự");
+      return false;
+    }
+
+    // Kiểm tra độ dài tối đa
+    if (trimmedComment.length > 1000) {
+      setCommentError("Nội dung đánh giá không được vượt quá 1000 ký tự");
+      return false;
+    }
+
+    // Kiểm tra không được chỉ có dấu cách hoặc ký tự đặc biệt
+    if (/^[\s\-\.]+$/.test(trimmedComment)) {
+      setCommentError("Nội dung đánh giá phải chứa ít nhất một chữ cái");
+      return false;
+    }
+
+    setCommentError("");
+    return true;
+  };
+
+  // Function handle comment change
+  const handleCommentChange = (e) => {
+    const value = e.target.value;
+    setNewComment(value);
+    
+    // Clear error khi user đang nhập
+    if (commentError) {
+      setCommentError("");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Filter + Pagination Controls */}
@@ -139,43 +183,96 @@ export default function ReviewsTab({ bookId, reviews }) {
               ))}
             </div>
           </div>
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Viết cảm nhận của bạn (chỉ người đã mua chương mới có thể gửi)"
-            className="mt-3 w-full bg-gray-700 rounded p-3 text-sm"
-          />
+          <div className="mt-3">
+            <textarea
+              value={newComment}
+              onChange={handleCommentChange}
+              placeholder="Viết cảm nhận của bạn (chỉ người đã mua chương mới có thể gửi)"
+              className={`w-full bg-gray-700 rounded p-3 text-sm border ${
+                commentError 
+                  ? "border-red-500 focus:border-red-500" 
+                  : "border-gray-600 focus:border-orange-500"
+              } focus:outline-none focus:ring-1 focus:ring-orange-500`}
+              rows={4}
+            />
+            {/* Character count and validation hints */}
+            <div className="flex justify-between items-center mt-1">
+              <div className="text-xs text-gray-400">
+                {newComment.length}/1000 ký tự
+                {newComment.length > 0 && newComment.length < 10 && (
+                  <span className="text-yellow-500 ml-2">
+                    (Cần ít nhất 10 ký tự)
+                  </span>
+                )}
+              </div>
+              {commentError && (
+                <div className="text-xs text-red-500 flex items-center">
+                  <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {commentError}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="text-right mt-3">
             <button
-              className="px-4 py-2 bg-orange-600 rounded hover:bg-orange-500"
+              className={`px-4 py-2 rounded transition duration-200 ${
+                isSubmitting || commentError
+                  ? "bg-gray-500 text-gray-300 cursor-not-allowed"
+                  : "bg-orange-600 hover:bg-orange-500 text-white"
+              }`}
+              disabled={isSubmitting || !!commentError}
               onClick={async () => {
                 const uid = getUserId();
+                
+                // Kiểm tra đăng nhập
                 if (!uid) {
                   toast.error("Vui lòng đăng nhập để đánh giá");
                   navigate("/auth");
                   return;
                 }
+
+                // Kiểm tra đã đánh giá
                 if (hasReviewed) {
                   toast.error("Bạn đã đánh giá sách này rồi");
                   return;
                 }
+
+                // Validate comment trước khi gửi
+                if (!validateComment(newComment)) {
+                  return;
+                }
+
+                setIsSubmitting(true);
                 try {
                   const created = await createReview(
                     parseInt(bookId, 10),
                     newRating,
-                    newComment
+                    newComment.trim()
                   );
-                  toast.success("Đã gửi đánh giá");
+                  toast.success("Đã gửi đánh giá thành công!");
                   setReviewsData([created, ...reviewsData]);
                   setNewComment("");
                   setNewRating(5);
                   setHasReviewed(true);
+                  setCommentError("");
                 } catch (e) {
-                  toast.error(e.message);
+                  console.error("Error creating review:", e);
+                  toast.error(e.message || "Có lỗi xảy ra khi gửi đánh giá");
+                } finally {
+                  setIsSubmitting(false);
                 }
               }}
             >
-              Gửi đánh giá
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Đang gửi...
+                </div>
+              ) : (
+                "Gửi đánh giá"
+              )}
             </button>
           </div>
         </div>

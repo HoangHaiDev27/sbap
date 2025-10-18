@@ -1527,3 +1527,36 @@ CREATE INDEX IX_ReadingHistory_Type ON dbo.ReadingHistory(ReadingType);
 ALTER TABLE dbo.ReadingHistory
 ADD CONSTRAINT CK_ReadingHistory_Type
 CHECK (ReadingType IN ('Reading', 'Listening'));
+
+-- Reminder setting table
+CREATE TABLE [dbo].[ReminderSettings](
+    [ReminderSettingsId] [int] IDENTITY(1,1) NOT NULL,
+    [UserId] [int] NOT NULL,
+    [DailyGoalMinutes] [int] NOT NULL,
+    [WeeklyGoalHours] [int] NOT NULL,
+    [ReminderMinutesBefore] [int] NOT NULL,
+    [IsActive] [bit] NOT NULL,
+    [CreatedAt] [datetime2](7) NOT NULL,
+    [UpdatedAt] [datetime2](7) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+    [ReminderSettingsId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((30)) FOR [DailyGoalMinutes]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((5)) FOR [WeeklyGoalHours]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((15)) FOR [ReminderMinutesBefore]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((1)) FOR [IsActive]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings]  WITH CHECK ADD FOREIGN KEY([UserId])
+REFERENCES [dbo].[Users] ([UserId])
+GO
