@@ -50,6 +50,7 @@ export const API_ENDPOINTS = {
   // OpenAI endpoints
   OPENAI: {
     CHECK_SPELLING: `${API_BASE_URL}/api/openai/check-spelling`,
+    CHECK_MEANING: `${API_BASE_URL}/api/openai/check-meaning`,
     MODERATION: `${API_BASE_URL}/api/openai/moderation`,
     CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
     GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
@@ -96,6 +97,19 @@ export const API_ENDPOINTS = {
     TOGGLE: (bookId) => `${API_BASE_URL}/api/wishlist/${bookId}/toggle`,
     MY_LIST: `${API_BASE_URL}/api/wishlist/me`,
   },
+
+  // Feedback endpoints
+  FEEDBACK: {
+    BOOK_REPORT: `${API_BASE_URL}/api/feedback/book-report`,
+  },
+
+  // Reading History endpoints
+  READING_HISTORY: {
+    BASE: `${API_BASE_URL}/api/ReadingHistory`,
+    SAVE_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/save-progress`,
+    CURRENT_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/current-progress`,
+    PAGINATED: `${API_BASE_URL}/api/ReadingHistory/paginated`,
+  },
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,
   // ORDERS: `${API_BASE_URL}/api/orders`,
@@ -120,6 +134,11 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE: `${API_BASE_URL}/api/upload/uploadChapterFile`,
   },
 
+  AUDIO_CONVERSION: {
+    GENERATE: (chapterId, voiceName = "banmai", speed = 1.0) =>
+      `${API_BASE_URL}/api/audioconversion/generate/${chapterId}?voiceName=${voiceName}&speed=${speed}`,
+  },
+  
   CATEGORIES: {
     GET_ALL: `${API_BASE_URL}/api/categories`,
     GET_BY_ID: (id) => `${API_BASE_URL}/api/categories/${id}`,
@@ -167,17 +186,17 @@ export const API_ENDPOINTS = {
     GET_ALL_ACTIVE_BOOKS: `${API_BASE_URL}/api/BookApproval/active-books`,
     GET_ALL_USERS_WITH_PROFILE: `${API_BASE_URL}/api/BookApproval/users`
   },
-        USER_MANAGEMENT: {
-          GET_USERS_BY_ROLE: (roleName) => `${API_BASE_URL}/api/staff/users-by-role/${roleName}`,
-          GET_BOOK_OWNERS: `${API_BASE_URL}/api/staff/book-owners`,
-          GET_CUSTOMERS: `${API_BASE_URL}/api/staff/customers`,
-          GET_USER_DETAIL: (id) => `${API_BASE_URL}/api/staff/users/${id}`,
-          TOGGLE_STATUS: (id) => `${API_BASE_URL}/api/staff/toggle-user-status/${id}`,
-          LOCK_USER: (id) => `${API_BASE_URL}/api/staff/lock-user/${id}`,
-          UNLOCK_USER: (id) => `${API_BASE_URL}/api/staff/unlock-user/${id}`,
-          SEND_EMAIL: `${API_BASE_URL}/api/staff/send-email`,
-          GET_USER_SUBSCRIPTION: (id) => `${API_BASE_URL}/api/staff/users/${id}/subscription`,
-        },
+  USER_MANAGEMENT: {
+    GET_USERS_BY_ROLE: (roleName) => `${API_BASE_URL}/api/staff/users-by-role/${roleName}`,
+    GET_BOOK_OWNERS: `${API_BASE_URL}/api/staff/book-owners`,
+    GET_CUSTOMERS: `${API_BASE_URL}/api/staff/customers`,
+    GET_USER_DETAIL: (id) => `${API_BASE_URL}/api/staff/users/${id}`,
+    TOGGLE_STATUS: (id) => `${API_BASE_URL}/api/staff/toggle-user-status/${id}`,
+    LOCK_USER: (id) => `${API_BASE_URL}/api/staff/lock-user/${id}`,
+    UNLOCK_USER: (id) => `${API_BASE_URL}/api/staff/unlock-user/${id}`,
+    SEND_EMAIL: `${API_BASE_URL}/api/staff/send-email`,
+    GET_USER_SUBSCRIPTION: (id) => `${API_BASE_URL}/api/staff/users/${id}/subscription`,
+  },
   API_BASE_URL: API_BASE_URL,
 
 };

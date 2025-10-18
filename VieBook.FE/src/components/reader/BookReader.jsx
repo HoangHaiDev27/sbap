@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReaderHeader from "./ReaderHeader";
 import ReaderSettings from "./ReaderSettings";
 import ReaderBookmarks from "./ReaderBookmarks";
@@ -11,7 +11,9 @@ import {
   deleteBookmark,
   getBookmarkByChapter 
 } from "../../api/bookmarkApi";
+import { getMyPurchases } from "../../api/chapterPurchaseApi";
 import { getUserId } from "../../api/authApi";
+import { saveReadingProgress, getCurrentReadingProgress } from "../../api/readingHistoryApi";
 import toast from "react-hot-toast";
 import { RiRobotLine } from "react-icons/ri";
 
@@ -26,14 +28,53 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   const [chapterContent, setChapterContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [lastScrollPosition, setLastScrollPosition] = useState(0);
+  const [hasSavedReadingHistory, setHasSavedReadingHistory] = useState(false);
+  const saveHistoryTimeoutRef = useRef(null);
+  const [purchasedChapters, setPurchasedChapters] = useState([]); // Lưu danh sách chương đã mua
 
   // Tìm chương hiện tại
   const currentChapter = book?.chapters?.find(ch => ch.chapterId === parseInt(chapterId));
   
-  // Debug logs
-  console.log("BookReader - book:", book);
-  console.log("BookReader - chapterId:", chapterId);
-  console.log("BookReader - currentChapter:", currentChapter);
+
+  // Lưu lịch sử đọc khi vào trang (với debounce để tránh gọi nhiều lần)
+  useEffect(() => {
+    // Clear timeout cũ nếu có
+    if (saveHistoryTimeoutRef.current) {
+      clearTimeout(saveHistoryTimeoutRef.current);
+    }
+
+    // Chỉ save nếu chưa save cho bookId + chapterId này
+    if (hasSavedReadingHistory) {
+      return;
+    }
+
+    const saveReadingHistory = async () => {
+      if (!book?.bookId || !chapterId) return;
+      
+      try {
+        const readingData = {
+          bookId: book.bookId,
+          chapterId: parseInt(chapterId),
+          readingType: 'Reading'
+        };
+        
+        await saveReadingProgress(readingData);
+        setHasSavedReadingHistory(true);
+      } catch (error) {
+        console.error("Error saving reading history:", error);
+      }
+    };
+
+    // Debounce 500ms để tránh gọi nhiều lần
+    saveHistoryTimeoutRef.current = setTimeout(saveReadingHistory, 500);
+
+    // Cleanup function
+    return () => {
+      if (saveHistoryTimeoutRef.current) {
+        clearTimeout(saveHistoryTimeoutRef.current);
+      }
+    };
+  }, [book?.bookId, chapterId, hasSavedReadingHistory]);
 
   // Tải nội dung từ Cloudinary
   useEffect(() => {
@@ -59,9 +100,10 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                 window.scrollTo({ top: savedBookmark.pagePosition, behavior: 'auto' });
                 console.log("BookReader - Scrolled to saved position:", savedBookmark.pagePosition);
                   
-                  // Update local bookmarks state with the loaded bookmark
+                  // Update local bookmarks state with the loaded bookmark (chỉ của cuốn sách hiện tại)
                   const existingBookmark = bookmarks.find(b => 
-                    b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)
+                    (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) &&
+                    b.bookId === book.bookId
                   );
                   
                   if (!existingBookmark) {
@@ -73,6 +115,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                       createdAt: savedBookmark.createdAt
                     };
                     setBookmarks(prev => [...prev, newBookmark]);
+                    console.log("BookReader - Added bookmark to local state for book:", book.bookId, "chapter:", chapterId);
                   }
               }
             } catch (error) {
@@ -100,9 +143,10 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       if (scrollDifference > 100) {
         setLastScrollPosition(scrollPosition);
         
-        // Update existing bookmark for this chapter (only if bookmark exists)
+        // Update existing bookmark for this chapter (only if bookmark exists và thuộc cuốn sách hiện tại)
         const existingBookmark = bookmarks.find(b => 
-          b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)
+          (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) &&
+          b.bookId === book.bookId
         );
         
         if (existingBookmark) {
@@ -115,15 +159,15 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
             
             await createOrUpdateBookmark(bookmarkData);
             
-            // Update local state
+            // Update local state - chỉ cập nhật bookmark của cuốn sách hiện tại
             const updatedBookmarks = bookmarks.map(b => 
-              (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId))
+              (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) && b.bookId === book.bookId
                 ? { ...b, pagePosition: scrollPosition, createdAt: new Date().toISOString() }
                 : b
             );
             setBookmarks(updatedBookmarks);
             
-            console.log("BookReader - Auto-updated bookmark position:", scrollPosition);
+            console.log("BookReader - Auto-updated bookmark position for book:", book.bookId, "position:", scrollPosition);
           } catch (error) {
             console.error("Error auto-updating bookmark:", error);
           }
@@ -167,14 +211,27 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Load bookmarks from API
+  // Load bookmarks from API - chỉ load bookmark của cuốn sách hiện tại
   useEffect(() => {
     const loadBookmarks = async () => {
+      if (!book?.bookId) {
+        setBookmarks([]);
+        return;
+      }
+
       try {
         setLoadingBookmarks(true);
         const userBookmarks = await getUserBookmarks();
-        setBookmarks(userBookmarks);
-        console.log("BookReader - Loaded bookmarks from API:", userBookmarks);
+        
+        // Filter chỉ bookmark của cuốn sách hiện tại
+        const bookBookmarks = userBookmarks.filter(bookmark => 
+          bookmark.bookId === book.bookId
+        );
+        
+        setBookmarks(bookBookmarks);
+        console.log("BookReader - Loaded bookmarks for book:", book.bookId, bookBookmarks);
+        console.log("BookReader - Total user bookmarks:", userBookmarks.length);
+        console.log("BookReader - Filtered book bookmarks:", bookBookmarks.length);
       } catch (error) {
         console.error("Error loading bookmarks:", error);
         setBookmarks([]);
@@ -184,22 +241,46 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
     };
 
     loadBookmarks();
+  }, [book?.bookId]); // Chỉ load lại khi bookId thay đổi
+
+  // Load purchased chapters from API
+  useEffect(() => {
+    const loadPurchasedChapters = async () => {
+      const isLoggedIn = getUserId() !== null;
+      if (isLoggedIn) {
+        try {
+          console.log("BookReader - Loading purchased chapters");
+          const response = await getMyPurchases();
+          const purchases = response?.data || [];
+          const purchasedChapterIds = purchases.map((p) => p.chapterId);
+          setPurchasedChapters(purchasedChapterIds);
+          console.log("BookReader - Loaded purchased chapters:", purchasedChapterIds);
+        } catch (error) {
+          console.error("BookReader - Error loading purchased chapters:", error);
+          setPurchasedChapters([]);
+        }
+      } else {
+        setPurchasedChapters([]);
+      }
+    };
+
+    loadPurchasedChapters();
   }, []);
 
   // Add/remove bookmarks with scroll position
   const addBookmark = async () => {
     try {
-      // Check if bookmark already exists for this chapter
+      // Check if bookmark already exists for this chapter (chỉ trong cuốn sách hiện tại)
       const existingBookmark = bookmarks.find(b => 
-        b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)
+        (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) &&
+        b.bookId === book.bookId
       );
       
       if (existingBookmark) {
-        // If bookmark exists, show message instead of creating new one
-        toast("Bookmark đã tồn tại cho chương này. Vị trí đã được cập nhật.", {
-          icon: "ℹ️",
+        // If bookmark exists, show message that chapter is already bookmarked
+        toast("Chương này đã được đánh dấu", {
           style: {
-            background: "#3b82f6",
+            background: "#10b981",
             color: "#fff",
           },
         });
@@ -218,9 +299,10 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       const result = await createOrUpdateBookmark(bookmarkData);
       console.log("BookReader - Bookmark saved to API:", result);
       
-      // Update local state
+      // Update local state - chỉ giữ bookmark của cuốn sách hiện tại
       const updatedBookmarks = bookmarks.filter(b => 
-        b.chapterReadId !== parseInt(chapterId) && b.chapterListenId !== parseInt(chapterId)
+        (b.chapterReadId !== parseInt(chapterId) && b.chapterListenId !== parseInt(chapterId)) &&
+        b.bookId === book.bookId
       );
       updatedBookmarks.push({
         bookmarkId: result.bookmarkId,
@@ -230,6 +312,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         createdAt: result.createdAt
       });
       setBookmarks(updatedBookmarks);
+      console.log("BookReader - Added bookmark for book:", book.bookId, "chapter:", chapterId);
       
       toast.success("Đã thêm bookmark thành công");
       
@@ -244,11 +327,13 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       // Delete bookmark from database using bookmarkId
       await deleteBookmark(bookmarkId);
       
-      // Update local state
-      const newBookmarks = bookmarks.filter((b) => b.bookmarkId !== bookmarkId);
+      // Update local state - chỉ filter bookmark của cuốn sách hiện tại
+      const newBookmarks = bookmarks.filter((b) => 
+        b.bookmarkId !== bookmarkId && b.bookId === book.bookId
+      );
       setBookmarks(newBookmarks);
       
-      console.log("BookReader - Bookmark deleted from database and local state");
+      console.log("BookReader - Bookmark deleted from database and local state for book:", book.bookId);
       toast.success("Đã xóa bookmark thành công");
     } catch (error) {
       console.error("Error deleting bookmark:", error);
@@ -312,10 +397,9 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                 className={`${currentTheme.contentBg} rounded-lg p-6`}
                 style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
               >
-                <div
-                  className="prose prose-lg max-w-none"
-                  dangerouslySetInnerHTML={{ __html: chapterContent }}
-                />
+                <pre className="whitespace-pre-wrap break-words prose prose-lg max-w-none">
+                  {chapterContent}
+                </pre>
               </div>
             </>
           )}
@@ -355,7 +439,20 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         {showContents && (
           <ReaderContents
             book={book}
+            purchasedChapters={purchasedChapters}
             onClose={() => setShowContents(false)}
+            onRefreshPurchases={async () => {
+              try {
+                console.log("BookReader - Refreshing purchased chapters");
+                const response = await getMyPurchases();
+                const purchases = response?.data || [];
+                const purchasedChapterIds = purchases.map((p) => p.chapterId);
+                setPurchasedChapters(purchasedChapterIds);
+                console.log("BookReader - Refreshed purchased chapters:", purchasedChapterIds);
+              } catch (error) {
+                console.error("BookReader - Error refreshing purchased chapters:", error);
+              }
+            }}
           />
         )}
 

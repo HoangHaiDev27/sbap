@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { RiMenuLine, RiSearchLine, RiBookmarkLine } from "react-icons/ri";
+import { useNavigate } from "react-router-dom";
+import { RiMenuLine, RiSearchLine } from "react-icons/ri";
 import UserMenu from "../user/UserMenu";
 import UserNotificationMenu from "../user/UserNotificationMenu";
+import UserWishlistIcon from "../user/UserWishlistIcon";
 import { useSearch } from "../../hooks/useSearch";
 
 export default function UserHeader({ onToggleSidebar }) {
@@ -107,12 +108,7 @@ export default function UserHeader({ onToggleSidebar }) {
 
         {/* Icon bên phải */}
         <div className="flex items-center space-x-4">
-          <Link
-            to="/wishlist"
-            className="w-6 h-6 flex items-center justify-center hover:text-blue-400 transition-colors cursor-pointer"
-          >
-            <RiBookmarkLine className="text-xl" />
-          </Link>
+          <UserWishlistIcon />
           <UserNotificationMenu />
           <UserMenu />
         </div>

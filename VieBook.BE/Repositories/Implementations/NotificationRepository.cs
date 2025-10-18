@@ -1,121 +1,76 @@
 using BusinessObject.Models;
-using DataAccess;
-using Microsoft.EntityFrameworkCore;
+using DataAccess.DAO;
 using Repositories.Interfaces;
 
 namespace Repositories.Implementations
 {
     public class NotificationRepository : INotificationRepository
     {
-        private readonly VieBookContext _context;
+        private readonly NotificationDAO _dao;
 
-        public NotificationRepository(VieBookContext context)
+        public NotificationRepository(NotificationDAO dao)
         {
-            _context = context;
+            _dao = dao;
         }
 
         public async Task<Notification?> GetByIdAsync(long notificationId)
         {
-            return await _context.Notifications
-                .Include(n => n.User)
-                .FirstOrDefaultAsync(n => n.NotificationId == notificationId);
+            return await _dao.GetByIdAsync(notificationId);
         }
 
         public async Task<List<Notification>> GetByUserIdAsync(int userId)
         {
-            return await _context.Notifications
-                .Include(n => n.User)
-                .Where(n => n.UserId == userId)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync();
+            return await _dao.GetByUserIdAsync(userId);
         }
 
         public async Task<List<Notification>> GetUnreadByUserIdAsync(int userId)
         {
-            return await _context.Notifications
-                .Include(n => n.User)
-                .Where(n => n.UserId == userId && !n.IsRead)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync();
+            return await _dao.GetUnreadByUserIdAsync(userId);
         }
 
         public async Task<List<Notification>> GetByUserIdAndTypeAsync(int userId, string type)
         {
-            return await _context.Notifications
-                .Include(n => n.User)
-                .Where(n => n.UserId == userId && n.Type == type)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync();
+            return await _dao.GetByUserIdAndTypeAsync(userId, type);
         }
 
         public async Task<Notification> CreateAsync(Notification notification)
         {
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
-            return notification;
+            return await _dao.CreateAsync(notification);
         }
 
         public async Task<Notification> UpdateAsync(Notification notification)
         {
-            _context.Notifications.Update(notification);
-            await _context.SaveChangesAsync();
-            return notification;
+            return await _dao.UpdateAsync(notification);
         }
 
         public async Task<bool> DeleteAsync(long notificationId)
         {
-            var notification = await _context.Notifications.FindAsync(notificationId);
-            if (notification == null) return false;
-
-            _context.Notifications.Remove(notification);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _dao.DeleteAsync(notificationId);
         }
 
         public async Task<bool> MarkAsReadAsync(long notificationId)
         {
-            var notification = await _context.Notifications.FindAsync(notificationId);
-            if (notification == null) return false;
-
-            notification.IsRead = true;
-            await _context.SaveChangesAsync();
-            return true;
+            return await _dao.MarkAsReadAsync(notificationId);
         }
 
         public async Task<bool> MarkAllAsReadAsync(int userId)
         {
-            var notifications = await _context.Notifications
-                .Where(n => n.UserId == userId && !n.IsRead)
-                .ToListAsync();
-
-            foreach (var notification in notifications)
-            {
-                notification.IsRead = true;
-            }
-
-            await _context.SaveChangesAsync();
-            return true;
+            return await _dao.MarkAllAsReadAsync(userId);
         }
 
         public async Task<int> GetUnreadCountAsync(int userId)
         {
-            return await _context.Notifications
-                .CountAsync(n => n.UserId == userId && !n.IsRead);
+            return await _dao.GetUnreadCountAsync(userId);
         }
 
         public async Task<List<Notification>> GetRecentNotificationsAsync(int userId, int count = 10)
         {
-            return await _context.Notifications
-                .Include(n => n.User)
-                .Where(n => n.UserId == userId)
-                .OrderByDescending(n => n.CreatedAt)
-                .Take(count)
-                .ToListAsync();
+            return await _dao.GetRecentNotificationsAsync(userId, count);
         }
 
         public async Task<bool> ExistsAsync(long notificationId)
         {
-            return await _context.Notifications.AnyAsync(n => n.NotificationId == notificationId);
+            return await _dao.ExistsAsync(notificationId);
         }
     }
 }

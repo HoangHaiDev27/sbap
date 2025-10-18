@@ -82,7 +82,7 @@ export default function ReaderBookmarks({
         <div className="bg-gray-700 px-6 py-4 border-b border-gray-600">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold flex items-center gap-2">
-              <RiBookmarkLine /> Dấu trang
+              <RiBookmarkLine /> Dấu Chương
             </h3>
             <button
               onClick={close}
@@ -98,7 +98,7 @@ export default function ReaderBookmarks({
           {bookmarks.length === 0 ? (
             <div className="text-center py-8">
               <RiBookmarkLine size={48} className="text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-300">Chưa có dấu trang nào</p>
+              <p className="text-gray-300">Chưa có dấu chương nào</p>
               <p className="text-sm text-gray-400 mt-2">Nhấn nút bookmark để lưu vị trí đọc</p>
             </div>
           ) : (

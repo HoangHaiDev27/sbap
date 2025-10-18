@@ -1,43 +1,26 @@
 using BusinessObject.Models;
-using DataAccess;
-using Microsoft.EntityFrameworkCore;
+using DataAccess.DAO;
 using Repositories.Interfaces;
 
 namespace Repositories.Implementations
 {
     public class OrderItemRepository : IOrderItemRepository
     {
-        private readonly VieBookContext _context;
+        private readonly OrderItemDAO _orderItemDAO;
 
-        public OrderItemRepository(VieBookContext context)
+        public OrderItemRepository(OrderItemDAO orderItemDAO)
         {
-            _context = context;
+            _orderItemDAO = orderItemDAO;
         }
 
         public async Task<IEnumerable<OrderItem>> GetPurchasedBooksByUserIdAsync(int userId)
         {
-            return await _context.OrderItems
-                .Include(oi => oi.Chapter)
-                    .ThenInclude(c => c.Book)
-                        .ThenInclude(b => b.Categories)
-                .Include(oi => oi.Chapter)
-                    .ThenInclude(c => c.Book)
-                        .ThenInclude(b => b.BookReviews)
-                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
-                .ToListAsync();
+            return await _orderItemDAO.GetPurchasedBooksByUserIdAsync(userId);
         }
 
         public async Task<OrderItem?> GetOrderItemByIdAsync(long orderItemId)
         {
-            return await _context.OrderItems
-                .Include(oi => oi.Chapter)
-                    .ThenInclude(c => c.Book)
-                        .ThenInclude(b => b.Categories)
-                .Include(oi => oi.Chapter)
-                    .ThenInclude(c => c.Book)
-                        .ThenInclude(b => b.BookReviews)
-                .Include(oi => oi.Customer)
-                .FirstOrDefaultAsync(oi => oi.OrderItemId == orderItemId);
+            return await _orderItemDAO.GetByIdAsync(orderItemId);
         }
 
     }

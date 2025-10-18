@@ -84,15 +84,38 @@ export default function UserMenu() {
           >
             Thông tin tài khoản
           </Link>
-          {/* Chỉ hiển thị "Cửa hàng của tôi" khi user có role owner */}
+          {/* Chỉ hiển thị các link owner khi user có role owner */}
           {isOwner && (
-            <Link
-              to="/owner/dashboard"
-              className="block px-4 py-2 hover:bg-slate-700 transition-colors"
-              onClick={() => setOpen(false)}
-            >
-              Cửa hàng của tôi
-            </Link>
+            <>
+              <Link
+                to="/owner/dashboard"
+                className="block px-4 py-2 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Cửa hàng của tôi
+              </Link>
+              <Link
+                to="/owner/profile/overview"
+                className="block px-4 py-2 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Hồ sơ của tôi
+              </Link>
+              <Link
+                to="/owner/profile/settings/personal"
+                className="block px-4 py-2 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Cài đặt
+              </Link>
+              <Link
+                to="/owner/withdraw"
+                className="block px-4 py-2 text-green-400 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                💵 Yêu cầu rút tiền
+              </Link>
+            </>
           )}
           <button
             onClick={handleLogout}

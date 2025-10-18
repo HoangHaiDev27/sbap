@@ -112,6 +112,8 @@ export default function OwnerBooks() {
       <div className="bg-slate-800 p-4 rounded-lg shadow-lg">
         {loading ? (
           <p className="text-gray-400">Đang tải sách...</p>
+        ) : filteredBooks.length === 0 ? (
+          <p className="text-gray-400 text-center py-4">Bạn chưa có sách nào.</p>
         ) : (
           <BookTable
             books={filteredBooks}
