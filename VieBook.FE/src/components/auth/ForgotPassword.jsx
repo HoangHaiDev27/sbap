@@ -36,7 +36,7 @@ export default function ForgotPassword({ setActiveTab }) {
   const handleVerificationSubmit = async (e) => {
     e.preventDefault();
     if (verificationCode.length !== 6) {
-      setMessage({ type: "error", text: "Mã OTP phải đủ 6 số!" });
+      setMessage({ type: "error", text: "Mã OTP phải đủ 6 kí tự" });
       return;
     }
 

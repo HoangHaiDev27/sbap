@@ -39,10 +39,10 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.ForgotPasswordAsync(request);
 
-        if (result == "Invalid email format")
+        if (result == "Email không đúng định dạng")
             return BadRequest(new { message = result });
 
-        if (result == "Email not found")
+        if (result == "Email không tồn tại")
             return NotFound(new { message = result });
 
         return Ok(new { message = result });
@@ -67,7 +67,7 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.ResetPasswordAsync(request);
 
-        if (result != "Password reset successful")
+        if (result != "Đặt lại mật khẩu thành công")
             return BadRequest(new { message = result });
 
         return Ok(new { message = result });
