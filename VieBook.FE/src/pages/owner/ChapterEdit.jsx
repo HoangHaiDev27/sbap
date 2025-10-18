@@ -271,27 +271,20 @@ export default function ChapterEdit() {
                     </div>
                 </div>
             </div>
-            {/* Upload file chương */}
-            <div
-                className="bg-slate-800 p-6 rounded-lg mb-6 border-2 border-dashed border-gray-500 cursor-pointer hover:border-gray-400 flex flex-col items-center justify-center"
-                onClick={() => fileInputRef.current?.click()}
-            >
-                <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.pdf" onChange={handleFileChange} />
-                <p className="text-center">
-                    {file ? file.name : "Chọn file chương (TXT hoặc PDF không nhận hình ảnh)"} {getFileTag()}
+            <div className="bg-slate-800 p-6 rounded-lg mb-6">
+                <p className="text-center text-gray-400 italic">
+                    Nội dung chương chỉ có thể đọc, không được phép tải hoặc chỉnh sửa.
                 </p>
-                {file && <p className="text-xs text-gray-400 mt-1 text-center">{formatFileSize(file.size)}{pdfPages && ` • Số trang: ${pdfPages}`}</p>}
             </div>
 
             {/* Nội dung chương */}
             <div className="bg-slate-800 p-6 rounded-lg mb-6">
                 <h2 className="text-lg font-semibold mb-4">Nội dung chương</h2>
                 <textarea
-                    placeholder="Nhập nội dung chương..."
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    readOnly
                     rows={30}
-                    className="w-full px-3 py-2 rounded-lg bg-gray-700 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-300 focus:outline-none cursor-not-allowed"
                 />
                 <div className="text-right text-xs text-gray-400 mt-2">{content.length}/50000 ký tự</div>
             </div>

@@ -9,6 +9,7 @@ import {
 } from "../../api/readingScheduleApi";
 import { getUserPurchasedBooks } from "../../api/bookApi";
 import { getCurrentUser } from "../../api/authApi";
+import ReminderSettings from "./ReminderSettings";
 
 function UserReadingSchedule() {
   const [selectedDate, setSelectedDate] = useState(
@@ -34,13 +35,28 @@ function UserReadingSchedule() {
     }, 3000);
   };
 
-  // Helper function to get AM/PM
+  // Helper function to get AM/PM (database stores UTC, convert to Vietnam time for display only)
   const getAMPM = (date) => {
-    return new Date(date).toLocaleTimeString('en-US', { 
+    const dateObj = new Date(date);
+    // Convert from UTC to Vietnam timezone (UTC+7) for display only
+    const vietnamTime = new Date(dateObj.getTime() + (7 * 60 * 60 * 1000));
+    return vietnamTime.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit',
       hour12: true 
     }).split(' ')[1];
+  };
+
+  // Helper function to format time for display (database stores UTC, convert to Vietnam time for display only)
+  const formatTimeForDisplay = (date) => {
+    const dateObj = new Date(date);
+    // Convert from UTC to Vietnam timezone (UTC+7) for display only
+    const vietnamTime = new Date(dateObj.getTime() + (7 * 60 * 60 * 1000));
+    return vietnamTime.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
   };
 
   // Filter books based on search
@@ -164,8 +180,10 @@ function UserReadingSchedule() {
   const handleEditClick = (schedule) => {
     setEditingSchedule(schedule);
     const beginReadAt = new Date(schedule.beginReadAt);
+    // Convert UTC to Vietnam time for display only
+    const vietnamTime = new Date(beginReadAt.getTime() + (7 * 60 * 60 * 1000));
     setEditFormData({
-      time: beginReadAt.toTimeString().slice(0, 5),
+      time: vietnamTime.toTimeString().slice(0, 5),
       duration: schedule.readingTime.toString(),
       reminder: schedule.reminder || false
     });
@@ -196,13 +214,15 @@ function UserReadingSchedule() {
         errors.duration = "Thời gian đọc phải lớn hơn 0";
       }
       
-      // Check if time is in the past for today
+      // Check if time is in the past for today (using Vietnam timezone)
       const selectedDateObj = new Date(selectedDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
       if (selectedDateObj.getTime() === today.getTime()) {
-        const selectedDateTime = new Date(`${selectedDate}T${editFormData.time}`);
+        const [year, month, day] = selectedDate.split('-');
+        const [hours, minutes] = editFormData.time.split(':');
+        const selectedDateTime = new Date(year, month - 1, day, parseInt(hours), parseInt(minutes));
         const now = new Date();
         
         if (selectedDateTime < now) {
@@ -216,12 +236,36 @@ function UserReadingSchedule() {
         return;
       }
       
-      const beginReadAt = new Date(`${selectedDate}T${editFormData.time}`);
+      // Create date in Vietnam timezone (database stores UTC, so convert to UTC)
+      const [year, month, day] = selectedDate.split('-');
+      const [hours, minutes] = editFormData.time.split(':');
+      
+      console.log('Debug Edit - Input data:', {
+        selectedDate,
+        time: editFormData.time,
+        year, month, day, hours, minutes
+      });
+      
+      // Create Vietnam time as UTC string, then convert to Date
+      const vietnamTimeString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00+07:00`;
+      console.log('Debug Edit - vietnamTimeString:', vietnamTimeString);
+      
+      const beginReadAt = new Date(vietnamTimeString);
+      console.log('Debug Edit - beginReadAt:', beginReadAt);
+      console.log('Debug Edit - beginReadAt.toString():', beginReadAt.toString());
+      
+      // Convert to UTC for database storage
+      const utcTime = new Date(beginReadAt.getTime());
+      console.log('Debug Edit - utcTime:', utcTime);
+      console.log('Debug Edit - utcTime.toString():', utcTime.toString());
+      
       const updateData = {
-        beginReadAt: beginReadAt.toISOString(),
+        beginReadAt: utcTime.toISOString(),
         readingTime: parseInt(editFormData.duration),
-        isActive: !editFormData.reminder
+        isActive: editFormData.reminder  // Sửa logic: reminder = true → isActive = true
       };
+      
+      console.log('Debug Edit - updateData:', updateData);
       
       await updateReadingSchedule(editingSchedule.scheduleId, updateData);
       await loadSchedules();
@@ -285,9 +329,11 @@ function UserReadingSchedule() {
         errors.date = "Không thể tạo lịch trình cho ngày quá khứ";
       }
       
-      // Check if time is in the past for today
+      // Check if time is in the past for today (using Vietnam timezone)
       if (selectedDate.getTime() === today.getTime()) {
-        const selectedDateTime = new Date(`${addFormData.date}T${addFormData.time}`);
+        const [year, month, day] = addFormData.date.split('-');
+        const [hours, minutes] = addFormData.time.split(':');
+        const selectedDateTime = new Date(year, month - 1, day, parseInt(hours), parseInt(minutes));
         const now = new Date();
         
         if (selectedDateTime < now) {
@@ -301,12 +347,34 @@ function UserReadingSchedule() {
         return;
       }
       
-      const beginReadAt = new Date(`${addFormData.date}T${addFormData.time}`);
+      // Create date in Vietnam timezone (database stores UTC, so convert to UTC)
+      const [year, month, day] = addFormData.date.split('-');
+      const [hours, minutes] = addFormData.time.split(':');
+      
+      console.log('Debug - Input data:', {
+        date: addFormData.date,
+        time: addFormData.time,
+        year, month, day, hours, minutes
+      });
+      
+      // Create Vietnam time as UTC string, then convert to Date
+      const vietnamTimeString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00+07:00`;
+      console.log('Debug - vietnamTimeString:', vietnamTimeString);
+      
+      const beginReadAt = new Date(vietnamTimeString);
+      console.log('Debug - beginReadAt:', beginReadAt);
+      console.log('Debug - beginReadAt.toString():', beginReadAt.toString());
+      
+      // Convert to UTC for database storage
+      const utcTime = new Date(beginReadAt.getTime());
+      console.log('Debug - utcTime:', utcTime);
+      console.log('Debug - utcTime.toString():', utcTime.toString());
+      
       const scheduleData = {
         bookId: parseInt(addFormData.bookId),
-        beginReadAt: beginReadAt.toISOString(),
+        beginReadAt: utcTime.toISOString(),
         readingTime: parseInt(addFormData.duration),
-        isActive: !addFormData.reminder
+        isActive: addFormData.reminder  // Sửa logic: reminder = true → isActive = true
       };
       
       console.log('Creating schedule with data:', scheduleData);
@@ -374,17 +442,20 @@ function UserReadingSchedule() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Lịch trình đọc sách</h2>
-        <button
-          onClick={() => {
-            setShowAddModal(true);
-            setBookSearch(""); // Reset search when opening modal
-            setShowAllBooks(false); // Reset show all books
-          }}
-          className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
-        >
-          <i className="ri-add-line mr-2"></i>
-          Thêm lịch trình
-        </button>
+        <div className="flex gap-3">
+          <ReminderSettings />
+          <button
+            onClick={() => {
+              setShowAddModal(true);
+              setBookSearch(""); // Reset search when opening modal
+              setShowAllBooks(false); // Reset show all books
+            }}
+            className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
+          >
+            <i className="ri-add-line mr-2"></i>
+            Thêm lịch trình
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -451,9 +522,7 @@ function UserReadingSchedule() {
             </div>
           ) : (
             getFilteredSchedules().map((schedule) => {
-              const beginReadAt = new Date(schedule.beginReadAt);
-              const timeString = beginReadAt.toTimeString().slice(0, 5);
-              const ampm = getAMPM(schedule.beginReadAt);
+              const timeString = formatTimeForDisplay(schedule.beginReadAt);
               const isCompleted = !schedule.isActive;
               
               return (
@@ -469,9 +538,6 @@ function UserReadingSchedule() {
                         <div className="flex items-center gap-1">
                           <span className="font-semibold text-white">
                             {timeString}
-                          </span>
-                          <span className="text-xs text-gray-400 font-medium">
-                            {ampm}
                           </span>
                         </div>
                         <span className="text-orange-400">{schedule.bookTitle}</span>
@@ -525,48 +591,6 @@ function UserReadingSchedule() {
         </div>
       </div>
 
-      {/* Goals */}
-      <div className="bg-gray-750 rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Mục tiêu đọc sách</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span>Mục tiêu hàng ngày</span>
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                defaultValue="30"
-                className="w-20 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-center"
-              />
-              <span className="text-gray-400">phút</span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Mục tiêu hàng tuần</span>
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                defaultValue="5"
-                className="w-20 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-center"
-              />
-              <span className="text-gray-400">giờ</span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Nhắc nhở</span>
-            <div className="flex items-center space-x-2">
-              <select className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-white pr-8">
-                <option>15 phút trước</option>
-                <option>30 phút trước</option>
-                <option>1 giờ trước</option>
-                <option>Tắt nhắc nhở</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <button className="mt-4 bg-orange-500 hover:bg-orange-600 px-6 py-2 rounded-lg text-white font-medium whitespace-nowrap">
-          Lưu cài đặt
-        </button>
-      </div>
 
       {/* Modal */}
       {showAddModal && (
@@ -880,10 +904,7 @@ function UserReadingSchedule() {
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1">
                     <span className="font-semibold text-white">
-                      {new Date(deletingSchedule.beginReadAt).toTimeString().slice(0, 5)}
-                    </span>
-                    <span className="text-xs text-gray-400 font-medium">
-                      {getAMPM(deletingSchedule.beginReadAt)}
+                      {formatTimeForDisplay(deletingSchedule.beginReadAt)}
                     </span>
                   </div>
                   <span className="text-orange-400">{deletingSchedule.bookTitle}</span>

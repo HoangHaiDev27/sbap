@@ -141,6 +141,11 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE: `${API_BASE_URL}/api/upload/uploadChapterFile`,
   },
 
+  AUDIO_CONVERSION: {
+    GENERATE: (chapterId, voiceName = "banmai", speed = 1.0) =>
+      `${API_BASE_URL}/api/audioconversion/generate/${chapterId}?voiceName=${voiceName}&speed=${speed}`,
+  },
+  
   CATEGORIES: {
     GET_ALL: `${API_BASE_URL}/api/categories`,
     GET_BY_ID: (id) => `${API_BASE_URL}/api/categories/${id}`,
@@ -188,17 +193,17 @@ export const API_ENDPOINTS = {
     GET_ALL_ACTIVE_BOOKS: `${API_BASE_URL}/api/BookApproval/active-books`,
     GET_ALL_USERS_WITH_PROFILE: `${API_BASE_URL}/api/BookApproval/users`
   },
-        USER_MANAGEMENT: {
-          GET_USERS_BY_ROLE: (roleName) => `${API_BASE_URL}/api/staff/users-by-role/${roleName}`,
-          GET_BOOK_OWNERS: `${API_BASE_URL}/api/staff/book-owners`,
-          GET_CUSTOMERS: `${API_BASE_URL}/api/staff/customers`,
-          GET_USER_DETAIL: (id) => `${API_BASE_URL}/api/staff/users/${id}`,
-          TOGGLE_STATUS: (id) => `${API_BASE_URL}/api/staff/toggle-user-status/${id}`,
-          LOCK_USER: (id) => `${API_BASE_URL}/api/staff/lock-user/${id}`,
-          UNLOCK_USER: (id) => `${API_BASE_URL}/api/staff/unlock-user/${id}`,
-          SEND_EMAIL: `${API_BASE_URL}/api/staff/send-email`,
-          GET_USER_SUBSCRIPTION: (id) => `${API_BASE_URL}/api/staff/users/${id}/subscription`,
-        },
+  USER_MANAGEMENT: {
+    GET_USERS_BY_ROLE: (roleName) => `${API_BASE_URL}/api/staff/users-by-role/${roleName}`,
+    GET_BOOK_OWNERS: `${API_BASE_URL}/api/staff/book-owners`,
+    GET_CUSTOMERS: `${API_BASE_URL}/api/staff/customers`,
+    GET_USER_DETAIL: (id) => `${API_BASE_URL}/api/staff/users/${id}`,
+    TOGGLE_STATUS: (id) => `${API_BASE_URL}/api/staff/toggle-user-status/${id}`,
+    LOCK_USER: (id) => `${API_BASE_URL}/api/staff/lock-user/${id}`,
+    UNLOCK_USER: (id) => `${API_BASE_URL}/api/staff/unlock-user/${id}`,
+    SEND_EMAIL: `${API_BASE_URL}/api/staff/send-email`,
+    GET_USER_SUBSCRIPTION: (id) => `${API_BASE_URL}/api/staff/users/${id}/subscription`,
+  },
   API_BASE_URL: API_BASE_URL,
 
 };

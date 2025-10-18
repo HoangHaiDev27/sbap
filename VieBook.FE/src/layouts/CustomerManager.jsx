@@ -1,31 +1,92 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   RiUserLine,
   RiBookReadLine,
   RiExchangeDollarLine,
+  RiHeartLine,
 } from "react-icons/ri";
 import UserProfile from "../components/user/UserProfile";
 import UserReadingSchedule from "../components/user/UserReadingSchedule";
 import UserTransactionHistory from "../components/user/UserTransactionHistory";
+import { getUserPurchasedBooks } from "../api/bookApi";
+import { getUserTransactionHistory } from "../api/transactionApi";
+import { getMyWishlist } from "../api/wishlistApi";
+import { isBookOwner } from "../api/authApi";
 export default function CustomerManager() {
   const [activeTab, setActiveTab] = useState("personal");
+  const [statsData, setStatsData] = useState({
+    purchasedBooks: 0,
+    favoriteBooks: 0,
+    totalTransactions: 0,
+    userRole: "User"
+  });
+
+  // Load stats data
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      // Load purchased books
+      let purchasedBooks = [];
+      try {
+        purchasedBooks = await getUserPurchasedBooks();
+      } catch (error) {
+        console.error("Error loading purchased books:", error);
+      }
+      
+      // Load transaction history
+      let transactions = [];
+      try {
+        transactions = await getUserTransactionHistory();
+      } catch (error) {
+        console.error("Error loading transaction history:", error);
+        transactions = [];
+      }
+      
+      // Load user wishlist (favorite books)
+      let wishlist = { data: [] };
+      try {
+        wishlist = await getMyWishlist();
+      } catch (error) {
+        console.error("Error loading wishlist:", error);
+      }
+      
+      // Update stats
+      setStatsData({
+        purchasedBooks: purchasedBooks?.length || 0,
+        favoriteBooks: Array.isArray(wishlist) ? wishlist.length : (wishlist?.data?.length || 0),
+        totalTransactions: transactions?.length || 0,
+        userRole: isBookOwner() ? "Book Owner" : "User"
+      });
+    } catch (error) {
+      console.error("Error loading stats:", error);
+    }
+  };
 
   const stats = [
     {
       label: "Sách đang đọc",
-      value: 12,
+      value: statsData.purchasedBooks,
       color: "bg-blue-500",
       icon: <RiBookReadLine size={28} />,
     },
     {
-      label: "Tổng giao dịch",
-      value: 23,
+      label: "Sách yêu thích",
+      value: statsData.favoriteBooks,
       color: "bg-purple-500",
+      icon: <RiHeartLine size={28} />,
+    },
+    {
+      label: "Tổng giao dịch",
+      value: statsData.totalTransactions,
+      color: "bg-green-500",
       icon: <RiExchangeDollarLine size={28} />,
     },
     {
       label: "Khách hàng",
-      value: "VIP",
+      value: statsData.userRole,
       color: "bg-orange-500",
       icon: <RiUserLine size={28} />,
     },
@@ -57,7 +118,7 @@ export default function CustomerManager() {
       </p>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, index) => (
           <div
             key={index}
