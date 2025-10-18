@@ -159,13 +159,13 @@ function AudiobookCard({ book }) {
         {/* h-[260px] = tổng chiều cao cố định phần nội dung */}
         
         {/* Title */}
-        <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors h-12 overflow-hidden line-clamp-2">
+        <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors h-[56px] overflow-hidden line-clamp-2">
           {book.title}
         </h3>
 
         {/* Author */}
         <p className="text-gray-400 text-sm mb-1 h-5 truncate">
-          bỏi {book.author}
+          Tác giả: {book.author}
         </p>
 
         {/* Rating */}
@@ -208,7 +208,7 @@ function AudiobookRow({ book }) {
         <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-1">
           {book.title}
         </h3>
-        <p className="text-gray-400 text-sm mb-1">bởi {book.author}</p>
+        <p className="text-gray-400 text-sm mb-1">Tác giả: {book.author}</p>
         <Rating rating={book.rating} reviews={book.reviews} />
         <div className="mt-auto">
           <BookFooter

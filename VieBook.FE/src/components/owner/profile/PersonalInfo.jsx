@@ -10,6 +10,7 @@ export default function PersonalInfo() {
     BankName: "",
     PortfolioUrl: "",
     Bio: "",
+    Address: "",
   });
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -32,7 +33,10 @@ export default function PersonalInfo() {
           BankName: p.BankName || p.bankName || "",
           PortfolioUrl: p.PortfolioUrl || p.portfolioUrl || "",
           Bio: p.Bio || p.bio || "",
+          Address: p.Address || p.address || "",
         });
+        console.log("PersonalInfo - Profile data loaded:", p); // Debug log
+        console.log("PersonalInfo - Address value:", p.Address || p.address || ""); // Debug log
       })
       .catch(() => {});
     return () => {
@@ -48,6 +52,20 @@ export default function PersonalInfo() {
   const onSubmit = async () => {
     setSaving(true);
     setMsg("");
+    
+    // Validate date of birth - không cho phép chọn ngày sinh ở tương lai
+    if (form.DateOfBirth) {
+      const selectedDate = new Date(form.DateOfBirth);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+      
+      if (selectedDate > today) {
+        setMsg("Không thể chọn ngày sinh ở tương lai");
+        setSaving(false);
+        return;
+      }
+    }
+    
     try {
       const payload = {
         FullName: form.FullName || null,
@@ -57,6 +75,7 @@ export default function PersonalInfo() {
         BankName: form.BankName || null,
         PortfolioUrl: form.PortfolioUrl || null,
         Bio: form.Bio || null,
+        Address: form.Address || null,
       };
       await upsertMyProfile(payload);
       setMsg("Lưu thay đổi thành công");
@@ -115,6 +134,7 @@ export default function PersonalInfo() {
             name="DateOfBirth"
             value={form.DateOfBirth}
             onChange={onChange}
+            max={new Date().toISOString().split('T')[0]}
             className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
           />
         </div>
@@ -156,6 +176,18 @@ export default function PersonalInfo() {
             onChange={onChange}
             className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
             rows={4}
+          />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-sm text-gray-400 mb-1">Địa chỉ</label>
+          {console.log("PersonalInfo - Address field value:", form.Address)}
+          <textarea
+            name="Address"
+            value={form.Address}
+            onChange={onChange}
+            className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
+            rows={3}
+            placeholder="Nhập địa chỉ của bạn"
           />
         </div>
       </div>

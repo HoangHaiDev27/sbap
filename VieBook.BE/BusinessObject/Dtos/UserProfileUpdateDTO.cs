@@ -13,6 +13,7 @@ namespace BusinessObject.Dtos
         public string? PortfolioUrl { get; set; }
         public string? Bio { get; set; }
         public bool? AgreeTos { get; set; }
+        public string? Address { get; set; }
     }
 }
 

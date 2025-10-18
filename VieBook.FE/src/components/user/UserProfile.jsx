@@ -37,6 +37,7 @@ export default function UserProfile() {
     avatarUrl: "",
     bankNumber: "",
     bankName: "",
+    address: "",
     wallet: 0,
     isPhoneVerified: false,
     phoneVerifiedAt: null
@@ -66,6 +67,7 @@ export default function UserProfile() {
     try {
       setLoading(true);
       const userData = await getCurrentUser();
+      console.log("User data received:", userData); // Debug log
       const profileData = {
         fullName: userData.userProfile?.fullName || "",
         email: userData.email || "",
@@ -75,10 +77,12 @@ export default function UserProfile() {
         avatarUrl: userData.userProfile?.avatarUrl || "",
         bankNumber: userData.userProfile?.bankNumber || "",
         bankName: userData.userProfile?.bankName || "",
+        address: userData.userProfile?.address || "",
         wallet: userData.wallet || 0,
         isPhoneVerified: userData.userProfile?.isPhoneVerified || false,
         phoneVerifiedAt: userData.userProfile?.phoneVerifiedAt
       };
+      console.log("Profile data mapped:", profileData); // Debug log
       setFormData(profileData);
       setTempData(profileData);
     } catch (error) {
@@ -165,6 +169,17 @@ export default function UserProfile() {
         }
       }
 
+      // Validate date of birth - không cho phép chọn ngày sinh ở tương lai
+      if (tempData.dateOfBirth) {
+        const selectedDate = new Date(tempData.dateOfBirth);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+        
+        if (selectedDate > today) {
+          errors.dateOfBirth = "Không thể chọn ngày sinh ở tương lai";
+        }
+      }
+
       if (Object.keys(errors).length > 0) {
         setValidationErrors(errors);
         return;
@@ -176,7 +191,8 @@ export default function UserProfile() {
         dateOfBirth: tempData.dateOfBirth ? new Date(tempData.dateOfBirth) : null,
         avatarUrl: tempData.avatarUrl,
         bankNumber: tempData.bankNumber,
-        bankName: tempData.bankName
+        bankName: tempData.bankName,
+        address: tempData.address
       };
       
       await upsertMyProfile(updateData);
@@ -460,6 +476,7 @@ export default function UserProfile() {
           { label: "Ngày sinh", key: "dateOfBirth", type: "date" },
           { label: "Số tài khoản ngân hàng", key: "bankNumber" },
           { label: "Tên ngân hàng", key: "bankName" },
+          { label: "Địa chỉ", key: "address", type: "textarea", colSpan: true },
         ].map((field) => (
           <div key={field.key} className={field.colSpan ? "md:col-span-2" : ""}>
             <p className="text-gray-400 flex items-center gap-1">
@@ -468,6 +485,7 @@ export default function UserProfile() {
             </p>
             {isEditing ? (
               <div>
+                {field.key === 'address' && console.log('Address field in editing mode:', tempData[field.key])}
                 {field.type === "textarea" ? (
                   <textarea
                     name={field.key}
@@ -486,6 +504,7 @@ export default function UserProfile() {
                     value={tempData[field.key]}
                     onChange={handleChange}
                     readOnly={field.readOnly}
+                    max={field.type === "date" ? new Date().toISOString().split('T')[0] : undefined}
                     className={`mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 disabled:opacity-50 ${
                       validationErrors[field.key] ? 'ring-red-500 border-red-500' : 'focus:ring-orange-500'
                     }`}
@@ -502,6 +521,7 @@ export default function UserProfile() {
               </div>
             ) : (
               <p className="font-medium">
+                {field.key === 'address' && console.log('Address field value:', formData[field.key])}
                 {formData[field.key] || <span className="text-gray-500 italic">Chưa cập nhật</span>}
               </p>
             )}
