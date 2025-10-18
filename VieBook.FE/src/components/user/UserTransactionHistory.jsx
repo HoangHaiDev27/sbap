@@ -42,6 +42,21 @@ export default function UserTransactionHistory() {
   const currentTx = transactions.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(transactions.length / txPerPage);
 
+  // Build page numbers with ellipsis for large page counts
+  const buildPageNumbers = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = [];
+    const add = (p) => pages.push(p);
+    add(1);
+    if (currentPage > 4) add("...");
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let p = start; p <= end; p++) add(p);
+    if (currentPage < totalPages - 3) add("...");
+    add(totalPages);
+    return pages;
+  };
+
   // Icon + label theo loại
   const renderIcon = (transaction) => {
     if (transaction.type === "purchase") {
@@ -122,35 +137,41 @@ export default function UserTransactionHistory() {
       )}
 
       {/* Pagination */}
-      <div className="flex justify-center space-x-2 mt-6">
-        <button
-          className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
-          onClick={() => setCurrentPage((p) => p - 1)}
-          disabled={currentPage === 1}
-        >
-          Trước
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center space-x-2 mt-6">
           <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-4 py-2 rounded ${
-              currentPage === page
-                ? "bg-orange-500 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
+            className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
+            onClick={() => setCurrentPage((p) => p - 1)}
+            disabled={currentPage === 1}
           >
-            {page}
+            Trước
           </button>
-        ))}
-        <button
-          className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
-          onClick={() => setCurrentPage((p) => p + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Sau
-        </button>
-      </div>
+          {buildPageNumbers().map((page, idx) => (
+            typeof page === "number" ? (
+              <button
+                key={`p-${page}`}
+                onClick={() => setCurrentPage(page)}
+                className={`px-4 py-2 rounded ${
+                  currentPage === page
+                    ? "bg-orange-500 text-white"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+              >
+                {page}
+              </button>
+            ) : (
+              <span key={`e-${idx}`} className="px-2 text-gray-400">{page}</span>
+            )
+          ))}
+          <button
+            className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-50"
+            onClick={() => setCurrentPage((p) => p + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Sau
+          </button>
+        </div>
+      )}
 
       {/* Modal */}
       {selectedTx && (
