@@ -59,10 +59,45 @@ namespace VieBook.BE.Controllers
                 {
                     using var audioClient = new HttpClient();
                     var audioBytes = await audioClient.GetByteArrayAsync(audioUrl);
-                    using var memoryStream = new MemoryStream(audioBytes);
 
-                    using var mp3Reader = new Mp3FileReader(memoryStream);
-                    durationSeconds = mp3Reader.TotalTime.TotalSeconds;
+                    using (var memoryStream = new MemoryStream(audioBytes))
+                    using (var mp3Reader = new Mp3FileReader(memoryStream))
+                    {
+                        durationSeconds = mp3Reader.TotalTime.TotalSeconds;
+                    }
+
+                    // Nếu lần đầu không đọc được (duration = 0) thì thử lại sau 2 giây
+                    if (durationSeconds <= 0.5)
+                    {
+                        Console.WriteLine("[WARN] Duration = 0, retrying in 2s...");
+                        await Task.Delay(2000);
+
+                        var retryBytes = await audioClient.GetByteArrayAsync(audioUrl);
+                        using (var retryStream = new MemoryStream(retryBytes))
+                        using (var retryReader = new Mp3FileReader(retryStream))
+                        {
+                            durationSeconds = retryReader.TotalTime.TotalSeconds;
+                        }
+                    }
+
+                    // Nếu vẫn 0, thử dùng MediaFoundationReader (fallback)
+                    if (durationSeconds <= 0.5)
+                    {
+                        try
+                        {
+                            var tempFile = Path.GetTempFileName();
+                            await System.IO.File.WriteAllBytesAsync(tempFile, audioBytes);
+
+                            using var reader = new MediaFoundationReader(tempFile);
+                            durationSeconds = reader.TotalTime.TotalSeconds;
+
+                            System.IO.File.Delete(tempFile);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            Console.WriteLine($"[WARN] Fallback MediaFoundationReader failed: {innerEx.Message}");
+                        }
+                    }
 
                     chapter.DurationSec = (int)Math.Round(durationSeconds);
                 }
