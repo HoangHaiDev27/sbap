@@ -95,6 +95,7 @@ builder.Services.AddScoped<BookmarkDAO>();
 builder.Services.AddScoped<NotificationDAO>();
 builder.Services.AddScoped<ReadingScheduleDAO>();
 builder.Services.AddScoped<WalletTransactionDAO>();
+builder.Services.AddScoped<ReadingStatsDAO>();
 
 
 
@@ -118,6 +119,7 @@ builder.Services.AddScoped<IBookReviewRepository, BookReviewRepository>();
 builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 builder.Services.AddScoped<IUserFeedbackRepository, UserFeedbackRepository>();
 builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
+builder.Services.AddScoped<IReadingStatsRepository, ReadingStatsRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -147,6 +149,7 @@ builder.Services.AddScoped<IUserFeedbackService, UserFeedbackService>();
 builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository>();
 builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
 builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
+builder.Services.AddScoped<IReadingStatsService, ReadingStatsService>();
 
 
 

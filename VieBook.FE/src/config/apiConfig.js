@@ -1,5 +1,4 @@
 // API Configuration
-const API_BASE_URL = "http://102.37.147.127:5757";
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -109,6 +108,14 @@ export const API_ENDPOINTS = {
     SAVE_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/save-progress`,
     CURRENT_PROGRESS: `${API_BASE_URL}/api/ReadingHistory/current-progress`,
     PAGINATED: `${API_BASE_URL}/api/ReadingHistory/paginated`,
+  },
+
+  // Reading Stats endpoints
+  READING_STATS: {
+    BOOKS_READ: (userId) => `${API_BASE_URL}/api/ReadingStats/user/${userId}/books-read`,
+    BOOKS_PURCHASED: (userId) => `${API_BASE_URL}/api/ReadingStats/user/${userId}/books-purchased`,
+    FAVORITES: (userId) => `${API_BASE_URL}/api/ReadingStats/user/${userId}/favorites`,
+    BOOKS_LISTENED: (userId) => `${API_BASE_URL}/api/ReadingStats/user/${userId}/books-listened`,
   },
   // Other endpoints can be added here
   // BOOKS: `${API_BASE_URL}/api/books`,
