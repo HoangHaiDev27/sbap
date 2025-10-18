@@ -68,7 +68,8 @@ namespace VieBook.BE.Controllers
                         profile.BankName,
                         profile.PortfolioUrl,
                         profile.Bio,
-                        profile.AgreeTos
+                        profile.AgreeTos,
+                        profile.Address
                     }
                 });
             }
@@ -150,7 +151,8 @@ namespace VieBook.BE.Controllers
                         phoneVerifiedAt = user.UserProfile.PhoneVerifiedAt,
                         portfolioUrl = user.UserProfile.PortfolioUrl,
                         bio = user.UserProfile.Bio,
-                        agreeTos = user.UserProfile.AgreeTos
+                        agreeTos = user.UserProfile.AgreeTos,
+                        address = user.UserProfile.Address
                     } : null,
                     roles = user.Roles.Select(r => r.RoleName).ToList()
                 });
@@ -375,7 +377,8 @@ namespace VieBook.BE.Controllers
                     dto.BankName,
                     dto.PortfolioUrl,
                     dto.Bio,
-                    dto.AgreeTos
+                    dto.AgreeTos,
+                    dto.Address
                 );
 
                 return Ok(new
@@ -389,7 +392,8 @@ namespace VieBook.BE.Controllers
                         profile.DateOfBirth,
                         profile.AvatarUrl,
                         profile.BankNumber,
-                        profile.BankName
+                        profile.BankName,
+                        profile.Address
                     }
                 });
             }
