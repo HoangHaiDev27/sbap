@@ -10,10 +10,18 @@ import ReadingHistory from "../components/library/ReadingHistory";
 import ListeningHistory from "../components/library/ListeningHistory";
 import PurchasedBook from "../components/library/PurchasedBook";
 import FavoriteBook from "../components/library/FavoriteBook";
+import readingStatsApi from "../api/readingStatsApi";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 export default function LibraryManager() {
+  const { user, userId } = useCurrentUser();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("reading");
+  const [booksReadCount, setBooksReadCount] = useState(0);
+  const [booksPurchasedCount, setBooksPurchasedCount] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [booksListenedCount, setBooksListenedCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // Check for tab parameter in URL
   useEffect(() => {
@@ -23,28 +31,61 @@ export default function LibraryManager() {
     }
   }, [searchParams]);
 
+  // Fetch books read count and purchased count
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!userId) return;
+      
+      try {
+        setLoading(true);
+        
+        // Fetch books read count
+        const readCount = await readingStatsApi.getBooksReadCount(userId);
+        setBooksReadCount(readCount);
+        
+        // Fetch books purchased count
+        const purchasedCount = await readingStatsApi.getBooksPurchasedCount(userId);
+        setBooksPurchasedCount(purchasedCount);
+        
+        // Fetch favorites count
+        const favorites = await readingStatsApi.getFavoritesCount(userId);
+        setFavoritesCount(favorites);
+        
+        // Fetch books listened count
+        const listenedCount = await readingStatsApi.getBooksListenedCount(userId);
+        setBooksListenedCount(listenedCount);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [userId]);
+
   const stats = [
     {
-      label: "Sách đã nghe",
-      value: 142,
+      label: "Sách đã đọc",
+      value: loading ? "..." : booksReadCount,
       color: "bg-blue-500",
-      icon: <RiHeadphoneLine size={28} />,
-    },
-    {
-      label: "Tổng thời gian",
-      value: "847h",
-      color: "bg-green-500",
       icon: <RiBookReadLine size={28} />,
     },
     {
+      label: "Sách đã nghe",
+      value: loading ? "..." : booksListenedCount,
+      color: "bg-green-500",
+      icon: <RiHeadphoneLine size={28} />,
+    },
+    {
       label: "Sách đã mua",
-      value: 89,
+      value: loading ? "..." : booksPurchasedCount,
       color: "bg-purple-500",
       icon: <RiShoppingBagLine size={28} />,
     },
     {
       label: "Yêu thích",
-      value: 37,
+      value: loading ? "..." : favoritesCount,
       color: "bg-orange-500",
       icon: <RiHeartLine size={28} />,
     },

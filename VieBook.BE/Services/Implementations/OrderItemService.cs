@@ -56,6 +56,32 @@ namespace Services.Implementations
             return paginatedItems.Select(MapGroupedToPurchasedBookDTO);
         }
 
+        public async Task<IEnumerable<PurchasedBookDTO>> GetAllPurchasedBooksAsync(int userId, string timeFilter, string sortBy)
+        {
+            var orderItems = await _orderItemRepository.GetPurchasedBooksByUserIdAsync(userId);
+            
+            // Group by book to combine chapters
+            var groupedByBook = orderItems
+                .GroupBy(oi => oi.Chapter.Book.BookId)
+                .Select(group => new BookGroupInfo
+                {
+                    Book = group.First().Chapter.Book,
+                    OrderItems = group.ToList(),
+                    TotalChapters = group.First().Chapter.Book.Chapters.Count,
+                    PurchasedChapters = group.Count(),
+                    LatestPurchase = group.Max(oi => oi.PaidAt),
+                    TotalSpent = group.Sum(oi => oi.CashSpent)
+                });
+            
+            // Filter by time
+            var filteredItems = FilterByTime(groupedByBook, timeFilter);
+            
+            // Sort
+            var sortedItems = SortGroupedItems(filteredItems, sortBy);
+
+            return sortedItems.Select(MapGroupedToPurchasedBookDTO);
+        }
+
         public async Task<PurchasedBookDTO?> GetOrderItemByIdAsync(long orderItemId)
         {
             var orderItem = await _orderItemRepository.GetOrderItemByIdAsync(orderItemId);
@@ -84,6 +110,29 @@ namespace Services.Implementations
                 .OrderBy(c => c.ChapterId);
 
             return purchasedChapters;
+        }
+
+        public async Task<int> GetPurchasedBooksCountAsync(int userId, string timeFilter)
+        {
+            var orderItems = await _orderItemRepository.GetPurchasedBooksByUserIdAsync(userId);
+            
+            // Group by book to count unique books
+            var groupedByBook = orderItems
+                .GroupBy(oi => oi.Chapter.Book.BookId)
+                .Select(group => new BookGroupInfo
+                {
+                    Book = group.First().Chapter.Book,
+                    OrderItems = group.ToList(),
+                    TotalChapters = group.First().Chapter.Book.Chapters.Count,
+                    PurchasedChapters = group.Count(),
+                    LatestPurchase = group.Max(oi => oi.PaidAt),
+                    TotalSpent = group.Sum(oi => oi.CashSpent)
+                });
+            
+            // Apply time filter
+            var filteredItems = FilterByTime(groupedByBook, timeFilter);
+            
+            return filteredItems.Count();
         }
 
         private IEnumerable<BookGroupInfo> FilterByTime(IEnumerable<BookGroupInfo> groupedItems, string timeFilter)

@@ -32,7 +32,7 @@ export default function ReportBookModal({
     setIsSubmitting(true);
     try {
       await submitBookReport(bookId, reportText);
-      toast.success("📨 Đã gửi báo cáo thành công");
+      toast.success("Đã gửi báo cáo thành công");
       setReportText("");
       onClose();
     } catch (error) {

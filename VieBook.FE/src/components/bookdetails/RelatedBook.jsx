@@ -1,125 +1,128 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { RiStarFill, RiArrowLeftSLine, RiArrowRightSLine } from "react-icons/ri";
 import { getRelatedBooks } from "../../api/bookApi";
 
 export default function BookRelated({ currentBookId }) {
   const [relatedBooks, setRelatedBooks] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const booksPerPage = 4; // Số sách hiển thị mỗi lần
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     async function fetchData() {
+      if (!currentBookId) return;
+      setIsLoading(true);
       try {
         const books = await getRelatedBooks(currentBookId);
-        setRelatedBooks(books);
+        setRelatedBooks(books || []);
       } catch (err) {
         console.error("Lỗi khi fetch related books:", err);
+        setRelatedBooks([]);
+      } finally {
+        setIsLoading(false);
       }
     }
-    if (currentBookId) fetchData();
+    fetchData();
   }, [currentBookId]);
 
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex + booksPerPage >= relatedBooks.length 
-        ? 0 
-        : prevIndex + booksPerPage
-    );
+  const scroll = (direction) => {
+    if (!scrollRef.current) return;
+    const amount = 300; // số pixel scroll mỗi lần
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
   };
-
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === 0 
-        ? Math.max(0, relatedBooks.length - booksPerPage)
-        : prevIndex - booksPerPage
-    );
-  };
-
-  const visibleBooks = relatedBooks.slice(currentIndex, currentIndex + booksPerPage);
 
   return (
     <section className="mb-8">
       <h2 className="text-2xl font-bold mb-6">Sách cùng thể loại</h2>
       
-      {relatedBooks.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+          <span className="ml-2 text-gray-400">Đang tải...</span>
+        </div>
+      ) : relatedBooks.length > 0 ? (
         <div className="relative">
           {/* Nút điều hướng trái */}
           <button
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-            disabled={relatedBooks.length <= booksPerPage}
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 
+               bg-gray-800/80 hover:bg-gray-700 text-white 
+               p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110
+               disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
             <RiArrowLeftSLine className="text-xl" />
           </button>
 
           {/* Nút điều hướng phải */}
           <button
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-            disabled={relatedBooks.length <= booksPerPage}
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 
+               bg-gray-800/80 hover:bg-gray-700 text-white 
+               p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110
+               disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
             <RiArrowRightSLine className="text-xl" />
           </button>
 
-          {/* Container cho sách */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-12">
-            {visibleBooks.map((book) => (
-              <div
+          {/* Container cho sách với scroll */}
+          <div
+            ref={scrollRef}
+            className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
+          >
+            {relatedBooks.map((book) => (
+              <Link
                 key={book.id}
-                className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                to={`/bookdetails/${book.id}`}
+                className="flex-shrink-0 cursor-pointer group"
               >
-                <Link to={`/bookdetails/${book.id}`} className="block">
-                  <div className="relative">
-                    <img
-                      src={book.image}
-                      alt={book.title}
-                      className="w-full h-48 object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-1 group-hover:text-orange-400 transition-colors line-clamp-2">
-                      {book.title}
-                    </h3>
-                    <p className="text-gray-400 text-sm mb-2">{book.author}</p>
-
-                    {/* Rating giống AudiobookGrid */}
-                    <div className="flex items-center space-x-2 mb-2">
-                      <RiStarFill className="text-yellow-400 text-sm" />
-                      <span className="text-sm text-gray-400">
-                        {book.rating.toFixed(1)} ({book.reviews})
-                      </span>
+                <div className="w-64">
+                  <div className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={book.image}
+                        alt={book.title}
+                        className="w-full h-48 object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-lg"></div>
                     </div>
 
-                    <span className="text-orange-400 font-semibold text-sm">
-                      {book.price.toLocaleString()} xu
-                    </span>
+                    <div className="p-4">
+                      <h3 className="font-semibold mb-1 group-hover:text-orange-400 transition-colors line-clamp-2">
+                        {book.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-2 group-hover:text-gray-300 transition-colors">
+                        {book.author}
+                      </p>
+
+                      {/* Rating */}
+                      <div className="flex items-center space-x-2 mb-2">
+                        <RiStarFill className="text-yellow-400 text-sm group-hover:text-yellow-300 transition-colors" />
+                        <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                          {book.rating?.toFixed(1) || '0.0'} ({book.reviews || 0})
+                        </span>
+                      </div>
+
+                      <span className="text-orange-400 font-semibold text-sm group-hover:text-orange-300 transition-colors">
+                        {book.price?.toLocaleString() || '0'} xu
+                      </span>
+                    </div>
                   </div>
-                </Link>
-              </div>
+                </div>
+              </Link>
             ))}
           </div>
-
-          {/* Dots indicator */}
-          {relatedBooks.length > booksPerPage && (
-            <div className="flex justify-center mt-4 space-x-2">
-              {Array.from({ length: Math.ceil(relatedBooks.length / booksPerPage) }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index * booksPerPage)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    Math.floor(currentIndex / booksPerPage) === index
-                      ? 'bg-orange-400 w-6'
-                      : 'bg-gray-600 hover:bg-gray-500'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
         </div>
       ) : (
-        <p className="text-gray-400">Không có sách liên quan.</p>
+        <div className="text-center py-8">
+          <p className="text-gray-400 mb-2">Không có sách liên quan</p>
+          <p className="text-gray-500 text-sm">Hãy thử xem các sách khác trong cùng thể loại</p>
+        </div>
       )}
     </section>
   );
