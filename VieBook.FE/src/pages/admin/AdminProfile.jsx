@@ -293,7 +293,7 @@ export default function AdminProfile() {
                       ? "Email *"
                       : key === "phoneNumber"
                       ? "Số điện thoại *"
-                      : "Địa chỉ"}
+                      : "Địa chỉ *"}
                   </label>
 
                   <input
