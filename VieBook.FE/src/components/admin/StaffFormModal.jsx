@@ -87,10 +87,10 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
       return alert('Nhân viên phải từ 18 tuổi trở lên');
     }
 
-     const phoneRegex = /^0(3|5|7|8|9)[0-9]{8}$/;
-      if (!phoneRegex.test(formData.phoneNumber)) {
-        return alert('Số điện thoại không hợp lệ (phải có 10 số và bắt đầu bằng 03, 05, 07, 08 hoặc 09)');
-      }
+     const phoneRegex = /^0\d{8,10}$/;
+    if (!phoneRegex.test(formData.phoneNumber)) {
+      return alert('Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có từ 9 đến 11 số)');
+    }
 
     onSave(formData, staff?.userId || null, newAvatarFile);
   };
@@ -153,8 +153,8 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
             type="text"
             required
             placeholder="0905123456"
-            pattern="^0(3|5|7|8|9)[0-9]{8}$"
-            title="Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9]"
+            pattern="^0\d{8,10}$"
+            title="Số điện thoại phải bắt đầu từ 0 và có 9-11 số"
             value={formData.phoneNumber}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
@@ -199,12 +199,12 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
           </div>
           <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
-            Địa chỉ { !isEdit && <span className="text-red-500">*</span> }
+            Địa chỉ  <span className="text-red-500">*</span> 
           </label>
           <input
             type="text"
             required 
-            placeholder={isEdit ? "Nhập địa chỉ (không bắt buộc)" : "Nhập địa chỉ"}
+            placeholder={isEdit ? "Địa chỉ không được để trống" : "Nhập địa chỉ"}
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
