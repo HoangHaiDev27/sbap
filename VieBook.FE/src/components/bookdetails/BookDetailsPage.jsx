@@ -262,39 +262,50 @@ export default function BookDetailPage() {
 
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-4">
-            <span className="text-white font-medium">
-              {reviews && reviews.length > 0
-                ? (
+            {reviews && reviews.length > 0 ? (
+              <>
+                <span className="text-white font-medium">
+                  {(
                     reviews.reduce((sum, r) => sum + r.rating, 0) /
                     reviews.length
-                  ).toFixed(1)
-                : "Chưa có"}
-            </span>
-            <RiStarFill className="text-yellow-400" />
-            <span className="text-gray-400 text-sm">
-              ({reviews?.length || 0} đánh giá)
-            </span>
+                  ).toFixed(1)}
+                </span>
+                <RiStarFill className="text-yellow-400" />
+                <span className="text-gray-400 text-sm">
+                  ({reviews.length} đánh giá)
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-400 text-sm">
+                Chưa có đánh giá
+              </span>
+            )}
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-gray-700 mb-6 flex space-x-6">
-            {["overview", "details", "reviews"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 ${
-                  activeTab === tab
-                    ? "border-b-2 border-orange-500 text-orange-400"
-                    : "text-gray-400"
-                }`}
-              >
-                {tab === "overview"
-                  ? "Tổng quan"
-                  : tab === "details"
-                  ? "Chi tiết"
-                  : "Đánh giá"}
-              </button>
-            ))}
+          <div className="border-b border-gray-700 mb-6">
+            <div className="flex space-x-8">
+              {["overview", "details", "reviews"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`relative pb-3 px-1 font-medium transition-all duration-200 ${
+                    activeTab === tab
+                      ? "text-orange-400"
+                      : "text-gray-400 hover:text-gray-300"
+                  }`}
+                >
+                  {tab === "overview"
+                    ? "Tổng quan"
+                    : tab === "details"
+                    ? "Chi tiết"
+                    : "Đánh giá"}
+                  {activeTab === tab && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"></div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Nội dung Tab */}
