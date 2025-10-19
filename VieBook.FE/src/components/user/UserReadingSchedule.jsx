@@ -100,14 +100,14 @@ function UserReadingSchedule() {
   const [editFormData, setEditFormData] = useState({
     time: "",
     duration: "",
-    reminder: false
+    reminder: true
   });
   const [addFormData, setAddFormData] = useState({
     bookId: "",
     date: new Date().toISOString().split('T')[0], // Default: hôm nay
     time: "09:00", // Default: 9:00 AM
     duration: "30", // Default: 30 phút
-    reminder: false
+    reminder: true
   });
 
 
@@ -185,7 +185,7 @@ function UserReadingSchedule() {
     setEditFormData({
       time: vietnamTime.toTimeString().slice(0, 5),
       duration: schedule.readingTime.toString(),
-      reminder: schedule.reminder || false
+      reminder: true
     });
     setShowEditModal(true);
   };
@@ -284,7 +284,7 @@ function UserReadingSchedule() {
     setEditFormData({
       time: "",
       duration: "",
-      reminder: false
+      reminder: true
     });
   };
 
@@ -386,7 +386,7 @@ function UserReadingSchedule() {
         date: new Date().toISOString().split('T')[0], // Reset to today
         time: "09:00", // Reset to 9:00 AM
         duration: "30", // Reset to 30 minutes
-        reminder: false
+        reminder: true
       });
       setBookSearch(""); // Reset search
       setShowAllBooks(false); // Reset show all books
@@ -744,19 +744,6 @@ function UserReadingSchedule() {
                 )}
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="reminder" 
-                  name="reminder"
-                  checked={addFormData.reminder}
-                  onChange={handleAddFormChange}
-                  className="rounded" 
-                />
-                <label htmlFor="reminder" className="text-sm text-gray-300">
-                  Bật nhắc nhở
-                </label>
-              </div>
 
               <div className="flex space-x-3 pt-4">
                 <button
@@ -847,19 +834,6 @@ function UserReadingSchedule() {
               </div>
 
 
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="editReminder" 
-                  name="reminder"
-                  checked={editFormData.reminder}
-                  onChange={handleEditFormChange}
-                  className="rounded" 
-                />
-                <label htmlFor="editReminder" className="text-sm text-gray-300">
-                  Bật nhắc nhở
-                </label>
-              </div>
 
               <div className="flex space-x-3 pt-4">
                 <button
