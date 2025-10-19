@@ -3,20 +3,19 @@ import {
   RiUserLine,
   RiBookReadLine,
   RiExchangeDollarLine,
-  RiHeartLine,
+  RiHeadphoneLine,
 } from "react-icons/ri";
 import UserProfile from "../components/user/UserProfile";
 import UserReadingSchedule from "../components/user/UserReadingSchedule";
 import UserTransactionHistory from "../components/user/UserTransactionHistory";
-import { getUserPurchasedBooks } from "../api/bookApi";
 import { getUserTransactionHistory } from "../api/transactionApi";
-import { getMyWishlist } from "../api/wishlistApi";
+import { getReadingHistory } from "../api/readingHistoryApi";
 import { isBookOwner } from "../api/authApi";
 export default function CustomerManager() {
   const [activeTab, setActiveTab] = useState("personal");
   const [statsData, setStatsData] = useState({
-    purchasedBooks: 0,
-    favoriteBooks: 0,
+    readingBooks: 0,
+    listeningBooks: 0,
     totalTransactions: 0,
     userRole: "User"
   });
@@ -28,12 +27,22 @@ export default function CustomerManager() {
 
   const loadStats = async () => {
     try {
-      // Load purchased books
-      let purchasedBooks = [];
+      // Load reading history (books currently being read)
+      let readingHistory = [];
       try {
-        purchasedBooks = await getUserPurchasedBooks();
+        const readingData = await getReadingHistory({ readingType: 'Reading' });
+        readingHistory = readingData?.data || readingData || [];
       } catch (error) {
-        console.error("Error loading purchased books:", error);
+        console.error("Error loading reading history:", error);
+      }
+      
+      // Load listening history (books currently being listened to)
+      let listeningHistory = [];
+      try {
+        const listeningData = await getReadingHistory({ readingType: 'Listening' });
+        listeningHistory = listeningData?.data || listeningData || [];
+      } catch (error) {
+        console.error("Error loading listening history:", error);
       }
       
       // Load transaction history
@@ -45,18 +54,10 @@ export default function CustomerManager() {
         transactions = [];
       }
       
-      // Load user wishlist (favorite books)
-      let wishlist = { data: [] };
-      try {
-        wishlist = await getMyWishlist();
-      } catch (error) {
-        console.error("Error loading wishlist:", error);
-      }
-      
       // Update stats
       setStatsData({
-        purchasedBooks: purchasedBooks?.length || 0,
-        favoriteBooks: Array.isArray(wishlist) ? wishlist.length : (wishlist?.data?.length || 0),
+        readingBooks: readingHistory?.length || 0,
+        listeningBooks: listeningHistory?.length || 0,
         totalTransactions: transactions?.length || 0,
         userRole: isBookOwner() ? "Book Owner" : "User"
       });
@@ -68,15 +69,15 @@ export default function CustomerManager() {
   const stats = [
     {
       label: "Sách đang đọc",
-      value: statsData.purchasedBooks,
+      value: statsData.readingBooks,
       color: "bg-blue-500",
       icon: <RiBookReadLine size={28} />,
     },
     {
-      label: "Sách yêu thích",
-      value: statsData.favoriteBooks,
+      label: "Sách đang nghe",
+      value: statsData.listeningBooks,
       color: "bg-purple-500",
-      icon: <RiHeartLine size={28} />,
+      icon: <RiHeadphoneLine size={28} />,
     },
     {
       label: "Tổng giao dịch",
