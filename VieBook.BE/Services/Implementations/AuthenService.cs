@@ -113,11 +113,11 @@ namespace Services.Implementations
         public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
             if (!Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-                return "Invalid email format";
+                return "Email không đúng định dạng";
 
             var user = await _authRepo.GetByEmailAsync(request.Email);
             if (user == null)
-                return "Email not found";
+                return "Email không tồn tại";
 
             // generate otp
             var otp = GenerateOtp(6);
@@ -143,12 +143,12 @@ namespace Services.Implementations
         public async Task<string> ResetPasswordAsync(ResetPasswordRequestDto request)
         {
             var user = await _authRepo.GetByEmailAsync(request.Email);
-            if (user == null) return "Email not found";
+            if (user == null) return "Email không tồn tại";
 
             // Regex check password (>=6 ký tự, có ít nhất 1 chữ và 1 số)
             var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$");
             if (!passwordRegex.IsMatch(request.NewPassword))
-                return "Password phải có ít nhất 6 ký tự, gồm chữ và số";
+                return "Mật khẩu phải có ít nhất 6 ký tự, gồm chữ và số";
 
             // Hash mật khẩu mới
             user.PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(request.NewPassword));
@@ -163,7 +163,7 @@ namespace Services.Implementations
                 await _tokenRepo.UpdateAsync(token);
             }
 
-            return "Password reset successful";
+            return "Đặt lại mật khẩu thành công";
         }
         public async Task LogoutAsync(int userId)
         {
@@ -173,7 +173,7 @@ namespace Services.Implementations
         public async Task<string> VerifyOtpAsync(VerifyOtpRequestDto request)
         {
             var user = await _authRepo.GetByEmailAsync(request.Email);
-            if (user == null) return "Email not found";
+            if (user == null) return "Email không tồn tại";
 
             var token = await _tokenRepo.GetLatestValidForUserAsync(user.UserId);
             if (token == null || token.ExpiresAt < DateTime.UtcNow || token.UsedAt != null)

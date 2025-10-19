@@ -36,13 +36,9 @@ export default function VipPackagesPage() {
     })();
   }, []);
 
-  // Fallback public plans when API returns empty (e.g., unauthenticated customers)
-  const fallbackPlans = [
-    { planId: null, name: "Starter", price: 5000, period: "MONTHLY", conversionLimit: 5 },
-    { planId: null, name: "Pro", price: 12000, period: "MONTHLY", conversionLimit: 15 },
-    { planId: null, name: "Business", price: 30000, period: "QUARTERLY", conversionLimit: 50 },
-  ];
-  const displayPlans = Array.isArray(ownerPlans) && ownerPlans.length > 0 ? ownerPlans : fallbackPlans;
+  // Hiển thị thông báo khi không có dữ liệu từ API
+  const displayPlans = Array.isArray(ownerPlans) && ownerPlans.length > 0 ? ownerPlans : [];
+  const hasPlans = displayPlans.length > 0;
 
   const faqs = [
     {
@@ -106,72 +102,93 @@ export default function VipPackagesPage() {
               </>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {displayPlans.map((p) => (
-              <div
-                key={p.planId || p.name}
-                className="bg-gray-800 rounded-2xl p-6 border border-gray-700"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-semibold">{p.name}</h3>
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-700 border border-gray-600 uppercase">
-                    {p.period}
-                  </span>
-                </div>
-                <div className="text-2xl font-bold text-orange-500 mb-3">
-                  {p.price?.toLocaleString("vi-VN")} coin
-                </div>
-                <ul className="text-sm text-gray-300 space-y-2 mb-4">
-                  <li className="flex items-start">
-                    <i className="ri-sound-module-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                    Số lượt chuyển đổi:{" "}
-                    <span className="ml-1 text-white font-medium">
-                      {p.conversionLimit} lần/kỳ
+          
+          {hasPlans ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {displayPlans.map((p) => (
+                <div
+                  key={p.planId || p.name}
+                  className="bg-gray-800 rounded-2xl p-6 border border-gray-700"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-semibold">{p.name}</h3>
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-700 border border-gray-600 uppercase">
+                      {p.period}
                     </span>
-                  </li>
-                  <li className="flex items-start">
-                    <i className="ri-time-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                    Chu kỳ:{" "}
-                    <span className="ml-1 capitalize">
-                      {String(p.period || '').toLowerCase()}
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <i className="ri-recycle-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                    Tự gia hạn: <span className="ml-1">Không (mua lẻ)</span>
-                  </li>
-                  <li className="flex items-start">
-                    <i className="ri-book-open-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                    Phạm vi: Chuyển đổi sách sang audio trực tuyến
-                  </li>
-                  <li className="flex items-start">
-                    <i className="ri-customer-service-2-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                    Hỗ trợ: Trong giờ hành chính
-                  </li>
-                </ul>
-                {isOwner && p.planId ? (
-                  <button
-                    disabled={loading}
-                    onClick={async () => {
-                      setConfirmPlan(p);
-                      setConfirmOpen(true);
-                    }}
-                    className="w-full py-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium"
-                  >
-                    Mua bằng coin
-                  </button>
-                ) : (
-                  <button
-                    disabled
-                    className="w-full py-3 rounded-lg bg-gray-700 text-gray-300 cursor-not-allowed"
-                    title={isOwner ? "Gói minh họa - vui lòng đăng nhập để xem gói thực" : "Chỉ chủ sách (book owner) mới có thể mua"}
-                  >
-                    {isOwner ? "Gói minh họa" : "Chỉ dành cho chủ sách"}
-                  </button>
-                )}
+                  </div>
+                  <div className="text-2xl font-bold text-orange-500 mb-3">
+                    {p.price?.toLocaleString("vi-VN")} coin
+                  </div>
+                  <ul className="text-sm text-gray-300 space-y-2 mb-4">
+                    <li className="flex items-start">
+                      <i className="ri-sound-module-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                      Số lượt chuyển đổi:{" "}
+                      <span className="ml-1 text-white font-medium">
+                        {p.conversionLimit} lần/kỳ
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-time-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                      Chu kỳ:{" "}
+                      <span className="ml-1 capitalize">
+                        {String(p.period || '').toLowerCase()}
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-recycle-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                      Tự gia hạn: <span className="ml-1">Không (mua lẻ)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-book-open-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                      Phạm vi: Chuyển đổi sách sang audio trực tuyến
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-customer-service-2-line text-orange-400 mr-2 mt-0.5"></i>{" "}
+                      Hỗ trợ: Trong giờ hành chính
+                    </li>
+                  </ul>
+                  {isOwner && p.planId ? (
+                    <button
+                      disabled={loading}
+                      onClick={async () => {
+                        setConfirmPlan(p);
+                        setConfirmOpen(true);
+                      }}
+                      className="w-full py-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium"
+                    >
+                      Mua bằng coin
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-3 rounded-lg bg-gray-700 text-gray-300 cursor-not-allowed"
+                      title={isOwner ? "Gói minh họa - vui lòng đăng nhập để xem gói thực" : "Chỉ chủ sách (book owner) mới có thể mua"}
+                    >
+                      {isOwner ? "Gói minh họa" : "Chỉ dành cho chủ sách"}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 max-w-md mx-auto">
+                <div className="text-6xl mb-4">
+                  <i className="ri-error-warning-line text-orange-400"></i>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Không thể tải gói VIP</h3>
+                <p className="text-gray-400 mb-4">
+                  Hiện tại không thể tải danh sách gói VIP. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Thử lại
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Modal xác nhận mua gói */}

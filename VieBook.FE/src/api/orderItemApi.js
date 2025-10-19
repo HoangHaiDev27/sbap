@@ -1,18 +1,14 @@
 import { API_ENDPOINTS } from '../config/apiConfig';
 
 const orderItemApi = {
-  // Lấy lịch sử mua sách của user
+  // Lấy tất cả lịch sử mua sách của user (không phân trang)
   getPurchasedBooks: async (userId, params = {}) => {
     const {
-      page = 1,
-      pageSize = 6,
       timeFilter = 'all',
       sortBy = 'recent'
     } = params;
 
     const queryParams = new URLSearchParams({
-      page: page.toString(),
-      pageSize: pageSize.toString(),
       timeFilter,
       sortBy
     });
@@ -34,6 +30,14 @@ const orderItemApi = {
       }
 
       const data = await response.json();
+      
+      // Log API response for debugging
+      console.log('API Response for purchased books:', {
+        url,
+        params,
+        response: data
+      });
+      
       return data;
     } catch (error) {
       console.error('Error fetching purchased books:', error);

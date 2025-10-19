@@ -29,14 +29,14 @@ namespace VieBook.BE.Controllers
         [HttpGet("purchased-books/{userId}")]
         public async Task<IActionResult> GetPurchasedBooks(
             int userId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 6,
             [FromQuery] string timeFilter = "all",
             [FromQuery] string sortBy = "recent")
         {
             try
             {
-                var result = await _orderItemService.GetPurchasedBooksAsync(userId, page, pageSize, timeFilter, sortBy);
+                // Get all books without pagination
+                var result = await _orderItemService.GetAllPurchasedBooksAsync(userId, timeFilter, sortBy);
+                
                 return Ok(new
                 {
                     success = true,
