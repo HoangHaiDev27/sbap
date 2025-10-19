@@ -21,7 +21,7 @@ export default function StoryGrid({
 }) {
   const [stories, setStories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
+  const itemsPerPage = 8;
 
   useEffect(() => {
     async function fetchAudioBooks() {
