@@ -65,6 +65,13 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
       const start = new Date(form.startDate);
       const end = new Date(form.endDate);
+      const now = new Date();
+      
+      if (start <= now) {
+        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Ngày bắt đầu phải sau thời điểm hiện tại" }}));
+        return;
+      }
+      
       if (end <= start) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Ngày kết thúc phải sau ngày bắt đầu" }}));
         return;
