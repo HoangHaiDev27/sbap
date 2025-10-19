@@ -15,6 +15,7 @@ export default function StoryFilters({
   setSortBy,
 }) {
   const [categories, setCategories] = useState(["Tất cả thể loại"]);
+  const [narrators, setNarrators] = useState(["Tất cả người kể"]);
 
   const durations = [
     "Tất cả thời lượng",
@@ -25,20 +26,13 @@ export default function StoryFilters({
     "Trên 10 giờ",
   ];
 
-  const narrators = [
-    "Tất cả người kể",
-    "Thanh Hương",
-    "Minh Châu",
-    "Hoàng Anh",
-    "Thu Hà",
-    "Quang Minh",
-  ];
-
-  // --- Fetch categories từ API ---
+  // --- Fetch categories và narrators từ API ---
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchData() {
       try {
         const books = await getAudioBooks();
+        
+        // Fetch categories
         const uniqueCategories = Array.from(
           new Set(
             books
@@ -47,11 +41,21 @@ export default function StoryFilters({
           )
         );
         setCategories(["Tất cả thể loại", ...uniqueCategories]);
+        
+        // Fetch narrators
+        const uniqueNarrators = Array.from(
+          new Set(
+            books
+              .map((b) => b.narrator)
+              .filter((n) => n && n.trim() !== "")
+          )
+        );
+        setNarrators(["Tất cả người kể", ...uniqueNarrators]);
       } catch (err) {
-        console.error("Failed to fetch categories", err);
+        console.error("Failed to fetch data", err);
       }
     }
-    fetchCategories();
+    fetchData();
   }, []);
 
   return (

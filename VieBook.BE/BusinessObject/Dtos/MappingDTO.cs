@@ -119,8 +119,9 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Narrator,
                 opt => opt.MapFrom(src =>
                     src.Chapters
-                        .Where(c => c.ChapterAudioUrl != null)
-                        .Select(c => c.StorageMeta)
+                        .Where(c => c.ChapterAudioUrl != null && !string.IsNullOrEmpty(c.VoiceName))
+                        .OrderByDescending(c => c.ChapterId)
+                        .Select(c => c.VoiceName)
                         .FirstOrDefault()));
 
             CreateMap<User, StaffDTO>()
