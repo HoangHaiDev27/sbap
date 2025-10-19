@@ -84,6 +84,13 @@ export default function Register({ setActiveTab }) {
       return;
     }
 
+    // Kiểm tra định dạng email chuẩn
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      setEmailError("Định dạng email không hợp lệ");
+      return;
+    }
+
     setIsCheckingEmail(true);
     try {
       const result = await checkEmailExists(email);
