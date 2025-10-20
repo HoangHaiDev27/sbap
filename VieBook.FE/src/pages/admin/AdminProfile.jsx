@@ -285,49 +285,49 @@ export default function AdminProfile() {
               </div>
 
               {["fullName", "email", "phoneNumber", "address"].map((key) => (
-                <div key={key}>
-                  <label className="text-sm font-medium">
-                    {key === "fullName"
-                      ? "Họ và tên *"
-                      : key === "email"
-                      ? "Email *"
-                      : key === "phoneNumber"
-                      ? "Số điện thoại *"
-                      : "Địa chỉ *"}
-                  </label>
+              <div key={key}>
+                <label className="text-sm font-medium">
+                  {key === "fullName"
+                    ? <>Họ và tên <span className="text-red-500">*</span></>
+                    : key === "email"
+                    ? <>Email</>
+                    : key === "phoneNumber"
+                    ? <>Số điện thoại <span className="text-red-500">*</span></>
+                    : <>Địa chỉ <span className="text-red-500">*</span></>}
+                </label>
 
-                  <input
-                    type={
-                      key === "email"
-                        ? "email"
-                        : key === "phoneNumber"
-                        ? "tel"
-                        : "text"
-                    }
-                    name={key}
-                    value={adminInfo[key] || ""}
-                    onChange={handleChange}
-                    disabled={key === "email"}
-                    required={key === "fullName" || key === "phoneNumber" || key === "address"}
-                    pattern={key === "phoneNumber" ? "^0(3|5|7|8|9)[0-9]{8}$" : undefined}
-                    title={
-                      key === "phoneNumber"
-                        ? "Số điện thoại phải bao gồm 10 só và bắt đầu 0[3|5|7|8|9])"
-                        : undefined
-                    }
-                    className={`mt-1 w-full px-3 py-2 border rounded ${
-                      key === "email" ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                    placeholder={
-                      key === "fullName"
-                        ? "Nhập họ và tên"
-                        : key === "phoneNumber"
-                        ? "0905123456"
-                        : ""
-                    }
-                  />
-                </div>
-              ))}
+                <input
+                  type={
+                    key === "email"
+                      ? "email"
+                      : key === "phoneNumber"
+                      ? "tel"
+                      : "text"
+                  }
+                  name={key}
+                  value={adminInfo[key] || ""}
+                  onChange={handleChange}
+                  disabled={key === "email"}
+                  required={["fullName", "phoneNumber", "address"].includes(key)}
+                  pattern={key === "phoneNumber" ? "^0\\d{8,10}$" : undefined}
+                  title={
+                    key === "phoneNumber"
+                      ? "Số điện thoại phải bắt đầu bằng 0 và có từ 9 - 11 số"
+                      : undefined
+                  }
+                  className={`mt-1 w-full px-3 py-2 border rounded ${
+                    key === "email" ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
+                  placeholder={
+                    key === "fullName"
+                      ? "Nhập họ và tên"
+                      : key === "phoneNumber"
+                      ? "0905123456"
+                      : ""
+                  }
+                />
+              </div>
+            ))}
 
               <div className="mt-6 flex justify-end space-x-2">
                 <button

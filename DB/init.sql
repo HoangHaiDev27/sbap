@@ -1502,7 +1502,7 @@ ALTER TABLE Chapters
 ADD VoiceName NVARCHAR(200) NULL;
 
 -- Hương//////////
-ALTER TABLE dbo.UserProfiles ADD Address VARCHAR(200) NULL;
+ALTER TABLE dbo.UserProfiles ADD Address NVARCHAR(200) NULL;
 ---------------------------
 -- =========================================================
 -- Reading History - Lịch sử đọc/nghe
