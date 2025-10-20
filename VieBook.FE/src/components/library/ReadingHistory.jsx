@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { getReadingHistory } from "../../api/readingHistoryApi";
 import { Link } from "react-router-dom";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function ReadingHistory() {
+  const { isAuthenticated, isLoading: authLoading } = useCurrentUser();
   const [sortBy, setSortBy] = useState("recent");
   const [readingHistory, setReadingHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,14 +15,20 @@ export default function ReadingHistory() {
   const itemsPerPage = 6;
 
   useEffect(() => {
-    loadReadingHistory();
-  }, [sortBy]);
+    if (isAuthenticated) {
+      loadReadingHistory();
+    } else {
+      setLoading(false);
+    }
+  }, [sortBy, isAuthenticated]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [sortBy]);
 
   const loadReadingHistory = async () => {
+    if (!isAuthenticated) return;
+    
     try {
       setLoading(true);
       const data = await getReadingHistory({});
@@ -93,6 +101,27 @@ export default function ReadingHistory() {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem lịch sử đọc
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem lịch sử đọc sách của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -239,12 +268,15 @@ export default function ReadingHistory() {
         <div className="text-center py-12">
           <i className="ri-book-open-line text-6xl text-gray-600 mb-4"></i>
           <h3 className="text-lg font-medium text-gray-400 mb-2">
-            Chưa có sách nào
+            Chưa có lịch sử đọc nào
           </h3>
           <p className="text-gray-500 mb-4">
-            Hãy bắt đầu khám phá thư viện sách phong phú của chúng tôi
+            Hãy bắt đầu đọc sách để xây dựng lịch sử đọc của bạn
           </p>
-          <button className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium">
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
             Khám phá sách hay
           </button>
         </div>
