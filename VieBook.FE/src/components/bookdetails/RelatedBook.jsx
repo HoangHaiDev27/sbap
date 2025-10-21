@@ -80,8 +80,8 @@ export default function BookRelated({ currentBookId }) {
                 to={`/bookdetails/${book.id}`}
                 className="flex-shrink-0 cursor-pointer group"
               >
-                <div className="w-64">
-                  <div className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="w-64 h-80">
+                  <div className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
                     <div className="relative overflow-hidden">
                       <img
                         src={book.image}
@@ -92,8 +92,8 @@ export default function BookRelated({ currentBookId }) {
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-lg"></div>
                     </div>
 
-                    <div className="p-4">
-                      <h3 className="font-semibold mb-1 group-hover:text-orange-400 transition-colors line-clamp-2">
+                    <div className="p-4 flex flex-col flex-grow">
+                      <h3 className="font-semibold mb-1 group-hover:text-orange-400 transition-colors line-clamp-2 min-h-[2.5rem]">
                         {book.title}
                       </h3>
                       <p className="text-gray-400 text-sm mb-2 group-hover:text-gray-300 transition-colors">
@@ -108,9 +108,11 @@ export default function BookRelated({ currentBookId }) {
                         </span>
                       </div>
 
-                      <span className="text-orange-400 font-semibold text-sm group-hover:text-orange-300 transition-colors">
-                        {book.price?.toLocaleString() || '0'} xu
-                      </span>
+                      <div className="mt-auto">
+                        <span className="text-orange-400 font-semibold text-sm group-hover:text-orange-300 transition-colors">
+                          {book.price?.toLocaleString() || '0'} xu
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -5,8 +5,10 @@ import { getUserId } from "../../api/authApi";
 import { RiCloseLine } from "react-icons/ri";
 import toast from "react-hot-toast";
 import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function FavoriteBook() {
+  const { isAuthenticated, isLoading: authLoading } = useCurrentUser();
   const [filter] = useState("all");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,11 +32,11 @@ export default function FavoriteBook() {
   };
 
   useEffect(() => {
-    const uid = getUserId();
-    if (!uid) {
-      navigate("/auth");
+    if (!isAuthenticated) {
+      setLoading(false);
       return;
     }
+    
     (async () => {
       try {
         setLoading(true);
@@ -62,7 +64,7 @@ export default function FavoriteBook() {
         setLoading(false);
       }
     })();
-  }, [navigate]);
+  }, [isAuthenticated]);
 
   // 🔹 Filter
   const getFilteredBooks = () => {
@@ -132,6 +134,27 @@ export default function FavoriteBook() {
     if (progress >= 40) return "bg-orange-500";
     return "bg-gray-500";
   };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem sách yêu thích
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem danh sách sách yêu thích của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -236,6 +259,25 @@ export default function FavoriteBook() {
           </div>
         ))}
       </div>
+
+      {/* Empty state when no favorite books */}
+      {!loading && !error && currentBooks.length === 0 && (
+        <div className="text-center py-12">
+          <i className="ri-heart-line text-6xl text-gray-600 mb-4"></i>
+          <h3 className="text-lg font-medium text-gray-400 mb-2">
+            Chưa có sách yêu thích nào
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Hãy khám phá và thêm sách vào danh sách yêu thích của bạn
+          </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
+            Khám phá sách hay
+          </button>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
