@@ -211,8 +211,8 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
                         </td>
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.dateOfBirth || '-'}</td>
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.address || '-'}</td>
-                        <td className="px-6 py-3 text-sm text-gray-500">{staff.createdAt}</td>
-                        <td className="px-6 py-3 text-sm text-gray-500">{staff.lastLoginAt || '-'}</td>
+                        <td className="px-6 py-3 text-sm text-gray-500">{staff.createdAt?.split('T')[0]}</td>
+                        <td className="px-6 py-3 text-sm text-gray-500">{staff.lastLoginAt ? staff.lastLoginAt.split('T')[0] : '-'}</td>
                         <td className="px-6 py-3 flex space-x-2">
                           <button onClick={() => handleOpenEdit(staff)} className="p-2 text-blue-600 hover:bg-blue-50 rounded" title="Sửa">
                             <i className="ri-edit-line" />

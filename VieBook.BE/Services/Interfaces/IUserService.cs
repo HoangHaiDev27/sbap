@@ -17,7 +17,7 @@ namespace Services.Interfaces
         Task DeleteAsync(User user);
         Task<User?> GetByEmailAsync(string email);
         Task<bool> AddRoleToUserByNameAsync(int userId, string roleName);
-        Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName, string? portfolioUrl = null, string? bio = null, bool? agreeTos = null);
+        Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName, string? portfolioUrl = null, string? bio = null, bool? agreeTos = null, string? address = null);
         Task<List<Plan>> GetPlansByRoleAsync(string forRole);
         Task<Plan?> GetPlanByIdAsync(int planId);
         Task<Subscription> CreateSubscriptionAsync(int userId, Plan plan, DateTime startAt, DateTime endAt);

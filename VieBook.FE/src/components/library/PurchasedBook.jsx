@@ -4,15 +4,16 @@ import orderItemApi from "../../api/orderItemApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function PurchasedBook() {
-  const { user, userId } = useCurrentUser();
+  const { user, userId, isAuthenticated, isLoading: authLoading } = useCurrentUser();
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBook, setSelectedBook] = useState(null); // 🔹 Modal state
   const [purchasedChapters, setPurchasedChapters] = useState([]); // 🔹 Chapters modal state
-  const [purchasedBooks, setPurchasedBooks] = useState([]);
-  const [allBooks, setAllBooks] = useState([]); // 🔹 Store all books for search
+  const [allBooks, setAllBooks] = useState([]); // 🔹 Store all books from API
+  const [filteredBooks, setFilteredBooks] = useState([]); // 🔹 Books after search/filter
+  const [purchasedBooks, setPurchasedBooks] = useState([]); // 🔹 Current page books
   const [searchTerm, setSearchTerm] = useState(""); // 🔹 Search term
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,26 +21,29 @@ export default function PurchasedBook() {
 
   const booksPerPage = 6;
 
-  // Fetch purchased books from API
+  // Fetch all purchased books from API (no pagination)
   const fetchPurchasedBooks = async () => {
-    if (!userId) return;
+    if (!isAuthenticated || !userId) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     setError(null);
     
     try {
       const response = await orderItemApi.getPurchasedBooks(userId, {
-        page: currentPage,
-        pageSize: booksPerPage,
         timeFilter,
         sortBy
       });
       
       if (response.success) {
         setAllBooks(response.data);
-        setPurchasedBooks(response.data);
-        // Calculate total pages based on response
-        setTotalPages(Math.ceil(response.data.length / booksPerPage));
+        console.log('API Response:', { 
+          dataLength: response.data.length,
+          timeFilter,
+          sortBy
+        });
       } else {
         setError(response.message || "Có lỗi xảy ra khi tải dữ liệu");
       }
@@ -51,35 +55,50 @@ export default function PurchasedBook() {
     }
   };
 
-  // Load data when component mounts or dependencies change
+  // Load data when component mounts or filter/sort changes
   useEffect(() => {
     fetchPurchasedBooks();
-  }, [userId, currentPage, timeFilter, sortBy]);
+  }, [isAuthenticated, userId, timeFilter, sortBy]);
 
   // Search functionality
   useEffect(() => {
     if (searchTerm.trim() === "") {
-      setPurchasedBooks(allBooks);
+      setFilteredBooks(allBooks);
     } else {
       const filtered = allBooks.filter(book => 
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.category?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setPurchasedBooks(filtered);
+      setFilteredBooks(filtered);
     }
   }, [searchTerm, allBooks]);
+
+  // Pagination logic
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * booksPerPage;
+    const endIndex = startIndex + booksPerPage;
+    const currentBooks = filteredBooks.slice(startIndex, endIndex);
+    
+    setPurchasedBooks(currentBooks);
+    setTotalPages(Math.ceil(filteredBooks.length / booksPerPage));
+  }, [filteredBooks, currentPage, booksPerPage]);
 
   // Handle filter and sort changes
   const handleTimeFilterChange = (newTimeFilter) => {
     setTimeFilter(newTimeFilter);
     setCurrentPage(1); // Reset to first page when filter changes
+    // Smooth scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
     setCurrentPage(1); // Reset to first page when sort changes
+    // Smooth scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
 
   // Fetch purchased chapters for a specific book
   const fetchPurchasedChapters = async (bookId) => {
@@ -144,12 +163,55 @@ export default function PurchasedBook() {
     }
   };
 
+  // Build page numbers with ellipsis for advanced pagination
+  const buildPageNumbers = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = [];
+    const add = (p) => pages.push(p);
+    add(1);
+    if (currentPage > 4) add("...");
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let p = start; p <= end; p++) add(p);
+    if (currentPage < totalPages - 3) add("...");
+    add(totalPages);
+    return pages;
+  };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem sách đã mua
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem danh sách sách đã mua của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-xl font-semibold">Sách đã mua</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold">Sách đã mua</h2>
+            {!loading && !error && (
+              <span className="text-sm text-gray-400">
+                ({filteredBooks.length} sách)
+              </span>
+            )}
+          </div>
           <div className="w-full sm:w-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
             <select
               value={timeFilter}
@@ -215,7 +277,7 @@ export default function PurchasedBook() {
       {/* Grid */}
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {purchasedBooks.map((book) => (
+            {purchasedBooks.map((book) => (
           <div
             key={book.orderItemId}
             onClick={() => handleBookClick(book)} // 🔹 Mở modal khi click card
@@ -286,29 +348,31 @@ export default function PurchasedBook() {
       {!loading && !error && totalPages > 1 && (
         <div className="flex justify-center items-center space-x-2 mt-4">
           <button
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-            className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
+            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
           >
             Trước
           </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded ${
-                currentPage === i + 1
-                  ? "bg-orange-500 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
-            >
-              {i + 1}
-            </button>
+          {buildPageNumbers().map((p, idx) => (
+            typeof p === "number" ? (
+              <button
+                key={`p-${p}`}
+                onClick={() => setCurrentPage(p)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === p ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
+                }`}
+              >
+                {p}
+              </button>
+            ) : (
+              <span key={`e-${idx}`} className="px-2 text-gray-400">{p}</span>
+            )
           ))}
           <button
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-            className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
+            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
           >
             Sau
           </button>
@@ -319,11 +383,17 @@ export default function PurchasedBook() {
         <div className="text-center py-12">
           <i className="ri-shopping-bag-line text-6xl text-gray-600 mb-4"></i>
           <h3 className="text-lg font-medium text-gray-400 mb-2">
-            Chưa có sách nào
+            Chưa có sách đã mua nào
           </h3>
           <p className="text-gray-500 mb-4">
             Khám phá và mua sách yêu thích để xây dựng thư viện riêng
           </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
+            Khám phá sách hay
+          </button>
         </div>
       )}
 

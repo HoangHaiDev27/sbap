@@ -26,7 +26,7 @@ namespace Services.Implementations
                 BeginReadAt = createDto.BeginReadAt,
                 ReadingTime = createDto.ReadingTime,
                 IsActive = createDto.IsActive,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             var createdSchedule = await _readingScheduleRepository.CreateReadingScheduleAsync(readingSchedule);

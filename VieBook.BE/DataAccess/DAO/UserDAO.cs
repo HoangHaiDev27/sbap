@@ -108,7 +108,7 @@ namespace DataAccess
             return true;
         }
 
-        public async Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName, string? portfolioUrl = null, string? bio = null, bool? agreeTos = null)
+        public async Task<UserProfile> UpsertUserProfileAsync(int userId, string? fullName, string? phoneNumber, DateOnly? dateOfBirth, string? avatarUrl, string? bankNumber, string? bankName, string? portfolioUrl = null, string? bio = null, bool? agreeTos = null, string? address = null)
         {
             var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
             if (profile == null)
@@ -124,7 +124,8 @@ namespace DataAccess
                     BankName = bankName,
                     PortfolioUrl = portfolioUrl,
                     Bio = bio,
-                    AgreeTos = agreeTos ?? false
+                    AgreeTos = agreeTos ?? false,
+                    Address = address
                 };
                 _context.UserProfiles.Add(profile);
             }
@@ -139,6 +140,7 @@ namespace DataAccess
                 if (portfolioUrl != null) profile.PortfolioUrl = portfolioUrl;
                 if (bio != null) profile.Bio = bio;
                 if (agreeTos.HasValue) profile.AgreeTos = agreeTos.Value;
+                if (address != null) profile.Address = address;
                 _context.UserProfiles.Update(profile);
             }
             await _context.SaveChangesAsync();

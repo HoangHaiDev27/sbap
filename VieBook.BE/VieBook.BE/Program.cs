@@ -38,6 +38,11 @@ else
     builder.Services.AddDbContext<VieBookContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString(ApiConfiguration.Database.CONNECTION_STRING_KEY)));
 }
+
+// Add logging configuration
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
 
 PayOS payOS = new PayOS(configuration[ApiConfiguration.PayOS.CLIENT_ID_KEY] ?? throw new Exception("Cannot find PayOS_CLIENT_ID"),
@@ -94,7 +99,9 @@ builder.Services.AddScoped<ReadingHistoryDAO>();
 builder.Services.AddScoped<BookmarkDAO>();
 builder.Services.AddScoped<NotificationDAO>();
 builder.Services.AddScoped<ReadingScheduleDAO>();
+builder.Services.AddScoped<ReminderSettingsDAO>();
 builder.Services.AddScoped<WalletTransactionDAO>();
+builder.Services.AddScoped<ReadingStatsDAO>();
 
 
 
@@ -118,6 +125,7 @@ builder.Services.AddScoped<IBookReviewRepository, BookReviewRepository>();
 builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 builder.Services.AddScoped<IUserFeedbackRepository, UserFeedbackRepository>();
 builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
+builder.Services.AddScoped<IReadingStatsRepository, ReadingStatsRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -131,7 +139,6 @@ builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
@@ -147,7 +154,10 @@ builder.Services.AddScoped<IUserFeedbackService, UserFeedbackService>();
 builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository>();
 builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
 builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
-
+builder.Services.AddScoped<IReadingStatsService, ReadingStatsService>();
+builder.Services.AddScoped<IReminderSettingsRepository, ReminderSettingsRepository>();
+builder.Services.AddScoped<IReminderSettingsService, ReminderSettingsService>();
+builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
 
 
 //Add OpenAI service
@@ -213,6 +223,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Add debug logging
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("🚀 Application starting up...");
+logger.LogInformation("🔧 Background services registered: {count}", 
+    app.Services.GetServices<IHostedService>().Count());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

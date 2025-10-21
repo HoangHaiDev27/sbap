@@ -262,39 +262,50 @@ export default function BookDetailPage() {
 
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-4">
-            <span className="text-white font-medium">
-              {reviews && reviews.length > 0
-                ? (
+            {reviews && reviews.length > 0 ? (
+              <>
+                <span className="text-white font-medium">
+                  {(
                     reviews.reduce((sum, r) => sum + r.rating, 0) /
                     reviews.length
-                  ).toFixed(1)
-                : "Chưa có"}
-            </span>
-            <RiStarFill className="text-yellow-400" />
-            <span className="text-gray-400 text-sm">
-              ({reviews?.length || 0} đánh giá)
-            </span>
+                  ).toFixed(1)}
+                </span>
+                <RiStarFill className="text-yellow-400" />
+                <span className="text-gray-400 text-sm">
+                  ({reviews.length} đánh giá)
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-400 text-sm">
+                Chưa có đánh giá
+              </span>
+            )}
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-gray-700 mb-6 flex space-x-6">
-            {["overview", "details", "reviews"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 ${
-                  activeTab === tab
-                    ? "border-b-2 border-orange-500 text-orange-400"
-                    : "text-gray-400"
-                }`}
-              >
-                {tab === "overview"
-                  ? "Tổng quan"
-                  : tab === "details"
-                  ? "Chi tiết"
-                  : "Đánh giá"}
-              </button>
-            ))}
+          <div className="border-b border-gray-700 mb-6">
+            <div className="flex space-x-8">
+              {["overview", "details", "reviews"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`relative pb-3 px-1 font-medium transition-all duration-200 ${
+                    activeTab === tab
+                      ? "text-orange-400"
+                      : "text-gray-400 hover:text-gray-300"
+                  }`}
+                >
+                  {tab === "overview"
+                    ? "Tổng quan"
+                    : tab === "details"
+                    ? "Chi tiết"
+                    : "Đánh giá"}
+                  {activeTab === tab && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"></div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Nội dung Tab */}
@@ -324,8 +335,25 @@ export default function BookDetailPage() {
         bookTitle={title}
         bookId={id}
         chapters={chapters}
-        onPurchaseSuccess={(purchasedChapters) => {
-          console.log("Purchased chapters:", purchasedChapters);
+        onPurchaseSuccess={async (newlyPurchasedChapters) => {
+          console.log("Newly purchased chapters:", newlyPurchasedChapters);
+          // Cập nhật state ngay lập tức bằng cách thêm các chương vừa mua
+          setPurchasedChapters(prevPurchased => {
+            const updatedPurchased = [...new Set([...prevPurchased, ...newlyPurchasedChapters])];
+            console.log("BookDetailsPage - Updated purchased chapters immediately:", updatedPurchased);
+            return updatedPurchased;
+          });
+          
+          // Cũng reload từ API để đảm bảo sync (chạy ngầm)
+          try {
+            const response = await getMyPurchases();
+            const purchases = response?.data || [];
+            const purchasedChapterIds = purchases.map((p) => p.chapterId);
+            setPurchasedChapters(purchasedChapterIds);
+            console.log("BookDetailsPage - Synced with API:", purchasedChapterIds);
+          } catch (error) {
+            console.error("Error syncing purchased chapters:", error);
+          }
         }}
       />
 
@@ -366,6 +394,15 @@ export default function BookDetailPage() {
                     chapter.chapterSoftUrl.trim() !== "";
                   const isLoggedIn = getUserId() !== null;
                   const isOwned = purchasedChapters.includes(chapter.chapterId);
+                  // Debug log để theo dõi trạng thái sở hữu
+                  if (index === 0) {
+                    console.log("BookDetailsPage - Chapter ownership check:", {
+                      chapterId: chapter.chapterId,
+                      isOwned,
+                      purchasedChapters,
+                      totalPurchased: purchasedChapters.length
+                    });
+                  }
                   const isFree =
                     !chapter.priceAudio || chapter.priceAudio === 0;
                   const isDisabled =

@@ -79,7 +79,7 @@ namespace BusinessObject.Dtos
                     IsPhoneVerified = false
                 }))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Pending"))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
                 .ForMember(dest => dest.Roles, opt => opt.Ignore()) // sẽ gán ở Service
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // hash trong Service
 
@@ -119,8 +119,9 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Narrator,
                 opt => opt.MapFrom(src =>
                     src.Chapters
-                        .Where(c => c.ChapterAudioUrl != null)
-                        .Select(c => c.StorageMeta)
+                        .Where(c => c.ChapterAudioUrl != null && !string.IsNullOrEmpty(c.VoiceName))
+                        .OrderByDescending(c => c.ChapterId)
+                        .Select(c => c.VoiceName)
                         .FirstOrDefault()));
 
             CreateMap<User, StaffDTO>()
@@ -154,7 +155,7 @@ namespace BusinessObject.Dtos
 
                 }))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Active"))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
                 .ForMember(dest => dest.Roles, opt => opt.Ignore())       // gán trong Service
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // hash trong Service
                                                                             // Trong MappingProfile.cs
@@ -214,7 +215,7 @@ namespace BusinessObject.Dtos
             CreateMap<CreateReadingScheduleDTO, ReadingSchedule>()
                 .ForMember(dest => dest.ScheduleId, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
                 .ForMember(dest => dest.Book, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore());
 
@@ -224,6 +225,21 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.BookId, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            // ReminderSettings mappings
+            CreateMap<ReminderSettings, ReminderSettingsDTO>().ReverseMap();
+            CreateMap<CreateReminderSettingsDTO, ReminderSettings>()
+                .ForMember(dest => dest.ReminderSettingsId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+            CreateMap<UpdateReminderSettingsDTO, ReminderSettings>()
+                .ForMember(dest => dest.ReminderSettingsId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
                 .ForMember(dest => dest.User, opt => opt.Ignore());
         }
     }

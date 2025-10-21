@@ -3,18 +3,32 @@
 import { useState, useEffect } from "react";
 import { getReadingHistory } from "../../api/readingHistoryApi";
 import { Link } from "react-router-dom";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function ReadingHistory() {
+  const { isAuthenticated, isLoading: authLoading } = useCurrentUser();
   const [sortBy, setSortBy] = useState("recent");
   const [readingHistory, setReadingHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
-    loadReadingHistory();
+    if (isAuthenticated) {
+      loadReadingHistory();
+    } else {
+      setLoading(false);
+    }
+  }, [sortBy, isAuthenticated]);
+
+  useEffect(() => {
+    setCurrentPage(1);
   }, [sortBy]);
 
   const loadReadingHistory = async () => {
+    if (!isAuthenticated) return;
+    
     try {
       setLoading(true);
       const data = await getReadingHistory({});
@@ -51,6 +65,27 @@ export default function ReadingHistory() {
     return filtered;
   };
 
+  const filteredBooks = getFilteredBooks();
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+  const currentBooks = filteredBooks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const buildPageNumbers = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = [];
+    const add = (p) => pages.push(p);
+    add(1);
+    if (currentPage > 4) add("...");
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let p = start; p <= end; p++) add(p);
+    if (currentPage < totalPages - 3) add("...");
+    add(totalPages);
+    return pages;
+  };
+
   const getProgressColor = (progress) => {
     if (progress === 100) return "bg-green-500";
     if (progress >= 70) return "bg-blue-500";
@@ -66,6 +101,27 @@ export default function ReadingHistory() {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem lịch sử đọc
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem lịch sử đọc sách của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,16 +168,16 @@ export default function ReadingHistory() {
       )}
 
       {/* Results count */}
-      {!loading && !error && getFilteredBooks().length > 0 && (
+      {!loading && !error && filteredBooks.length > 0 && (
         <div className="text-sm text-gray-400">
-          Hiển thị {getFilteredBooks().length} kết quả
+          Hiển thị {filteredBooks.length} kết quả
         </div>
       )}
 
       {/* Book grid */}
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {getFilteredBooks().map((item) => (
+          {currentBooks.map((item) => (
             <div
               key={item.readingHistoryId}
               className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors"
@@ -172,17 +228,55 @@ export default function ReadingHistory() {
         </div>
       )}
 
+      {/* Pagination */}
+      {!loading && !error && totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-4">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+          >
+            Trước
+          </button>
+          {buildPageNumbers().map((p, idx) => (
+            typeof p === "number" ? (
+              <button
+                key={`p-${p}`}
+                onClick={() => setCurrentPage(p)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === p ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
+                }`}
+              >
+                {p}
+              </button>
+            ) : (
+              <span key={`e-${idx}`} className="px-2 text-gray-400">{p}</span>
+            )
+          ))}
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+          >
+            Sau
+          </button>
+        </div>
+      )}
+
       {/* Empty state */}
-      {!loading && !error && getFilteredBooks().length === 0 && (
+      {!loading && !error && filteredBooks.length === 0 && (
         <div className="text-center py-12">
           <i className="ri-book-open-line text-6xl text-gray-600 mb-4"></i>
           <h3 className="text-lg font-medium text-gray-400 mb-2">
-            Chưa có sách nào
+            Chưa có lịch sử đọc nào
           </h3>
           <p className="text-gray-500 mb-4">
-            Hãy bắt đầu khám phá thư viện sách phong phú của chúng tôi
+            Hãy bắt đầu đọc sách để xây dựng lịch sử đọc của bạn
           </p>
-          <button className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium">
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
             Khám phá sách hay
           </button>
         </div>

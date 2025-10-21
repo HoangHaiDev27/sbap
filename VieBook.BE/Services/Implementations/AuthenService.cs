@@ -52,6 +52,17 @@ namespace Services.Implementations
             if (!BCrypt.Net.BCrypt.Verify(request.Password, storedHash))
                 throw new Exception("Email hoặc mật khẩu không đúng");
 
+            // Kiểm tra trạng thái user - chỉ cho phép user có status "Active" đăng nhập
+            if (user.Status != "Active")
+            {
+                if (user.Status == "Pending")
+                    throw new Exception("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và bấm vào link xác thực.");
+                else if (user.Status == "Banned" || user.Status == "Locked" || user.Status == "NotActive")
+                    throw new Exception("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                else
+                    throw new Exception("Tài khoản không được phép đăng nhập. Vui lòng liên hệ quản trị viên.");
+            }
+
             var jwtService = new JwtService(_config);
             var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
             var token = jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
@@ -102,11 +113,11 @@ namespace Services.Implementations
         public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
             if (!Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-                return "Invalid email format";
+                return "Email không đúng định dạng";
 
             var user = await _authRepo.GetByEmailAsync(request.Email);
             if (user == null)
-                return "Email not found";
+                return "Email không tồn tại";
 
             // generate otp
             var otp = GenerateOtp(6);
@@ -132,12 +143,12 @@ namespace Services.Implementations
         public async Task<string> ResetPasswordAsync(ResetPasswordRequestDto request)
         {
             var user = await _authRepo.GetByEmailAsync(request.Email);
-            if (user == null) return "Email not found";
+            if (user == null) return "Email không tồn tại";
 
             // Regex check password (>=6 ký tự, có ít nhất 1 chữ và 1 số)
             var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$");
             if (!passwordRegex.IsMatch(request.NewPassword))
-                return "Password phải có ít nhất 6 ký tự, gồm chữ và số";
+                return "Mật khẩu phải có ít nhất 6 ký tự, gồm chữ và số";
 
             // Hash mật khẩu mới
             user.PasswordHash = Encoding.UTF8.GetBytes(BCrypt.Net.BCrypt.HashPassword(request.NewPassword));
@@ -152,7 +163,7 @@ namespace Services.Implementations
                 await _tokenRepo.UpdateAsync(token);
             }
 
-            return "Password reset successful";
+            return "Đặt lại mật khẩu thành công";
         }
         public async Task LogoutAsync(int userId)
         {
@@ -162,7 +173,7 @@ namespace Services.Implementations
         public async Task<string> VerifyOtpAsync(VerifyOtpRequestDto request)
         {
             var user = await _authRepo.GetByEmailAsync(request.Email);
-            if (user == null) return "Email not found";
+            if (user == null) return "Email không tồn tại";
 
             var token = await _tokenRepo.GetLatestValidForUserAsync(user.UserId);
             if (token == null || token.ExpiresAt < DateTime.UtcNow || token.UsedAt != null)

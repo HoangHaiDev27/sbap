@@ -104,6 +104,47 @@ export default function StoryGrid({
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentStories = sortedStories.slice(indexOfFirst, indexOfLast);
 
+  // Pagination logic
+  const getPageNumbers = () => {
+    const maxVisiblePages = 5;
+    const pages = [];
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show pages with ellipsis
+      if (currentPage <= 2) {
+        // Show first 3 pages, ellipsis, and last page
+        for (let i = 1; i <= 3; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 1) {
+        // Show first page, ellipsis, and last 3 pages
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 2; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show first page, ellipsis, current-1, current, current+1, ellipsis, last page
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div>
       {/* Grid stories */}
@@ -111,9 +152,9 @@ export default function StoryGrid({
         {currentStories.map((story) => (
           <div
             key={story.id}
-            className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors"
+            className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors flex flex-col h-full"
           >
-            <Link to={`/bookdetails/${story.id}`}>
+            <Link to={`/bookdetails/${story.id}`} className="flex flex-col h-full">
               <div className="relative">
                 <img
                   src={story.image}
@@ -147,15 +188,15 @@ export default function StoryGrid({
                 </div>
               </div>
 
-              <div className="p-4">
-                <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2">
+              <div className="p-4 flex flex-col flex-grow">
+                <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 min-h-[3.5rem]">
                   {story.title}
                 </h3>
                 <p className="text-gray-400 text-sm mb-2">Tác giả: {story.author}</p>
                 <p className="text-orange-400 text-sm mb-3">
                   Người kể: {story.narrator || "Đang cập nhật"}
                 </p>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-auto">
                   {/* Rating */}
                   <div className="flex items-center text-sm text-gray-400">
                     <RiStarFill className="text-yellow-400 mr-1" />
@@ -189,42 +230,50 @@ export default function StoryGrid({
       )}
 
       {/* Pagination Controls */}
-      <div className="flex justify-center mt-6 space-x-2">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className={`px-3 py-1 rounded ${currentPage === 1
-            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-            : "bg-gray-700 text-white hover:bg-gray-600"
-            }`}
-        >
-          Trang trước
-        </button>
-
-        {Array.from({ length: totalPages }).map((_, index) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6 space-x-2">
           <button
-            key={index}
-            onClick={() => setCurrentPage(index + 1)}
-            className={`px-3 py-1 rounded ${currentPage === index + 1
-              ? "bg-orange-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-          >
-            {index + 1}
-          </button>
-        ))}
-
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-          className={`px-3 py-1 rounded ${currentPage === totalPages
-            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-            : "bg-gray-700 text-white hover:bg-gray-600"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 rounded ${currentPage === 1
+              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+              : "bg-gray-700 text-white hover:bg-gray-600"
             }`}
-        >
-          Trang sau
-        </button>
-      </div>
+          >
+            Trang trước
+          </button>
+
+          {getPageNumbers().map((page, index) => (
+            page === '...' ? (
+              <span key={`ellipsis-${index}`} className="px-3 py-1 text-gray-400">
+                ...
+              </span>
+            ) : (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded ${currentPage === page
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+              >
+                {page}
+              </button>
+            )
+          ))}
+
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1 rounded ${currentPage === totalPages
+              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+              : "bg-gray-700 text-white hover:bg-gray-600"
+            }`}
+          >
+            Trang sau
+          </button>
+        </div>
+      )}
     </div>
   );
 }
