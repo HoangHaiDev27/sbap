@@ -603,14 +603,16 @@ DECLARE @BobId   INT  = (SELECT UserId FROM dbo.Users WHERE Email='bob@viebook.l
 /* =========================================================
    Categories
    ========================================================= */
-INSERT INTO dbo.Categories(Name, Type, ParentId, IsActive)
+INSERT INTO dbo.Categories (Name, Type, ParentId, IsActive)
 VALUES
- (N'Fiction',      'Genre',   NULL, 1),
- (N'Self-Help',    'Genre',   NULL, 1),
- (N'Technology',   'Subject', NULL, 1),
- (N'Programming',  'Subject', (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Technology' AND Type='Subject'), 1);
-
-
+ (N'Hành động',  'Genre',   NULL, 1),
+ (N'Kinh dị',     'Genre',   NULL, 1),
+ (N'Tình cảm',    'Genre',   NULL, 1),
+ (N'Trinh thám',  'Genre',   NULL, 1),
+ (N'Công nghệ',   'Subject', NULL, 1),
+ (N'Lịch sử',     'Subject', NULL, 1),
+ (N'Tâm lý học',  'Subject', NULL, 1),
+ (N'Giáo dục',    'Subject', NULL, 1);
 
 /* =========================================================
    Books & Chapters
@@ -1502,7 +1504,7 @@ ALTER TABLE Chapters
 ADD VoiceName NVARCHAR(200) NULL;
 
 -- Hương//////////
-ALTER TABLE dbo.UserProfiles ADD Address VARCHAR(200) NULL;
+ALTER TABLE dbo.UserProfiles ADD Address NVARCHAR(200) NULL;
 ---------------------------
 -- =========================================================
 -- Reading History - Lịch sử đọc/nghe
@@ -1527,3 +1529,200 @@ CREATE INDEX IX_ReadingHistory_Type ON dbo.ReadingHistory(ReadingType);
 ALTER TABLE dbo.ReadingHistory
 ADD CONSTRAINT CK_ReadingHistory_Type
 CHECK (ReadingType IN ('Reading', 'Listening'));
+
+-- Reminder setting table
+CREATE TABLE [dbo].[ReminderSettings](
+    [ReminderSettingsId] [int] IDENTITY(1,1) NOT NULL,
+    [UserId] [int] NOT NULL,
+    [DailyGoalMinutes] [int] NOT NULL,
+    [WeeklyGoalHours] [int] NOT NULL,
+    [ReminderMinutesBefore] [int] NOT NULL,
+    [IsActive] [bit] NOT NULL,
+    [CreatedAt] [datetime2](7) NOT NULL,
+    [UpdatedAt] [datetime2](7) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+    [ReminderSettingsId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((30)) FOR [DailyGoalMinutes]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((5)) FOR [WeeklyGoalHours]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((15)) FOR [ReminderMinutesBefore]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings] ADD  DEFAULT ((1)) FOR [IsActive]
+GO
+
+ALTER TABLE [dbo].[ReminderSettings]  WITH CHECK ADD FOREIGN KEY([UserId])
+REFERENCES [dbo].[Users] ([UserId])
+GO
+
+/* =========================================================
+   BookCategories (phù hợp với từng sách)
+   ========================================================= */
+DECLARE @BookId INT;
+
+-- 1. The Art of Reading → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title = N'The Art of Reading');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 2. Miền Bắc - Một Thời Chiến Tranh Một Thời Hòa Bình → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Miền Bắc%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 3. Lịch Sử Các Nước Ven Địa Trung Hải → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Địa Trung Hải%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 4. Bài Giảng Lịch Sử An Nam → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Lịch Sử An Nam%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 5. Tâm Lý Học Tội Phạm → Tâm lý học, Trinh thám
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tâm Lý Học Tội Phạm%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 4);
+
+-- 6. 1111 - Nhật Ký Sáu Vạn Dặm Trên Yên Xe Cà Tàng → Hành động
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%1111%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 1);
+
+-- 7. Trên Đường Về Nhớ Đầy → Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Trên Đường Về Nhớ Đầy%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 8. Có Hẹn Với Paris → Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Có Hẹn Với Paris%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 9. Cô Đơn Trên Everest → Hành động, Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Cô Đơn Trên Everest%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 1);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 10. Vàng Son Một Thuở Ba Tư → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Vàng Son Một Thuở Ba Tư%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 11. Trở Về Từ Iraq → Hành động
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Trở Về Từ Iraq%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 1);
+
+-- 12. Nhẹ Bước Lãng Du → Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Nhẹ Bước Lãng Du%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 13. Collins - Writing For IELTS → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Writing For Ielts%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 14. Tìm Hiểu Thế Giới Cảm Xúc Của Bé Trai → Tâm lý học, Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Cảm Xúc Của Bé Trai%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 15. Những Từ Ngữ Làm Cho Trẻ Hạnh Phúc → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Những Từ Ngữ Làm Cho Trẻ Hạnh Phúc%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 16. Đọc Sách Cùng Con, Đi Muôn Dặm Đường → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Đọc Sách Cùng Con%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 17. Bản Du Ca Cuối Cùng → Lịch sử, Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Bản Du Ca Cuối Cùng%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 18. Huy Động Vốn: Khó Mà Dễ! → Công nghệ
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Huy Động Vốn%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
+
+-- 19. Tư Duy Logic → Giáo dục, Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tư Duy Logic%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 20. Chữa Lành Những Sang Chấn Tuổi Thơ → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Chữa Lành Những Sang Chấn%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 21. Mày Vẫn Ổn, Đừng Lo Lắng! → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Mày Vẫn Ổn%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 22. No Bad Parts - Không Có Phần Nào Xấu → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%No Bad Parts%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 23. Bản lĩnh đàn ông hiện đại → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%đàn ông hiện đại%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 24. Kỹ năng nói trước đám đông → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%nói trước đám đông%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 25. Lập trình tư duy phản biện → Công nghệ, Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%tư duy phản biện%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 26. Sống tối giản → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Sống tối giản%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 27. Học cách học → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Học cách học%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 28. Bí mật của sự tập trung → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%tập trung%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 29. Khởi nghiệp 4.0 → Công nghệ
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Khởi nghiệp 4.0%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
+
+-- 30. Hacker não IELTS → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Hacker não IELTS%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 31. Khoa học của hạnh phúc → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%hạnh phúc%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 32. Bí ẩn vũ trụ → Công nghệ
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Bí ẩn vũ trụ%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
+
+-- 33. Nghệ thuật giao tiếp → Giáo dục, Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Nghệ thuật giao tiếp%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 34. Lịch sử nhân loại rút gọn → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Lịch sử nhân loại%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- Thêm status cho sách để check 
+ALTER TABLE dbo.Books
+ADD UploaderType VARCHAR(20) NOT NULL DEFAULT('Owner'),
+    UploadStatus VARCHAR(20) NOT NULL DEFAULT('Incomplete'),
+    CompletionStatus VARCHAR(20) NOT NULL DEFAULT('Ongoing');
+-- Thêm bảng nhiều audio
+CREATE TABLE dbo.ChapterAudios (
+AudioId       INT IDENTITY(1,1) PRIMARY KEY,         
+ChapterId     INT NOT NULL REFERENCES dbo.Chapters(ChapterId),  
+UserId        INT NOT NULL REFERENCES dbo.Users(UserId),        
+AudioLink     VARCHAR(1000) NOT NULL,                 
+DurationSec   INT NULL,                               
+PriceAudio    DECIMAL(18,2) NULL,                     
+CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
