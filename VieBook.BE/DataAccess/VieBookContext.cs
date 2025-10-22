@@ -90,6 +90,7 @@ public partial class VieBookContext : DbContext
     public virtual DbSet<ChapterChunkEmbedding> ChapterChunkEmbeddings { get; set; }
 
     public virtual DbSet<ReadingHistory> ReadingHistories { get; set; }
+    public virtual DbSet<ChapterAudio> ChapterAudios { get; set; }
 
     private string GetConnectionString()
     {
@@ -160,6 +161,14 @@ public partial class VieBookContext : DbContext
                         j.HasKey("BookId", "CategoryId");
                         j.ToTable("BookCategories");
                     });
+            entity.Property(b => b.UploaderType)
+                    .HasDefaultValue("Owner");
+
+            entity.Property(b => b.UploadStatus)
+                  .HasDefaultValue("Incomplete");
+
+            entity.Property(b => b.CompletionStatus)
+                  .HasDefaultValue("Ongoing");
         });
 
         modelBuilder.Entity<BookApproval>(entity =>
@@ -334,6 +343,34 @@ public partial class VieBookContext : DbContext
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Chapters__BookId__4AB81AF0");
+        });
+        modelBuilder.Entity<ChapterAudio>(entity =>
+        {
+            entity.HasKey(e => e.AudioId).HasName("PK__ChapterAudios__AudioId");
+
+            entity.Property(e => e.AudioLink)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+
+            entity.Property(e => e.PriceAudio)
+                .HasColumnType("decimal(18, 2)");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())");
+
+            // FK: Chapter
+            entity.HasOne(e => e.Chapter)
+                .WithMany(c => c.ChapterAudios)
+                .HasForeignKey(e => e.ChapterId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ChapterAudios_Chapters");
+
+            // FK: User
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.ChapterAudios)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ChapterAudios_Users");
         });
 
         modelBuilder.Entity<ChatConversation>(entity =>
