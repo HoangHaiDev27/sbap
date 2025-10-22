@@ -161,6 +161,14 @@ public partial class VieBookContext : DbContext
                         j.HasKey("BookId", "CategoryId");
                         j.ToTable("BookCategories");
                     });
+            entity.Property(b => b.UploaderType)
+                    .HasDefaultValue("Owner");
+
+            entity.Property(b => b.UploadStatus)
+                  .HasDefaultValue("Incomplete");
+
+            entity.Property(b => b.CompletionStatus)
+                  .HasDefaultValue("Ongoing");
         });
 
         modelBuilder.Entity<BookApproval>(entity =>
