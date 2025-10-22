@@ -80,4 +80,6 @@ public partial class User
     public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 
     public virtual ICollection<Role> Roles { get; set; } = new List<Role>();
+    public virtual ICollection<ChapterAudio> ChapterAudios { get; set; } = new List<ChapterAudio>();
+
 }

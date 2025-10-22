@@ -1726,3 +1726,15 @@ DurationSec   INT NULL,
 PriceAudio    DECIMAL(18,2) NULL,                     
 CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
+
+-- Liên kết ChapterAudios → Chapters
+ALTER TABLE dbo.ChapterAudios
+ADD CONSTRAINT FK_ChapterAudios_Chapters
+FOREIGN KEY (ChapterId) REFERENCES dbo.Chapters(ChapterId)
+ON DELETE CASCADE;
+
+-- Liên kết ChapterAudios → Users
+ALTER TABLE dbo.ChapterAudios
+ADD CONSTRAINT FK_ChapterAudios_Users
+FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
+ON DELETE NO ACTION;

@@ -344,6 +344,34 @@ public partial class VieBookContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Chapters__BookId__4AB81AF0");
         });
+        modelBuilder.Entity<ChapterAudio>(entity =>
+        {
+            entity.HasKey(e => e.AudioId).HasName("PK__ChapterAudios__AudioId");
+
+            entity.Property(e => e.AudioLink)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+
+            entity.Property(e => e.PriceAudio)
+                .HasColumnType("decimal(18, 2)");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysutcdatetime())");
+
+            // FK: Chapter
+            entity.HasOne(e => e.Chapter)
+                .WithMany(c => c.ChapterAudios)
+                .HasForeignKey(e => e.ChapterId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ChapterAudios_Chapters");
+
+            // FK: User
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.ChapterAudios)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ChapterAudios_Users");
+        });
 
         modelBuilder.Entity<ChatConversation>(entity =>
         {
