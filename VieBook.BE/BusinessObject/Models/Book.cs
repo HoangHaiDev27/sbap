@@ -26,7 +26,9 @@ public partial class Book
 
     public DateTime? UpdatedAt { get; set; }
     public string? Author { get; set; }
-
+    public string? UploaderType { get; set; }  
+    public string? UploadStatus { get; set; }     
+    public string? CompletionStatus { get; set; }
 
     public virtual ICollection<BookApproval> BookApprovals { get; set; } = new List<BookApproval>();
 
