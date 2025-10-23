@@ -1,17 +1,49 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+// Export to CSV function with proper UTF-8 BOM for Vietnamese characters
+const exportToCSV = (data, filename = 'orders.csv') => {
+  const headers = ['Ma don', 'Khach hang', 'Email', 'Sach', 'Chuong', 'Trang thai', 'Tong tien (xu)', 'Thoi gian'];
+  const csvContent = [
+    headers.join(','),
+    ...data.map(order => [
+      order.id,
+      `"${order.customer.replace(/"/g, '""')}"`,
+      `"${order.customerEmail.replace(/"/g, '""')}"`,
+      `"${order.bookTitle.replace(/"/g, '""')}"`,
+      `"${order.chapterTitle.replace(/"/g, '""')}"`,
+      `"${order.status.replace(/"/g, '""')}"`,
+      order.total,
+      `"${order.date.replace(/"/g, '""')}"`
+    ].join(','))
+  ].join('\n');
+  
+  // Add UTF-8 BOM for proper Vietnamese character support
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 export default function OrderTable({ orders }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const pageSize = 4;
+  const pageSize = 6;
 
   const filtered = orders.filter((o) => {
     const matchSearch =
       o.customer.toLowerCase().includes(search.toLowerCase()) ||
-      o.id.toLowerCase().includes(search.toLowerCase());
+      o.id.toLowerCase().includes(search.toLowerCase()) ||
+      o.bookTitle.toLowerCase().includes(search.toLowerCase());
     const matchStatus = status === "all" || o.status === status;
+    
     return matchSearch && matchStatus;
   });
 
@@ -21,10 +53,12 @@ export default function OrderTable({ orders }) {
   return (
     <div className="bg-slate-800 p-4 rounded-lg shadow">
       {/* Filter */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+      <div className="space-y-4 mb-4">
+        {/* Search and Status */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
         <input
           type="text"
-          placeholder="Tìm mã đơn hoặc khách hàng..."
+            placeholder="Tìm mã đơn, khách hàng hoặc tên sách..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -47,7 +81,61 @@ export default function OrderTable({ orders }) {
         </select>
       </div>
 
-      {/* Table */}
+        {/* Clear filters button */}
+        {(search || status !== "all") && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                setSearch("");
+                setStatus("all");
+                setPage(1);
+              }}
+              className="px-4 py-2 rounded bg-orange-600 hover:bg-orange-700 text-white text-sm transition-colors"
+            >
+              🔄 Xóa bộ lọc
+            </button>
+          </div>
+        )}
+        
+        {/* Results count and Export */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="text-sm text-gray-400">
+            Hiển thị {paginated.length} trong {filtered.length} đơn hàng
+            {filtered.length !== orders.length && ` (từ ${orders.length} đơn hàng)`}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => exportToCSV(orders, `don-hang-${new Date().toISOString().split('T')[0]}.csv`)}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center space-x-2"
+            >
+              <span>📊</span>
+              <span>Xuất CSV</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Empty state when no results */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🔍</div>
+          <h3 className="text-xl font-semibold mb-2 text-gray-300">Không tìm thấy đơn hàng</h3>
+          <p className="text-gray-400 mb-4">
+            Không có đơn hàng nào phù hợp với bộ lọc hiện tại
+          </p>
+          <button
+            onClick={() => {
+              setSearch("");
+              setStatus("all");
+              setPage(1);
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            🔄 Xóa bộ lọc
+          </button>
+        </div>
+      ) : (
+        <>
       <table className="w-full text-left text-sm border-collapse">
         <thead>
           <tr className="bg-slate-700 text-gray-300">
@@ -72,7 +160,10 @@ export default function OrderTable({ orders }) {
                   alt={o.bookTitle}
                   className="w-10 h-14 object-cover rounded"
                 />
-                <span className="text-white text-sm">{o.bookTitle}</span>
+                <div className="flex flex-col">
+                  <span className="text-white text-sm font-medium">{o.bookTitle}</span>
+                  <span className="text-gray-400 text-xs mt-1">{o.chapterTitle}</span>
+                </div>
               </td>
 
               <td className="p-3">{o.customer}</td>
@@ -90,7 +181,7 @@ export default function OrderTable({ orders }) {
                 </span>
               </td>
 
-              <td className="p-3">{o.total.toLocaleString()} VND</td>
+              <td className="p-3">{o.total.toLocaleString()} xu</td>
               <td className="p-3">{o.date}</td>
 
               <td className="p-3">
@@ -121,19 +212,93 @@ export default function OrderTable({ orders }) {
             Trước
           </button>
 
-          {/* Các số trang */}
-          {Array.from({ length: totalPages }, (_, i) => (
+          {/* Các số trang với logic thông minh */}
+          {(() => {
+            const maxVisiblePages = 5; // Số trang tối đa hiển thị
+            const pages = [];
+            
+            if (totalPages <= maxVisiblePages) {
+              // Nếu tổng số trang <= 5, hiển thị tất cả
+              for (let i = 1; i <= totalPages; i++) {
+                pages.push(
+                  <button
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`px-3 py-1 rounded text-sm ${page === i
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      }`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+            } else {
+              // Logic cho nhiều trang
+              const startPage = Math.max(1, page - 2);
+              const endPage = Math.min(totalPages, page + 2);
+              
+              // Trang đầu
+              if (startPage > 1) {
+                pages.push(
+                  <button
+                    key={1}
+                    onClick={() => setPage(1)}
+                    className="px-3 py-1 rounded text-sm bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  >
+                    1
+                  </button>
+                );
+                
+                if (startPage > 2) {
+                  pages.push(
+                    <span key="start-ellipsis" className="px-2 py-1 text-gray-400">
+                      ...
+                    </span>
+                  );
+                }
+              }
+              
+              // Các trang giữa
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
             <button
               key={i}
-              onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 rounded text-sm ${page === i + 1
+                    onClick={() => setPage(i)}
+                    className={`px-3 py-1 rounded text-sm ${page === i
                   ? "bg-orange-500 text-white"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                 }`}
             >
-              {i + 1}
+                    {i}
+                  </button>
+                );
+              }
+              
+              // Trang cuối
+              if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                  pages.push(
+                    <span key="end-ellipsis" className="px-2 py-1 text-gray-400">
+                      ...
+                    </span>
+                  );
+                }
+                
+                pages.push(
+                  <button
+                    key={totalPages}
+                    onClick={() => setPage(totalPages)}
+                    className="px-3 py-1 rounded text-sm bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  >
+                    {totalPages}
             </button>
-          ))}
+                );
+              }
+            }
+            
+            return pages;
+          })()}
 
           {/* Nút Sau */}
           <button
@@ -147,6 +312,8 @@ export default function OrderTable({ orders }) {
             Sau
           </button>
         </div>
+      )}
+      </>
       )}
     </div>
   );

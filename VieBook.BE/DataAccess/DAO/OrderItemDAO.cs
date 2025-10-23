@@ -24,6 +24,7 @@ namespace DataAccess.DAO
                     .ThenInclude(c => c.Book)
                         .ThenInclude(b => b.BookReviews)
                 .Include(oi => oi.Customer)
+                    .ThenInclude(c => c.UserProfile)
                 .FirstOrDefaultAsync(oi => oi.OrderItemId == id);
         }
 
@@ -37,6 +38,7 @@ namespace DataAccess.DAO
                     .ThenInclude(c => c.Book)
                         .ThenInclude(b => b.BookReviews)
                 .Include(oi => oi.Customer)
+                    .ThenInclude(c => c.UserProfile)
                 .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
                 .OrderByDescending(oi => oi.PaidAt)
                 .ToListAsync();
@@ -63,6 +65,46 @@ namespace DataAccess.DAO
                 .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
                 .OrderByDescending(oi => oi.PaidAt)
                 .ToListAsync();
+        }
+
+        /// <summary>
+        /// Lấy danh sách OrderItem của owner (sách được mua từ owner)
+        /// </summary>
+        public async Task<List<OrderItem>> GetOwnerOrderItemsAsync(int ownerId)
+        {
+            return await _context.OrderItems
+                .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
+                .Include(oi => oi.Customer)
+                    .ThenInclude(c => c.UserProfile)
+                .Where(oi => oi.Chapter.Book.OwnerId == ownerId && oi.PaidAt != null)
+                .OrderByDescending(oi => oi.PaidAt)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Lấy thống kê orders của owner
+        /// </summary>
+        public async Task<object> GetOwnerOrderStatsAsync(int ownerId)
+        {
+            var orders = await _context.OrderItems
+                .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
+                .Where(oi => oi.Chapter.Book.OwnerId == ownerId && oi.PaidAt != null)
+                .ToListAsync();
+
+            var totalRevenue = orders.Sum(oi => oi.CashSpent);
+            var totalOrders = orders.Count;
+            var completedOrders = orders.Count(oi => oi.OrderType == "BuyChapter");
+            var refundedOrders = orders.Count(oi => oi.OrderType == "Refund");
+
+            return new
+            {
+                TotalRevenue = totalRevenue,
+                TotalOrders = totalOrders,
+                CompletedOrders = completedOrders,
+                RefundedOrders = refundedOrders
+            };
         }
     }
 }
