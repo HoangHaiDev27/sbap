@@ -128,6 +128,7 @@ builder.Services.AddScoped<IUserFeedbackRepository, UserFeedbackRepository>();
 builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
 builder.Services.AddScoped<IReadingStatsRepository, ReadingStatsRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IOwnerDashboardRepository, OwnerDashboardRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -160,6 +161,7 @@ builder.Services.AddScoped<IReadingStatsService, ReadingStatsService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IReminderSettingsRepository, ReminderSettingsRepository>();
 builder.Services.AddScoped<IReminderSettingsService, ReminderSettingsService>();
+builder.Services.AddScoped<IOwnerDashboardService, OwnerDashboardService>();
 builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
 
 
