@@ -481,3 +481,26 @@ export function getAvailableRoles() {
   const currentRole = getCurrentRole();
   return allRoles.filter(role => role !== currentRole);
 }
+
+// Fetch user profile from API (with UserProfile.FullName)
+export async function fetchCurrentUserProfile() {
+  const token = getToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const res = await fetch(API_ENDPOINTS.USER_ME, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch user profile");
+  }
+
+  const data = await res.json();
+  return data; // { userId, email, userProfile: { fullName, ... }, roles, ... }
+}

@@ -18,9 +18,6 @@ export default function ChapterEdit() {
     const [pdfPages, setPdfPages] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const [audioUrl, setAudioUrl] = useState(null);
-    const [duration, setDuration] = useState(null);
-
     const [bookTitle, setBookTitle] = useState(location.state?.bookTitle || "Không xác định");
     const [status, setStatus] = useState("Draft");
 
@@ -89,8 +86,6 @@ export default function ChapterEdit() {
                 const data = await getChapterById(chapterId);
                 setTitle(data.chapterTitle || "");
                 setPrice(data.priceAudio || 10);
-                setAudioUrl(data.chapterAudioUrl || null);
-                setDuration(data.durationSec || null);
                 setIsFree(data.priceAudio === 0);
                 setBookTitle(data.bookTitle || "Không xác định");
                 setStatus(data.status || "Draft"); // ✅ lấy status từ BE
@@ -173,8 +168,8 @@ export default function ChapterEdit() {
                 chapterTitle: title,
                 chapterView: 0,
                 chapterSoftUrl: chapterUrl,
-                chapterAudioUrl: audioUrl,
-                durationSec: duration,
+                chapterAudioUrl: null,
+                durationSec: null,
                 priceAudio: price,
                 uploadedAt: new Date().toISOString(),
                 status: status,
@@ -288,15 +283,6 @@ export default function ChapterEdit() {
                 />
                 <div className="text-right text-xs text-gray-400 mt-2">{content.length}/50000 ký tự</div>
             </div>
-
-            {/* Audio chương (nếu có) */}
-            {audioUrl && (
-                <div className="bg-slate-800 p-6 rounded-lg mb-6">
-                    <h2 className="text-lg font-semibold mb-4">Audio chương</h2>
-                    <p className="mb-2">Đã có Audio {duration ? `(Thời lượng: ${Math.floor(duration / 60)} phút ${duration % 60} giây)` : ""}</p>
-                    <audio controls src={audioUrl} className="w-full" />
-                </div>
-            )}
 
             {/* Buttons */}
             <div className="flex justify-end space-x-3">

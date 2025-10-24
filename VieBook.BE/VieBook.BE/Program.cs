@@ -90,6 +90,7 @@ builder.Services.AddScoped<PromotionDAO>();
 builder.Services.AddScoped<StaffDAO>();
 builder.Services.AddScoped<AdminDAO>();
 builder.Services.AddScoped<ChapterDAO>();
+builder.Services.AddScoped<ChapterAudioDAO>();
 builder.Services.AddScoped<RankingSummaryDAO>();
 builder.Services.AddScoped<WishlistDAO>();
 builder.Services.AddScoped<BookReviewDAO>();
@@ -102,6 +103,7 @@ builder.Services.AddScoped<ReadingScheduleDAO>();
 builder.Services.AddScoped<ReminderSettingsDAO>();
 builder.Services.AddScoped<WalletTransactionDAO>();
 builder.Services.AddScoped<ReadingStatsDAO>();
+builder.Services.AddScoped<SubscriptionDAO>();
 
 
 
@@ -119,6 +121,7 @@ builder.Services.AddScoped<IStaffRepository, StaffRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IBookApprovalRepository, BookApprovalRepository>();
 builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
+builder.Services.AddScoped<IChapterAudioRepository, ChapterAudioRepository>();
 builder.Services.AddScoped<IRankingRepository, RankingRepository>();
 builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 builder.Services.AddScoped<IBookReviewRepository, BookReviewRepository>();
@@ -126,6 +129,7 @@ builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 builder.Services.AddScoped<IUserFeedbackRepository, UserFeedbackRepository>();
 builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
 builder.Services.AddScoped<IReadingStatsRepository, ReadingStatsRepository>();
+builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -146,6 +150,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IBookApprovalService, BookApprovalService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
+builder.Services.AddScoped<IChapterAudioService, ChapterAudioService>();
 builder.Services.AddScoped<IRankingService, RankingService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IBookReviewService, BookReviewService>();
@@ -157,6 +162,7 @@ builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
 builder.Services.AddScoped<IReadingStatsService, ReadingStatsService>();
 builder.Services.AddScoped<IReminderSettingsRepository, ReminderSettingsRepository>();
 builder.Services.AddScoped<IReminderSettingsService, ReminderSettingsService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
 
 

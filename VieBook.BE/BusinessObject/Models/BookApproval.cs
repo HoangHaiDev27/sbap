@@ -9,7 +9,7 @@ public partial class BookApproval
 
     public int BookId { get; set; }
 
-    public int StaffId { get; set; }
+    public int? StaffId { get; set; }  // Nullable - null khi chưa có staff phê duyệt
 
     public string Action { get; set; } = null!;
 
@@ -19,5 +19,5 @@ public partial class BookApproval
 
     public virtual Book Book { get; set; } = null!;
 
-    public virtual User Staff { get; set; } = null!;
+    public virtual User? Staff { get; set; }  // Nullable navigation property
 }

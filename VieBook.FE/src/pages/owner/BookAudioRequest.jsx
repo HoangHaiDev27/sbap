@@ -2,7 +2,9 @@ import { Link, useParams } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import ChapterSelector from "../../components/owner/bookaudiorequest/ChapterSelector";
 import VoiceConfig from "../../components/owner/bookaudiorequest/VoiceConfig";
+import ChapterAudioList from "../../components/owner/bookaudiorequest/ChapterAudioList";
 import TTSQueue from "../../components/owner/bookaudiorequest/TTSQueue";
+import SubscriptionStatus from "../../components/owner/bookaudiorequest/SubscriptionStatus";
 import { getChaptersByBookId } from "../../api/ownerBookApi";
 
 export default function BookAudioRequest() {
@@ -13,6 +15,7 @@ export default function BookAudioRequest() {
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [queue, setQueue] = useState([]);
+  const [subscriptionKey, setSubscriptionKey] = useState(0);
 
   const fetchChapters = useCallback(async () => {
     try {
@@ -64,6 +67,11 @@ export default function BookAudioRequest() {
     );
 
     fetchChapters();
+    
+    // Refresh subscription status
+    if (success) {
+      setSubscriptionKey(prev => prev + 1);
+    }
   };
 
   return (
@@ -101,10 +109,16 @@ export default function BookAudioRequest() {
               chapterId={selectedChapter}
               onStartQueue={handleStartQueue}
               onCompleteQueue={handleCompleteQueue}
+              onRefreshChapters={fetchChapters}
             />
           </div>
 
           <div className="lg:col-span-5 space-y-6">
+            <SubscriptionStatus key={subscriptionKey} />
+            <ChapterAudioList 
+              chapterId={selectedChapter}
+              onRefreshChapters={fetchChapters}
+            />
             <TTSQueue queue={queue} />
             <div className="bg-slate-800 rounded-lg p-4">
               <h2 className="font-semibold mb-3">Lưu ý về TTS</h2>
@@ -113,6 +127,7 @@ export default function BookAudioRequest() {
                 <li>Audio được phát trực tuyến, không tải xuống.</li>
                 <li>Chất lượng: MP3 128kbps.</li>
                 <li>Giọng đọc sử dụng dịch vụ FPT.AI.</li>
+                <li>Chương {'>'} 10,000 ký tự sẽ trừ 2 lượt, {'<='} 10,000 ký tự trừ 1 lượt.</li>
               </ul>
             </div>
           </div>

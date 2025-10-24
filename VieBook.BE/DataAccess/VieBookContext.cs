@@ -355,6 +355,10 @@ public partial class VieBookContext : DbContext
             entity.Property(e => e.PriceAudio)
                 .HasColumnType("decimal(18, 2)");
 
+            entity.Property(e => e.VoiceName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(sysutcdatetime())");
 

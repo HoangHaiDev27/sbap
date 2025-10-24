@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { RiPlayFill, RiSendPlaneFill } from "react-icons/ri";
 import { generateChapterAudio } from "../../../api/ownerBookApi";
+import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import toast from "react-hot-toast";
 
 const voices = [
   { id: "banmai", name: "Nữ miền Bắc - Ban Mai", sampleUrl: "https://res.cloudinary.com/dwduk4vjl/video/upload/v1760617392/banmai_schowu.mp3" },
@@ -18,6 +20,7 @@ export default function VoiceConfig({ chapterId, onStartQueue, onCompleteQueue, 
   const [speed, setSpeed] = useState(1);
   const [loading, setLoading] = useState(false);
   const [audio] = useState(new Audio());
+  const { userId } = useCurrentUser();
 
   // 🔊 Nghe thử giọng đọc demo
   const handlePlaySample = (url) => {
@@ -35,13 +38,19 @@ export default function VoiceConfig({ chapterId, onStartQueue, onCompleteQueue, 
   // 🚀 Gửi yêu cầu tạo audio
   const handleGenerateAudio = async () => {
     if (!chapterId) return;
+    
+    if (!userId) {
+      toast.error("Không tìm thấy thông tin người dùng");
+      return;
+    }
+    
     setLoading(true);
 
     // Thông báo bắt đầu xử lý cho hàng đợi
     if (onStartQueue) onStartQueue(chapterId);
 
     try {
-      const result = await generateChapterAudio(chapterId, selectedVoice, speed);
+      const result = await generateChapterAudio(chapterId, selectedVoice, speed, userId);
       console.log("✅ Audio tạo xong:", result);
 
       // Thông báo hoàn tất
@@ -49,10 +58,13 @@ export default function VoiceConfig({ chapterId, onStartQueue, onCompleteQueue, 
 
       // Làm mới danh sách chương (để hiện "Đã có audio")
       if (onRefreshChapters) onRefreshChapters();
+      
+      toast.success(`Đã tạo audio thành công với giọng ${voices.find(v => v.id === selectedVoice)?.name}. Đã trừ ${result.conversionsDeducted || 1} lượt chuyển đổi.`);
 
     } catch (err) {
       console.error("❌ Lỗi khi tạo audio:", err);
       if (onCompleteQueue) onCompleteQueue(chapterId, false);
+      toast.error(err.message || "Không thể tạo audio");
     } finally {
       setLoading(false);
     }

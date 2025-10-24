@@ -23,15 +23,18 @@ export async function createBook(payload) {
   });
 
   if (!res.ok) {
+    const errorText = await res.text();
+    console.error("❌ Create book failed:", res.status, errorText);
+    
     if (res.status === 409) {
       // BE trả về Conflict ISBN
-      const message = await res.text();
-      throw new Error(message || "ISBN đã tồn tại");
+      throw new Error(errorText || "ISBN đã tồn tại");
     }
-    throw new Error("Tạo mới sách thất bại");
+    throw new Error(errorText || "Tạo mới sách thất bại");
   }
 
-  return res.json();
+  const result = await res.json();
+  return result;
 }
 
 
@@ -85,6 +88,21 @@ export async function uploadBookImage(formData) {
   if (!res.ok) throw new Error("Upload ảnh thất bại");
   const data = await res.json();
   return data.imageUrl;
+}
+
+// Upload certificate
+export async function uploadCertificate(formData) {
+  const res = await fetch(API_ENDPOINTS.UPLOADCERTIFICATE, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("❌ Certificate upload failed:", res.status, errorText);
+    throw new Error(`Upload giấy chứng nhận thất bại: ${errorText}`);
+  }
+  const data = await res.json();
+  return data.fileUrl || data.imageUrl; // Support both field names
 }
 // xóa ảnh trên Cloudinary
 export async function removeOldBookImage(imageUrl) {
@@ -201,21 +219,88 @@ export async function getWordCountFromUrl(url) {
 
 ////////////////////////////
 // Gọi API chuyển văn bản thành audio (TTS)
-export async function generateChapterAudio(chapterId, voiceName = "banmai", speed = 1.0) {
-  const res = await fetch(
-    API_ENDPOINTS.AUDIO_CONVERSION.GENERATE(chapterId, voiceName, speed),
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+export async function generateChapterAudio(chapterId, voiceName = "banmai", speed = 1.0, userId) {
+  const url = new URL(API_ENDPOINTS.AUDIO_CONVERSION.GENERATE(chapterId, voiceName, speed));
+  if (userId) {
+    url.searchParams.append('userId', userId);
+  }
+  
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
 
   if (!res.ok) {
     if (res.status === 404) {
       throw new Error("Không tìm thấy chương cần chuyển audio");
     }
+    if (res.status === 400) {
+      const error = await res.json();
+      throw new Error(error.message || "Tạo audio thất bại");
+    }
     throw new Error("Tạo audio thất bại");
   }
 
+  return res.json();
+}
+
+// Lấy danh sách audio của chapter
+export async function getChapterAudios(chapterId) {
+  const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_CHAPTER_AUDIOS(chapterId));
+  if (!res.ok) throw new Error("Failed to fetch chapter audios");
+  return res.json();
+}
+
+// Lấy danh sách chapters có audio của book
+export async function getBookChapterAudios(bookId) {
+  const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_BOOK_CHAPTER_AUDIOS(bookId));
+  if (!res.ok) throw new Error("Failed to fetch book chapter audios");
+  const data = await res.json();
+  return data.data || [];
+}
+
+// Lấy audio mới nhất của chapter
+export async function getLatestChapterAudio(chapterId) {
+  const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_LATEST_CHAPTER_AUDIO(chapterId));
+  if (!res.ok) throw new Error("Failed to fetch latest chapter audio");
+  const data = await res.json();
+  return data.data;
+}
+
+// Xóa audio
+export async function deleteChapterAudio(audioId) {
+  const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.DELETE_AUDIO(audioId), {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete audio");
+  return res.json();
+}
+
+// Cập nhật giá audio
+export async function updateChapterAudioPrice(audioId, price) {
+  const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.UPDATE_AUDIO_PRICE(audioId), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ priceAudio: price }),
+  });
+  if (!res.ok) throw new Error("Failed to update audio price");
+  return res.json();
+}
+
+// Cập nhật giá cho tất cả audio của chapter
+export async function updateChapterAudiosPrice(chapterId, price) {
+  const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.UPDATE_CHAPTER_AUDIOS_PRICE(chapterId), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ priceAudio: price }),
+  });
+  if (!res.ok) throw new Error("Failed to update audio prices");
+  return res.json();
+}
+
+// Lấy subscription status
+export async function getSubscriptionStatus(userId) {
+  const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_SUBSCRIPTION_STATUS(userId));
+  if (!res.ok) throw new Error("Failed to fetch subscription status");
   return res.json();
 }
