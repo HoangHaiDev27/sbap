@@ -34,7 +34,7 @@ export default function OrderStats({ orders }) {
       <div className="bg-slate-800 p-4 rounded-lg flex items-center space-x-3">
         <RiCloseLine size={28} className="text-red-400" />
         <div>
-          <p className="text-xl font-bold">{revenue.toLocaleString()} VND</p>
+          <p className="text-xl font-bold">{revenue.toLocaleString()} xu</p>
           <p className="text-sm text-gray-400">Doanh thu</p>
         </div>
       </div>
