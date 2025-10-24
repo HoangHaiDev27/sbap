@@ -23,5 +23,14 @@ namespace Repositories.Implementations
             return await _orderItemDAO.GetByIdAsync(orderItemId);
         }
 
+        public async Task<IEnumerable<OrderItem>> GetOwnerOrderItemsAsync(int ownerId)
+        {
+            return await _orderItemDAO.GetOwnerOrderItemsAsync(ownerId);
+        }
+
+        public async Task<object> GetOwnerOrderStatsAsync(int ownerId)
+        {
+            return await _orderItemDAO.GetOwnerOrderStatsAsync(ownerId);
+        }
     }
 }

@@ -33,6 +33,11 @@ namespace VieBook.BE.Constants
         public const string ProcessPayments = "ProcessPayments";
         public const string RefundPayments = "RefundPayments";
 
+        // Transaction Management
+        public const string TransactionManagement = "TransactionManagement";
+        public const string ViewTransactions = "ViewTransactions";
+        public const string ManageTransactions = "ManageTransactions";
+
         // Category Management
         public const string CategoryManagement = "CategoryManagement";
         public const string ViewCategories = "ViewCategories";
@@ -97,6 +102,9 @@ namespace VieBook.BE.Constants
                 Permissions.ViewPayments,
                 Permissions.ProcessPayments,
                 Permissions.RefundPayments,
+                Permissions.TransactionManagement,
+                Permissions.ViewTransactions,
+                Permissions.ManageTransactions,
                 Permissions.CategoryManagement,
                 Permissions.ViewCategories,
                 Permissions.CreateCategories,
@@ -130,6 +138,9 @@ namespace VieBook.BE.Constants
                 Permissions.PaymentManagement,
                 Permissions.ViewPayments,
                 Permissions.ProcessPayments,
+                Permissions.TransactionManagement,
+                Permissions.ViewTransactions,
+                Permissions.ManageTransactions,
                 Permissions.CategoryManagement,
                 Permissions.ViewCategories,
                 Permissions.CreateCategories,
@@ -159,6 +170,9 @@ namespace VieBook.BE.Constants
                 Permissions.PaymentManagement,
                 Permissions.ViewPayments,
                 Permissions.ProcessPayments,
+                Permissions.TransactionManagement,
+                Permissions.ViewTransactions,
+                Permissions.ManageTransactions,
                 Permissions.CategoryManagement,
                 Permissions.ViewCategories,
                 Permissions.CreateCategories,

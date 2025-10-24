@@ -1726,3 +1726,10 @@ ON DELETE NO ACTION;
 ALTER TABLE Books
 ADD CertificateUrl NVARCHAR(MAX) NULL;
 GO
+CREATE TABLE ChatbaseHistories (
+    Id INT IDENTITY PRIMARY KEY,
+    UserId INT NULL,              -- Có thể null cho khách
+    Message NVARCHAR(MAX) NOT NULL,
+    Sender NVARCHAR(20) NOT NULL, -- "user" hoặc "bot"
+    CreatedAt DATETIME DEFAULT GETDATE()
+);

@@ -90,6 +90,7 @@ public partial class VieBookContext : DbContext
     public virtual DbSet<ChapterChunkEmbedding> ChapterChunkEmbeddings { get; set; }
 
     public virtual DbSet<ReadingHistory> ReadingHistories { get; set; }
+    public virtual DbSet<ChatbaseHistory> ChatbaseHistories { get; set; }
     public virtual DbSet<ChapterAudio> ChapterAudios { get; set; }
 
     private string GetConnectionString()

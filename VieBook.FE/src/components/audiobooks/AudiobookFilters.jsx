@@ -24,11 +24,28 @@ export default function AudiobookFilters({
 
         // categories
         const cleanCategories = books
-          .map((b) => (b.category ?? "").toString().trim())
-          .filter((c) => c !== "");
-        const uniqueCategories = Array.from(new Set(cleanCategories)).sort((a, b) =>
-          a.localeCompare(b, "vi")
-        );
+        .flatMap((b) => {
+          // Nếu API trả về dạng mảng: ["Tình cảm", "Hành động"]
+          if (Array.isArray(b.categories)) {
+            return b.categories.map((c) => c.toString().trim());
+          }
+          // Nếu API trả về dạng chuỗi "Tình cảm, Hành động"
+          else if (typeof b.categories === "string") {
+            return b.categories
+              .split(",")
+              .map((c) => c.trim())
+              .filter((c) => c !== "");
+          }
+          // Không có categories
+          else {
+            return [];
+          }
+        })
+        .filter((c) => c !== ""); // loại bỏ chuỗi rỗng
+
+      const uniqueCategories = Array.from(new Set(cleanCategories)).sort((a, b) =>
+        a.localeCompare(b, "vi")
+      );
         setCategories(["Tất cả", ...uniqueCategories]);
 
         // authors

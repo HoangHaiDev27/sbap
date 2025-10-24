@@ -327,5 +327,70 @@ namespace Services.Implementations
             }
             return "Không xác định";
         }
+
+        public async Task<IEnumerable<object>> GetOwnerOrderItemsAsync(int ownerId)
+        {
+            var orderItems = await _orderItemRepository.GetOwnerOrderItemsAsync(ownerId);
+            
+            return orderItems.Select(oi => new
+            {
+                OrderItemId = oi.OrderItemId,
+                CustomerId = oi.CustomerId,
+                CustomerName = oi.Customer?.UserProfile?.FullName ?? "Không xác định",
+                CustomerEmail = oi.Customer?.Email ?? "Không xác định",
+                BookId = oi.Chapter.Book.BookId,
+                BookTitle = oi.Chapter.Book.Title,
+                BookCoverUrl = oi.Chapter.Book.CoverUrl,
+                ChapterId = oi.Chapter.ChapterId,
+                ChapterTitle = oi.Chapter.ChapterTitle,
+                UnitPrice = oi.UnitPrice,
+                CashSpent = oi.CashSpent,
+                OrderType = oi.OrderType,
+                PaidAt = oi.PaidAt,
+                Status = GetOrderStatus(oi.OrderType)
+            });
+        }
+
+        public async Task<object> GetOwnerOrderStatsAsync(int ownerId)
+        {
+            return await _orderItemRepository.GetOwnerOrderStatsAsync(ownerId);
+        }
+
+        public async Task<object> GetOrderDetailByIdAsync(long orderItemId)
+        {
+            var orderItem = await _orderItemRepository.GetOrderItemByIdAsync(orderItemId);
+            if (orderItem == null)
+            {
+                return null;
+            }
+
+            return new
+            {
+                OrderItemId = orderItem.OrderItemId,
+                CustomerId = orderItem.CustomerId,
+                CustomerName = orderItem.Customer?.UserProfile?.FullName ?? "Không xác định",
+                CustomerEmail = orderItem.Customer?.Email ?? "Không xác định",
+                BookId = orderItem.Chapter.Book.BookId,
+                BookTitle = orderItem.Chapter.Book.Title,
+                BookCoverUrl = orderItem.Chapter.Book.CoverUrl,
+                ChapterId = orderItem.Chapter.ChapterId,
+                ChapterTitle = orderItem.Chapter.ChapterTitle,
+                UnitPrice = orderItem.UnitPrice,
+                CashSpent = orderItem.CashSpent,
+                OrderType = orderItem.OrderType,
+                PaidAt = orderItem.PaidAt,
+                Status = GetOrderStatus(orderItem.OrderType)
+            };
+        }
+
+        private string GetOrderStatus(string? orderType)
+        {
+            return orderType switch
+            {
+                "BuyChapter" => "Hoàn thành",
+                "Refund" => "Đã hoàn tiền",
+                _ => "Không xác định"
+            };
+        }
     }
 }
