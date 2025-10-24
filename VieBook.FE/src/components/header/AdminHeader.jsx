@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../../api/authApi";
+import { getCurrentUser } from "../../api/userApi";
 import { toast } from "react-toastify";
 import {
   RiMenuLine,
@@ -8,25 +9,55 @@ import {
   RiCheckboxCircleLine,
   RiCloseCircleLine,
   RiUserFollowLine,
+  RiUserLine,
 } from "react-icons/ri";
-import { useNotificationStore } from "../../hooks/stores/notificationStore";
-import { useAdminStore } from "../../hooks/stores/useAdminStore"; 
+import { useNotificationStore } from "../../hooks/stores/notificationStore"; 
 
 export default function AdminHeader({ onToggleSidebar }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(true);
+  const [currentAdmin, setCurrentAdmin] = useState(null);
+  const [adminAvatar, setAdminAvatar] = useState(null);
 
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
-  const defaultAvatar = "https://img5.thuthuatphanmem.vn/uploads/2021/11/22/anh-gau-nau_092901233.jpg";
   const { notifications, unreadCount } = useNotificationStore();
-  const { admin, fetchAdmin } = useAdminStore();
 
-  // Lần đầu mount, nếu chưa có admin thì fetch
+  // Load admin data on component mount
   useEffect(() => {
-    if (!admin) fetchAdmin();
-  }, [admin, fetchAdmin]);
+    const loadAdminData = async () => {
+      try {
+        const adminData = await getCurrentUser();
+        console.log("AdminHeader - Loaded admin data:", adminData);
+        setCurrentAdmin(adminData);
+        const avatarUrl = adminData?.userProfile?.avatarUrl;
+        setAdminAvatar(avatarUrl);
+        // Reset showAvatar khi có avatar mới
+        if (avatarUrl) {
+          setShowAvatar(true);
+        }
+      } catch (error) {
+        console.error("AdminHeader - Error loading admin data:", error);
+        // Fallback to localStorage data
+        const localAdmin = JSON.parse(localStorage.getItem("auth_user") || "null");
+        setCurrentAdmin(localAdmin);
+        const avatarUrl = localAdmin?.userProfile?.avatarUrl;
+        setAdminAvatar(avatarUrl);
+        if (avatarUrl) {
+          setShowAvatar(true);
+        }
+      }
+    };
+    
+    loadAdminData();
+  }, []);
+
+  // Reset showAvatar khi admin thay đổi
+  useEffect(() => {
+    setShowAvatar(true);
+  }, [currentAdmin]);
   // Đóng menu/dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -188,12 +219,32 @@ export default function AdminHeader({ onToggleSidebar }) {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center space-x-2 p-2 bg-gray-900 text-white rounded-lg cursor-pointer"
           >
-            <img
-            className="h-8 w-8 rounded-full object-cover object-top"
-            src={admin?.avatarUrl || defaultAvatar} // <- dùng từ store
-            alt="Admin"
-          />
-            <span className="font-medium">Admin</span>
+            {adminAvatar && showAvatar ? (
+              <img
+                src={adminAvatar}
+                alt="Admin Avatar"
+                className="h-8 w-8 rounded-full object-cover border border-gray-600 hover:border-blue-400 transition-colors"
+                onError={(e) => {
+                  // Nếu ảnh lỗi, chuyển sang hiển thị icon
+                  console.log("AdminHeader - Avatar image failed to load, switching to icon");
+                  setShowAvatar(false);
+                  // Ẩn ảnh lỗi ngay lập tức
+                  e.target.style.display = 'none';
+                }}
+                onLoad={() => {
+                  console.log("AdminHeader - Avatar image loaded successfully");
+                }}
+              />
+            ) : null}
+            {/* Icon luôn hiển thị khi không có avatar hoặc avatar lỗi */}
+            {(!adminAvatar || !showAvatar) && (
+              <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center">
+                <RiUserLine className="text-white text-sm" />
+              </div>
+            )}
+            <span className="font-medium">
+              {currentAdmin?.userProfile?.fullName || 'Admin'}
+            </span>
             <i className="ri-arrow-down-s-line w-4 h-4 text-white"></i>
           </button>
 

@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = "http://102.37.147.127:5757";
+const API_BASE_URL = "http://localhost:5757";
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -57,6 +57,12 @@ export const API_ENDPOINTS = {
     SUMMARIZE: `${API_BASE_URL}/api/openai/summarize`,
   },
 
+  //Chatbase endpoints
+  CHATBASE: {
+    SEND_MESSAGE: `${API_BASE_URL}/api/chatbase/send-message`,
+    GET_CHAT_HISTORY: `${API_BASE_URL}/api/chatbase/chat-history`,
+  },
+
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
@@ -87,7 +93,11 @@ export const API_ENDPOINTS = {
   ORDER_ITEM: {
     PURCHASED_BOOKS: (userId) => `${API_BASE_URL}/api/OrderItem/purchased-books/${userId}`,
     GET_BY_ID: (orderItemId) => `${API_BASE_URL}/api/OrderItem/${orderItemId}`,
+    GET_DETAIL: (orderItemId) => `${API_BASE_URL}/api/OrderItem/detail/${orderItemId}`,
     PURCHASED_CHAPTERS: (userId, bookId) => `${API_BASE_URL}/api/OrderItem/purchased-chapters/${userId}/${bookId}`,
+    // Owner endpoints (auto-extract userId from JWT token)
+    MY_ORDERS: `${API_BASE_URL}/api/OrderItem/my-orders`,
+    MY_ORDER_STATS: `${API_BASE_URL}/api/OrderItem/my-orders/stats`,
   },
   // Wishlist endpoints
   WISHLIST: {
@@ -204,6 +214,14 @@ export const API_ENDPOINTS = {
     UNLOCK_USER: (id) => `${API_BASE_URL}/api/staff/unlock-user/${id}`,
     SEND_EMAIL: `${API_BASE_URL}/api/staff/send-email`,
     GET_USER_SUBSCRIPTION: (id) => `${API_BASE_URL}/api/staff/users/${id}/subscription`,
+  },
+
+  // Transaction Management endpoints
+  TRANSACTIONS: {
+    GET_ALL: `${API_BASE_URL}/api/transaction`,
+    GET_STATS: `${API_BASE_URL}/api/transaction/stats`,
+    GET_DETAIL: (transactionId) => `${API_BASE_URL}/api/transaction/${transactionId}`,
+    UPDATE_STATUS: (transactionId) => `${API_BASE_URL}/api/transaction/${transactionId}/status`,
   },
   API_BASE_URL: API_BASE_URL,
 

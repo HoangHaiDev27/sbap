@@ -3,11 +3,20 @@ import { RiUserLine, RiAddLine, RiCoinLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
 import { logout, getCurrentRole } from "../../api/authApi";
+import { getCurrentUser } from "../../api/userApi";
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userAvatar, setUserAvatar] = useState(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  
+  // Debug logging
+  console.log("UserMenu - Current user:", currentUser);
+  console.log("UserMenu - User avatar:", userAvatar);
+  console.log("UserMenu - Show avatar:", showAvatar);
   
   // Lấy role hiện tại
   const userRole = getCurrentRole();
@@ -40,14 +49,68 @@ export default function UserMenu() {
     console.log("UserMenu - Coins changed to:", coins);
   }, [coins]);
 
+  // Load user data on component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await getCurrentUser();
+        console.log("UserMenu - Loaded user data:", userData);
+        setCurrentUser(userData);
+        const avatarUrl = userData?.userProfile?.avatarUrl;
+        setUserAvatar(avatarUrl);
+        // Reset showAvatar khi có avatar mới
+        if (avatarUrl) {
+          setShowAvatar(true);
+        }
+      } catch (error) {
+        console.error("UserMenu - Error loading user data:", error);
+        // Fallback to localStorage data
+        const localUser = JSON.parse(localStorage.getItem("auth_user") || "null");
+        setCurrentUser(localUser);
+        const avatarUrl = localUser?.userProfile?.avatarUrl;
+        setUserAvatar(avatarUrl);
+        if (avatarUrl) {
+          setShowAvatar(true);
+        }
+      }
+    };
+    
+    loadUserData();
+  }, []);
+
+  // Reset showAvatar khi user thay đổi
+  useEffect(() => {
+    setShowAvatar(true);
+  }, [currentUser]);
+
   return (
     <div className="relative" ref={menuRef}>
-      {/* Icon user */}
+      {/* Avatar hoặc Icon user */}
       <button
         onClick={() => setOpen(!open)}
         className="w-8 h-8 flex items-center justify-center hover:text-blue-400 transition-colors cursor-pointer"
       >
-        <RiUserLine className="text-xl text-white" />
+        {userAvatar && showAvatar ? (
+          <img
+            src={userAvatar}
+            alt="User Avatar"
+            className="w-8 h-8 rounded-full object-cover border border-gray-600 hover:border-blue-400 transition-colors"
+            onError={(e) => {
+              // Nếu ảnh lỗi, chuyển sang hiển thị icon
+              console.log("UserMenu - Avatar image failed to load, switching to icon");
+              setShowAvatar(false);
+              // Ẩn ảnh lỗi ngay lập tức
+              e.target.style.display = 'none';
+            }}
+            onLoad={() => {
+              console.log("UserMenu - Avatar image loaded successfully");
+            }}
+          />
+        ) : null}
+        {/* Icon luôn hiển thị khi không có avatar hoặc avatar lỗi */}
+        {(!userAvatar || !showAvatar) && (
+          <RiUserLine className="text-xl text-white" />
+        )}
       </button>
 
       {/* Dropdown menu */}

@@ -9,6 +9,7 @@ import {
 } from "../api/bookApi";
 import { getUserId } from "../api/authApi";
 import { useHomeStore } from "../hooks/stores/homeStore";
+import ChatbaseWidget from "../components/chat/ChatbaseWidget"
 
 export default function HomeManager() {
   const {
@@ -107,6 +108,7 @@ export default function HomeManager() {
           />
         </div>
       </div>
+      <ChatbaseWidget />
     </div>
   );
 }

@@ -27,8 +27,7 @@ export default function StoryGrid({
     async function fetchAudioBooks() {
       try {
         const data = await getAudioBooks();
-        // lọc bỏ book có category rỗng để không bị option trống
-        setStories(data.filter(b => b.category && b.category.trim() !== ""));
+        setStories(data.filter((b) => b.categories && b.categories.length > 0));
       } catch (err) {
         console.error("Failed to fetch audio books", err);
       }
@@ -38,20 +37,30 @@ export default function StoryGrid({
 
   // --- Filter ---
   const filteredStories = stories.filter((story) => {
+    // Chuẩn hóa categories
+    const storyCategories = Array.isArray(story.categories)
+      ? story.categories.map((c) => c.trim())
+      : typeof story.categories === "string"
+      ? story.categories.split(",").map((c) => c.trim())
+      : [];
+
     if (
       selectedCategory &&
       selectedCategory !== "Tất cả thể loại" &&
-      story.category !== selectedCategory
-    ) return false;
+      !storyCategories.includes(selectedCategory)
+    ) {
+      return false;
+    }
 
     if (
       selectedNarrator &&
       selectedNarrator !== "Tất cả người kể" &&
       story.narrator !== selectedNarrator
-    ) return false;
+    )
+      return false;
 
     if (selectedDuration && selectedDuration !== "Tất cả thời lượng") {
-      const match = story.duration.match(/(\d+)h/);
+      const match = story.duration?.match(/(\d+)h/);
       const hours = match ? parseInt(match[1], 10) : 0;
 
       switch (selectedDuration) {
@@ -90,8 +99,7 @@ export default function StoryGrid({
       break;
     case "Thời lượng ngắn":
       sortedStories.sort(
-        (a, b) =>
-          parseFloat(a.duration) - parseFloat(b.duration)
+        (a, b) => parseFloat(a.duration) - parseFloat(b.duration)
       );
       break;
     default:
@@ -104,44 +112,30 @@ export default function StoryGrid({
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentStories = sortedStories.slice(indexOfFirst, indexOfLast);
 
-  // Pagination logic
   const getPageNumbers = () => {
     const maxVisiblePages = 5;
     const pages = [];
-    
+
     if (totalPages <= maxVisiblePages) {
-      // Show all pages if total is small
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      // Show pages with ellipsis
       if (currentPage <= 2) {
-        // Show first 3 pages, ellipsis, and last page
-        for (let i = 1; i <= 3; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
+        for (let i = 1; i <= 3; i++) pages.push(i);
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 1) {
-        // Show first page, ellipsis, and last 3 pages
         pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 2; i <= totalPages; i++) {
-          pages.push(i);
-        }
+        pages.push("...");
+        for (let i = totalPages - 2; i <= totalPages; i++) pages.push(i);
       } else {
-        // Show first page, ellipsis, current-1, current, current+1, ellipsis, last page
         pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
+        pages.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push("...");
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -161,18 +155,34 @@ export default function StoryGrid({
                   alt={story.title}
                   className="w-full h-64 object-cover object-top"
                 />
-                {/* Genre Badge */}
-                <div className="absolute top-3 left-3">
-                  <span className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                    {story.category}
-                  </span>
+
+                {/* Thể loại */}
+                <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[80%]">
+                  {Array.isArray(story.categories)
+                    ? story.categories.map((cat, i) => (
+                        <span
+                          key={i}
+                          className="bg-gradient-to-r from-purple-600 to-purple-400 
+                                     text-white px-2 py-0.5 rounded-full text-[10px] 
+                                     font-medium shadow-sm backdrop-blur-sm truncate"
+                        >
+                          {cat}
+                        </span>
+                      ))
+                    : (
+                        <span className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          {story.categories}
+                        </span>
+                      )}
                 </div>
+
                 {/* Headphone Icon */}
                 <div className="absolute top-3 right-3">
                   <div className="bg-black/50 rounded-full p-2">
                     <RiHeadphoneLine className="text-white text-sm" />
                   </div>
                 </div>
+
                 {/* Duration + Chapters */}
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="bg-black/70 rounded-lg px-3 py-2">
@@ -235,16 +245,17 @@ export default function StoryGrid({
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className={`px-3 py-1 rounded ${currentPage === 1
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gray-700 text-white hover:bg-gray-600"
+            className={`px-3 py-1 rounded ${
+              currentPage === 1
+                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                : "bg-gray-700 text-white hover:bg-gray-600"
             }`}
           >
             Trang trước
           </button>
 
-          {getPageNumbers().map((page, index) => (
-            page === '...' ? (
+          {getPageNumbers().map((page, index) =>
+            page === "..." ? (
               <span key={`ellipsis-${index}`} className="px-3 py-1 text-gray-400">
                 ...
               </span>
@@ -252,22 +263,24 @@ export default function StoryGrid({
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded ${currentPage === page
-                  ? "bg-orange-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                className={`px-3 py-1 rounded ${
+                  currentPage === page
+                    ? "bg-orange-600 text-white"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                 }`}
               >
                 {page}
               </button>
             )
-          ))}
+          )}
 
           <button
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded ${currentPage === totalPages
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gray-700 text-white hover:bg-gray-600"
+            className={`px-3 py-1 rounded ${
+              currentPage === totalPages
+                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                : "bg-gray-700 text-white hover:bg-gray-600"
             }`}
           >
             Trang sau

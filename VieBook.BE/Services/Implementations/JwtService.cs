@@ -74,6 +74,7 @@ public class JwtService
                         "BookManagement", "ViewBooks", "CreateBooks", "UpdateBooks", "DeleteBooks", "ApproveBooks",
                         "OrderManagement", "ViewOrders", "CreateOrders", "UpdateOrders", "CancelOrders",
                         "PaymentManagement", "ViewPayments", "ProcessPayments", "RefundPayments",
+                        "TransactionManagement", "ViewTransactions", "ManageTransactions",
                         "CategoryManagement", "ViewCategories", "CreateCategories", "UpdateCategories", "DeleteCategories",
                         "NotificationManagement", "ViewNotifications", "SendNotifications",
                         "Analytics", "ViewReports", "ExportData",
@@ -87,6 +88,7 @@ public class JwtService
                         "BookManagement", "ViewBooks", "CreateBooks", "UpdateBooks", "ApproveBooks",
                         "OrderManagement", "ViewOrders", "UpdateOrders",
                         "PaymentManagement", "ViewPayments", "ProcessPayments",
+                        "TransactionManagement", "ViewTransactions", "ManageTransactions",
                         "CategoryManagement", "ViewCategories", "CreateCategories", "UpdateCategories",
                         "NotificationManagement", "ViewNotifications", "SendNotifications",
                         "Analytics", "ViewReports", "ExportData"
@@ -99,6 +101,7 @@ public class JwtService
                         "BookManagement", "ViewBooks", "CreateBooks", "UpdateBooks", "ApproveBooks",
                         "OrderManagement", "ViewOrders", "UpdateOrders",
                         "PaymentManagement", "ViewPayments", "ProcessPayments",
+                        "TransactionManagement", "ViewTransactions", "ManageTransactions",
                         "CategoryManagement", "ViewCategories", "CreateCategories", "UpdateCategories",
                         "NotificationManagement", "ViewNotifications", "SendNotifications",
                         "Analytics", "ViewReports"

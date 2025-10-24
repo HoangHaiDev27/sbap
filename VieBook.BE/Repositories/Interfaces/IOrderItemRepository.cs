@@ -6,5 +6,7 @@ namespace Repositories.Interfaces
     {
         Task<IEnumerable<OrderItem>> GetPurchasedBooksByUserIdAsync(int userId);
         Task<OrderItem?> GetOrderItemByIdAsync(long orderItemId);
+        Task<IEnumerable<OrderItem>> GetOwnerOrderItemsAsync(int ownerId);
+        Task<object> GetOwnerOrderStatsAsync(int ownerId);
     }
 }
