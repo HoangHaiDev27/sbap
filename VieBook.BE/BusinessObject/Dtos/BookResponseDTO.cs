@@ -20,5 +20,6 @@ namespace BusinessObject.Dtos
         public string Image { get; set; } // CoverUrl
         public string Description { get; set; }
         public string? Narrator { get; set; }
+        public List<string> Categories { get; set; }
     }
 }
