@@ -13,6 +13,9 @@ import {
   deleteChapter,
   removeOldBookImage,
   getWordCountFromUrl,
+  getBookById,
+  updateCompletionStatus,
+  submitForApproval,
 } from "../../api/ownerBookApi";
 
 export default function OwnerChapters() {
@@ -27,6 +30,9 @@ export default function OwnerChapters() {
   const [chapterToDelete, setChapterToDelete] = useState(null);
   const [wordCounts, setWordCounts] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [bookInfo, setBookInfo] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showSellerThankModal, setShowSellerThankModal] = useState(false);
   const pageSize = 5;
   const totalPages = Math.max(1, Math.ceil(chapters.length / pageSize));
   const paginatedChapters = chapters.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -50,6 +56,20 @@ export default function OwnerChapters() {
     }
 
     fetchChapters();
+  }, [bookId]);
+
+  // Load book info để kiểm tra UploaderType và UploadStatus
+  useEffect(() => {
+    async function fetchBookInfo() {
+      try {
+        const bookData = await getBookById(bookId);
+        setBookInfo(bookData);
+      } catch (err) {
+        console.error("Failed to fetch book info:", err);
+      }
+    }
+
+    fetchBookInfo();
   }, [bookId]);
 
   // đếm từ
@@ -136,6 +156,41 @@ export default function OwnerChapters() {
     }
   };
 
+  const handleMarkCompleted = async () => {
+    try {
+      // Cập nhật cả CompletionStatus và UploadStatus
+      await updateCompletionStatus(bookId, "Completed", "Full");
+      setBookInfo(prev => ({ 
+        ...prev, 
+        completionStatus: "Completed",
+        uploadStatus: "Full"
+      }));
+      
+      // Đóng modal xác nhận
+      setShowCompletionModal(false);
+      
+      // Phân biệt thông báo theo loại user
+      if (bookInfo?.uploaderType === "Seller") {
+        // Seller: Popup cảm ơn và gửi kiểm duyệt
+        await submitForApproval(bookId);
+        setShowSellerThankModal(true);
+      } else {
+        // Owner: Thông báo hoàn thành sách
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { type: "success", message: "Bạn đã hoàn thành sách thành công!" },
+          })
+        );
+      }
+    } catch (err) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Cập nhật trạng thái thất bại" },
+        })
+      );
+    }
+  };
+
   const formatDuration = (sec) => {
     if (!sec && sec !== 0) return "0:00";
     const minutes = Math.floor(sec / 60);
@@ -169,13 +224,28 @@ export default function OwnerChapters() {
           <p className="text-gray-400 text-xl">{bookTitle}</p>
         </div>
 
-        <Link
-          to={`/owner/books/${bookId}/chapters/new`}
-          state={{ bookTitle }}
-          className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
-        >
-          <RiAddLine className="mr-2" /> Thêm chương mới
-        </Link>
+        <div className="flex items-center space-x-3">
+          {/* Nút đánh dấu hoàn thành - hiển thị trừ khi đã hoàn thành hoàn toàn */}
+          {bookInfo && !(bookInfo.uploadStatus === "Full" && bookInfo.completionStatus === "Completed") && (
+            <button
+              onClick={() => setShowCompletionModal(true)}
+              className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+            >
+              <RiCheckLine className="mr-2" /> Đã hoàn thành
+            </button>
+          )}
+          
+          {/* Nút thêm chương mới - ẩn khi đã hoàn thành hoàn toàn */}
+          {bookInfo && !(bookInfo.uploadStatus === "Full" && bookInfo.completionStatus === "Completed") && (
+            <Link
+              to={`/owner/books/${bookId}/chapters/new`}
+              state={{ bookTitle }}
+              className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+            >
+              <RiAddLine className="mr-2" /> Thêm chương mới
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -287,7 +357,7 @@ export default function OwnerChapters() {
                       {isFree ? (
                         <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">Miễn phí</span>
                       ) : (
-                        <span className="text-orange-400 font-semibold">{ch.priceAudio.toLocaleString()} xu</span>
+                        <span className="text-orange-400 font-semibold">{(ch.priceAudio || 0).toLocaleString()} xu</span>
                       )}
 
                       <span className="text-sm text-gray-400">{formatDateSafe(ch.uploadedAt)}</span>
@@ -364,7 +434,7 @@ export default function OwnerChapters() {
         )}
       </div>
 
-      {/* Popup confirm */}
+      {/* Popup confirm xóa chương */}
       {chapterToDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-[500px] text-center">
@@ -378,6 +448,65 @@ export default function OwnerChapters() {
                 Xóa
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup xác nhận hoàn thành */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-[500px] text-center">
+            <h3 className="text-lg font-bold mb-4">Xác nhận hoàn thành sách</h3>
+            <p className="mb-6 text-gray-300">
+              {bookInfo?.uploadStatus === "Full" 
+                ? "Bạn có chắc chắn đã hoàn thành việc upload tất cả chương cho sách này? Sau khi xác nhận, sách sẽ được gửi đi kiểm duyệt."
+                : "Bạn có chắc chắn đã hoàn thành việc upload tất cả chương cho sách này?"
+              }
+            </p>
+            <div className="flex justify-center space-x-4">
+              <button 
+                onClick={() => setShowCompletionModal(false)} 
+                className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleMarkCompleted} 
+                className="px-4 py-2 bg-green-500 rounded hover:bg-green-600"
+              >
+                Xác nhận hoàn thành
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup cảm ơn cho Seller */}
+      {showSellerThankModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 p-8 rounded-lg shadow-lg w-[500px] text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <RiCheckLine className="text-white text-2xl" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Cảm ơn bạn!</h3>
+              <p className="text-gray-300 text-lg leading-relaxed">
+                Cảm ơn bạn đã sử dụng nền tảng và thông tin sách của bạn đã được gửi đến bộ phận kiểm duyệt.
+              </p>
+            </div>
+            
+            <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-6">
+              <p className="text-blue-300 text-sm">
+                <strong>Lưu ý:</strong> Sách của bạn sẽ được xem xét và thông báo kết quả trong thời gian sớm nhất.
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => setShowSellerThankModal(false)} 
+              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium"
+            >
+              Đóng
+            </button>
           </div>
         </div>
       )}

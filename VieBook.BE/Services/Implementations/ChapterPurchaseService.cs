@@ -81,7 +81,21 @@ namespace Services.Implementations
                     };
                 }
 
-                var totalCost = newChaptersToPurchase.Sum(c => c.PriceAudio ?? 0);
+                // Tính tổng giá dựa trên loại mua
+                decimal totalCost = 0;
+                if (request.PurchaseType == "soft")
+                {
+                    // Giá bản mềm từ PriceAudio trong Chapters
+                    totalCost = newChaptersToPurchase.Sum(c => c.PriceAudio ?? 0);
+                }
+                else if (request.PurchaseType == "audio")
+                {
+                    // Giá audio từ PriceAudio trong ChapterAudios
+                    var audioPrices = await _bookRepository.GetChapterAudioPricesAsync(request.BookId);
+                    totalCost = newChaptersToPurchase.Sum(c =>
+                        audioPrices.ContainsKey(c.ChapterId) ? audioPrices[c.ChapterId] : (c.PriceAudio ?? 0)
+                    );
+                }
 
                 // Kiểm tra số dư
                 if (user.Wallet < totalCost)
@@ -110,14 +124,29 @@ namespace Services.Implementations
                         };
                     }
 
+                    // Tính giá dựa trên loại mua
+                    decimal unitPrice = 0;
+                    if (request.PurchaseType == "soft")
+                    {
+                        unitPrice = chapter.PriceAudio ?? 0;
+                    }
+                    else if (request.PurchaseType == "audio")
+                    {
+                        // Lấy giá từ ChapterAudios
+                        var audioPrices = await _bookRepository.GetChapterAudioPricesAsync(request.BookId);
+                        unitPrice = audioPrices.ContainsKey(chapter.ChapterId)
+                            ? audioPrices[chapter.ChapterId]
+                            : (chapter.PriceAudio ?? 0);
+                    }
+
                     var orderItem = new OrderItem
                     {
                         CustomerId = userId,
                         ChapterId = chapter.ChapterId,
-                        UnitPrice = chapter.PriceAudio ?? 0,
-                        CashSpent = chapter.PriceAudio ?? 0,
+                        UnitPrice = unitPrice,
+                        CashSpent = unitPrice,
                         PaidAt = DateTime.UtcNow,
-                        OrderType = "BuyChapter"
+                        OrderType = request.PurchaseType == "soft" ? "BuyChapterSoft" : "BuyChapterAudio"
                     };
 
                     _context.OrderItems.Add(orderItem);

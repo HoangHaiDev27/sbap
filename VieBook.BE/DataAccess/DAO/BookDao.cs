@@ -51,10 +51,10 @@ namespace DataAccess.DAO
             return await _context.Books
                  //  .Include(b => b.Owner).ThenInclude(u => u.UserProfile) // lấy tác giả
                  .Where(b => b.Status == "Approved")
-                .Include(b => b.Categories) 
-                .Include(b => b.Chapters) 
-                .Include(b => b.BookReviews) 
-                .Where(b => b.Chapters.Any(c => c.ChapterSoftUrl != null)) 
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .Where(b => b.Chapters.Any(c => c.ChapterSoftUrl != null))
                 .ToListAsync();
         }
 
@@ -284,6 +284,18 @@ namespace DataAccess.DAO
                     .Take(10)
                     .ToListAsync();
             }
+        }
+
+        // Lấy giá audio từ ChapterAudios cho từng chapter
+        public async Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId)
+        {
+            var audioPrices = await _context.ChapterAudios
+                .Where(ca => ca.Chapter.BookId == bookId)
+                .GroupBy(ca => ca.ChapterId)
+                .Select(g => new { ChapterId = g.Key, Price = g.First().PriceAudio ?? 0 })
+                .ToDictionaryAsync(x => x.ChapterId, x => x.Price);
+
+            return audioPrices;
         }
 
     }

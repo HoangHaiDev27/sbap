@@ -129,7 +129,7 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/books`,
     UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
-
+    UPDATE_COMPLETION_STATUS: (bookId) => `${API_BASE_URL}/api/books/${bookId}/completion-status`,
   },
   BOOK_SEARCH: (query) => `${API_BASE_URL}/api/books/search?query=${encodeURIComponent(query)}`,
   RECOMMENDATIONS: `${API_BASE_URL}/api/books/recommendations`,

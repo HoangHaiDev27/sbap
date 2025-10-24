@@ -93,5 +93,10 @@ namespace Services.Implementations
         {
             return await _bookRepo.GetRecommendedBooksAsync(userId);
         }
+
+        public async Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId)
+        {
+            return await _bookRepo.GetChapterAudioPricesAsync(bookId);
+        }
     }
 }

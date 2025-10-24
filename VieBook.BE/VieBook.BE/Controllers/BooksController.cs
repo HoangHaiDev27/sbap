@@ -115,6 +115,50 @@ namespace VieBook.BE.Controllers
             await _bookService.DeleteAsync(book);
             return NoContent();
         }
+        // PATCH: api/books/{id}/completion-status
+        [HttpPatch("{id:int}/completion-status")]
+        public async Task<IActionResult> UpdateCompletionStatus(int id, [FromBody] UpdateCompletionStatusDTO dto)
+        {
+            try
+            {
+                var book = await _bookService.GetByIdAsync(id);
+                if (book == null)
+                    return NotFound();
+
+                book.CompletionStatus = dto.CompletionStatus;
+
+                // Cập nhật UploadStatus nếu có
+                if (!string.IsNullOrEmpty(dto.UploadStatus))
+                {
+                    book.UploadStatus = dto.UploadStatus;
+                }
+
+                book.UpdatedAt = DateTime.UtcNow;
+
+                await _bookService.UpdateAsync(book);
+                return Ok(new { message = "Book status updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/books/{bookId}/chapters/audio-prices
+        [HttpGet("{bookId:int}/chapters/audio-prices")]
+        public async Task<IActionResult> GetChapterAudioPrices(int bookId)
+        {
+            try
+            {
+                var audioPrices = await _bookService.GetChapterAudioPricesAsync(bookId);
+                return Ok(audioPrices);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // GET: api/books/owner/{ownerId}
         [HttpGet("owner/{ownerId:int}")]
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooksByOwner(int ownerId)

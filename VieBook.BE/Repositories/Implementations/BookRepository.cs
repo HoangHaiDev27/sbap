@@ -78,5 +78,10 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetRecommendedBooksAsync(userId);
         }
+
+        public async Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId)
+        {
+            return await _bookDao.GetChapterAudioPricesAsync(bookId);
+        }
     }
 }

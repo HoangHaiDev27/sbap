@@ -70,6 +70,70 @@ export async function deleteBook(bookId) {
   return true;
 }
 
+// Cập nhật trạng thái hoàn thành
+export async function updateCompletionStatus(bookId, completionStatus, uploadStatus = null) {
+  const body = { completionStatus };
+  if (uploadStatus) {
+    body.uploadStatus = uploadStatus;
+  }
+  
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_COMPLETION_STATUS(bookId), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update completion status");
+  }
+
+  return res.json();
+}
+
+// Cập nhật trạng thái upload
+export async function updateUploadStatus(bookId, uploadStatus) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_COMPLETION_STATUS(bookId), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uploadStatus }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update upload status");
+  }
+
+  return res.json();
+}
+
+// Gửi yêu cầu kiểm duyệt cho Seller
+export async function submitForApproval(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKAPPROVAL.ADD, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      bookId: bookId,
+      action: "Pending",
+      createdAt: new Date().toISOString()
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to submit for approval");
+  }
+
+  return res.json();
+}
+
+// Lấy giá audio từ ChapterAudios
+export async function getChapterAudioPrices(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.GET_BY_ID(bookId) + "/chapters/audio-prices");
+  if (!res.ok) throw new Error("Failed to fetch audio prices");
+  return res.json();
+}
+
 // Lấy tất cả categories
 export async function getCategories() {
   const res = await fetch(API_ENDPOINTS.CATEGORIES.GET_ALL);

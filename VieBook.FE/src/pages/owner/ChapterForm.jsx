@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-import { uploadChapterFile, createChapter } from "../../api/ownerBookApi";
+import { uploadChapterFile, createChapter, getBookById } from "../../api/ownerBookApi";
 import { checkSpelling as checkSpellingApi, checkMeaning as checkMeaningApi, moderation as moderationApi, checkPlagiarism as checkPlagiarismApi, generateEmbeddings as generateEmbeddingsApi } from "../../api/openAiApi";
 import { useLocation } from "react-router-dom";
 
@@ -108,10 +108,27 @@ export default function ChapterForm() {
   const [meaningProgress, setMeaningProgress] = useState(0);
   const [policyProgress, setPolicyProgress] = useState(0);
   const [plagiarismProgress, setPlagiarismProgress] = useState(0);
+  
+  // Book info để kiểm tra UploaderType
+  const [bookInfo, setBookInfo] = useState(null);
   const [hasAutoChecked, setHasAutoChecked] = useState(false);
   const [lastCheckedContent, setLastCheckedContent] = useState("");
   
   const [bookTitle, setBookTitle] = useState(location.state?.bookTitle || "Không xác định");
+
+  // Load book info để kiểm tra UploaderType
+  useEffect(() => {
+    async function fetchBookInfo() {
+      try {
+        const bookData = await getBookById(bookId);
+        setBookInfo(bookData);
+      } catch (err) {
+        console.error("Failed to fetch book info:", err);
+      }
+    }
+
+    fetchBookInfo();
+  }, [bookId]);
   
   // Terms and conditions popup
   const [showTermsPopup, setShowTermsPopup] = useState(false);
@@ -441,6 +458,17 @@ export default function ChapterForm() {
   // Auto-run all checks sequentially
   const runAutoChecks = async () => {
     if (!content.trim()) return;
+
+    // Bỏ qua kiểm duyệt cho Seller
+    if (bookInfo?.uploaderType === "Seller") {
+      console.log("Seller detected - skipping approval steps");
+      setPolicyResult({ passed: true, message: "Bỏ qua kiểm duyệt cho Seller" });
+      setPlagiarismResult({ passed: true, message: "Bỏ qua kiểm duyệt cho Seller" });
+      setContentHasMeaning(true);
+      setMeaningScore(100);
+      setMeaningReason("Bỏ qua kiểm duyệt cho Seller");
+      return;
+    }
 
     // Reset states
     setPolicyResult(null);
@@ -1242,7 +1270,9 @@ export default function ChapterForm() {
       {/* Thông báo trạng thái kiểm duyệt */}
       {currentStep === 3 && (
         <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mt-4">
-          <h4 className="text-blue-400 font-semibold mb-2">Trạng thái kiểm duyệt</h4>
+          <h4 className="text-blue-400 font-semibold mb-2">
+            {bookInfo?.uploaderType === "Seller" ? "Trạng thái (Seller - Bỏ qua kiểm duyệt)" : "Trạng thái kiểm duyệt"}
+          </h4>
           <div className="space-y-1 text-sm">
             <div className={`flex items-center gap-2 ${
               contentHasMeaning === true ? "text-green-400" : 

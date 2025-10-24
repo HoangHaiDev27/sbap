@@ -49,6 +49,7 @@ export default function HomeManager() {
           image: b.coverUrl || b.image,
           author: b.author || b.narrator || "",
           category: b.category || b.categoryIds?.join(", ") || "",
+          completionStatus: b.completionStatus || "Ongoing", // Default to Ongoing
         });
 
         const data = {
