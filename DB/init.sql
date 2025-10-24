@@ -1720,3 +1720,11 @@ ALTER TABLE dbo.ChapterAudios
 ADD CONSTRAINT FK_ChapterAudios_Users
 FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
 ON DELETE NO ACTION;
+
+CREATE TABLE ChatbaseHistories (
+    Id INT IDENTITY PRIMARY KEY,
+    UserId INT NULL,              -- Có thể null cho khách
+    Message NVARCHAR(MAX) NOT NULL,
+    Sender NVARCHAR(20) NOT NULL, -- "user" hoặc "bot"
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
