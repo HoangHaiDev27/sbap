@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = "http://102.37.147.127:5757";
+const API_BASE_URL = "http://localhost:5757";
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -55,6 +55,12 @@ export const API_ENDPOINTS = {
     CHECK_PLAGIARISM: `${API_BASE_URL}/api/openai/check-plagiarism`,
     GENERATE_EMBEDDINGS: `${API_BASE_URL}/api/openai/generate-embeddings`,
     SUMMARIZE: `${API_BASE_URL}/api/openai/summarize`,
+  },
+
+  //Chatbase endpoints
+  CHATBASE: {
+    SEND_MESSAGE: `${API_BASE_URL}/api/chatbase/send-message`,
+    GET_CHAT_HISTORY: `${API_BASE_URL}/api/chatbase/chat-history`,
   },
 
   // Notification endpoints

@@ -1,4 +1,5 @@
 using BusinessObject;
+using BusinessObject.Chatbase;
 using BusinessObject.Dtos;
 using BusinessObject.OpenAI;
 using DataAccess;
@@ -16,6 +17,8 @@ using Repositories.Implementations.Staff;
 using Repositories.Interfaces;
 using Repositories.Interfaces.Admin;
 using Repositories.Interfaces.Staff;
+using Service.Implementations;
+using Service.Interfaces;
 using Services.Implementations;
 using Services.Implementations.Admin;
 using Services.Implementations.Staff;
@@ -102,7 +105,7 @@ builder.Services.AddScoped<ReadingScheduleDAO>();
 builder.Services.AddScoped<ReminderSettingsDAO>();
 builder.Services.AddScoped<WalletTransactionDAO>();
 builder.Services.AddScoped<ReadingStatsDAO>();
-
+builder.Services.AddScoped<ChatbaseDAO>();
 
 
 //Add Repo
@@ -126,6 +129,7 @@ builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 builder.Services.AddScoped<IUserFeedbackRepository, UserFeedbackRepository>();
 builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
 builder.Services.AddScoped<IReadingStatsRepository, ReadingStatsRepository>();
+builder.Services.AddScoped<IChatbaseRepository, ChatbaseRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -158,6 +162,8 @@ builder.Services.AddScoped<IReadingStatsService, ReadingStatsService>();
 builder.Services.AddScoped<IReminderSettingsRepository, ReminderSettingsRepository>();
 builder.Services.AddScoped<IReminderSettingsService, ReminderSettingsService>();
 builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
+builder.Services.AddHttpClient<IChatbaseService, ChatbaseService>();
+builder.Services.AddHttpClient<ChatbaseService>();
 
 
 //Add OpenAI service
@@ -180,6 +186,9 @@ builder.Services.AddScoped<IAudioService, AudioService>();
 //OpenAI service
 builder.Services.Configure<OpenAIConfig>(builder.Configuration.GetSection("OpenAI"));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<OpenAIConfig>>().Value);
+//Chatbase service
+builder.Services.Configure<ChatbaseConfig>(builder.Configuration.GetSection("Chatbase"));
+
 
 //Add automapper
 builder.Services.AddAutoMapper(typeof(MappingDTO));

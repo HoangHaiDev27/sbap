@@ -49,8 +49,8 @@ namespace DataAccess.DAO
         public async Task<List<Book>> GetReadBooksAsync()
         {
             return await _context.Books
-                 //  .Include(b => b.Owner).ThenInclude(u => u.UserProfile) // lấy tác giả
-                 .Where(b => b.Status == "Approved")
+                .Where(b => b.Status == "Approved")
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile) // lấy tác giả
                 .Include(b => b.Categories) 
                 .Include(b => b.Chapters) 
                 .Include(b => b.BookReviews) 

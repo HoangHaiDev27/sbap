@@ -3,9 +3,6 @@ import { Link } from "react-router-dom";
 import {
   RiGridLine,
   RiListCheck,
-  RiTimeLine,
-  RiHeartLine,
-  RiHeartFill,
   RiStarFill,
   RiBookOpenLine,
   RiCoinLine,
@@ -22,13 +19,13 @@ export default function AudiobookGrid({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [audiobooks, setAudiobooks] = useState([]);
-  
 
+  // Fetch sách đọc
   useEffect(() => {
     async function fetchBooks() {
       try {
-        const books = await getReadBooks();
-        setAudiobooks(books);
+        const data = await getReadBooks();
+        setAudiobooks(data || []);
       } catch (err) {
         console.error("Failed to fetch books", err);
       }
@@ -38,40 +35,44 @@ export default function AudiobookGrid({
 
   // --- Filter ---
   const filteredBooks = audiobooks.filter((book) => {
-    if (
-      selectedCategory &&
-      selectedCategory !== "Tất cả" &&
-      book.category !== selectedCategory
-    )
-      return false;
+    // Chuẩn hóa categories về mảng
+    const bookCats = Array.isArray(book.categories)
+      ? book.categories.map((c) => c.trim())
+      : typeof book.categories === "string"
+      ? book.categories.split(",").map((c) => c.trim())
+      : [];
 
-    if (
-      selectedAuthor &&
-      selectedAuthor !== "Tất cả" &&
-      book.author !== selectedAuthor
-    )
-      return false;
+    const matchCategory =
+      selectedCategory === "Tất cả" || bookCats.includes(selectedCategory);
 
-    if (selectedRating && selectedRating > 0 && book.rating < selectedRating)
-      return false;
+    const matchAuthor =
+      selectedAuthor === "Tất cả" ||
+      (book.author && book.author.trim() === selectedAuthor);
 
-    return true;
+    const matchRating =
+      selectedRating === 0 || (book.rating || 0) >= selectedRating;
+
+    return matchCategory && matchAuthor && matchRating;
   });
 
   // --- Sort ---
   const sortedBooks = [...filteredBooks];
   switch (sortBy) {
     case "Phổ biến":
-      sortedBooks.sort((a, b) => b.reviews - a.reviews);
+      sortedBooks.sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
       break;
     case "Mới nhất":
-      sortedBooks.sort((a, b) => b.id - a.id);
+      sortedBooks.sort((a, b) => (b.id || 0) - (a.id || 0));
       break;
     case "A-Z":
-      sortedBooks.sort((a, b) => a.title.localeCompare(b.title));
+      sortedBooks.sort((a, b) =>
+        (a.title || "").localeCompare(b.title || "", "vi")
+      );
       break;
     case "Z-A":
-      sortedBooks.sort((a, b) => b.title.localeCompare(a.title));
+      sortedBooks.sort((a, b) =>
+        (b.title || "").localeCompare(a.title || "", "vi")
+      );
       break;
     default:
       break;
@@ -80,10 +81,7 @@ export default function AudiobookGrid({
   // --- Pagination ---
   const totalPages = Math.ceil(sortedBooks.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentBooks = sortedBooks.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const currentBooks = sortedBooks.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div>
@@ -127,7 +125,7 @@ export default function AudiobookGrid({
 function AudiobookCard({ book }) {
   const [isFavorite, setIsFavorite] = useState(false);
   return (
-   <Link
+    <Link
       to={`/bookdetails/${book.id}`}
       className="block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group h-full"
     >
@@ -140,13 +138,21 @@ function AudiobookCard({ book }) {
         />
 
         {/* Danh mục */}
-        <div className="absolute top-3 left-3">
-          <span className="bg-gradient-to-r from-purple-600 to-purple-400 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm backdrop-blur-sm">
-            {book.category}
-          </span>
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[80%]">
+          {Array.isArray(book.categories) &&
+            book.categories.map((category, index) => (
+              <span
+                key={index}
+                className="bg-gradient-to-r from-purple-600 to-purple-400 
+                          text-white px-2 py-0.5 rounded-full text-[10px] 
+                          font-medium shadow-sm backdrop-blur-sm truncate"
+              >
+                {category}
+              </span>
+            ))}
         </div>
 
-        {/* Icon Đọc */}
+        {/* Icon đọc */}
         <div className="absolute top-3 right-3">
           <span className="bg-gray/90 hover:bg-orange-500 hover:text-white text-orange-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm transition-all duration-300 cursor-pointer">
             <RiBookOpenLine className="w-4 h-4" />
@@ -154,37 +160,22 @@ function AudiobookCard({ book }) {
         </div>
       </div>
 
-      {/* Nội dung text */}
-      <div className="p-4 flex flex-col h-[260px]"> 
-        {/* h-[260px] = tổng chiều cao cố định phần nội dung */}
-        
-        {/* Title */}
+      {/* Nội dung */}
+      <div className="p-4 flex flex-col h-[260px]">
         <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors h-[56px] overflow-hidden line-clamp-2">
           {book.title}
         </h3>
-
-        {/* Author */}
         <p className="text-gray-400 text-sm mb-1 h-5 truncate">
           Tác giả: {book.author}
         </p>
-
-        {/* Rating */}
         <div className="h-5 mb-2">
-          <Rating rating={book.rating} reviews={book.reviews} />
+          <Rating rating={book.rating || 0} reviews={book.reviews || 0} />
         </div>
-
-        {/* Description */}
         <p className="text-gray-300 text-sm mb-3 line-clamp-2 overflow-hidden">
           {book.description}
         </p>
-
-        {/* Footer luôn cố định dưới */}
         <div className="mt-auto">
-          <BookFooter
-            isFavorite={isFavorite}
-            setIsFavorite={setIsFavorite}
-            book={book}
-          />
+          <BookFooter book={book} />
         </div>
       </div>
     </Link>
@@ -193,7 +184,6 @@ function AudiobookCard({ book }) {
 
 // --- Row Component ---
 function AudiobookRow({ book }) {
-  const [isFavorite, setIsFavorite] = useState(false);
   return (
     <Link
       to={`/bookdetails/${book.id}`}
@@ -209,13 +199,9 @@ function AudiobookRow({ book }) {
           {book.title}
         </h3>
         <p className="text-gray-400 text-sm mb-1">Tác giả: {book.author}</p>
-        <Rating rating={book.rating} reviews={book.reviews} />
+        <Rating rating={book.rating || 0} reviews={book.reviews || 0} />
         <div className="mt-auto">
-          <BookFooter
-            isFavorite={isFavorite}
-            setIsFavorite={setIsFavorite}
-            book={book}
-          />
+          <BookFooter book={book} />
         </div>
       </div>
     </Link>
@@ -238,66 +224,39 @@ function Rating({ rating, reviews }) {
 function BookFooter({ book }) {
   return (
     <div className="flex items-center justify-between mt-2">
-      {/* Thông tin giá và chương */}
       <div className="flex flex-col">
         <span className="text-orange-400 font-semibold flex items-center space-x-1">
-          <span>{book.price.toLocaleString()}</span>
+          <span>{(book.price || 0).toLocaleString()}</span>
           <RiCoinLine className="text-yellow-400 w-5 h-5" />
         </span>
         <span className="text-xs text-gray-400">{book.chapters} chương</span>
       </div>
 
-      {/* Nút hành động */}
       <div className="flex space-x-2">
-        <button
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-full shadow-md transition-all duration-200"
-        >
+        <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-full shadow-md transition-all duration-200">
           <RiBookOpenLine className="w-5 h-5" />
           <span>Đọc</span>
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // setIsFavorite(!isFavorite);
-          }}
-        >
-          {/* {isFavorite ? (
-            <RiHeartFill className="w-5 h-5 text-red-500" />
-          ) : (
-            <RiHeartLine className="w-5 h-5 text-orange-400 hover:text-orange-300" />
-          )} */}
         </button>
       </div>
     </div>
   );
 }
 
-// --- Pagination Component ---
+// --- Pagination ---
 function Pagination({ totalPages, currentPage, setCurrentPage }) {
-  // Hàm sinh danh sách trang cần hiển thị
   const getPageNumbers = () => {
     const pages = [];
-
     if (totalPages <= 3) {
-      // Nếu ít hơn 7 trang thì hiện hết
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      // Luôn hiện trang đầu, cuối, và 2 trang quanh currentPage
       pages.push(1);
-
       if (currentPage > 4) pages.push("...");
-
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(totalPages - 1, currentPage + 1);
       for (let i = start; i <= end; i++) pages.push(i);
-
       if (currentPage < totalPages - 3) pages.push("...");
-
       pages.push(totalPages);
     }
-
     return pages;
   };
 
@@ -305,7 +264,6 @@ function Pagination({ totalPages, currentPage, setCurrentPage }) {
 
   return (
     <div className="flex justify-center mt-6 space-x-2">
-      {/* Nút Trang trước */}
       <button
         onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
         disabled={currentPage === 1}
@@ -318,7 +276,6 @@ function Pagination({ totalPages, currentPage, setCurrentPage }) {
         Trang trước
       </button>
 
-      {/* Nút số trang */}
       {pageNumbers.map((num, i) =>
         num === "..." ? (
           <span key={i} className="px-3 py-1 text-gray-400">
@@ -339,7 +296,6 @@ function Pagination({ totalPages, currentPage, setCurrentPage }) {
         )
       )}
 
-      {/* Nút Trang sau */}
       <button
         onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
         disabled={currentPage === totalPages}
@@ -354,4 +310,3 @@ function Pagination({ totalPages, currentPage, setCurrentPage }) {
     </div>
   );
 }
-

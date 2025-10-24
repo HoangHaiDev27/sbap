@@ -93,10 +93,8 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BookId))
             .ForMember(dest => dest.Author,
                 opt => opt.MapFrom(src => src.Author))
-            .ForMember(dest => dest.Category,
-                opt => opt.MapFrom(src => src.Categories.FirstOrDefault() != null
-                    ? src.Categories.First().Name
-                    : string.Empty))
+            .ForMember(dest => dest.Categories,
+               opt => opt.MapFrom(src => src.Categories.Select(c => c.Name).ToList()))
             .ForMember(dest => dest.Price,
                 opt => opt.MapFrom(src => src.Chapters.Sum(c => c.PriceAudio ?? 0)))
             .ForMember(dest => dest.Rating,

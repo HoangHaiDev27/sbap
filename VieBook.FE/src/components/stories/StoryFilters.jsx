@@ -28,35 +28,37 @@ export default function StoryFilters({
 
   // --- Fetch categories và narrators từ API ---
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const books = await getAudioBooks();
-        
-        // Fetch categories
-        const uniqueCategories = Array.from(
-          new Set(
-            books
-              .map((b) => b.category)
-              .filter((c) => c && c.trim() !== "")
-          )
-        );
-        setCategories(["Tất cả thể loại", ...uniqueCategories]);
-        
-        // Fetch narrators
-        const uniqueNarrators = Array.from(
-          new Set(
-            books
-              .map((b) => b.narrator)
-              .filter((n) => n && n.trim() !== "")
-          )
-        );
-        setNarrators(["Tất cả người kể", ...uniqueNarrators]);
-      } catch (err) {
-        console.error("Failed to fetch data", err);
-      }
+  async function fetchData() {
+    try {
+      const books = await getAudioBooks();
+
+      // ✅ Lấy tất cả categories, dù là mảng hay chuỗi
+      const allCategories = books.flatMap((b) => 
+        Array.isArray(b.categories)
+          ? b.categories
+          : b.categories ? [b.categories] : []
+      );
+
+      const uniqueCategories = Array.from(
+        new Set(allCategories.filter((c) => c && c.trim() !== ""))
+      );
+      setCategories(["Tất cả thể loại", ...uniqueCategories]);
+
+      // ✅ Lấy tất cả người kể
+      const uniqueNarrators = Array.from(
+        new Set(
+          books
+            .map((b) => b.narrator)
+            .filter((n) => n && n.trim() !== "")
+        )
+      );
+      setNarrators(["Tất cả người kể", ...uniqueNarrators]);
+    } catch (err) {
+      console.error("Failed to fetch data", err);
     }
-    fetchData();
-  }, []);
+  }
+  fetchData();
+}, []);
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg mb-8">
