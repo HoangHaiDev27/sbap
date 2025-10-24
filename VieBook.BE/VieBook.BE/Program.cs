@@ -102,6 +102,7 @@ builder.Services.AddScoped<ReadingScheduleDAO>();
 builder.Services.AddScoped<ReminderSettingsDAO>();
 builder.Services.AddScoped<WalletTransactionDAO>();
 builder.Services.AddScoped<ReadingStatsDAO>();
+builder.Services.AddScoped<TransactionDAO>();
 
 
 
@@ -126,6 +127,7 @@ builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 builder.Services.AddScoped<IUserFeedbackRepository, UserFeedbackRepository>();
 builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
 builder.Services.AddScoped<IReadingStatsRepository, ReadingStatsRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IOwnerDashboardRepository, OwnerDashboardRepository>();
 
 //Add Service
@@ -156,6 +158,7 @@ builder.Services.AddScoped<IReadingScheduleRepository, ReadingScheduleRepository
 builder.Services.AddScoped<IReadingScheduleService, ReadingScheduleService>();
 builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
 builder.Services.AddScoped<IReadingStatsService, ReadingStatsService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IReminderSettingsRepository, ReminderSettingsRepository>();
 builder.Services.AddScoped<IReminderSettingsService, ReminderSettingsService>();
 builder.Services.AddScoped<IOwnerDashboardService, OwnerDashboardService>();
