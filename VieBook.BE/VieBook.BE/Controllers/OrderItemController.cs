@@ -119,5 +119,117 @@ namespace VieBook.BE.Controllers
                 });
             }
         }
+
+
+        /// <summary>
+        /// Lấy chi tiết đơn hàng theo ID (cho trang chi tiết)
+        /// </summary>
+        /// <param name="orderItemId">ID của order item</param>
+        /// <returns>Chi tiết đơn hàng đầy đủ</returns>
+        [HttpGet("detail/{orderItemId}")]
+        public async Task<IActionResult> GetOrderDetail(long orderItemId)
+        {
+            try
+            {
+                var result = await _orderItemService.GetOrderDetailByIdAsync(orderItemId);
+                if (result == null)
+                {
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "Không tìm thấy đơn hàng"
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result,
+                    message = "Lấy chi tiết đơn hàng thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách orders của owner hiện tại (tự động lấy từ JWT token)
+        /// </summary>
+        /// <returns>Danh sách orders của owner hiện tại</returns>
+        [Authorize]
+        [HttpGet("my-orders")]
+        public async Task<IActionResult> GetMyOrders()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var result = await _orderItemService.GetOwnerOrderItemsAsync(userId);
+                return Ok(new
+                {
+                    success = true,
+                    data = result,
+                    message = "Lấy danh sách orders của owner hiện tại thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Lấy thống kê orders của owner hiện tại (tự động lấy từ JWT token)
+        /// </summary>
+        /// <returns>Thống kê orders của owner hiện tại</returns>
+        [Authorize]
+        [HttpGet("my-orders/stats")]
+        public async Task<IActionResult> GetMyOrderStats()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new { message = "Token không hợp lệ" });
+                }
+
+                var result = await _orderItemService.GetOwnerOrderStatsAsync(userId);
+                return Ok(new
+                {
+                    success = true,
+                    data = result,
+                    message = "Lấy thống kê orders của owner hiện tại thành công"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
     }
 }

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function ListeningHistory() {
+  const { isAuthenticated, isLoading: authLoading } = useCurrentUser();
   const [filter, setFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -176,6 +178,27 @@ export default function ListeningHistory() {
     return null;
   };
 
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem lịch sử nghe
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem lịch sử nghe sách của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header + Filter */}
@@ -281,6 +304,25 @@ export default function ListeningHistory() {
           </div>
         ))}
       </div>
+
+      {/* Empty state when no listening history */}
+      {currentBooks.length === 0 && (
+        <div className="text-center py-12">
+          <i className="ri-headphone-line text-6xl text-gray-600 mb-4"></i>
+          <h3 className="text-lg font-medium text-gray-400 mb-2">
+            Chưa có lịch sử nghe nào
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Hãy bắt đầu nghe sách để xây dựng lịch sử nghe của bạn
+          </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
+            Khám phá sách hay
+          </button>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

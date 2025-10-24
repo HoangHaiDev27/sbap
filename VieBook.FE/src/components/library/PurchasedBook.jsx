@@ -4,7 +4,7 @@ import orderItemApi from "../../api/orderItemApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function PurchasedBook() {
-  const { user, userId } = useCurrentUser();
+  const { user, userId, isAuthenticated, isLoading: authLoading } = useCurrentUser();
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
@@ -23,7 +23,10 @@ export default function PurchasedBook() {
 
   // Fetch all purchased books from API (no pagination)
   const fetchPurchasedBooks = async () => {
-    if (!userId) return;
+    if (!isAuthenticated || !userId) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -55,7 +58,7 @@ export default function PurchasedBook() {
   // Load data when component mounts or filter/sort changes
   useEffect(() => {
     fetchPurchasedBooks();
-  }, [userId, timeFilter, sortBy]);
+  }, [isAuthenticated, userId, timeFilter, sortBy]);
 
   // Search functionality
   useEffect(() => {
@@ -174,6 +177,27 @@ export default function PurchasedBook() {
     add(totalPages);
     return pages;
   };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem sách đã mua
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem danh sách sách đã mua của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -359,11 +383,17 @@ export default function PurchasedBook() {
         <div className="text-center py-12">
           <i className="ri-shopping-bag-line text-6xl text-gray-600 mb-4"></i>
           <h3 className="text-lg font-medium text-gray-400 mb-2">
-            Chưa có sách nào
+            Chưa có sách đã mua nào
           </h3>
           <p className="text-gray-500 mb-4">
             Khám phá và mua sách yêu thích để xây dựng thư viện riêng
           </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
+            Khám phá sách hay
+          </button>
         </div>
       )}
 

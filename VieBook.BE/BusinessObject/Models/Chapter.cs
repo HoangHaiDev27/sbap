@@ -36,4 +36,5 @@ public partial class Chapter
     public virtual ICollection<Bookmark> BookmarkChapterReads { get; set; } = new List<Bookmark>();
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public virtual ICollection<ChapterAudio> ChapterAudios { get; set; } = new List<ChapterAudio>();
 }

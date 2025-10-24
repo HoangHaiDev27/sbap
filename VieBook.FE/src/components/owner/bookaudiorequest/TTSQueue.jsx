@@ -31,7 +31,7 @@ export default function TTSQueue({ queue, loading = false }) {
             const isDone = item.status === "Hoàn thành";
             const isProcessing = item.status === "Đang xử lý";
             const isPending = item.status === "Chờ xử lý";
-            const isError = item.status === "Lỗi";
+            const isError = item.status === "Chuyển đổi thất bại";
 
             return (
               <div

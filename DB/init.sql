@@ -603,14 +603,16 @@ DECLARE @BobId   INT  = (SELECT UserId FROM dbo.Users WHERE Email='bob@viebook.l
 /* =========================================================
    Categories
    ========================================================= */
-INSERT INTO dbo.Categories(Name, Type, ParentId, IsActive)
+INSERT INTO dbo.Categories (Name, Type, ParentId, IsActive)
 VALUES
- (N'Fiction',      'Genre',   NULL, 1),
- (N'Self-Help',    'Genre',   NULL, 1),
- (N'Technology',   'Subject', NULL, 1),
- (N'Programming',  'Subject', (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Technology' AND Type='Subject'), 1);
-
-
+ (N'Hành động',  'Genre',   NULL, 1),
+ (N'Kinh dị',     'Genre',   NULL, 1),
+ (N'Tình cảm',    'Genre',   NULL, 1),
+ (N'Trinh thám',  'Genre',   NULL, 1),
+ (N'Công nghệ',   'Subject', NULL, 1),
+ (N'Lịch sử',     'Subject', NULL, 1),
+ (N'Tâm lý học',  'Subject', NULL, 1),
+ (N'Giáo dục',    'Subject', NULL, 1);
 
 /* =========================================================
    Books & Chapters
@@ -874,16 +876,6 @@ DECLARE @Book_KhongDuTot INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tại
 DECLARE @Book_HocThuongMinh INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Học Thương Mình Giữa Muôn Vàn Vụn Vỡ - 1/5 Giây Để Rung Động Với Chính Mình');
 DECLARE @Book_KhiMoiDieuKhongNhuY INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Khi Mọi Điều Không Như Ý');
 
--- Map categories (guard null)
-IF @Book1Id IS NOT NULL
-  INSERT INTO dbo.BookCategories(BookId, CategoryId)
-  SELECT @Book1Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Self-Help' AND Type='Genre')
-  WHERE NOT EXISTS (SELECT 1 FROM dbo.BookCategories WHERE BookId=@Book1Id AND CategoryId=(SELECT CategoryId FROM dbo.Categories WHERE Name=N'Self-Help' AND Type='Genre'));
-IF @Book2Id IS NOT NULL
-  INSERT INTO dbo.BookCategories(BookId, CategoryId)
-  SELECT @Book2Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Programming' AND Type='Subject')
-  WHERE NOT EXISTS (SELECT 1 FROM dbo.BookCategories WHERE BookId=@Book2Id AND CategoryId=(SELECT CategoryId FROM dbo.Categories WHERE Name=N'Programming' AND Type='Subject'));
-
 -- Chapters (guard null)
 IF @Book1Id IS NOT NULL
 BEGIN
@@ -1030,13 +1022,6 @@ DECLARE @Book4Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tiếng Việ
 DECLARE @Book5Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'The Power of Habit');
 DECLARE @Book6Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Mindfulness Everyday');
 
--- Map category cho sách
-INSERT INTO dbo.BookCategories(BookId, CategoryId)
-VALUES
-  (@Book3Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Technology' AND Type='Subject')),
-  (@Book4Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Fiction' AND Type='Genre')),
-  (@Book5Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Self-Help' AND Type='Genre')),
-  (@Book6Id, (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Self-Help' AND Type='Genre'));
 
 -- Chapters cho "Learning SQL" (có audio)
 INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
@@ -1560,3 +1545,178 @@ GO
 ALTER TABLE [dbo].[ReminderSettings]  WITH CHECK ADD FOREIGN KEY([UserId])
 REFERENCES [dbo].[Users] ([UserId])
 GO
+
+/* =========================================================
+   BookCategories (phù hợp với từng sách)
+   ========================================================= */
+DECLARE @BookId INT;
+
+-- 1. The Art of Reading → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title = N'The Art of Reading');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 2. Miền Bắc - Một Thời Chiến Tranh Một Thời Hòa Bình → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Miền Bắc%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 3. Lịch Sử Các Nước Ven Địa Trung Hải → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Địa Trung Hải%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 4. Bài Giảng Lịch Sử An Nam → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Lịch Sử An Nam%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 5. Tâm Lý Học Tội Phạm → Tâm lý học, Trinh thám
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tâm Lý Học Tội Phạm%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 4);
+
+-- 6. 1111 - Nhật Ký Sáu Vạn Dặm Trên Yên Xe Cà Tàng → Hành động
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%1111%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 1);
+
+-- 7. Trên Đường Về Nhớ Đầy → Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Trên Đường Về Nhớ Đầy%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 8. Có Hẹn Với Paris → Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Có Hẹn Với Paris%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 9. Cô Đơn Trên Everest → Hành động, Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Cô Đơn Trên Everest%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 1);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 10. Vàng Son Một Thuở Ba Tư → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Vàng Son Một Thuở Ba Tư%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 11. Trở Về Từ Iraq → Hành động
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Trở Về Từ Iraq%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 1);
+
+-- 12. Nhẹ Bước Lãng Du → Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Nhẹ Bước Lãng Du%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 13. Collins - Writing For IELTS → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Writing For Ielts%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 14. Tìm Hiểu Thế Giới Cảm Xúc Của Bé Trai → Tâm lý học, Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Cảm Xúc Của Bé Trai%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 15. Những Từ Ngữ Làm Cho Trẻ Hạnh Phúc → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Những Từ Ngữ Làm Cho Trẻ Hạnh Phúc%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 16. Đọc Sách Cùng Con, Đi Muôn Dặm Đường → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Đọc Sách Cùng Con%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 17. Bản Du Ca Cuối Cùng → Lịch sử, Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Bản Du Ca Cuối Cùng%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 3);
+
+-- 18. Huy Động Vốn: Khó Mà Dễ! → Công nghệ
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Huy Động Vốn%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
+
+-- 19. Tư Duy Logic → Giáo dục, Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tư Duy Logic%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 20. Chữa Lành Những Sang Chấn Tuổi Thơ → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Chữa Lành Những Sang Chấn%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 21. Mày Vẫn Ổn, Đừng Lo Lắng! → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Mày Vẫn Ổn%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 22. No Bad Parts - Không Có Phần Nào Xấu → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%No Bad Parts%');
+INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 23. Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt? → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 24. Học Thương Mình Giữa Muôn Vàn Vụn Vỡ - 1/5 Giây Để Rung Động Với Chính Mình → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Học Thương Mình Giữa Muôn Vàn Vụn Vỡ%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 25. Khi Mọi Điều Không Như Ý → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Khi Mọi Điều Không Như Ý%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 26. C# for Beginners → Công nghệ
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%C# for Beginners%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
+
+-- 27. Demo Feedback Book → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Demo Feedback Book%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 28. Learning SQL → Công nghệ
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Learning SQL%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
+
+-- 29. Tiếng Việt Thực Hành → Giáo dục
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tiếng Việt Thực Hành%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
+
+-- 30. The Power of Habit → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%The Power of Habit%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 31. Mindfulness Everyday → Tâm lý học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Mindfulness Everyday%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
+
+-- 32. Cặp Đôi Hoàn Cảnh → Tình cảm
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Cặp Đôi Hoàn Cảnh%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 9);
+
+-- 33. Sử Ký III - Thế Gia → Lịch sử
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Sử Ký III - Thế Gia%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
+
+-- 34. Truyện Ngắn Thạch Lam 1 → Văn học
+SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Truyện Ngắn Thạch Lam 1%');
+IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 10);
+
+
+-- Thêm status cho sách để check 
+ALTER TABLE dbo.Books
+ADD UploaderType VARCHAR(20) NOT NULL DEFAULT('Owner'),
+    UploadStatus VARCHAR(20) NOT NULL DEFAULT('Incomplete'),
+    CompletionStatus VARCHAR(20) NOT NULL DEFAULT('Ongoing');
+-- Thêm bảng nhiều audio
+CREATE TABLE dbo.ChapterAudios (
+AudioId       INT IDENTITY(1,1) PRIMARY KEY,         
+ChapterId     INT NOT NULL REFERENCES dbo.Chapters(ChapterId),  
+UserId        INT NOT NULL REFERENCES dbo.Users(UserId),        
+AudioLink     VARCHAR(1000) NOT NULL,                 
+DurationSec   INT NULL,                               
+PriceAudio    DECIMAL(18,2) NULL,                     
+CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+-- Liên kết ChapterAudios → Chapters
+ALTER TABLE dbo.ChapterAudios
+ADD CONSTRAINT FK_ChapterAudios_Chapters
+FOREIGN KEY (ChapterId) REFERENCES dbo.Chapters(ChapterId)
+ON DELETE CASCADE;
+
+-- Liên kết ChapterAudios → Users
+ALTER TABLE dbo.ChapterAudios
+ADD CONSTRAINT FK_ChapterAudios_Users
+FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
+ON DELETE NO ACTION;
