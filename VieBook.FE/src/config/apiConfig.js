@@ -87,7 +87,11 @@ export const API_ENDPOINTS = {
   ORDER_ITEM: {
     PURCHASED_BOOKS: (userId) => `${API_BASE_URL}/api/OrderItem/purchased-books/${userId}`,
     GET_BY_ID: (orderItemId) => `${API_BASE_URL}/api/OrderItem/${orderItemId}`,
+    GET_DETAIL: (orderItemId) => `${API_BASE_URL}/api/OrderItem/detail/${orderItemId}`,
     PURCHASED_CHAPTERS: (userId, bookId) => `${API_BASE_URL}/api/OrderItem/purchased-chapters/${userId}/${bookId}`,
+    // Owner endpoints (auto-extract userId from JWT token)
+    MY_ORDERS: `${API_BASE_URL}/api/OrderItem/my-orders`,
+    MY_ORDER_STATS: `${API_BASE_URL}/api/OrderItem/my-orders/stats`,
   },
   // Wishlist endpoints
   WISHLIST: {
@@ -204,6 +208,14 @@ export const API_ENDPOINTS = {
     UNLOCK_USER: (id) => `${API_BASE_URL}/api/staff/unlock-user/${id}`,
     SEND_EMAIL: `${API_BASE_URL}/api/staff/send-email`,
     GET_USER_SUBSCRIPTION: (id) => `${API_BASE_URL}/api/staff/users/${id}/subscription`,
+  },
+
+  // Transaction Management endpoints
+  TRANSACTIONS: {
+    GET_ALL: `${API_BASE_URL}/api/transaction`,
+    GET_STATS: `${API_BASE_URL}/api/transaction/stats`,
+    GET_DETAIL: (transactionId) => `${API_BASE_URL}/api/transaction/${transactionId}`,
+    UPDATE_STATUS: (transactionId) => `${API_BASE_URL}/api/transaction/${transactionId}/status`,
   },
   API_BASE_URL: API_BASE_URL,
 
