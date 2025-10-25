@@ -193,6 +193,46 @@ namespace Services.Implementations
 
             throw new Exception("Upload avatar thất bại.");
         }
+
+        // Upload certificate (PDF or Image)
+        public async Task<string> UploadCertificateAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return null;
+
+            await using var stream = file.OpenReadStream();
+            
+            // Check if file is PDF or image
+            var isPdf = file.ContentType.ToLower() == "application/pdf";
+            
+            if (isPdf)
+            {
+                // Upload PDF as raw file
+                var uploadParams = new RawUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "certificates"
+                };
+                
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                    return uploadResult.SecureUrl.ToString();
+            }
+            else
+            {
+                // Upload image
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "certificates"
+                };
+                
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                    return uploadResult.SecureUrl.ToString();
+            }
+
+            return null;
+        }
         
     }
 

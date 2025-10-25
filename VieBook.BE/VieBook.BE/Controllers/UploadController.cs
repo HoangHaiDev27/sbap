@@ -59,5 +59,26 @@ namespace VieBook.BE.Controllers
 
             return Ok(new { url });
         }
+
+        [HttpPost("certificate")]
+        public async Task<IActionResult> UploadCertificate([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "File không hợp lệ" });
+
+            // Validate file type (image or PDF)
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                return BadRequest(new { message = "Chỉ chấp nhận file ảnh (JPG, PNG, WEBP) hoặc PDF" });
+
+            // Validate file size (max 10MB)
+            if (file.Length > 10 * 1024 * 1024)
+                return BadRequest(new { message = "File không được vượt quá 10MB" });
+
+            var url = await _cloudinaryService.UploadCertificateAsync(file);
+            if (url == null) return StatusCode(500, new { message = "Upload giấy chứng nhận thất bại" });
+
+            return Ok(new { fileUrl = url, imageUrl = url }); // Return both for compatibility
+        }
     }
 }

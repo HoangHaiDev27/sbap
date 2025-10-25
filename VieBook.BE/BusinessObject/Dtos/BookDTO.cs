@@ -19,6 +19,10 @@ namespace BusinessObject.Dtos
         public string? Author { get; set; }
         public int OwnerId { get; set; }
         public string Status { get; set; } = null!;
+        public string? UploaderType { get; set; }
+        public string? UploadStatus { get; set; }
+        public string? CompletionStatus { get; set; }
+        public string? CertificateUrl { get; set; }
         // TotalPrice,Sold và Rating
         public decimal TotalPrice { get; set; }
         public int Sold { get; set; }

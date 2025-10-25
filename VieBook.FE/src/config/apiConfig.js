@@ -155,6 +155,13 @@ export const API_ENDPOINTS = {
   AUDIO_CONVERSION: {
     GENERATE: (chapterId, voiceName = "banmai", speed = 1.0) =>
       `${API_BASE_URL}/api/audioconversion/generate/${chapterId}?voiceName=${voiceName}&speed=${speed}`,
+    GET_CHAPTER_AUDIOS: (chapterId) => `${API_BASE_URL}/api/audioconversion/chapter/${chapterId}/audios`,
+    GET_LATEST_CHAPTER_AUDIO: (chapterId) => `${API_BASE_URL}/api/audioconversion/chapter/${chapterId}/latest-audio`,
+    GET_BOOK_CHAPTER_AUDIOS: (bookId) => `${API_BASE_URL}/api/audioconversion/book/${bookId}/chapter-audios`,
+    DELETE_AUDIO: (audioId) => `${API_BASE_URL}/api/audioconversion/audio/${audioId}`,
+    UPDATE_AUDIO_PRICE: (audioId) => `${API_BASE_URL}/api/audioconversion/audio/${audioId}/price`,
+    UPDATE_CHAPTER_AUDIOS_PRICE: (chapterId) => `${API_BASE_URL}/api/audioconversion/chapter/${chapterId}/price`,
+    GET_SUBSCRIPTION_STATUS: (userId) => `${API_BASE_URL}/api/audioconversion/subscription/status?userId=${userId}`,
   },
   
   CATEGORIES: {
@@ -166,6 +173,7 @@ export const API_ENDPOINTS = {
   },
   UPLOADBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
   REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
+  UPLOADCERTIFICATE: `${API_BASE_URL}/api/upload/certificate`,
   PROMOTIONS: {
     GET_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}`,
     CREATE: `${API_BASE_URL}/api/promotions`,
@@ -224,6 +232,16 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (transactionId) => `${API_BASE_URL}/api/transaction/${transactionId}/status`,
   },
   API_BASE_URL: API_BASE_URL,
+
+  // Owner Dashboard endpoints
+  OWNER_DASHBOARD: {
+    STATS: `${API_BASE_URL}/api/OwnerDashboard/stats`,
+    REVENUE_BY_CATEGORY: `${API_BASE_URL}/api/OwnerDashboard/revenue-by-category`,
+    MONTHLY_SALES: `${API_BASE_URL}/api/OwnerDashboard/monthly-sales`,
+    RECENT_ORDERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/recent-orders?limit=${limit}`,
+    BEST_SELLERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/best-sellers?limit=${limit}`,
+    DASHBOARD: `${API_BASE_URL}/api/OwnerDashboard/dashboard`
+  }
 
 };
 

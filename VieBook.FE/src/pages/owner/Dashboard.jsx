@@ -250,7 +250,7 @@ export default function OwnerDashboard() {
       color: "bg-green-500",
     },
     {
-      label: "Chapter đã bán",
+      label: "Chương đã bán",
       value: formatNumber(dashboardData.stats?.totalChaptersSold || 0),
       icon: <RiBook2Line size={28} />,
       color: "bg-blue-500",
