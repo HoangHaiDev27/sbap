@@ -16,6 +16,7 @@ import CategoriesManagement from "../pages/staff/CategoriesManagement";
 import BookOwnersManagement from "../pages/staff/BookOwnersManagement";
 import TransactionsManagement from "../pages/staff/TransactionsManagement";
 import FeedbackManagement from "../pages/staff/FeedbackManagement";
+import StaffSupportChat from "../pages/staff/StaffSupportChat";
 
 import Dashboard from "../pages/owner/Dashboard";
 import OwnerBooks from "../pages/owner/OwnerBooks";
@@ -88,6 +89,7 @@ function AppRoutes() {
       <Route path="/staff/book-owners" element={<BookOwnersManagement />} />
       <Route path="/staff/transactions" element={<TransactionsManagement />} />
       <Route path="/staff/feedback" element={<FeedbackManagement />} />
+      <Route path="/staff/support-chat" element={<StaffSupportChat />} />
       {/* Staff routes */}
 
       <Route path="/customer" element={<CustomerPage />} />

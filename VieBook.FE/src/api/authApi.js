@@ -194,6 +194,12 @@ export function getUserId() {
   return user.userId || user.UserId || user.id || user.Id || null;
 }
 
+export function getUserName() {
+  const user = getCurrentUser();
+  if (!user) return null;
+  return user.fullName || user.FullName || user.name || user.Name || user.email || user.Email || "User";
+}
+
 export function getRefreshToken() {
   return localStorage.getItem("refreshToken");
 }
