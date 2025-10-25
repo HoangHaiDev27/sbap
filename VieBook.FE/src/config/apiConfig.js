@@ -233,6 +233,16 @@ export const API_ENDPOINTS = {
   },
   API_BASE_URL: API_BASE_URL,
 
+  // Owner Dashboard endpoints
+  OWNER_DASHBOARD: {
+    STATS: `${API_BASE_URL}/api/OwnerDashboard/stats`,
+    REVENUE_BY_CATEGORY: `${API_BASE_URL}/api/OwnerDashboard/revenue-by-category`,
+    MONTHLY_SALES: `${API_BASE_URL}/api/OwnerDashboard/monthly-sales`,
+    RECENT_ORDERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/recent-orders?limit=${limit}`,
+    BEST_SELLERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/best-sellers?limit=${limit}`,
+    DASHBOARD: `${API_BASE_URL}/api/OwnerDashboard/dashboard`
+  }
+
 };
 
 
