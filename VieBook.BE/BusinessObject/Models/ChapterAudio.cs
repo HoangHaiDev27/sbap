@@ -19,6 +19,8 @@ public partial class ChapterAudio
 
     public DateTime CreatedAt { get; set; }         
 
+    public string? VoiceName { get; set; }          
+
     public virtual Chapter Chapter { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;

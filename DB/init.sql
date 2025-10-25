@@ -1706,6 +1706,7 @@ UserId        INT NOT NULL REFERENCES dbo.Users(UserId),
 AudioLink     VARCHAR(1000) NOT NULL,                 
 DurationSec   INT NULL,                               
 PriceAudio    DECIMAL(18,2) NULL,                     
+VoiceName     VARCHAR(50) NULL,                       
 CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
@@ -1721,6 +1722,10 @@ ADD CONSTRAINT FK_ChapterAudios_Users
 FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
 ON DELETE NO ACTION;
 
+-- Thêm cột CertificateUrl vào bảng Books
+ALTER TABLE Books
+ADD CertificateUrl NVARCHAR(MAX) NULL;
+GO
 CREATE TABLE ChatbaseHistories (
     Id INT IDENTITY PRIMARY KEY,
     UserId INT NULL,              -- Có thể null cho khách

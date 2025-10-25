@@ -29,6 +29,7 @@ public partial class Book
     public string? UploaderType { get; set; }  
     public string? UploadStatus { get; set; }     
     public string? CompletionStatus { get; set; }
+    public string? CertificateUrl { get; set; }  // Link giấy chứng nhận (dành cho Seller)
 
     public virtual ICollection<BookApproval> BookApprovals { get; set; } = new List<BookApproval>();
 

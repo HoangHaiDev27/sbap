@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Services.Implementations;
 using Services.Interfaces;
+using Services.Interfaces.Staff;
 
 namespace VieBook.BE.Controllers
 {
@@ -15,10 +16,13 @@ namespace VieBook.BE.Controllers
     {
         private readonly IBookService _bookService;
         private readonly IMapper _mapper;
-        public BooksController(IBookService bookService, IMapper mapper)
+        private readonly IBookApprovalService _bookApprovalService;
+        
+        public BooksController(IBookService bookService, IMapper mapper, IBookApprovalService bookApprovalService)
         {
             _bookService = bookService;
             _mapper = mapper;
+            _bookApprovalService = bookApprovalService;
         }
 
         [HttpGet("{id}")]
@@ -69,6 +73,9 @@ namespace VieBook.BE.Controllers
             await _bookService.AddAsync(book);
             await _bookService.AddCategoriesToBookAsync(book.BookId, dto.CategoryIds);
 
+            // BookApproval sẽ được tạo sau khi owner submit sách để review
+            // Không tự động tạo khi tạo sách
+            
             return Ok(true);
         }
 

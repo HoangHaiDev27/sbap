@@ -63,6 +63,7 @@ export default function BookFilters({
         <option value="Tất cả">Tất cả trạng thái</option>
         <option value="Approved">Đang bán</option>
         <option value="Active">Chờ duyệt</option>
+        <option value="PendingChapters">Chờ đăng chương</option>
         <option value="InActive">Tạm dừng</option>
         <option value="Refused">Bị từ chối</option>
       </select>

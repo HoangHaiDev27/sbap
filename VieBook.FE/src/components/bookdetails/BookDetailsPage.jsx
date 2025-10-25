@@ -14,6 +14,7 @@ import OverviewTab from "./OverviewTab";
 import DetailsTab from "./DetailsTab";
 import ReviewsTab from "./ReviewsTab";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
+import { getBookChapterAudios } from "../../api/ownerBookApi";
 import toast from "react-hot-toast";
 import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
 import {
@@ -39,12 +40,14 @@ export default function BookDetailPage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
+  const [showAudioChapterModal, setShowAudioChapterModal] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
   const [bookDetail, setBookDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchasedChapters, setPurchasedChapters] = useState([]); // Lưu danh sách chương đã mua
   const [chapterOwnership, setChapterOwnership] = useState({}); // Lưu trạng thái sở hữu chương
+  const [chaptersWithAudio, setChaptersWithAudio] = useState([]); // Lưu danh sách chapter có audio từ ChapterAudio table
 
   // fetch dữ liệu sách và wishlist
   useEffect(() => {
@@ -55,6 +58,14 @@ export default function BookDetailPage() {
       try {
         const data = await getBookDetail(id);
         setBookDetail(data);
+
+        // Load chapters có audio từ ChapterAudio table
+        try {
+          const audioChapters = await getBookChapterAudios(id);
+          setChaptersWithAudio(audioChapters);
+        } catch (error) {
+          setChaptersWithAudio([]);
+        }
 
         // Load wishlist state if logged in
         const uid = getUserId();
@@ -145,8 +156,7 @@ export default function BookDetailPage() {
     totalPrice,
   } = bookDetail;
 
-  const hasAudio =
-    Array.isArray(chapters) && chapters.some((ch) => !!ch.chapterAudioUrl);
+  const hasAudio = chaptersWithAudio.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -182,12 +192,12 @@ export default function BookDetailPage() {
                 <RiBookOpenLine /> Đọc ngay
               </button>
               {hasAudio ? (
-                <Link
-                  to={`/player/${id}`}
+                <button
+                  onClick={() => setShowAudioChapterModal(true)}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <RiPlayCircleLine /> Nghe
-                </Link>
+                </button>
               ) : (
                 <button
                   type="button"
@@ -357,7 +367,7 @@ export default function BookDetailPage() {
         }}
       />
 
-      {/* Chapter Modal - Mục lục chương */}
+      {/* Chapter Modal - Mục lục chương đọc */}
       {showChapterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
           {/* Overlay */}
@@ -552,6 +562,92 @@ export default function BookDetailPage() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audio Chapter Modal - Mục lục chương nghe */}
+      {showAudioChapterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowAudioChapterModal(false)}
+          ></div>
+
+          {/* Modal */}
+          <div className="relative bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="bg-gray-700 px-4 sm:px-6 py-4 border-b border-gray-600">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-white">
+                  <RiPlayCircleLine className="text-green-500" />
+                  Chọn chương để nghe - {title}
+                </h3>
+                <button
+                  onClick={() => setShowAudioChapterModal(false)}
+                  className="text-gray-300 hover:text-white transition-colors p-1 rounded-lg hover:bg-gray-600"
+                >
+                  <RiCloseLine size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-80px)] sm:max-h-[calc(80vh-80px)]">
+              {/* Danh sách chương có audio */}
+              <div className="space-y-2">
+                {chaptersWithAudio.length > 0 ? (
+                  chaptersWithAudio.map((audioChapter, index) => {
+                      const isFree = !audioChapter.priceAudio || audioChapter.priceAudio === 0;
+
+                      return (
+                        <div
+                          key={audioChapter.chapterId || index}
+                          className="p-3 sm:p-4 rounded-lg border-2 border-gray-600 hover:border-green-500 bg-gray-700/50 hover:bg-gray-600 cursor-pointer transition-all"
+                          onClick={() => {
+                            // Navigate đến player với chapterId
+                            window.location.href = `/player/${id}/chapter/${audioChapter.chapterId}`;
+                          }}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <RiPlayCircleLine className="text-green-500 text-lg flex-shrink-0" />
+                                <h3 className="font-medium text-white text-sm sm:text-base truncate">
+                                  Chương {audioChapter.chapterNumber}: {audioChapter.chapterTitle || ""}
+                                </h3>
+                              </div>
+                              {audioChapter.durationSec && (
+                                <p className="text-xs sm:text-sm text-gray-400">
+                                  Thời lượng: {Math.floor(audioChapter.durationSec / 60)} phút {audioChapter.durationSec % 60} giây
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-left sm:text-right">
+                              {isFree ? (
+                                <div className="text-green-500 font-bold text-base sm:text-lg">
+                                  Miễn phí
+                                </div>
+                              ) : (
+                                <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
+                                  {audioChapter.priceAudio?.toLocaleString() || 0}
+                                  <RiCoinLine className="w-4 h-4 text-yellow-400" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    <RiPlayCircleLine className="mx-auto text-4xl mb-2 opacity-50" />
+                    <p>Chưa có chương nào có audio</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

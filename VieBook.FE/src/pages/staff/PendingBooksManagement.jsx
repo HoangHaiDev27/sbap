@@ -69,7 +69,9 @@ export default function PendingBooksManagement() {
               return `${hours}:${minutes} ${day}/${month}/${year}`;
             })(),
             cover: b.coverUrl || 'https://placehold.co/80x120',
-            summary: b.description || ''
+            summary: b.description || '',
+            certificateUrl: b.certificateUrl || null,
+            uploaderType: b.uploaderType || null
           };
         });
 

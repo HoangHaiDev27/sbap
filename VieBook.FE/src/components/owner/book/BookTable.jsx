@@ -76,6 +76,9 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     } else if (status === "Active") {
       colorClass = "bg-yellow-600";
       text = "Chờ duyệt";
+    } else if (status === "PendingChapters") {
+      colorClass = "bg-blue-600";
+      text = "Chờ đăng chương";
     } else if (status === "InActive") {
       colorClass = "bg-red-600";
       text = "Tạm dừng";
