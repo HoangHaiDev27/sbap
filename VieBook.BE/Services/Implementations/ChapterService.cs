@@ -33,6 +33,9 @@ namespace Services.Implementations
                 throw new ArgumentException($"Book with ID {chapter.BookId} does not exist.");
             }
 
+            // Set the navigation property to avoid validation errors
+            chapter.Book = book;
+
             await _chapterRepository.AddChapterAsync(chapter);
         }
 

@@ -24,14 +24,27 @@ namespace Services.Implementations.Staff
         public Task<BookApproval?> GetByIdAsync(int id)
             => _repository.GetByIdAsync(id);
 
-        public Task AddAsync(BookApproval bookApproval)
-            => _repository.AddAsync(bookApproval);
+        public async Task AddAsync(BookApproval bookApproval)
+        {
+            // Set the navigation property to avoid validation errors
+            if (bookApproval.Book == null)
+            {
+                // Load the book to set the navigation property
+                var book = await _repository.GetBookByIdAsync(bookApproval.BookId);
+                if (book != null)
+                {
+                    bookApproval.Book = book;
+                }
+            }
+
+            await _repository.AddAsync(bookApproval);
+        }
 
         public Task ApproveAsync(int bookId, int staffId)
-            => _repository.ApproveAsync(bookId,staffId);
+            => _repository.ApproveAsync(bookId, staffId);
 
         public Task RefuseAsync(int bookId, int staffId, string? reason = null)
-            => _repository.RefuseAsync(bookId,staffId,reason);
+            => _repository.RefuseAsync(bookId, staffId, reason);
 
         public Task<BookApproval?> GetLatestByBookIdAsync(int bookId)
             => _repository.GetLatestByBookIdAsync(bookId);

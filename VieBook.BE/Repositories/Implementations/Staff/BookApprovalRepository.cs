@@ -32,7 +32,7 @@ namespace Repositories.Implementations.Staff
             => _dao.ApproveAsync(bookId, staffId);
 
         public Task RefuseAsync(int bookId, int staffId, string? reason = null)
-            => _dao.RefuseAsync(bookId,staffId,reason);
+            => _dao.RefuseAsync(bookId, staffId, reason);
 
         public Task<BookApproval?> GetLatestByBookIdAsync(int bookId)
             => _dao.GetLatestByBookIdAsync(bookId);
@@ -42,5 +42,8 @@ namespace Repositories.Implementations.Staff
 
         public Task<List<User>> GetAllUsersWithProfileAsync()
             => _dao.GetAllUsersWithProfileAsync();
+
+        public Task<Book?> GetBookByIdAsync(int bookId)
+            => _dao.GetBookByIdAsync(bookId);
     }
 }

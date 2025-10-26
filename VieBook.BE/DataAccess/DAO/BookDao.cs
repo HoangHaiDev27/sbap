@@ -298,5 +298,52 @@ namespace DataAccess.DAO
             return audioPrices;
         }
 
+        // Kiểm tra xem book có chapter nào có status = Active không
+        public async Task<bool> CheckBookHasActiveChaptersAsync(int bookId)
+        {
+            return await _context.Chapters
+                .Where(c => c.BookId == bookId && c.Status == "Active")
+                .AnyAsync();
+        }
+
+        // Kiểm tra tất cả chapters của book có status = Active không
+        // Kiểm tra book có chapter nào có status = Draft không
+        public async Task<bool> CheckBookHasDraftChaptersAsync(int bookId)
+        {
+            return await _context.Chapters
+                .Where(c => c.BookId == bookId && c.Status == "Draft")
+                .AnyAsync();
+        }
+
+        public async Task<bool> CheckAllChaptersActiveAsync(int bookId)
+        {
+            var totalChapters = await _context.Chapters
+                .Where(c => c.BookId == bookId)
+                .CountAsync();
+
+            if (totalChapters == 0) return false;
+
+            var activeChapters = await _context.Chapters
+                .Where(c => c.BookId == bookId && c.Status == "Active")
+                .CountAsync();
+
+            return totalChapters == activeChapters;
+        }
+
+        // Thay đổi status của tất cả chương Draft thành InActive
+        public async Task UpdateDraftChaptersToInActiveAsync(int bookId)
+        {
+            var draftChapters = await _context.Chapters
+                .Where(c => c.BookId == bookId && c.Status == "Draft")
+                .ToListAsync();
+
+            foreach (var chapter in draftChapters)
+            {
+                chapter.Status = "InActive";
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

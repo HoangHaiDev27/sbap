@@ -368,3 +368,52 @@ export async function getSubscriptionStatus(userId) {
   if (!res.ok) throw new Error("Failed to fetch subscription status");
   return res.json();
 }
+
+// Kiểm tra xem book có chapter nào có status = Active không
+export async function checkBookHasActiveChapter(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.CHECK_ACTIVE_CHAPTERS(bookId));
+  if (!res.ok) throw new Error("Failed to check active chapters");
+  return res.json();
+}
+
+// Cập nhật book status
+export async function updateBookStatus(bookId, status) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_STATUS(bookId), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update book status");
+  }
+
+  return res.json();
+}
+
+// Kiểm tra tất cả chapters của book có status = Active không
+export async function checkAllChaptersActive(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.CHECK_ALL_CHAPTERS_ACTIVE(bookId));
+  if (!res.ok) throw new Error("Failed to check all chapters status");
+  return res.json();
+}
+
+// Kiểm tra book có chương nào có status = Draft không
+export async function checkBookHasDraftChapters(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.CHECK_DRAFT_CHAPTERS(bookId));
+  if (!res.ok) throw new Error("Failed to check draft chapters");
+  return res.json();
+}
+
+// Cập nhật tất cả chương Draft thành InActive
+export async function updateDraftChaptersToInActive(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_DRAFT_CHAPTERS_TO_INACTIVE(bookId), {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error("Failed to update draft chapters to InActive");
+  return res.json();
+}

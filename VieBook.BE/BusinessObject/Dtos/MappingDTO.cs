@@ -127,7 +127,7 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
-                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address!= null ? src.UserProfile.Address : ""))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address != null ? src.UserProfile.Address : ""))
                 .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
                 .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
@@ -200,7 +200,11 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title));
 
             CreateMap<ChapterViewDTO, Chapter>()
-                .ForMember(dest => dest.Book, opt => opt.Ignore());
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.BookmarkChapterListens, opt => opt.Ignore())
+                .ForMember(dest => dest.BookmarkChapterReads, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderItems, opt => opt.Ignore())
+                .ForMember(dest => dest.ChapterAudios, opt => opt.Ignore());
 
             // Bookmark mappings
             CreateMap<Bookmark, BookmarkDTO>().ReverseMap();

@@ -65,8 +65,16 @@ namespace BusinessObject.Helper
         /// </summary>
         public static double ComputeCosineSimilarity(List<float> vector1, List<float> vector2)
         {
+            // Validate input vectors
+            if (vector1 == null || vector2 == null || vector1.Count == 0 || vector2.Count == 0)
+                return 0;
+
+            // Handle dimension mismatch by returning 0 similarity instead of throwing exception
             if (vector1.Count != vector2.Count)
-                throw new ArgumentException("Vectors must have the same dimension");
+            {
+                Console.WriteLine($"Warning: Vector dimension mismatch - Vector1: {vector1.Count}, Vector2: {vector2.Count}. Returning 0 similarity.");
+                return 0;
+            }
 
             double dotProduct = 0;
             double norm1 = 0;
@@ -100,14 +108,24 @@ namespace BusinessObject.Helper
 
             foreach (var inputChunk in inputChunkEmbeddings)
             {
+                // Skip invalid chunks
+                if (inputChunk == null || inputChunk.Count == 0)
+                    continue;
+
                 bool isCovered = sourceChunkEmbeddings.Any(sourceChunk =>
-                    ComputeCosineSimilarity(inputChunk, sourceChunk) >= threshold);
+                {
+                    // Skip invalid source chunks
+                    if (sourceChunk == null || sourceChunk.Count == 0)
+                        return false;
+
+                    return ComputeCosineSimilarity(inputChunk, sourceChunk) >= threshold;
+                });
 
                 if (isCovered)
                     coveredChunks++;
             }
 
-            return (double)coveredChunks / inputChunkEmbeddings.Count;
+            return inputChunkEmbeddings.Count > 0 ? (double)coveredChunks / inputChunkEmbeddings.Count : 0;
         }
 
         /// <summary>

@@ -16,6 +16,10 @@ import {
   getBookById,
   updateCompletionStatus,
   submitForApproval,
+  checkAllChaptersActive,
+  checkBookHasDraftChapters,
+  updateDraftChaptersToInActive,
+  updateBookStatus,
 } from "../../api/ownerBookApi";
 
 export default function OwnerChapters() {
@@ -33,6 +37,7 @@ export default function OwnerChapters() {
   const [bookInfo, setBookInfo] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showSellerThankModal, setShowSellerThankModal] = useState(false);
+  const [showDraftWarningModal, setShowDraftWarningModal] = useState(false);
   const pageSize = 5;
   const totalPages = Math.max(1, Math.ceil(chapters.length / pageSize));
   const paginatedChapters = chapters.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -158,22 +163,86 @@ export default function OwnerChapters() {
 
   const handleMarkCompleted = async () => {
     try {
-      // Cập nhật cả CompletionStatus và UploadStatus
-      await updateCompletionStatus(bookId, "Completed", "Full");
-      setBookInfo(prev => ({ 
-        ...prev, 
-        completionStatus: "Completed",
-        uploadStatus: "Full"
-      }));
+      const { uploaderType, status: bookStatus, uploadStatus, completionStatus } = bookInfo;
+
+      // Kiểm tra sách có chương nào không
+      if (chapters.length === 0) {
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { 
+              type: "error", 
+              message: "Sách bạn hiện tại đang không có chương nào" 
+            },
+          })
+        );
+        setShowCompletionModal(false);
+        return;
+      }
+
+      // Kiểm tra chương Draft cho Owner
+      if (uploaderType === "Owner") {
+        const hasDraftChapters = await checkBookHasDraftChapters(bookId);
+        if (hasDraftChapters.hasDraftChapters) {
+          // Hiển thị modal xác nhận xóa chương Draft
+          setShowDraftWarningModal(true);
+          setShowCompletionModal(false);
+          return;
+        }
+      }
+
+      // Trường hợp 2 & 4: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Full, CompletionStatus = Ongoing
+      if (bookStatus === "PendingChapters" && uploadStatus === "Full" && completionStatus === "Ongoing") {
+        // Kiểm tra tất cả chapters phải có Status = Active
+        const allChaptersActive = await checkAllChaptersActive(bookId);
+        
+        if (!allChaptersActive.hasAllActive) {
+          window.dispatchEvent(
+            new CustomEvent("app:toast", {
+              detail: { 
+                type: "error", 
+                message: "Bạn phải phát hành tất cả các chương mới được kiểm duyệt" 
+              },
+            })
+          );
+          setShowCompletionModal(false);
+          return;
+        }
+
+        // Cập nhật CompletionStatus = Completed và Status = Active
+        await updateCompletionStatus(bookId, "Completed", "Full");
+        await updateBookStatus(bookId, "Active");
+        
+        setBookInfo(prev => ({ 
+          ...prev, 
+          completionStatus: "Completed",
+          uploadStatus: "Full",
+          status: "Active"
+        }));
+      } else {
+        // Trường hợp 1 & 3: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Incomplete, CompletionStatus = Ongoing
+        // Cập nhật UploadStatus = Full và CompletionStatus = Completed và Status = Active
+        await updateCompletionStatus(bookId, "Completed", "Full");
+        await updateBookStatus(bookId, "Active");
+        
+        setBookInfo(prev => ({ 
+          ...prev, 
+          completionStatus: "Completed",
+          uploadStatus: "Full",
+          status: "Active"
+        }));
+      }
       
       // Đóng modal xác nhận
       setShowCompletionModal(false);
       
       // Phân biệt thông báo theo loại user
       if (bookInfo?.uploaderType === "Seller") {
-        // Seller: Popup cảm ơn và gửi kiểm duyệt
-        await submitForApproval(bookId);
-        setShowSellerThankModal(true);
+        // Seller: Chỉ thông báo hoàn thành, không gửi kiểm duyệt
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { type: "success", message: "Bạn đã hoàn thành sách thành công!" },
+          })
+        );
       } else {
         // Owner: Thông báo hoàn thành sách
         window.dispatchEvent(
@@ -186,6 +255,95 @@ export default function OwnerChapters() {
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "error", message: "Cập nhật trạng thái thất bại" },
+        })
+      );
+    }
+  };
+
+  // Xử lý xác nhận xóa chương Draft và hoàn thành sách
+  const handleConfirmDeleteDraftsAndComplete = async () => {
+    try {
+      // Thay đổi status của tất cả chương Draft thành InActive
+      await updateDraftChaptersToInActive(bookId);
+
+      // Cập nhật danh sách chapters trong state
+      const updatedChapters = chapters.map(chapter => 
+        chapter.status === "Draft" ? { ...chapter, status: "InActive" } : chapter
+      );
+      setChapters(updatedChapters);
+
+      // Kiểm tra sau khi thay đổi status, sách còn chương Active nào không
+      const activeChapters = updatedChapters.filter(chapter => chapter.status === "Active");
+      if (activeChapters.length === 0) {
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { 
+              type: "error", 
+              message: "Sách bạn hiện tại đang không có chương nào đang hoạt động" 
+            },
+          })
+        );
+        setShowDraftWarningModal(false);
+        return;
+      }
+
+      // Đóng modal cảnh báo
+      setShowDraftWarningModal(false);
+
+      // Tiếp tục logic hoàn thành sách
+      const { status: bookStatus, uploadStatus, completionStatus } = bookInfo;
+
+      // Trường hợp 2 & 4: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Full, CompletionStatus = Ongoing
+      if (bookStatus === "PendingChapters" && uploadStatus === "Full" && completionStatus === "Ongoing") {
+        // Kiểm tra tất cả chapters phải có Status = Active
+        const allChaptersActive = await checkAllChaptersActive(bookId);
+        
+        if (!allChaptersActive.hasAllActive) {
+          window.dispatchEvent(
+            new CustomEvent("app:toast", {
+              detail: { 
+                type: "error", 
+                message: "Bạn phải phát hành tất cả các chương mới được kiểm duyệt" 
+              },
+            })
+          );
+          return;
+        }
+
+        // Cập nhật CompletionStatus = Completed và Status = Active
+        await updateCompletionStatus(bookId, "Completed", "Full");
+        await updateBookStatus(bookId, "Active");
+        
+        setBookInfo(prev => ({ 
+          ...prev, 
+          completionStatus: "Completed",
+          uploadStatus: "Full",
+          status: "Active"
+        }));
+      } else {
+        // Trường hợp 1 & 3: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Incomplete, CompletionStatus = Ongoing
+        // Cập nhật UploadStatus = Full và CompletionStatus = Completed và Status = Active
+        await updateCompletionStatus(bookId, "Completed", "Full");
+        await updateBookStatus(bookId, "Active");
+        
+        setBookInfo(prev => ({ 
+          ...prev, 
+          completionStatus: "Completed",
+          uploadStatus: "Full",
+          status: "Active"
+        }));
+      }
+
+      // Thông báo hoàn thành
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "success", message: "Đã vô hiệu hóa chương nháp và hoàn thành sách thành công!" },
+        })
+      );
+    } catch (err) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Có lỗi khi xử lý" },
         })
       );
     }
@@ -507,6 +665,44 @@ export default function OwnerChapters() {
             >
               Đóng
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Popup cảnh báo chương Draft cho Owner */}
+      {showDraftWarningModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 p-8 rounded-lg shadow-lg w-[600px] text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <RiDraftLine className="text-white text-2xl" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Cảnh báo chương nháp</h3>
+              <p className="text-gray-300 text-lg leading-relaxed mb-4">
+                Sách bạn đang có chương nháp. Nếu bạn xác nhận hoàn thành, tất cả chương nháp sẽ được vô hiệu hóa .
+              </p>
+            </div>
+            
+            <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-6">
+              <p className="text-red-300 text-sm">
+                <strong>Lưu ý:</strong> Các chương nháp sẽ được chuyển thành trạng thái Tạm dừng và chỉnh sửa.
+              </p>
+            </div>
+            
+            <div className="flex justify-center space-x-4">
+              <button 
+                onClick={() => setShowDraftWarningModal(false)} 
+                className="px-6 py-3 bg-gray-600 rounded-lg hover:bg-gray-500 text-white font-semibold"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={handleConfirmDeleteDraftsAndComplete} 
+                className="px-6 py-3 bg-red-500 rounded-lg hover:bg-red-600 text-white font-semibold"
+              >
+                Vô hiệu hóa chương nháp và hoàn thành
+              </button>
+            </div>
           </div>
         </div>
       )}

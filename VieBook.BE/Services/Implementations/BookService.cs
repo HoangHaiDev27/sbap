@@ -98,5 +98,25 @@ namespace Services.Implementations
         {
             return await _bookRepo.GetChapterAudioPricesAsync(bookId);
         }
+
+        public async Task<bool> CheckBookHasActiveChaptersAsync(int bookId)
+        {
+            return await _bookRepo.CheckBookHasActiveChaptersAsync(bookId);
+        }
+
+        public async Task<bool> CheckAllChaptersActiveAsync(int bookId)
+        {
+            return await _bookRepo.CheckAllChaptersActiveAsync(bookId);
+        }
+
+        public async Task<bool> CheckBookHasDraftChaptersAsync(int bookId)
+        {
+            return await _bookRepo.CheckBookHasDraftChaptersAsync(bookId);
+        }
+
+        public async Task UpdateDraftChaptersToInActiveAsync(int bookId)
+        {
+            await _bookRepo.UpdateDraftChaptersToInActiveAsync(bookId);
+        }
     }
 }

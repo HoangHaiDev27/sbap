@@ -32,5 +32,9 @@ namespace Repositories.Interfaces
         Task<List<Book>> GetTopPurchasedReadBooksAsync();
         Task<List<Book>> GetRecommendedBooksAsync(int? userId = null);
         Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId);
+        Task<bool> CheckBookHasActiveChaptersAsync(int bookId);
+        Task<bool> CheckAllChaptersActiveAsync(int bookId);
+        Task<bool> CheckBookHasDraftChaptersAsync(int bookId);
+        Task UpdateDraftChaptersToInActiveAsync(int bookId);
     }
 }
