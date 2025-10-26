@@ -35,6 +35,8 @@ export default function BookForm() {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [isbnError, setIsbnError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdBookId, setCreatedBookId] = useState(null);
 
   const dropdownRef = useRef(null);
 
@@ -54,20 +56,13 @@ export default function BookForm() {
     const loadData = async () => {
       try {
         const categoriesData = await getCategories();
-        console.log("Categories loaded:", categoriesData);
         setCategories(categoriesData);
         
         // Fetch user profile from API (to get UserProfile.FullName from database)
         const userProfile = await fetchCurrentUserProfile();
-        console.log("👤 User profile from API:", userProfile);
         setUserProfile(userProfile);
         
-        // Set default author name for Owner type from UserProfile
-        const fullName = userProfile?.userProfile?.fullName 
-          || userProfile?.email 
-          || "Tác giả";
-        console.log("📝 Author name set to:", fullName);
-        setForm((prev) => ({ ...prev, author: fullName }));
+        // Không tự động set author - chỉ set khi user chọn "Tác giả" (Owner)
       } catch (err) {
         console.error("Lỗi load data:", err);
         window.dispatchEvent(
@@ -178,21 +173,12 @@ export default function BookForm() {
       // Upload certificate if Seller
       let certificateUrl = null;
       if (form.uploaderType === "Seller" && form.certificateFile) {
-        console.log("📄 Certificate file:", form.certificateFile);
-        console.log("📄 File type:", form.certificateFile.type);
-        console.log("📄 File size:", form.certificateFile.size);
         const certData = new FormData();
         certData.append("file", form.certificateFile);
         certificateUrl = await uploadCertificate(certData); // Upload to certificate endpoint
-        console.log("✅ Certificate URL:", certificateUrl);
       }
 
-      // Determine CompletionStatus based on UploadStatus
-      const completionStatus = form.uploadStatus === "Full" ? "Completed" : "Ongoing";
-      
-      // Determine Status based on bookStatus
-      const bookStatus = form.bookStatus === "PendingChapters" ? "PendingChapters" : "Active";
-
+      // Luôn set Status = PendingChapters và CompletionStatus = Ongoing cho tất cả trường hợp
       const payload = {
         title: form.title,
         description: form.description,
@@ -201,31 +187,24 @@ export default function BookForm() {
         language: null,
         ownerId,
         categoryIds: form.categoryIds,
-        status: bookStatus, // PendingChapters nếu Full, Active nếu Incomplete
+        status: "PendingChapters", // Luôn là PendingChapters
         author: form.author,
         uploaderType: form.uploaderType,
         uploadStatus: form.uploadStatus,
-        completionStatus,
+        completionStatus: "Ongoing", // Luôn là Ongoing
         certificateUrl,
-        // If Full, we won't create BookApproval (handled in backend)
       };
 
-      console.log("📤 Payload to create book:", payload);
-      await createBook(payload);
-      console.log("✅ Book created successfully");
+      const result = await createBook(payload);
+      
+      // Lấy bookId từ response (có thể là result.bookId hoặc result)
+      const bookId = result?.bookId || result?.data?.bookId || result;
+      
       setUploading(false);
-
-      window.dispatchEvent(
-        new CustomEvent("app:toast", {
-          detail: { type: "success", message: "Thêm sách thành công!" },
-        })
-      );
-
-      navigate("/owner/books");
+      setCreatedBookId(bookId);
+      setShowSuccessModal(true);
     } catch (err) {
-      console.error("❌ Error creating book:", err);
-      console.error("❌ Error message:", err.message);
-      console.error("❌ Error stack:", err.stack);
+      console.error("Error creating book:", err);
       setUploading(false);
       if (err.message.includes("ISBN")) {
         setIsbnError("Mã ISBN đã tồn tại, vui lòng nhập mã khác.");
@@ -249,10 +228,9 @@ export default function BookForm() {
         {/* Owner */}
         <button
           onClick={() => {
-            const fullName = userProfile?.userProfile?.fullName 
+            const fullName = userProfile?.profile?.fullName 
               || userProfile?.email 
               || "Tác giả";
-            console.log("🔄 Owner selected, author set to:", fullName);
             setForm((prev) => ({ ...prev, uploaderType: "Owner", author: fullName }));
             setCurrentStep(2);
           }}
@@ -332,8 +310,8 @@ export default function BookForm() {
               Sách đang cập nhật, chưa hoàn thành. Bạn sẽ thêm chương dần dần.
             </p>
             <div className="mt-4 text-sm text-gray-300 bg-gray-700 p-3 rounded">
-              <p className="font-medium">Trạng thái: Đang ra</p>
-              <p className="text-xs mt-1">Sách cần được kiểm duyệt trước khi hiển thị trên web</p>
+              <p className="font-medium">Trạng thái: Chờ đăng chương • Đang ra</p>
+              <p className="text-xs mt-1">Bạn có thể đăng chương dần dần. Sách sẽ cần kiểm duyệt để hiển thị lên web.</p>
             </div>
           </div>
         </button>
@@ -357,8 +335,8 @@ export default function BookForm() {
               Sách đã hoàn thành, đầy đủ tất cả các chương. Sẵn sàng xuất bản.
             </p>
             <div className="mt-4 text-sm text-gray-300 bg-gray-700 p-3 rounded">
-              <p className="font-medium">Trạng thái: Đã kết thúc</p>
-              <p className="text-xs mt-1">Cần đăng hết chương mới có thể kiểm duyệt để hiển thị lên web</p>
+              <p className="font-medium">Trạng thái: Chờ đăng chương • Đang ra</p>
+              <p className="text-xs mt-1">Cần đăng hết chương mới có thể kiểm duyệt để hiển thị lên web.</p>
             </div>
           </div>
         </button>
@@ -405,11 +383,17 @@ export default function BookForm() {
             <span>{form.uploadStatus === "Full" ? "Đã trọn bộ" : "Chưa trọn bộ"}</span>
           </div>
           
-          {/* Book Status (only if Full) */}
-          {form.bookStatus === "PendingChapters" && (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-              <span className="text-lg">⏳</span>
-              <span>Chờ đăng chương</span>
+          {/* Book Status - Luôn hiển thị PendingChapters */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+            <span className="text-lg">⏳</span>
+            <span>Chờ đăng chương</span>
+          </div>
+          
+          {/* Completion Status - Chỉ hiển thị khi Incomplete */}
+          {form.uploadStatus === "Incomplete" && (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+              <span className="text-lg">📖</span>
+              <span>Đang ra</span>
             </div>
           )}
         </div>
@@ -439,13 +423,21 @@ export default function BookForm() {
             value={form.author}
             onChange={handleChange}
             placeholder="Nhập tên tác giả..."
-            disabled={form.uploaderType === "Owner"}
-            className={`w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              form.uploaderType === "Owner" ? "opacity-60 cursor-not-allowed" : ""
-            }`}
+            className="w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
           />
-          {form.uploaderType === "Owner" && (
-            <p className="text-xs text-gray-400 mt-1">Tác giả tự động gán theo tên của bạn</p>
+          {form.uploaderType === "Owner" && form.author && form.author.includes("@") && (
+            <div className="mt-1 p-2 bg-yellow-500/20 border border-yellow-500 rounded">
+              <p className="text-xs text-yellow-400">
+                ⚠️ Đang dùng email làm tên tác giả. 
+                <a 
+                  href="/profile" 
+                  target="_blank"
+                  className="underline ml-1 hover:text-yellow-300"
+                >
+                  Cập nhật tên đầy đủ trong Profile
+                </a>
+              </p>
+            </div>
           )}
           {errors.author && <p className="text-red-400 text-sm mt-1">{errors.author}</p>}
         </div>
@@ -491,11 +483,7 @@ export default function BookForm() {
           <label className="block mb-2 text-sm font-medium text-white">Thể loại *</label>
           <div
             className="w-full px-3 py-2 rounded bg-gray-700 text-white cursor-pointer hover:bg-gray-600"
-            onClick={() => {
-              console.log("Category dropdown clicked, current state:", showCategoryDropdown);
-              console.log("Available categories:", categories.length);
-              setShowCategoryDropdown((prev) => !prev);
-            }}
+            onClick={() => setShowCategoryDropdown((prev) => !prev)}
           >
             {form.categoryIds.length > 0
               ? `${form.categoryIds.length} thể loại đã chọn`
@@ -667,6 +655,54 @@ export default function BookForm() {
       {currentStep === 1 && renderStep1()}
       {currentStep === 2 && renderStep2()}
       {currentStep === 3 && renderStep3()}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl border-2 border-green-500">
+            {/* Icon */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/20 mb-4">
+                <RiCheckLine className="text-green-500 text-5xl" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">
+                Tạo sách thành công!
+              </h3>
+              <p className="text-gray-400">
+                Bạn đã tạo sách thành công. Hãy tiếp tục bằng cách đăng chương để hoàn thiện sách của bạn.
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="space-y-3">
+              {/* Thêm chương ngay */}
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  navigate(`/owner/books/${createdBookId}/chapters`, {
+                    state: { bookTitle: form.title }
+                  });
+                }}
+                className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
+              >
+                <RiArrowRightLine className="text-xl" />
+                Thêm chương ngay
+              </button>
+
+              {/* Thêm chương sau */}
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  navigate("/owner/books");
+                }}
+                className="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
+              >
+                Thêm chương sau
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

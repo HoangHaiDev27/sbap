@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using BusinessObject.Models;
 using BusinessObject.Dtos;
 using DataAccess;
@@ -215,8 +216,9 @@ namespace Tests
             var response = await _client.PostAsJsonAsync("/api/books", dto);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<bool>();
-            Assert.True(result);
+            var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.True(result.TryGetProperty("bookId", out var bookIdElement));
+            Assert.True(bookIdElement.GetInt32() > 0);
         }
 
         //[Fact]

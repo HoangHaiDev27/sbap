@@ -76,7 +76,7 @@ namespace VieBook.BE.Controllers
             // BookApproval sẽ được tạo sau khi owner submit sách để review
             // Không tự động tạo khi tạo sách
             
-            return Ok(true);
+            return Ok(new { bookId = book.BookId });
         }
 
 
