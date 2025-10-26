@@ -76,12 +76,12 @@ namespace DataAccess
             }
         }
 
-        // Lấy danh sách chapter theo BookId
+        // Lấy danh sách chapter theo BookId (chỉ lấy Active)
         public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
         {
             return await _context.Chapters
                                  .Include(c => c.Book)
-                                 .Where(c => c.BookId == bookId)
+                                 .Where(c => c.BookId == bookId && c.Status == "Active")
                                  .OrderBy(c => c.ChapterId)
                                  .ToListAsync();
         }

@@ -28,6 +28,8 @@ export default function PurchaseModal({
   const [selectedChapters, setSelectedChapters] = useState([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchasedChapters, setPurchasedChapters] = useState([]);
+  const [purchasedSoftChapters, setPurchasedSoftChapters] = useState([]);
+  const [purchasedAudioChapters, setPurchasedAudioChapters] = useState([]);
   const [loadingPurchases, setLoadingPurchases] = useState(false);
   const [buttonState, setButtonState] = useState('normal'); // Track button state: 'normal', 'selecting', 'deselecting'
   const [selectedSoftChapters, setSelectedSoftChapters] = useState([]);
@@ -50,10 +52,18 @@ export default function PurchaseModal({
   // Load audio prices
   const loadAudioPrices = async () => {
     try {
-      const prices = await getChapterAudioPrices(bookId);
-      setAudioPrices(prices);
+      const response = await getChapterAudioPrices(bookId);
+      // Backend trả về Dictionary hoặc object với chapterId làm key
+      if (response && typeof response === 'object') {
+        setAudioPrices(response);
+      } else {
+        console.warn("Audio prices response format unexpected:", response);
+        setAudioPrices({});
+      }
     } catch (err) {
       console.error("Failed to load audio prices:", err);
+      // Set empty object nếu lỗi để tránh crash
+      setAudioPrices({});
     }
   };
 
@@ -67,16 +77,42 @@ export default function PurchaseModal({
       const purchases = response?.data || [];
       console.log("All purchases data:", purchases);
       
-      // Lấy tất cả chương đã mua (không filter theo bookId)
+      // Phân loại chapters đã mua theo loại
       const purchasedChapterIds = [];
+      const softChapterIds = [];
+      const audioChapterIds = [];
       
       if (Array.isArray(purchases)) {
-        // Lấy tất cả chapterIds đã mua
-        purchasedChapterIds.push(...purchases.map(p => p.chapterId));
+        purchases.forEach(p => {
+          const chapterId = p.chapterId;
+          
+          // Thêm vào danh sách chung
+          if (!purchasedChapterIds.includes(chapterId)) {
+            purchasedChapterIds.push(chapterId);
+          }
+          
+          // Phân loại theo OrderType
+          if (p.orderType === 'BuyChapterSoft' || p.orderType === 'BuyChapter') {
+            if (!softChapterIds.includes(chapterId)) {
+              softChapterIds.push(chapterId);
+            }
+          }
+          
+          if (p.orderType === 'BuyChapterAudio') {
+            if (!audioChapterIds.includes(chapterId)) {
+              audioChapterIds.push(chapterId);
+            }
+          }
+        });
       }
       
       console.log("Purchased chapter IDs for all books:", purchasedChapterIds);
+      console.log("Purchased soft chapters:", softChapterIds);
+      console.log("Purchased audio chapters:", audioChapterIds);
+      
       setPurchasedChapters(purchasedChapterIds);
+      setPurchasedSoftChapters(softChapterIds);
+      setPurchasedAudioChapters(audioChapterIds);
     } catch (error) {
       console.error("Error loading purchased chapters:", error);
     } finally {
@@ -84,20 +120,32 @@ export default function PurchaseModal({
     }
   };
 
-  // Tính tổng giá cho bản mềm
-  const softTotalPrice = selectedSoftChapters.reduce((sum, chapterId) => {
+  // Tính tổng giá cho bản mềm (chỉ những chapter không có trong selectedAudioChapters)
+  const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
+  const softTotalPrice = softOnlyChapters.reduce((sum, chapterId) => {
     const chapter = chapters.find(ch => ch.chapterId === chapterId);
     return sum + (chapter?.priceAudio || 0);
   }, 0);
 
-  // Tính tổng giá cho bản audio
-  const audioTotalPrice = selectedAudioChapters.reduce((sum, chapterId) => {
+  // Tính tổng giá cho bản audio (chỉ những chapter không có trong selectedSoftChapters)
+  const audioOnlyChapters = selectedAudioChapters.filter(id => !selectedSoftChapters.includes(id));
+  const audioTotalPrice = audioOnlyChapters.reduce((sum, chapterId) => {
     const audioPrice = audioPrices[chapterId] || 0;
     return sum + audioPrice;
   }, 0);
 
+  // Tính tổng giá cho cả hai (với giảm 10%)
+  const bothChapters = selectedSoftChapters.filter(id => selectedAudioChapters.includes(id));
+  const bothTotalPrice = bothChapters.reduce((sum, chapterId) => {
+    const chapter = chapters.find(ch => ch.chapterId === chapterId);
+    const softPrice = chapter?.priceAudio || 0;
+    const audioPrice = audioPrices[chapterId] || 0;
+    const totalBoth = softPrice + audioPrice;
+    return sum + (totalBoth * 0.9); // Giảm 10%
+  }, 0);
+
   // Tổng giá tất cả
-  const totalPrice = softTotalPrice + audioTotalPrice;
+  const totalPrice = softTotalPrice + audioTotalPrice + bothTotalPrice;
 
   // Xử lý chọn/bỏ chọn bản mềm
   const toggleSoftChapter = (chapterId) => {
@@ -154,19 +202,29 @@ export default function PurchaseModal({
     setIsPurchasing(true);
     
     try {
-      // Mua bản mềm
-      if (selectedSoftChapters.length > 0) {
-        await purchaseChapters(bookId, selectedSoftChapters, 'soft');
+      // Tách các chapters thành 3 nhóm: soft only, audio only, both
+      const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
+      const audioOnlyChapters = selectedAudioChapters.filter(id => !selectedSoftChapters.includes(id));
+      const bothChapters = selectedSoftChapters.filter(id => selectedAudioChapters.includes(id));
+      
+      // Mua bản mềm (chỉ những chapter không có trong both)
+      if (softOnlyChapters.length > 0) {
+        await purchaseChapters(bookId, softOnlyChapters, 'soft');
       }
       
-      // Mua bản audio
-      if (selectedAudioChapters.length > 0) {
-        await purchaseChapters(bookId, selectedAudioChapters, 'audio');
+      // Mua bản audio (chỉ những chapter không có trong both)
+      if (audioOnlyChapters.length > 0) {
+        await purchaseChapters(bookId, audioOnlyChapters, 'audio');
+      }
+      
+      // Mua cả hai với giảm giá 10%
+      if (bothChapters.length > 0) {
+        await purchaseChapters(bookId, bothChapters, 'both');
       }
       
       console.log("Chapter purchase completed");
       
-      // Cập nhật số xu (giảm đi tổng giá)
+      // Cập nhật số xu ngay lập tức (backend đã trừ xu)
       setCoins(coins - totalPrice);
       
       // Thêm thông báo
@@ -313,11 +371,14 @@ export default function PurchaseModal({
               </div>
             )}
             {chapters.map((chapter, index) => {
-              const isPurchased = purchasedChapters.includes(chapter.chapterId);
+              const isPurchasedSoft = purchasedSoftChapters.includes(chapter.chapterId);
+              const isPurchasedAudio = purchasedAudioChapters.includes(chapter.chapterId);
+              const isPurchasedBoth = isPurchasedSoft && isPurchasedAudio;
+              const isPurchased = isPurchasedSoft || isPurchasedAudio;
               const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
               const duration = Math.round((chapter.durationSec || 0) / 60);
               const chapterNumber = index + 1;
-              const isDisabled = isPurchased || isFree;
+              const isDisabled = isPurchasedBoth || isFree;
               
               // Check if has audio
               const hasAudio = audioPrices[chapter.chapterId] > 0;
@@ -326,6 +387,11 @@ export default function PurchaseModal({
               const isSoftSelected = selectedSoftChapters.includes(chapter.chapterId);
               const isAudioSelected = selectedAudioChapters.includes(chapter.chapterId);
               const isBothSelected = isSoftSelected && isAudioSelected;
+              
+              // Disable buttons based on purchase status
+              const softDisabled = isPurchasedSoft;
+              const audioDisabled = isPurchasedAudio;
+              const bothDisabled = isPurchasedBoth || (isPurchasedSoft && isPurchasedAudio);
               
               return (
                 <div
@@ -343,8 +409,17 @@ export default function PurchaseModal({
                     <h3 className="font-medium text-white text-sm">
                       Chương {chapterNumber}: {chapter.chapterTitle?.replace(/chuogn/g, 'chương') || ''}
                     </h3>
-                    {isPurchased && (
-                      <span className="text-green-400 text-sm font-medium">Đã mua</span>
+                    {isPurchasedBoth && (
+                      <span className="text-green-400 text-sm font-medium flex items-center gap-1">
+                        <RiCheckLine className="text-xs" />
+                        Đã mua cả hai
+                      </span>
+                    )}
+                    {isPurchasedSoft && !isPurchasedBoth && (
+                      <span className="text-orange-400 text-sm font-medium">Đã mua bản mềm</span>
+                    )}
+                    {isPurchasedAudio && !isPurchasedBoth && (
+                      <span className="text-green-400 text-sm font-medium">Đã mua bản audio</span>
                     )}
                     {isFree && !isPurchased && (
                       <span className="text-blue-400 text-sm font-medium">Miễn phí</span>
@@ -357,8 +432,11 @@ export default function PurchaseModal({
                       {/* Bản mềm */}
                       <button
                         onClick={() => toggleSoftChapter(chapter.chapterId)}
+                        disabled={softDisabled}
                         className={`p-2 rounded-lg border-2 transition-all ${
-                          isSoftSelected
+                          softDisabled
+                            ? 'border-green-500 bg-green-500/20 text-green-400 cursor-not-allowed'
+                            : isSoftSelected
                             ? 'border-orange-500 bg-orange-500/20 text-orange-400'
                             : 'border-gray-600 bg-gray-600/20 text-gray-400 hover:border-gray-500'
                         }`}
@@ -366,6 +444,7 @@ export default function PurchaseModal({
                         <div className="flex items-center gap-2 mb-1">
                           <RiBookOpenLine className="text-sm" />
                           <span className="font-medium text-xs">Bản mềm</span>
+                          {softDisabled && <RiCheckLine className="text-xs" />}
                         </div>
                         <div className="text-xs text-orange-400 font-bold">
                           {chapter.priceAudio?.toLocaleString() || 0} xu
@@ -376,8 +455,11 @@ export default function PurchaseModal({
                       {hasAudio && (
                         <button
                           onClick={() => toggleAudioChapter(chapter.chapterId)}
+                          disabled={audioDisabled}
                           className={`p-2 rounded-lg border-2 transition-all ${
-                            isAudioSelected
+                            audioDisabled
+                              ? 'border-green-500 bg-green-500/20 text-green-400 cursor-not-allowed'
+                              : isAudioSelected
                               ? 'border-green-500 bg-green-500/20 text-green-400'
                               : 'border-gray-600 bg-gray-600/20 text-gray-400 hover:border-gray-500'
                           }`}
@@ -385,6 +467,7 @@ export default function PurchaseModal({
                           <div className="flex items-center gap-2 mb-1">
                             <RiPlayCircleLine className="text-sm" />
                             <span className="font-medium text-xs">Bản audio</span>
+                            {audioDisabled && <RiCheckLine className="text-xs" />}
                           </div>
                           <div className="text-xs text-green-400 font-bold">
                             {audioPrices[chapter.chapterId]?.toLocaleString() || 0} xu
@@ -396,8 +479,11 @@ export default function PurchaseModal({
                       {hasAudio && (
                         <button
                           onClick={() => toggleBothChapter(chapter.chapterId)}
+                          disabled={bothDisabled}
                           className={`p-2 rounded-lg border-2 transition-all ${
-                            isBothSelected
+                            bothDisabled
+                              ? 'border-green-500 bg-green-500/20 text-green-400 cursor-not-allowed'
+                              : isBothSelected
                               ? 'border-blue-500 bg-blue-500/20 text-blue-400'
                               : 'border-gray-600 bg-gray-600/20 text-gray-400 hover:border-gray-500'
                           }`}
@@ -405,10 +491,24 @@ export default function PurchaseModal({
                           <div className="flex items-center gap-2 mb-1">
                             <RiCheckLine className="text-sm" />
                             <span className="font-medium text-xs">Cả hai</span>
+                            {bothDisabled ? (
+                              <RiCheckLine className="text-xs" />
+                            ) : (
+                              <span className="text-xs bg-green-600 px-1 rounded">-10%</span>
+                            )}
                           </div>
-                          <div className="text-xs text-blue-400 font-bold">
-                            {((chapter.priceAudio || 0) + (audioPrices[chapter.chapterId] || 0)).toLocaleString()} xu
-                          </div>
+                          {bothDisabled ? (
+                            <div className="text-xs text-green-400 font-bold">Đã mua</div>
+                          ) : (
+                            <div className="flex flex-col items-start">
+                              <div className="text-xs text-gray-500 line-through">
+                                {((chapter.priceAudio || 0) + (audioPrices[chapter.chapterId] || 0)).toLocaleString()} xu
+                              </div>
+                              <div className="text-xs text-blue-400 font-bold">
+                                {((((chapter.priceAudio || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9).toFixed(0)).toLocaleString()} xu
+                              </div>
+                            </div>
+                          )}
                         </button>
                       )}
                     </div>

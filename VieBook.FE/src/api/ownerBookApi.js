@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from "../config/apiConfig";
+import { API_ENDPOINTS, API_BASE_URL } from "../config/apiConfig";
 
 // Lấy tất cả sách theo ownerId
 export async function getBooksByOwner(ownerId) {
@@ -132,8 +132,11 @@ export async function submitForApproval(bookId) {
 
 // Lấy giá audio từ ChapterAudios
 export async function getChapterAudioPrices(bookId) {
-  const res = await fetch(API_ENDPOINTS.BOOKS.GET_BY_ID(bookId) + "/chapters/audio-prices");
-  if (!res.ok) throw new Error("Failed to fetch audio prices");
+  // Sử dụng endpoint đúng: /api/books/{bookId}/chapters/audio-prices
+  const res = await fetch(`${API_BASE_URL}/api/books/${bookId}/chapters/audio-prices`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch audio prices: ${res.status}`);
+  }
   return res.json();
 }
 
