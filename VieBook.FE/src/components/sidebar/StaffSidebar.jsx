@@ -25,6 +25,7 @@ export default function StaffSidebar({ isOpen, onClose }) {
     { id: 'pending-books', label: 'Duyệt sách mới', icon: 'ri-file-check-line', href: '/staff/pending-books' },
     { id: 'transactions', label: 'Giao dịch', icon: 'ri-money-dollar-circle-line', href: '/staff/transactions' },
     { id: 'withdrawals', label: 'Phê duyệt rút tiền', icon: 'ri-bank-card-line', href: '/staff/withdrawals' },
+    { id: 'support-chat', label: 'Hỗ trợ khách hàng', icon: 'ri-customer-service-2-line', href: '/staff/support-chat' },
     { id: 'feedback', label: 'Đánh giá', icon: 'ri-message-2-line', href: '/staff/feedback' },
   ];
 

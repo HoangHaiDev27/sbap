@@ -63,6 +63,19 @@ export const API_ENDPOINTS = {
     GET_CHAT_HISTORY: `${API_BASE_URL}/api/chatbase/chat-history`,
   },
 
+  // Chat endpoints
+  CHAT: {
+    GET_CONVERSATIONS: `${API_BASE_URL}/api/chat/conversations`,
+    GET_CHAT_HISTORY: `${API_BASE_URL}/api/chat/conversations`,
+    SEND_MESSAGE: `${API_BASE_URL}/api/chat/messages`,
+    START_SUPPORT_CHAT: `${API_BASE_URL}/api/chat/start-support-chat`,
+    STAFF: {
+      GET_OWNERS: `${API_BASE_URL}/api/staff/staffchat/owners`,
+      GET_OWNER_MESSAGES: `${API_BASE_URL}/api/staff/staffchat/owners`,
+      SEND_MESSAGE: `${API_BASE_URL}/api/staff/staffchat/messages`,
+    },
+  },
+
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/api/notification`,
   USER_NOTIFICATIONS: (userId) => `${API_BASE_URL}/api/notification/user/${userId}`,
