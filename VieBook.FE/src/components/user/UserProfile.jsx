@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { changePassword, isBookOwner } from "../../api/authApi";
 import { becomeOwner, upsertMyProfile, getCurrentUser } from "../../api/userApi";
 import { uploadAvatar } from "../../api/uploadApi";
+import { useUserStore } from "../../hooks/stores/userStore";
 import OwnerApplicationStepper from "./OwnerApplicationStepper";
 
 export default function UserProfile() {
@@ -51,6 +52,9 @@ export default function UserProfile() {
   const [saving, setSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  
+  // Get user store
+  const { user, fetchUser, updateUserData } = useUserStore();
 
   // Load user data on component mount
   useEffect(() => {
@@ -66,7 +70,11 @@ export default function UserProfile() {
   const loadUserData = async () => {
     try {
       setLoading(true);
-      const userData = await getCurrentUser();
+      // Try to use store data first, fallback to fetch if not available
+      let userData = user;
+      if (!userData) {
+        userData = await fetchUser();
+      }
       console.log("User data received:", userData); // Debug log
       const profileData = {
         fullName: userData.userProfile?.fullName || "",
@@ -197,7 +205,8 @@ export default function UserProfile() {
       
       await upsertMyProfile(updateData);
       
-      // Reload data from server to ensure consistency
+      // Reload data from server to ensure consistency and notify other components
+      await updateUserData();
       await loadUserData();
       setIsEditing(false);
       
