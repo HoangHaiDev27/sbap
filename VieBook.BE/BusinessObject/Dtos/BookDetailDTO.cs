@@ -9,6 +9,7 @@ namespace BusinessObject.Dtos
     public class BookDetailDTO
     {
         public int BookId { get; set; }
+        public int OwnerId { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string? CoverUrl { get; set; }

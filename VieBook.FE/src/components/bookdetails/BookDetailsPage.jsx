@@ -149,6 +149,7 @@ export default function BookDetailPage() {
     language,
     totalView,
     createdAt,
+    ownerId,
     ownerName,
     categories,
     chapters,
@@ -157,6 +158,8 @@ export default function BookDetailPage() {
   } = bookDetail;
 
   const hasAudio = chaptersWithAudio.length > 0;
+  const currentUserId = getUserId();
+  const isOwner = currentUserId && ownerId && currentUserId === ownerId;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -210,12 +213,18 @@ export default function BookDetailPage() {
               )}
             </div>
 
-            <button
-              onClick={() => setShowPurchaseModal(true)}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <RiShoppingCartLine /> Mua ngay
-            </button>
+            {isOwner ? (
+              <div className="w-full bg-blue-600/20 border-2 border-blue-500 text-blue-300 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2">
+                <RiCheckboxCircleLine /> Sách của bạn
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowPurchaseModal(true)}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <RiShoppingCartLine /> Mua ngay
+              </button>
+            )}
 
             <div className="flex space-x-2">
               {/* Nút Yêu thích */}
@@ -345,6 +354,7 @@ export default function BookDetailPage() {
         bookTitle={title}
         bookId={id}
         chapters={chapters}
+        isOwner={isOwner}
         onPurchaseSuccess={async (newlyPurchasedChapters) => {
           console.log("Newly purchased chapters:", newlyPurchasedChapters);
           // Cập nhật state ngay lập tức bằng cách thêm các chương vừa mua

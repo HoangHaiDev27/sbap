@@ -23,6 +23,7 @@ export default function PurchaseModal({
   bookTitle, 
   bookId,
   chapters = [], 
+  isOwner = false,
   onPurchaseSuccess 
 }) {
   const [selectedChapters, setSelectedChapters] = useState([]);
@@ -328,7 +329,23 @@ export default function PurchaseModal({
 
         {/* Content */}
         <div className="p-3 sm:p-4 md:p-5 lg:p-6 flex-1 overflow-y-auto min-h-0">
+          {/* Owner notification */}
+          {isOwner && (
+            <div className="bg-blue-600/20 border-2 border-blue-500 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <RiCheckboxCircleLine className="text-blue-400 text-2xl flex-shrink-0" />
+                <div>
+                  <h3 className="text-blue-300 font-semibold mb-1">Đây là sách của bạn</h3>
+                  <p className="text-blue-200/80 text-sm">
+                    Bạn không thể mua chapter từ sách mà bạn là chủ sở hữu.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Số dư ví */}
+          {!isOwner && (
           <div className="bg-gray-700 rounded-lg p-2.5 sm:p-3 md:p-4 mb-3 sm:mb-4 md:mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
               <div className="flex items-center gap-2">
@@ -350,8 +367,10 @@ export default function PurchaseModal({
               </div>
             </div>
           </div>
+          )}
 
           {/* Thông tin đã mua */}
+          {!isOwner && (
           <div className="text-xs text-gray-400 text-center mb-4">
             {loadingPurchases ? (
               <span>Đang tải...</span>
@@ -359,8 +378,10 @@ export default function PurchaseModal({
               <span>Đã mua: {purchasedChapters.length} chương</span>
             )}
           </div>
+          )}
 
           {/* Danh sách chương */}
+          {!isOwner && (
           <div className="space-y-1.5 sm:space-y-2 max-h-96 sm:max-h-80 md:max-h-96 lg:max-h-[28rem] overflow-y-auto">
             {chapters.length > 8 && (
               <div className="text-center py-2 mb-2">
@@ -524,9 +545,11 @@ export default function PurchaseModal({
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Footer */}
+        {!isOwner && (
         <div className="p-3 sm:p-4 md:p-5 lg:p-6 border-t border-gray-700 bg-gray-700/30 flex-shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0">
             <div className="text-gray-300 text-xs sm:text-sm md:text-base">
@@ -571,6 +594,7 @@ export default function PurchaseModal({
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

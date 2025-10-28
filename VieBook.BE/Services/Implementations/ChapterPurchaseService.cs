@@ -52,6 +52,28 @@ namespace Services.Implementations
                     };
                 }
 
+                // Kiểm tra xem user có phải là owner của sách không
+                var book = await _context.Books
+                    .FirstOrDefaultAsync(b => b.BookId == request.BookId);
+
+                if (book == null)
+                {
+                    return new ChapterPurchaseResponseDTO
+                    {
+                        Success = false,
+                        Message = "Book not found"
+                    };
+                }
+
+                if (book.OwnerId == userId)
+                {
+                    return new ChapterPurchaseResponseDTO
+                    {
+                        Success = false,
+                        Message = "You cannot purchase chapters from your own book"
+                    };
+                }
+
                 // Lấy thông tin các chapter và tính tổng giá
                 var chapters = await _bookRepository.GetChaptersByBookIdAsync(request.BookId);
                 var chaptersToPurchase = chapters.Where(c => request.ChapterIds.Contains(c.ChapterId)).ToList();
@@ -261,14 +283,27 @@ namespace Services.Implementations
                     }
                 }
 
-                // Trừ xu từ ví
+                // Trừ xu từ ví người mua
                 await _userRepository.UpdateWalletBalanceAsync(userId, -totalCost);
+
+                // Cộng tiền vào ví của owner (người sở hữu sách)
+                // Không cần kiểm tra book.OwnerId != userId vì đã kiểm tra ở trên
+                await _userRepository.UpdateWalletBalanceAsync(book.OwnerId, totalCost);
+
+                // Tạo thông báo cho owner về doanh thu
+                await _notificationService.CreateAsync(new CreateNotificationDTO
+                {
+                    UserId = book.OwnerId,
+                    Title = "Bạn có doanh thu mới",
+                    Body = $"Bạn nhận được {totalCost} xu từ việc bán {newChaptersToPurchase.Count} chương của sách '{book.Title}'",
+                    Type = "WALLET_RECHARGE"
+                });
 
                 // Lấy số dư mới sau khi cập nhật
                 var updatedUser = await _userRepository.GetByIdAsync(userId);
                 var remainingBalance = updatedUser?.Wallet ?? 0;
 
-                // Tạo thông báo
+                // Tạo thông báo cho người mua
                 await _notificationService.CreateChapterPurchaseNotificationAsync(
                     userId,
                     request.BookId,
