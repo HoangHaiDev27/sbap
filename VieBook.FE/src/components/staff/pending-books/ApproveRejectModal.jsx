@@ -30,14 +30,14 @@ export default function ApproveRejectModal({ type, book, staffId, onClose, onCon
         await approveBookApproval(book.id, staffId);
         window.dispatchEvent(
           new CustomEvent("app:toast", {
-            detail: { type: "success", message: `✅ Duyệt sách "${book.title}" thành công` },
+            detail: { type: "success", message: `Duyệt sách "${book.title}" thành công` },
           })
         );
       } else {
         await refuseBookApproval(book.id, staffId, reason);
         window.dispatchEvent(
           new CustomEvent("app:toast", {
-            detail: { type: "success", message: `❌ Từ chối sách "${book.title}" thành công` },
+            detail: { type: "success", message: `Từ chối sách "${book.title}" thành công` },
           })
         );
       }
@@ -58,7 +58,7 @@ export default function ApproveRejectModal({ type, book, staffId, onClose, onCon
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-lg p-6 w-96">
         <h3 className="text-lg font-semibold text-gray-900 mb-3">
-          {type === "approve" ? "✅ Xác nhận duyệt sách" : "❌ Từ chối sách"}
+          {type === "approve" ? "Xác nhận duyệt sách" : "Từ chối sách"}
         </h3>
         <p className="text-gray-700 mb-4">
           {type === "approve"
