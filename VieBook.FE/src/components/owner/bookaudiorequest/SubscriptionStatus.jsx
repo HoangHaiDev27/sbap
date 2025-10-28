@@ -58,7 +58,12 @@ export default function SubscriptionStatus() {
     );
   }
 
-  const isExpiringSoon = subscription && new Date(subscription.endAt) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  // Tính số ngày còn lại
+  const daysRemaining = subscription 
+    ? Math.ceil((new Date(subscription.endAt) - new Date()) / (24 * 60 * 60 * 1000))
+    : 0;
+  
+  const isExpiringSoon = subscription && daysRemaining <= 3 && daysRemaining > 0;
   const isLowConversions = subscription && subscription.remainingConversions <= 5;
 
   return (
@@ -72,7 +77,7 @@ export default function SubscriptionStatus() {
           isExpiringSoon || isLowConversions ? "text-yellow-400" : "text-blue-400"
         }`} />
         <div className="flex-1">
-          <h3 className="font-semibold mb-2">Thông tin Subscription</h3>
+          <h3 className="font-semibold mb-2">Thông tin gói đăng kí</h3>
           
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -102,7 +107,7 @@ export default function SubscriptionStatus() {
           {(isExpiringSoon || isLowConversions) && (
             <div className="mt-3 pt-3 border-t border-yellow-500/30">
               <p className="text-yellow-300 text-xs">
-                {isExpiringSoon && "⚠️ Subscription của bạn sắp hết hạn. "}
+                {isExpiringSoon && `⚠️ Gói đăng kí của bạn sắp hết hạn (còn ${daysRemaining} ngày). `}
                 {isLowConversions && "⚠️ Số lượt chuyển đổi còn lại ít."}
               </p>
             </div>

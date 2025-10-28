@@ -255,14 +255,14 @@ export default function OwnerChapters() {
                 }
 
                 return (
-                  <div key={ch.chapterId} className="flex items-center justify-between bg-slate-700 p-3 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white">
+                  <div key={ch.chapterId} className="flex items-start justify-between bg-slate-700 p-3 rounded-lg gap-4">
+                    <div className="flex items-start space-x-3 flex-1 min-w-0">
+                      <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white flex-shrink-0">
                         Chương {globalIndex}
                       </span>
 
-                      <div>
-                        <p className="font-semibold">{ch.chapterTitle}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold break-words">{ch.chapterTitle}</p>
 
                         <p className="text-xs text-gray-400 mt-2 flex items-center flex-wrap gap-2">
                           <span className="inline-block min-w-[90px]">
@@ -282,15 +282,30 @@ export default function OwnerChapters() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3">
-                      {/* Giá / Miễn phí */}
-                      {isFree ? (
-                        <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">Miễn phí</span>
-                      ) : (
-                        <span className="text-orange-400 font-semibold">{ch.priceAudio.toLocaleString()} xu</span>
-                      )}
+                    <div className="flex items-start space-x-4 flex-shrink-0">
+                      {/* Giá chương và giá audio */}
+                      <div className="flex items-center gap-3 min-w-[280px]">
+                        <div className="flex-1 text-right">
+                          {isFree ? (
+                            <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">Miễn phí</span>
+                          ) : (
+                            <span className="text-orange-400 font-semibold text-sm whitespace-nowrap">
+                              Chương: {ch.priceAudio.toLocaleString()} xu
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 text-right">
+                          {ch.audioPrice !== undefined && ch.audioPrice !== null ? (
+                            <span className="text-blue-400 text-sm whitespace-nowrap">
+                              Audio: {ch.audioPrice === 0 ? 'Miễn phí' : `${ch.audioPrice.toLocaleString()} xu`}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 text-xs">Chưa có audio</span>
+                          )}
+                        </div>
+                      </div>
 
-                      <span className="text-sm text-gray-400">{formatDateSafe(ch.uploadedAt)}</span>
+                      <span className="text-sm text-gray-400 whitespace-nowrap">{formatDateSafe(ch.uploadedAt)}</span>
 
                       {/* CHỨC NĂNG: Sửa / Xem / Xóa */}
                       <div className="flex space-x-2">
