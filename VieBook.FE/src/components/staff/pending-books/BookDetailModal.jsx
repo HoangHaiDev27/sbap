@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import ApproveRejectModal from './ApproveRejectModal';
 import { getChaptersByBookId, getWordCountFromUrl } from '../../../api/ownerBookApi';
 
-export default function BookDetailModal({ book, onClose, staffId }) {
+export default function BookDetailModal({ book, onClose, staffId, onConfirm }) {
   const [actionType, setActionType] = useState(null);
   const [showChapters, setShowChapters] = useState(false);
   const [chapters, setChapters] = useState([]);
@@ -19,10 +19,13 @@ export default function BookDetailModal({ book, onClose, staffId }) {
     setActionType(type);
   };
 
-  const handleConfirm = () => {
-    // Có thể thêm callback để refresh danh sách sách chờ duyệt nếu cần
+  const handleConfirm = (type, bookId, reason) => {
+    // Callback để refresh danh sách sách chờ duyệt
     setActionType(null);
     onClose();
+    if (onConfirm) {
+      onConfirm(type, bookId, reason);
+    }
   };
 
   const handleViewChapterContent = async (chapter) => {

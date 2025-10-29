@@ -428,7 +428,7 @@ export default function BookForm() {
           {form.uploaderType === "Owner" && form.author && form.author.includes("@") && (
             <div className="mt-1 p-2 bg-yellow-500/20 border border-yellow-500 rounded">
               <p className="text-xs text-yellow-400">
-                ⚠️ Đang dùng email làm tên tác giả. 
+                Đang dùng email làm tên tác giả. 
                 <a 
                   href="/profile" 
                   target="_blank"

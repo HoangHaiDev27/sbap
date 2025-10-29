@@ -85,6 +85,7 @@ function App() {
   // Kiểm tra layout đặc biệt
   const isReaderPage = location.pathname.startsWith("/reader");
   const isPlayerPage = location.pathname.startsWith("/player");
+  const isListenPage = location.pathname.startsWith("/listen");
 
   // Nếu là trang Reader - chỉ render AppRoutes, ReaderManager sẽ được render bên trong ReaderPage
   if (isReaderPage) {
@@ -96,12 +97,22 @@ function App() {
     );
   }
 
-  // Nếu là trang Player
+  // Nếu là trang Player (old)
   if (isPlayerPage) {
     return (
       <PlayerManager>
         <AppRoutes />
       </PlayerManager>
+    );
+  }
+
+  // Nếu là trang Listen (new) - standalone, không có header/sidebar
+  if (isListenPage) {
+    return (
+      <>
+        <AppRoutes />
+        <Toast />
+      </>
     );
   }
 

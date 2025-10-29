@@ -23,8 +23,12 @@ export default function BookAudioRequest() {
       const data = await getChaptersByBookId(id);
       if (data && data.length > 0) {
         setBookTitle(data[0].bookTitle);
+        // Lọc chỉ hiện những chương có Status là Active hoặc Draft
+        const filteredData = data.filter((ch) => 
+          ch.status === "Active" || ch.status === "Draft"
+        );
         setChapters(
-          data.map((ch) => ({
+          filteredData.map((ch) => ({
             id: ch.chapterId,
             title: ch.chapterTitle,
             duration: ch.durationSec,
