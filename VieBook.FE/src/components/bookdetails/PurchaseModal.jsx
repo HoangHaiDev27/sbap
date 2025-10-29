@@ -72,7 +72,7 @@ export default function PurchaseModal({
   // Tính tổng giá
   const totalPrice = selectedChapters.reduce((sum, chapterId) => {
     const chapter = chapters.find(ch => ch.chapterId === chapterId);
-    return sum + (chapter?.priceAudio || 0);
+    return sum + (chapter?.priceSoft || 0);
   }, 0);
 
   // Xử lý chọn/bỏ chọn chapter
@@ -158,7 +158,7 @@ export default function PurchaseModal({
     const availableChapters = chapters
       .filter(ch => {
         const isPurchased = purchasedChapters.includes(ch.chapterId);
-        const isFree = !ch.priceAudio || ch.priceAudio === 0;
+        const isFree = !ch.priceSoft || ch.priceSoft === 0;
         return !isPurchased && !isFree;
       })
       .map(ch => ch.chapterId);
@@ -285,7 +285,7 @@ export default function PurchaseModal({
             {chapters.map((chapter, index) => {
               const isSelected = selectedChapters.includes(chapter.chapterId);
               const isPurchased = purchasedChapters.includes(chapter.chapterId);
-              const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
+              const isFree = !chapter.priceSoft || chapter.priceSoft === 0;
               const duration = Math.round((chapter.durationSec || 0) / 60);
               const chapterNumber = index + 1;
               const isDisabled = isPurchased || isFree;
@@ -357,7 +357,7 @@ export default function PurchaseModal({
                         </div>
                       ) : (
                         <div className="text-orange-500 font-bold text-sm sm:text-base md:text-lg flex items-center gap-1">
-                          {chapter.priceAudio?.toLocaleString() || 0}
+                          {chapter.priceSoft?.toLocaleString() || 0}
                           <RiCoinLine className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
                         </div>
                       )}

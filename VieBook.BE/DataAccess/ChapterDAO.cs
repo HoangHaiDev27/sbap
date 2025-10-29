@@ -88,14 +88,14 @@ namespace DataAccess
         }
 
         // Cập nhật audio url và duration
-        public async Task UpdateAudioAsync(int chapterId, string audioUrl, int durationSec, decimal? priceAudio = null, string? storageMeta = null)
+        public async Task UpdateAudioAsync(int chapterId, string audioUrl, int durationSec, decimal? priceSoft = null, string? storageMeta = null)
         {
             var chapter = await _context.Chapters.FindAsync(chapterId);
             if (chapter != null)
             {
                 chapter.ChapterAudioUrl = audioUrl;
                 chapter.DurationSec = durationSec;
-                chapter.PriceAudio = priceAudio;
+                chapter.PriceSoft = priceSoft;
                 chapter.StorageMeta = storageMeta;
                 await _context.SaveChangesAsync();
             }

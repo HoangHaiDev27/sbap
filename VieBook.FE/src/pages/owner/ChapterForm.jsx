@@ -680,7 +680,7 @@ export default function ChapterForm() {
         ChapterSoftUrl: chapterUrl,
         ChapterAudioUrl: null,
         DurationSec: null,
-        PriceAudio: price,
+        PriceSoft: price,
         UploadedAt: new Date().toISOString(),
         Status: status,
       });

@@ -336,7 +336,7 @@ public partial class VieBookContext : DbContext
                 .HasMaxLength(1000)
                 .IsUnicode(false);
             entity.Property(e => e.ChapterTitle).HasMaxLength(500);
-            entity.Property(e => e.PriceAudio).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PriceSoft).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.StorageMeta).HasMaxLength(1000);
             entity.Property(e => e.UploadedAt).HasDefaultValueSql("(sysutcdatetime())");
 
@@ -353,7 +353,7 @@ public partial class VieBookContext : DbContext
                 .HasMaxLength(1000)
                 .IsUnicode(false);
 
-            entity.Property(e => e.PriceAudio)
+            entity.Property(e => e.PriceSoft)
                 .HasColumnType("decimal(18, 2)");
 
             entity.Property(e => e.VoiceName)

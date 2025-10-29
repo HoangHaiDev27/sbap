@@ -84,7 +84,7 @@ namespace DataAccess.DAO
 
             foreach (var audio in audios)
             {
-                audio.PriceAudio = price;
+                audio.PriceSoft = price;
             }
 
             await _context.SaveChangesAsync();

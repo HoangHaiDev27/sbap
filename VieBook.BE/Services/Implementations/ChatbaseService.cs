@@ -73,7 +73,7 @@ namespace Service.Implementations
             // --- B4: Tạo context sách gọn gàng ---
             string context = string.Join("\n\n", filteredBooks.Select(b =>
             {
-                var totalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0);
+                var totalPrice = b.Chapters.Sum(c => c.PriceSoft ?? 0);
                 var avgRating = b.BookReviews.Any()
                     ? Math.Round(b.BookReviews.Average(r => r.Rating), 1)
                     : 0;

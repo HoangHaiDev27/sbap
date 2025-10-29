@@ -81,7 +81,7 @@ namespace Services.Implementations
                     };
                 }
 
-                var totalCost = newChaptersToPurchase.Sum(c => c.PriceAudio ?? 0);
+                var totalCost = newChaptersToPurchase.Sum(c => c.PriceSoft ?? 0);
 
                 // Kiểm tra số dư
                 if (user.Wallet < totalCost)
@@ -114,8 +114,8 @@ namespace Services.Implementations
                     {
                         CustomerId = userId,
                         ChapterId = chapter.ChapterId,
-                        UnitPrice = chapter.PriceAudio ?? 0,
-                        CashSpent = chapter.PriceAudio ?? 0,
+                        UnitPrice = chapter.PriceSoft ?? 0,
+                        CashSpent = chapter.PriceSoft ?? 0,
                         PaidAt = DateTime.UtcNow,
                         OrderType = "BuyChapter"
                     };

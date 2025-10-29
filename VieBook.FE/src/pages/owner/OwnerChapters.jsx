@@ -191,7 +191,7 @@ export default function OwnerChapters() {
         <div className="bg-slate-800 p-4 rounded-lg flex items-center space-x-3">
           <RiCheckLine size={28} className="text-green-400" />
           <div>
-            <p className="text-xl font-bold">{chapters.filter((ch) => ch.priceAudio > 0).length}</p>
+            <p className="text-xl font-bold">{chapters.filter((ch) => ch.priceSoft > 0).length}</p>
             <p className="text-sm text-gray-400">Có tính phí</p>
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function OwnerChapters() {
         <div className="bg-slate-800 p-4 rounded-lg flex items-center space-x-3">
           <RiGiftLine size={28} className="text-yellow-400" />
           <div>
-            <p className="text-xl font-bold">{chapters.filter((ch) => ch.priceAudio === 0).length}</p>
+            <p className="text-xl font-bold">{chapters.filter((ch) => ch.priceSoft === 0).length}</p>
             <p className="text-sm text-gray-400">Chương miễn phí</p>
           </div>
         </div>
@@ -227,7 +227,7 @@ export default function OwnerChapters() {
             {
               paginatedChapters.map((ch, index) => {
                 const globalIndex = (currentPage - 1) * pageSize + index + 1;
-                const isFree = ch.priceAudio === 0;
+                const isFree = ch.priceSoft === 0;
                 const hasAudio = !!ch.chapterAudioUrl;
 
                 // status badge
@@ -290,7 +290,7 @@ export default function OwnerChapters() {
                             <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">Miễn phí</span>
                           ) : (
                             <span className="text-orange-400 font-semibold text-sm whitespace-nowrap">
-                              Chương: {ch.priceAudio.toLocaleString()} xu
+                              Chương: {ch.priceSoft.toLocaleString()} xu
                             </span>
                           )}
                         </div>

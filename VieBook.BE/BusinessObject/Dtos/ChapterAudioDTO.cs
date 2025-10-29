@@ -13,7 +13,7 @@ namespace BusinessObject.Dtos
         public int UserId { get; set; }
         public string AudioLink { get; set; } = null!;
         public int? DurationSec { get; set; }
-        public decimal? PriceAudio { get; set; }
+        public decimal? PriceSoft { get; set; }
         public DateTime CreatedAt { get; set; }
         public string? VoiceName { get; set; }
         public string? UserName { get; set; }
@@ -25,12 +25,12 @@ namespace BusinessObject.Dtos
         public int UserId { get; set; }
         public string AudioLink { get; set; } = null!;
         public int? DurationSec { get; set; }
-        public decimal? PriceAudio { get; set; }
+        public decimal? PriceSoft { get; set; }
         public string? VoiceName { get; set; }
     }
 
     public class UpdateAudioPriceRequest
     {
-        public decimal? PriceAudio { get; set; }
+        public decimal? PriceSoft { get; set; }
     }
 }
