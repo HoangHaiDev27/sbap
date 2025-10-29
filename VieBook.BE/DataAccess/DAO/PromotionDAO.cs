@@ -49,6 +49,7 @@ namespace DataAccess.DAO
                         .ThenInclude(o => o.UserProfile)
                 .Include(p => p.Books)
                     .ThenInclude(b => b.Chapters)
+                        .ThenInclude(c => c.ChapterAudios)
                 .Where(p => p.OwnerId == ownerId && p.IsActive)
                 .OrderDescending()
                 .ToListAsync();
@@ -95,6 +96,7 @@ namespace DataAccess.DAO
             return await _context.Promotions
                 .Include(p => p.Books)
                     .ThenInclude(b => b.Chapters)
+                        .ThenInclude(c => c.ChapterAudios)
                 .Include(p => p.Books)
                     .ThenInclude(b => b.Categories)
                 .FirstOrDefaultAsync(p => p.PromotionId == promotionId && p.IsActive);
