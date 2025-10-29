@@ -29,6 +29,7 @@ namespace BusinessObject.Dtos
         public string? ChapterAudioUrl { get; set; }
         public int? DurationSec { get; set; }
         public decimal? PriceAudio { get; set; }
+        public decimal? AudioPrice { get; set; } 
         public string? StorageMeta { get; set; }
         public DateTime UploadedAt { get; set; }
         public string? BookTitle { get; set; }

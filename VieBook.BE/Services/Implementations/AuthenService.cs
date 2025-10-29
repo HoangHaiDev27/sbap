@@ -119,6 +119,12 @@ namespace Services.Implementations
             if (user == null)
                 return "Email không tồn tại";
 
+			// Không cho phép dùng quên mật khẩu cho tài khoản có role Staff
+			if (user.Roles != null && user.Roles.Any(r => string.Equals(r.RoleName, "Staff", StringComparison.OrdinalIgnoreCase))&& user.Roles.Count == 1)
+            {
+                return "Tài khoản Staff không được phép sử dụng chức năng quên mật khẩu";
+            }
+
             // generate otp
             var otp = GenerateOtp(6);
             var otpHash = BCrypt.Net.BCrypt.HashPassword(otp);

@@ -159,6 +159,8 @@ namespace DataAccess.DAO
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters)
                     .ThenInclude(c => c.OrderItems)
+                .Include(b => b.Chapters)
+                    .ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                 .Include(b => b.Owner)
                     .ThenInclude(o => o.UserProfile)

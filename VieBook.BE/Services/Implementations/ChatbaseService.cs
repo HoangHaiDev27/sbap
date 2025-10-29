@@ -7,6 +7,8 @@ using Service.Interfaces;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using static System.Net.WebRequestMethods;
+
 
 namespace Service.Implementations
 {
@@ -16,6 +18,7 @@ namespace Service.Implementations
         private readonly HttpClient _httpClient;
         private readonly OpenAIConfig _settings;
         private readonly IChatbaseRepository _chatbaseRepository;
+        private const string BookDetailLinkPrefix = "http://localhost:5173/bookdetails/"; 
 
         public ChatbaseService(IBookRepository bookRepository,HttpClient httpClient,IOptions<OpenAIConfig> settings,IChatbaseRepository chatbaseRepository)
         {
@@ -31,44 +34,72 @@ namespace Service.Implementations
             // Lưu tin nhắn người dùng
             await _chatbaseRepository.AddMessageAsync(userId, question, "user");
 
-            // Tạo context sách
-            string context = "";
+            // Lấy tất cả sách
             var books = await _bookRepository.GetAllAsync();
 
-            if (books.Any())
+            if (!books.Any())
             {
-                context = string.Join("\n\n", books.Select(b =>
-                {
-                    var totalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0);
-                    var avgRating = b.BookReviews.Any()
-                        ? Math.Round(b.BookReviews.Average(r => r.Rating), 1)
-                        : 0;
-                    var categories = b.Categories != null && b.Categories.Any()
-                        ? string.Join(", ", b.Categories.Select(c => c.Name))
-                        : "Không có";
-                    var readUrl = b.Chapters.FirstOrDefault(c => !string.IsNullOrEmpty(c.ChapterSoftUrl))?.ChapterSoftUrl;
-                    var audioUrl = b.Chapters.FirstOrDefault(c => !string.IsNullOrEmpty(c.ChapterAudioUrl))?.ChapterAudioUrl;
-                    string type = "";
-                    if (readUrl != null) type += "Sách đọc";
-                    if (audioUrl != null) type += (type != "" ? ", " : "") + "Sách nghe";
-                    if (type == "") type = "Không xác định";
-
-                    return
-                        $"Tên sách: {b.Title}\n" +
-                        $"Tác giả: {b.Author}\n" +
-                        $"Mô tả: {b.Description}\n" +
-                        $"Thể loại: {categories}\n" +
-                        $"Giá: {totalPrice:N0} Xu\n" +
-                        $"Đánh giá trung bình: {avgRating}/5\n" +
-                        $"Loại: {type}\n";
-                }));
-            }
-            else
-            {
-                context = "Hiện tại không có sách nào trong cơ sở dữ liệu.";
+                var emptyResponse = "Hiện tại không có sách nào trong cơ sở dữ liệu.";
+                await _chatbaseRepository.AddMessageAsync(userId, emptyResponse, "bot");
+                return emptyResponse;
             }
 
-            // Tạo payload gửi tới OpenAI
+            // --- B1: Chuẩn hóa câu hỏi người dùng ---
+            string normalizedQuestion = question.ToLower();
+
+            // --- B2: Xác định các thể loại mà người dùng nhắc đến ---
+            var allCategories = books
+                .SelectMany(b => b.Categories.Select(c => c.Name.ToLower()))
+                .Distinct()
+                .ToList();
+
+            var matchingCategories = allCategories
+                .Where(cat => normalizedQuestion.Contains(cat))
+                .ToList();
+
+            // --- B3: Lọc sách theo thể loại, tên, hoặc tác giả ---
+            var filteredBooks = books
+                .Where(b =>
+                    matchingCategories.Any(cat => b.Categories.Any(c => c.Name.ToLower() == cat)) ||
+                    normalizedQuestion.Contains(b.Title.ToLower()) ||
+                    (!string.IsNullOrEmpty(b.Author) && normalizedQuestion.Contains(b.Author.ToLower()))
+                )
+                .ToList();
+
+            // Nếu không có sách nào khớp, trả về tất cả để GPT vẫn có dữ liệu
+            if (!filteredBooks.Any())
+                filteredBooks = books;
+
+            // --- B4: Tạo context sách gọn gàng ---
+            string context = string.Join("\n\n", filteredBooks.Select(b =>
+            {
+                var totalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0);
+                var avgRating = b.BookReviews.Any()
+                    ? Math.Round(b.BookReviews.Average(r => r.Rating), 1)
+                    : 0;
+                var categories = b.Categories != null && b.Categories.Any()
+                    ? string.Join(", ", b.Categories.Select(c => c.Name))
+                    : "Không có";
+
+                var readUrl = b.Chapters.FirstOrDefault(c => !string.IsNullOrEmpty(c.ChapterSoftUrl))?.ChapterSoftUrl;
+                var audioUrl = b.Chapters.FirstOrDefault(c => !string.IsNullOrEmpty(c.ChapterAudioUrl))?.ChapterAudioUrl;
+                string type = "";
+                if (readUrl != null) type += "Sách đọc";
+                if (audioUrl != null) type += (type != "" ? ", " : "") + "Sách nói";
+                if (string.IsNullOrEmpty(type)) type = "Không xác định";
+
+                return
+                    $"Tên sách: {b.Title}\n" +
+                    $"Tác giả: {b.Author}\n" +
+                    $"Mô tả: {b.Description}\n" +
+                    $"Thể loại: {categories}\n" +
+                    $"Giá: {totalPrice:N0} Xu\n" +
+                    $"Đánh giá trung bình: {avgRating}/5\n" +
+                    $"Loại: {type}\n" +
+                    $"chi tiết: {BookDetailLinkPrefix}{b.BookId}\n";
+            }));
+
+            // --- B5: Gửi request đến OpenAI ---
             var payload = new
             {
                 model = _settings.SummaryModel, // ví dụ "gpt-4o-mini"
@@ -79,6 +110,7 @@ namespace Service.Implementations
                         role = "system",
                         content =
                             "Bạn là chatbot hỗ trợ người dùng tìm và gợi ý sách phù hợp. " +
+                            "Khi gợi ý sách, hãy luôn hiển thị 'Link chi tiết' đi kèm. " +
                             "Dưới đây là danh sách sách có sẵn trong hệ thống:\n" +
                             context +
                             "\nHãy trả lời **chỉ dựa trên danh sách này**. Nếu sách hoặc thể loại không có trong danh sách, hãy nói rõ."
@@ -107,10 +139,10 @@ namespace Service.Implementations
                 try
                 {
                     botResponse = doc.RootElement
-                                     .GetProperty("choices")[0]
-                                     .GetProperty("message")
-                                     .GetProperty("content")
-                                     .GetString() ?? "";
+                                    .GetProperty("choices")[0]
+                                    .GetProperty("message")
+                                    .GetProperty("content")
+                                    .GetString() ?? "";
                 }
                 catch
                 {
@@ -118,7 +150,7 @@ namespace Service.Implementations
                 }
             }
 
-            // Lưu phản hồi bot vào DB
+            // --- B6: Lưu phản hồi bot vào DB ---
             await _chatbaseRepository.AddMessageAsync(userId, botResponse, "bot");
 
             return botResponse;

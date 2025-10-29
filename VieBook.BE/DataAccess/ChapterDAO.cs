@@ -80,8 +80,8 @@ namespace DataAccess
         public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
         {
             return await _context.Chapters
-                                 .Include(c => c.Book)
                                  .Where(c => c.BookId == bookId && c.Status == "Active")
+                                 .Include(c => c.ChapterAudios)
                                  .OrderBy(c => c.ChapterId)
                                  .ToListAsync();
         }

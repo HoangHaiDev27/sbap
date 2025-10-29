@@ -11,53 +11,61 @@ import {
   RiUserFollowLine,
   RiUserLine,
 } from "react-icons/ri";
-import { useNotificationStore } from "../../hooks/stores/notificationStore"; 
+import { useNotificationStore } from "../../hooks/stores/notificationStore";
+import { useAdminStore } from "../../hooks/stores/useAdminStore"; 
 
 export default function AdminHeader({ onToggleSidebar }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAvatar, setShowAvatar] = useState(true);
-  const [currentAdmin, setCurrentAdmin] = useState(null);
-  const [adminAvatar, setAdminAvatar] = useState(null);
 
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
   const { notifications, unreadCount } = useNotificationStore();
+  
+  // Get admin data from store
+  const { admin, fetchAdmin } = useAdminStore();
+  const adminAvatar = admin?.avatarUrl || null;
+  const currentAdmin = admin;
 
   // Load admin data on component mount
   useEffect(() => {
     const loadAdminData = async () => {
+      const authUserStr = localStorage.getItem("auth_user");
+      if (!authUserStr) return;
+
       try {
-        const adminData = await getCurrentUser();
-        console.log("AdminHeader - Loaded admin data:", adminData);
-        setCurrentAdmin(adminData);
-        const avatarUrl = adminData?.userProfile?.avatarUrl;
-        setAdminAvatar(avatarUrl);
-        // Reset showAvatar khi có avatar mới
-        if (avatarUrl) {
-          setShowAvatar(true);
+        const authUser = JSON.parse(authUserStr);
+        const adminId = authUser.userId;
+        
+        if (adminId) {
+          await fetchAdmin(adminId);
         }
       } catch (error) {
-        console.error("AdminHeader - Error loading admin data:", error);
-        // Fallback to localStorage data
-        const localAdmin = JSON.parse(localStorage.getItem("auth_user") || "null");
-        setCurrentAdmin(localAdmin);
-        const avatarUrl = localAdmin?.userProfile?.avatarUrl;
-        setAdminAvatar(avatarUrl);
-        if (avatarUrl) {
-          setShowAvatar(true);
-        }
+        console.error("AdminHeader - Error parsing auth user:", error);
       }
     };
     
     loadAdminData();
+  }, [fetchAdmin]);
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleProfileUpdate = (event) => {
+      console.log("AdminHeader - Profile updated:", event.detail);
+      // Reset showAvatar to show new avatar
+      setShowAvatar(true);
+    };
+
+    window.addEventListener("admin:profile:updated", handleProfileUpdate);
+    return () => window.removeEventListener("admin:profile:updated", handleProfileUpdate);
   }, []);
 
   // Reset showAvatar khi admin thay đổi
   useEffect(() => {
     setShowAvatar(true);
-  }, [currentAdmin]);
+  }, [admin]);
   // Đóng menu/dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -243,7 +251,7 @@ export default function AdminHeader({ onToggleSidebar }) {
               </div>
             )}
             <span className="font-medium">
-              {currentAdmin?.userProfile?.fullName || 'Admin'}
+              {currentAdmin?.fullName || 'Admin'}
             </span>
             <i className="ri-arrow-down-s-line w-4 h-4 text-white"></i>
           </button>

@@ -255,7 +255,8 @@ export default function AdminProfile() {
       {/* Modal chỉnh sửa */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative text-gray-800">
+          <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-2xl relative text-gray-800 
+                    max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             <h3 className="text-lg font-semibold mb-4">Chỉnh sửa thông tin</h3>
 
             <form onSubmit={handleSave} className="space-y-4">

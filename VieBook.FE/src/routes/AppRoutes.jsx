@@ -49,6 +49,7 @@ import BookDetailPage from "../pages/BookDetailPage";
 import ReaderPage from "../pages/ReaderPage";
 import PlayerPage from "../pages/PlayerPage";
 import ListeningPage from "../pages/ListeningPage";
+import AudioListenPage from "../pages/AudioListenPage";
 import ChangePassword from "../components/auth/ChangePassword"; // kiểm tra đúng đường dẫn
 import AuthenticationManager from "../layouts/AuthenticationManager";
 import RechargePage from "../pages/RechargePage";
@@ -73,6 +74,9 @@ function AppRoutes() {
       {/* Reader dùng ReaderManager làm layout */}
       <Route path="/reader/:id" element={<ReaderPage />} />
       <Route path="/reader/:id/chapter/:chapterId" element={<ReaderPage />} />
+      {/* New audio listening page with /listen/:bookId structure */}
+      <Route path="/listen/:bookId" element={<AudioListenPage />} />
+      {/* Old player page kept for reference */}
       <Route path="/player/:id" element={<PlayerPage />} />
       {/* Routes cho staff/admin */}
       {/* Demo: Chỉ cấu hình 1 route admin để demo */}

@@ -618,8 +618,8 @@ export default function BookDetailPage() {
                           key={audioChapter.chapterId || index}
                           className="p-3 sm:p-4 rounded-lg border-2 border-gray-600 hover:border-green-500 bg-gray-700/50 hover:bg-gray-600 cursor-pointer transition-all"
                           onClick={() => {
-                            // Navigate đến player với chapterId
-                            window.location.href = `/player/${id}/chapter/${audioChapter.chapterId}`;
+                            // Navigate to new audio listening page with bookId
+                            window.location.href = `/listen/${id}`;
                           }}
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
