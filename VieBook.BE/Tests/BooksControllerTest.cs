@@ -117,7 +117,9 @@ namespace Tests
                         ChapterTitle = "Chapter 1",
                         ChapterSoftUrl = "https://example.com/ch1.pdf",
                         DurationSec = 600,
-                        PriceSoft = 15000
+
+                        PriceSoft = 15000,
+                        Status = "Active" // Cần có Status = "Active" để được đếm trong Chapters count
                     });
                     context.SaveChanges();
 

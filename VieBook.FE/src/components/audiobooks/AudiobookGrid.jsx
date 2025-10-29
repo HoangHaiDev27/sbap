@@ -152,6 +152,15 @@ function AudiobookCard({ book }) {
             ))}
         </div>
 
+        {/* Promotion badge */}
+        {book.hasPromotion && (
+          <div className="absolute bottom-3 left-3">
+            <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
+              🎉 -{book.discountValue}%
+            </span>
+          </div>
+        )}
+
         {/* Icon đọc */}
         <div className="absolute top-3 right-3">
           <span className="bg-gray/90 hover:bg-orange-500 hover:text-white text-orange-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm transition-all duration-300 cursor-pointer">
@@ -222,13 +231,40 @@ function Rating({ rating, reviews }) {
 
 // --- Footer ---
 function BookFooter({ book }) {
+  const hasPromotion = book.hasPromotion;
+  const originalPrice = book.price || 0;
+  const discountedPrice = book.discountedPrice || originalPrice;
+  
   return (
     <div className="flex items-center justify-between mt-2">
-      <div className="flex flex-col">
-        <span className="text-orange-400 font-semibold flex items-center space-x-1">
-          <span>{(book.price || 0).toLocaleString()}</span>
-          <RiCoinLine className="text-yellow-400 w-5 h-5" />
-        </span>
+      <div className="flex flex-col gap-1">
+        {hasPromotion ? (
+          <>
+            {/* Giá sau giảm */}
+            <div className="flex items-center gap-1">
+              <span className="text-orange-400 font-bold text-base flex items-center gap-1">
+                {discountedPrice.toLocaleString()}
+                <RiCoinLine className="text-yellow-400 w-4 h-4" />
+              </span>
+              {/* Badge giảm giá */}
+              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded font-bold">
+                -{book.discountValue}%
+              </span>
+            </div>
+            {/* Giá gốc gạch ngang */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 line-through text-sm flex items-center gap-1">
+                {originalPrice.toLocaleString()}
+                <RiCoinLine className="text-gray-500 w-3 h-3" />
+              </span>
+            </div>
+          </>
+        ) : (
+          <span className="text-orange-400 font-semibold flex items-center space-x-1">
+            <span>{originalPrice.toLocaleString()}</span>
+            <RiCoinLine className="text-yellow-400 w-5 h-5" />
+          </span>
+        )}
         <span className="text-xs text-gray-400">{book.chapters} chương</span>
       </div>
 

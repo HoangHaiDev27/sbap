@@ -24,6 +24,7 @@ namespace DataAccess.DAO
                             .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                             .Include(b => b.Categories)
                             .Include(b => b.Chapters)
+                                .ThenInclude(c => c.ChapterAudios) // Include ChapterAudios để lấy PriceAudio
                             .Include(b => b.BookReviews)
                                 .ThenInclude(r => r.User)
                                 .ThenInclude(u => u.UserProfile)
@@ -38,6 +39,7 @@ namespace DataAccess.DAO
                             .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                             .Include(b => b.Categories)
                             .Include(b => b.Chapters)
+                                .ThenInclude(c => c.ChapterAudios) // Include ChapterAudios để lấy PriceAudio
                             .Include(b => b.BookReviews)
                                 .ThenInclude(r => r.User)
                                 .ThenInclude(u => u.UserProfile)
@@ -345,6 +347,23 @@ namespace DataAccess.DAO
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        // Get active promotion for book
+        public async Task<Promotion?> GetActivePromotionForBook(int bookId)
+        {
+            var now = DateTime.UtcNow;
+            
+            var promotion = await _context.Promotions
+                .Where(p => p.Books.Any(b => b.BookId == bookId) // Book thuộc promotion này
+                    && p.IsActive // Promotion còn active
+                    && p.StartAt <= now // Đã bắt đầu
+                    && p.EndAt >= now // Chưa hết hạn
+                    && p.Quantity > 0) // Còn số lượng
+                .OrderByDescending(p => p.DiscountValue) // Ưu tiên promotion có giá trị cao nhất
+                .FirstOrDefaultAsync();
+            
+            return promotion;
         }
 
     }

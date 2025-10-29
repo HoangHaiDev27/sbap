@@ -103,5 +103,10 @@ namespace Repositories.Implementations
         {
             await _bookDao.UpdateDraftChaptersToInActiveAsync(bookId);
         }
+        
+        public async Task<Promotion?> GetActivePromotionForBook(int bookId)
+        {
+            return await _bookDao.GetActivePromotionForBook(bookId);
+        }
     }
 }

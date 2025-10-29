@@ -36,5 +36,6 @@ namespace Repositories.Interfaces
         Task<bool> CheckAllChaptersActiveAsync(int bookId);
         Task<bool> CheckBookHasDraftChaptersAsync(int bookId);
         Task UpdateDraftChaptersToInActiveAsync(int bookId);
+        Task<Promotion?> GetActivePromotionForBook(int bookId);
     }
 }

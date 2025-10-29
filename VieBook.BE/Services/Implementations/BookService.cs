@@ -10,6 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations
 {
@@ -28,13 +29,25 @@ namespace Services.Implementations
         {
             var book = await _bookRepo.GetBookDetailAsync(id);
             if (book == null) return null;
-            return _mapper.Map<BookDetailDTO>(book);
+            
+            var bookDetailDto = _mapper.Map<BookDetailDTO>(book);
+            
+            // Check and apply promotion
+            await ApplyPromotionToBookDetail(bookDetailDto);
+            
+            return bookDetailDto;
         }
         public async Task<BookDetailDTO?> GetBookDetail(int id)
         {
             var book = await _bookRepo.GetBookDetail(id);
             if (book == null) return null;
-            return _mapper.Map<BookDetailDTO>(book);
+            
+            var bookDetailDto = _mapper.Map<BookDetailDTO>(book);
+            
+            // Check and apply promotion
+            await ApplyPromotionToBookDetail(bookDetailDto);
+            
+            return bookDetailDto;
         }
         public Task<List<Book>> GetAllAsync() => _bookRepo.GetAllAsync();
         public Task<Book?> GetByIdAsync(int id) => _bookRepo.GetByIdAsync(id);
@@ -54,12 +67,28 @@ namespace Services.Implementations
         public async Task<List<BookResponseDTO>> GetReadBooksAsync()
         {
             var books = await _bookRepo.GetReadBooksAsync();
-            return _mapper.Map<List<BookResponseDTO>>(books);
+            var bookDtos = _mapper.Map<List<BookResponseDTO>>(books);
+            
+            // Apply promotion to each book
+            foreach (var bookDto in bookDtos)
+            {
+                await ApplyPromotionToBookResponse(bookDto);
+            }
+            
+            return bookDtos;
         }
         public async Task<List<BookResponseDTO>> GetAudioBooksAsync()
         {
             var books = await _bookRepo.GetAudioBooksAsync();
-            return _mapper.Map<List<BookResponseDTO>>(books);
+            var bookDtos = _mapper.Map<List<BookResponseDTO>>(books);
+            
+            // Apply promotion to each book
+            foreach (var bookDto in bookDtos)
+            {
+                await ApplyPromotionToBookResponse(bookDto);
+            }
+            
+            return bookDtos;
         }
 
         public async Task<BookResponseDTO?> GetAudioBookDetailAsync(int id)
@@ -117,6 +146,55 @@ namespace Services.Implementations
         public async Task UpdateDraftChaptersToInActiveAsync(int bookId)
         {
             await _bookRepo.UpdateDraftChaptersToInActiveAsync(bookId);
+        }
+        
+        private async Task ApplyPromotionToBookDetail(BookDetailDTO bookDetail)
+        {
+            var promotion = await GetActivePromotionForBook(bookDetail.BookId);
+            
+            if (promotion != null && promotion.DiscountType == "Percent")
+            {
+                bookDetail.HasPromotion = true;
+                bookDetail.PromotionName = promotion.PromotionName;
+                bookDetail.DiscountType = promotion.DiscountType;
+                bookDetail.DiscountValue = promotion.DiscountValue;
+                
+                // Tính giá sau khi áp dụng promotion (chỉ hỗ trợ Percent)
+                var discountAmount = bookDetail.TotalPrice * (promotion.DiscountValue / 100);
+                bookDetail.DiscountedPrice = bookDetail.TotalPrice - discountAmount;
+            }
+            else
+            {
+                bookDetail.HasPromotion = false;
+                bookDetail.DiscountedPrice = bookDetail.TotalPrice;
+            }
+        }
+        
+        private async Task<Promotion?> GetActivePromotionForBook(int bookId)
+        {
+            return await _bookRepo.GetActivePromotionForBook(bookId);
+        }
+        
+        private async Task ApplyPromotionToBookResponse(BookResponseDTO bookResponse)
+        {
+            var promotion = await GetActivePromotionForBook(bookResponse.Id);
+            
+            if (promotion != null && promotion.DiscountType == "Percent")
+            {
+                bookResponse.HasPromotion = true;
+                bookResponse.PromotionName = promotion.PromotionName;
+                bookResponse.DiscountType = promotion.DiscountType;
+                bookResponse.DiscountValue = promotion.DiscountValue;
+                
+                // Tính giá sau khi áp dụng promotion (chỉ hỗ trợ Percent)
+                var discountAmount = bookResponse.Price * (promotion.DiscountValue / 100);
+                bookResponse.DiscountedPrice = bookResponse.Price - discountAmount;
+            }
+            else
+            {
+                bookResponse.HasPromotion = false;
+                bookResponse.DiscountedPrice = bookResponse.Price;
+            }
         }
     }
 }

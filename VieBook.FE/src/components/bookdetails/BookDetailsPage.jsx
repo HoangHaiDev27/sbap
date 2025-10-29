@@ -275,9 +275,45 @@ export default function BookDetailPage() {
         <div className="lg:col-span-2">
           <h1 className="text-3xl font-bold mb-2">{title}</h1>
           <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
-          <p className="text-yellow-400 font-bold text-xl mb-4 flex items-center gap-1">
-            {totalPrice.toLocaleString()} <RiCoinLine className="w-5 h-5" />
-          </p>
+          
+          {/* Hiển thị giá với/không có promotion */}
+          <div className="mb-4">
+            {bookDetail.hasPromotion ? (
+              <div className="space-y-2">
+                {/* Tên promotion */}
+                <div className="inline-block bg-red-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                  🎉 {bookDetail.promotionName}
+                </div>
+                
+                {/* Giá sau giảm */}
+                <div className="flex items-center gap-3">
+                  <p className="text-yellow-400 font-bold text-2xl flex items-center gap-1">
+                    {bookDetail.discountedPrice?.toLocaleString()} <RiCoinLine className="w-6 h-6" />
+                  </p>
+                  
+                  {/* Giá gốc (gạch ngang) */}
+                  <p className="text-gray-500 line-through text-lg flex items-center gap-1">
+                    {totalPrice.toLocaleString()} <RiCoinLine className="w-4 h-4" />
+                  </p>
+                  
+                  {/* % giảm giá */}
+                  <span className="bg-red-500 text-white text-sm px-2 py-1 rounded font-bold">
+                    -{bookDetail.discountValue}%
+                  </span>
+                </div>
+                
+                {/* Tiết kiệm được */}
+                <p className="text-green-400 text-sm">
+                  Tiết kiệm: {(totalPrice - (bookDetail.discountedPrice || 0)).toLocaleString()} xu
+                </p>
+              </div>
+            ) : (
+              /* Không có promotion - hiển thị giá bình thường */
+              <p className="text-yellow-400 font-bold text-xl flex items-center gap-1">
+                {totalPrice.toLocaleString()} <RiCoinLine className="w-5 h-5" />
+              </p>
+            )}
+          </div>
 
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-4">
@@ -328,7 +364,7 @@ export default function BookDetailPage() {
           </div>
 
           {/* Nội dung Tab */}
-          {activeTab === "overview" && <OverviewTab bookDetail={bookDetail} />}
+          {activeTab === "overview" && <OverviewTab bookDetail={bookDetail} chaptersWithAudio={chaptersWithAudio} />}
           {activeTab === "details" && <DetailsTab bookDetail={bookDetail} />}
           {activeTab === "reviews" && <ReviewsTab bookId={id} reviews={reviews} />}
         </div>
@@ -556,16 +592,29 @@ export default function BookDetailPage() {
                             )}
                           </div>
                         </div>
-                        <div className="text-left sm:text-right">
+                        <div className="text-left sm:text-right space-y-1">
                           {isFree ? (
                             <div className="text-green-500 font-bold text-base sm:text-lg">
                               Miễn phí
                             </div>
                           ) : (
-                            <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
-                              {chapter.priceSoft?.toLocaleString() || 0}
-                              <RiCoinLine className="w-4 h-4 text-yellow-400" />
-                            </div>
+                            <>
+                              {/* Giá bản mềm (đọc) */}
+                              <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
+                                <RiBookOpenLine className="w-4 h-4" />
+                                {chapter.priceSoft?.toLocaleString() || 0}
+                                <RiCoinLine className="w-4 h-4 text-yellow-400" />
+                              </div>
+                              
+                              {/* Giá audio (nếu có) */}
+                              {chapter.priceAudio != null && chapter.priceAudio > 0 && (
+                                <div className="text-green-500 font-bold text-sm sm:text-base flex items-center gap-1">
+                                  <RiPlayCircleLine className="w-4 h-4" />
+                                  {chapter.priceAudio?.toLocaleString()}
+                                  <RiCoinLine className="w-3 h-3 text-yellow-400" />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
