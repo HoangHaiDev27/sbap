@@ -30,6 +30,15 @@ namespace DataAccess.DAO
                                 .ThenInclude(u => u.UserProfile)
                             .FirstOrDefaultAsync(b => b.BookId == id);
 
+            if (book != null && book.Chapters != null)
+            {
+                // Chỉ giữ các chapter có Status = "Active" để phục vụ màn hình mua/đọc
+                book.Chapters = book.Chapters
+                    .Where(c => c.Status == "Active")
+                    .OrderBy(c => c.ChapterId)
+                    .ToList();
+            }
+
             return book;
         }
         // full status
@@ -61,6 +70,13 @@ namespace DataAccess.DAO
         }
 
         public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
+        {
+            return await _context.Chapters
+                .Where(c => c.BookId == bookId)
+                .OrderBy(c => c.ChapterId)
+                .ToListAsync();
+        }
+        public async Task<List<Chapter>> GetChaptersActiveByBookIdAsync(int bookId)
         {
             return await _context.Chapters
                 .Where(c => c.BookId == bookId && c.Status == "Active")
