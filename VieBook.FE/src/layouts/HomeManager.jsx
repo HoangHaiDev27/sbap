@@ -44,32 +44,82 @@ export default function HomeManager() {
 
         if (cancelled) return;
 
-        const mapToCarouselItem = (b) => ({
-          id: b.bookId || b.id,
-          title: b.title,
-          image: b.coverUrl || b.image,
-          author: b.author || b.narrator || "",
-          category: b.category || b.categoryIds?.join(", ") || "",
-          completionStatus: b.completionStatus || "Ongoing", // Default to Ongoing
-        });
+        // Extract data nếu có wrapper (response có thể là { data: [...] } hoặc { code: 0, data: [...] })
+        const extractData = (response) => {
+          if (Array.isArray(response)) return response;
+          if (response?.data && Array.isArray(response.data)) return response.data;
+          if (response?.Data && Array.isArray(response.Data)) return response.Data;
+          return [];
+        };
+
+        const audioBooksData = extractData(audioRes);
+        const readBooksData = extractData(readRes);
+        const recommendBooksData = extractData(recommendRes);
+
+        // Debug: Log một vài books để xem structure
+        if (audioBooksData.length > 0) {
+          console.log("Sample audio book:", audioBooksData[0]);
+        }
+        if (readBooksData.length > 0) {
+          console.log("Sample read book:", readBooksData[0]);
+        }
+
+        const mapToCarouselItem = (b) => {
+          // Extract promotion data - kiểm tra nhiều format
+          const hasPromotion = b.hasPromotion !== undefined ? b.hasPromotion : 
+                              (b.HasPromotion !== undefined ? b.HasPromotion : false);
+          const discountValue = b.discountValue !== undefined ? b.discountValue : 
+                               (b.DiscountValue !== undefined ? b.DiscountValue : null);
+          
+          // Debug: log để kiểm tra promotion
+          if (hasPromotion || discountValue !== null) {
+            console.log("Book with promotion (mapped):", { 
+              title: b.title || b.Title, 
+              hasPromotion, 
+              discountValue,
+              rawHasPromotion: b.hasPromotion,
+              rawHasPromotionCaps: b.HasPromotion,
+              rawDiscountValue: b.discountValue,
+              rawDiscountValueCaps: b.DiscountValue
+            });
+          }
+          
+          const mapped = {
+            id: b.bookId || b.id || b.Id || b.BookId,
+            title: b.title || b.Title,
+            image: b.coverUrl || b.image || b.Image || b.CoverUrl,
+            author: b.author || b.Author || b.narrator || b.Narrator || "",
+            category: b.category || b.Category || b.categoryIds?.join(", ") || b.Categories?.map(c => c.name || c.Name || c).join(", ") || "",
+            completionStatus: b.completionStatus || b.CompletionStatus || "Ongoing",
+            // Promotion data - giữ nguyên giá trị boolean và number
+            hasPromotion: Boolean(hasPromotion),
+            discountValue: discountValue !== null && discountValue !== undefined ? Number(discountValue) : null,
+          };
+          
+          return mapped;
+        };
 
         const data = {
-          audioBooks: Array.isArray(audioRes)
-            ? audioRes.map(mapToCarouselItem)
-            : [],
-          readBooks: Array.isArray(readRes)
-            ? readRes.map(mapToCarouselItem)
-            : [],
-          recommendBooks: Array.isArray(recommendRes)
-            ? recommendRes.map(mapToCarouselItem)
-            : [],
+          audioBooks: audioBooksData.map(mapToCarouselItem),
+          readBooks: readBooksData.map(mapToCarouselItem),
+          recommendBooks: recommendBooksData.map(mapToCarouselItem),
           categories: [
             "Tất cả",
             ...(Array.isArray(categoriesRes)
-              ? categoriesRes.map((c) => c.name).filter(Boolean)
+              ? categoriesRes.map((c) => c.name || c.Name).filter(Boolean)
               : []),
           ],
         };
+
+        // Debug: Kiểm tra data sau khi map
+        const booksWithPromo = [
+          ...data.audioBooks.filter(b => b.hasPromotion),
+          ...data.readBooks.filter(b => b.hasPromotion),
+          ...data.recommendBooks.filter(b => b.hasPromotion)
+        ];
+        if (booksWithPromo.length > 0) {
+          console.log("Books with promotion in final data:", booksWithPromo);
+        }
 
         setHomeData(data); // ✅ lưu vào store Zustand
       } catch (e) {

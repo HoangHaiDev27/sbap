@@ -115,8 +115,20 @@ export default function PurchaseModal({
       setPurchasedChapters(purchasedChapterIds);
       setPurchasedSoftChapters(softChapterIds);
       setPurchasedAudioChapters(audioChapterIds);
+      
+      // Trả về data để sử dụng trực tiếp
+      return {
+        purchasedChapterIds,
+        softChapterIds,
+        audioChapterIds
+      };
     } catch (error) {
       console.error("Error loading purchased chapters:", error);
+      return {
+        purchasedChapterIds: [],
+        softChapterIds: [],
+        audioChapterIds: []
+      };
     } finally {
       setLoadingPurchases(false);
     }
@@ -159,7 +171,7 @@ export default function PurchaseModal({
 
   // Xử lý chọn/bỏ chọn bản mềm
   const toggleSoftChapter = (chapterId) => {
-    if (purchasedChapters.includes(chapterId)) return;
+    if (purchasedSoftChapters.includes(chapterId)) return;
     
     setSelectedSoftChapters(prev => 
       prev.includes(chapterId) 
@@ -170,7 +182,7 @@ export default function PurchaseModal({
 
   // Xử lý chọn/bỏ chọn bản audio
   const toggleAudioChapter = (chapterId) => {
-    if (purchasedChapters.includes(chapterId)) return;
+    if (purchasedAudioChapters.includes(chapterId)) return;
     
     setSelectedAudioChapters(prev => 
       prev.includes(chapterId) 
@@ -181,7 +193,8 @@ export default function PurchaseModal({
 
   // Xử lý mua cả hai
   const toggleBothChapter = (chapterId) => {
-    if (purchasedChapters.includes(chapterId)) return;
+    // Không thể toggle nếu đã mua ít nhất 1 trong 2 (soft hoặc audio)
+    if (purchasedSoftChapters.includes(chapterId) || purchasedAudioChapters.includes(chapterId)) return;
     
     const isSelected = selectedSoftChapters.includes(chapterId) && selectedAudioChapters.includes(chapterId);
     
@@ -204,7 +217,84 @@ export default function PurchaseModal({
       return;
     }
 
-    if (coins < totalPrice) {
+    // Reload danh sách chapter đã mua để đảm bảo data mới nhất trước khi mua
+    const purchasedData = await loadPurchasedChapters();
+    const currentPurchasedSoft = purchasedData?.softChapterIds || purchasedSoftChapters;
+    const currentPurchasedAudio = purchasedData?.audioChapterIds || purchasedAudioChapters;
+
+    // Tách các chapters thành 3 nhóm: soft only, audio only, both
+    const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
+    const audioOnlyChapters = selectedAudioChapters.filter(id => !selectedSoftChapters.includes(id));
+    const bothChapters = selectedSoftChapters.filter(id => selectedAudioChapters.includes(id));
+
+    // Lọc bỏ những chapter đã mua tương ứng từng loại
+    // Backend đã được sửa để phân biệt OrderType, nên có thể mua phần còn lại
+    const softToBuy = softOnlyChapters.filter(id => !currentPurchasedSoft.includes(id));
+    const audioToBuy = audioOnlyChapters.filter(id => !currentPurchasedAudio.includes(id));
+    
+    // Xử lý "both": chỉ mua "both" nếu chưa mua cả hai
+    // Nếu đã mua một phần thì tách thành soft/audio riêng
+    const bothChaptersNotPurchased = bothChapters.filter(id => 
+      !currentPurchasedSoft.includes(id) && !currentPurchasedAudio.includes(id)
+    );
+    const bothChaptersOnlySoftNeeded = bothChapters.filter(id => 
+      !currentPurchasedSoft.includes(id) && currentPurchasedAudio.includes(id)
+    );
+    const bothChaptersOnlyAudioNeeded = bothChapters.filter(id => 
+      currentPurchasedSoft.includes(id) && !currentPurchasedAudio.includes(id)
+    );
+    
+    // Thêm các chapter cần mua soft/audio riêng vào danh sách tương ứng
+    const finalSoftToBuy = [...softToBuy, ...bothChaptersOnlySoftNeeded];
+    const finalAudioToBuy = [...audioToBuy, ...bothChaptersOnlyAudioNeeded];
+    const bothToBuy = bothChaptersNotPurchased;
+
+    // Log để debug
+    console.log("Purchase attempt:", {
+      selectedSoft: selectedSoftChapters,
+      selectedAudio: selectedAudioChapters,
+      purchasedSoft: currentPurchasedSoft,
+      purchasedAudio: currentPurchasedAudio,
+      softToBuy: finalSoftToBuy,
+      audioToBuy: finalAudioToBuy,
+      bothToBuy
+    });
+
+    // Nếu không còn gì để mua sau khi lọc
+    if (finalSoftToBuy.length === 0 && finalAudioToBuy.length === 0 && bothToBuy.length === 0) {
+      toast.error("Tất cả các chương đã chọn đã được mua rồi");
+      // Reset selection
+      setSelectedSoftChapters([]);
+      setSelectedAudioChapters([]);
+      return;
+    }
+
+    // Tính tổng tiền thực tế cho các chapter còn phải mua
+    const calcSoft = finalSoftToBuy.reduce((sum, chapterId) => {
+      const chapter = chapters.find(ch => ch.chapterId === chapterId);
+      const basePrice = chapter?.priceSoft || 0;
+      const price = promotionPercent > 0 ? basePrice * (1 - promotionPercent / 100) : basePrice;
+      return sum + price;
+    }, 0);
+
+    const calcAudio = finalAudioToBuy.reduce((sum, chapterId) => {
+      const audioPrice = audioPrices[chapterId] || 0;
+      const price = promotionPercent > 0 ? audioPrice * (1 - promotionPercent / 100) : audioPrice;
+      return sum + price;
+    }, 0);
+
+    const calcBoth = bothToBuy.reduce((sum, chapterId) => {
+      const chapter = chapters.find(ch => ch.chapterId === chapterId);
+      const softPrice = chapter?.priceSoft || 0;
+      const audioPrice = audioPrices[chapterId] || 0;
+      const combo = (softPrice + audioPrice) * 0.9;
+      const price = promotionPercent > 0 ? combo * (1 - promotionPercent / 100) : combo;
+      return sum + price;
+    }, 0);
+
+    const effectiveTotal = parseFloat((calcSoft + calcAudio + calcBoth).toFixed(1));
+
+    if (coins < effectiveTotal) {
       toast.error("Số xu trong ví không đủ để mua các chương đã chọn");
       return;
     }
@@ -212,38 +302,43 @@ export default function PurchaseModal({
     setIsPurchasing(true);
     
     try {
-      // Tách các chapters thành 3 nhóm: soft only, audio only, both
-      const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
-      const audioOnlyChapters = selectedAudioChapters.filter(id => !selectedSoftChapters.includes(id));
-      const bothChapters = selectedSoftChapters.filter(id => selectedAudioChapters.includes(id));
-      
-      // Mua bản mềm (chỉ những chapter không có trong both)
-      if (softOnlyChapters.length > 0) {
-        await purchaseChapters(bookId, softOnlyChapters, 'soft');
+      // Mua bản mềm
+      if (finalSoftToBuy.length > 0) {
+        const softResponse = await purchaseChapters(bookId, finalSoftToBuy, 'soft');
+        if (softResponse?.error !== undefined && softResponse.error !== 0) {
+          throw new Error(softResponse.message || "Lỗi khi mua bản mềm");
+        }
       }
       
-      // Mua bản audio (chỉ những chapter không có trong both)
-      if (audioOnlyChapters.length > 0) {
-        await purchaseChapters(bookId, audioOnlyChapters, 'audio');
+      // Mua bản audio
+      if (finalAudioToBuy.length > 0) {
+        const audioResponse = await purchaseChapters(bookId, finalAudioToBuy, 'audio');
+        if (audioResponse?.error !== undefined && audioResponse.error !== 0) {
+          throw new Error(audioResponse.message || "Lỗi khi mua bản audio");
+        }
       }
       
       // Mua cả hai với giảm giá 10%
-      if (bothChapters.length > 0) {
-        await purchaseChapters(bookId, bothChapters, 'both');
+      if (bothToBuy.length > 0) {
+        const bothResponse = await purchaseChapters(bookId, bothToBuy, 'both');
+        if (bothResponse?.error !== undefined && bothResponse.error !== 0) {
+          throw new Error(bothResponse.message || "Lỗi khi mua cả hai bản");
+        }
       }
       
       console.log("Chapter purchase completed");
       
       // Cập nhật số xu ngay lập tức (backend đã trừ xu)
-      setCoins(coins - totalPrice);
+      setCoins(coins - effectiveTotal);
       
       // Thêm thông báo
+      const totalPurchased = finalSoftToBuy.length + finalAudioToBuy.length + bothToBuy.length;
       const notification = {
         notificationId: Date.now(),
         userId: userId,
         type: "BOOK_PURCHASE",
         title: "Mua chương thành công",
-        body: `Bạn đã mua thành công ${totalSelected} chương của "${bookTitle}". Tổng chi phí: ${parseFloat(totalPrice.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu.`,
+        body: `Bạn đã mua thành công ${totalPurchased} chương của "${bookTitle}". Tổng chi phí: ${parseFloat(effectiveTotal.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu.`,
         isRead: false,
         createdAt: new Date().toISOString(),
         userName: "User",
@@ -261,14 +356,25 @@ export default function PurchaseModal({
       await loadPurchasedChapters();
       
       if (onPurchaseSuccess) {
-        onPurchaseSuccess([...selectedSoftChapters, ...selectedAudioChapters]);
+        onPurchaseSuccess([...finalSoftToBuy, ...finalAudioToBuy, ...bothToBuy]);
       }
       
-      toast.success(`Mua thành công ${totalSelected} chương với giá ${totalPrice.toLocaleString()} xu!`);
+      toast.success(`Mua thành công ${totalPurchased} chương với giá ${effectiveTotal.toLocaleString()} xu!`);
       
     } catch (error) {
       console.error("Error purchasing chapters:", error);
-      toast.error("Có lỗi xảy ra khi mua chương. Vui lòng thử lại.");
+      
+      // Nếu lỗi là do chapter đã được mua, reload và thông báo
+      if (error.message?.includes("already been purchased") || error.message?.includes("đã được mua")) {
+        toast.error(error.message || "Một số chương đã được mua rồi. Đang cập nhật...");
+        // Reload purchased chapters để cập nhật UI
+        await loadPurchasedChapters();
+        // Reset selection để user chọn lại
+        setSelectedSoftChapters([]);
+        setSelectedAudioChapters([]);
+      } else {
+        toast.error(error.message || "Có lỗi xảy ra khi mua chương. Vui lòng thử lại.");
+      }
     } finally {
       setIsPurchasing(false);
     }
@@ -408,6 +514,7 @@ export default function PurchaseModal({
               const isFree = !chapter.priceSoft || chapter.priceSoft === 0;
               const duration = Math.round((chapter.durationSec || 0) / 60);
               const chapterNumber = index + 1;
+              // Chỉ disable toàn bộ card nếu đã mua cả 2 hoặc miễn phí
               const isDisabled = isPurchasedBoth || isFree;
               
               // Check if has audio
@@ -419,15 +526,18 @@ export default function PurchaseModal({
               const isBothSelected = isSoftSelected && isAudioSelected;
               
               // Disable buttons based on purchase status
+              // Bản mềm: disable nếu đã mua bản mềm
               const softDisabled = isPurchasedSoft;
+              // Bản audio: disable nếu đã mua bản audio
               const audioDisabled = isPurchasedAudio;
-              const bothDisabled = isPurchasedBoth || (isPurchasedSoft && isPurchasedAudio);
+              // Nút "Cả 2": disable nếu đã mua ít nhất 1 trong 2 (soft hoặc audio)
+              const bothDisabled = isPurchasedSoft || isPurchasedAudio;
               
               return (
                 <div
                   key={chapter.chapterId}
                   className={`p-3 rounded-lg border-2 transition-all ${
-                    isPurchased
+                    isPurchasedBoth
                       ? "border-green-500 bg-green-500/10 cursor-not-allowed opacity-75"
                       : isFree
                       ? "border-gray-600 bg-gray-700/50 cursor-not-allowed opacity-60"
@@ -439,19 +549,14 @@ export default function PurchaseModal({
                     <h3 className="font-medium text-white text-sm">
                       Chương {chapterNumber}: {chapter.chapterTitle?.replace(/chuogn/g, 'chương') || ''}
                     </h3>
-                    {isPurchasedBoth && (
-                      <span className="text-green-400 text-sm font-medium flex items-center gap-1">
-                        <RiCheckLine className="text-xs" />
-                        Đã mua cả hai
-                      </span>
-                    )}
-                    {isPurchasedSoft && !isPurchasedBoth && (
+                    {isPurchasedBoth ? (
+                      <span className="text-green-400 text-sm font-medium">Đã mua</span>
+                    ) : isPurchasedSoft ? (
                       <span className="text-orange-400 text-sm font-medium">Đã mua bản mềm</span>
-                    )}
-                    {isPurchasedAudio && !isPurchasedBoth && (
+                    ) : isPurchasedAudio ? (
                       <span className="text-green-400 text-sm font-medium">Đã mua bản audio</span>
-                    )}
-                    {isFree && !isPurchased && (
+                    ) : null}
+                    {isFree && !isPurchasedBoth && (
                       <span className="text-blue-400 text-sm font-medium">Miễn phí</span>
                     )}
                   </div>
@@ -540,7 +645,7 @@ export default function PurchaseModal({
                           disabled={bothDisabled}
                           className={`p-2 rounded-lg border-2 transition-all ${
                             bothDisabled
-                              ? 'border-green-500 bg-green-500/20 text-green-400 cursor-not-allowed'
+                              ? 'border-red-500 bg-red-500/20 text-red-400 cursor-not-allowed'
                               : isBothSelected
                               ? 'border-blue-500 bg-blue-500/20 text-blue-400'
                               : 'border-gray-600 bg-gray-600/20 text-gray-400 hover:border-gray-500'
@@ -553,11 +658,11 @@ export default function PurchaseModal({
                               <span className="text-[10px] bg-pink-600/80 text-white px-1 rounded">-{promotionPercent}%</span>
                             )}
                             {bothDisabled && (
-                              <RiCheckLine className="text-xs" />
+                              <RiCloseLine className="text-xs" />
                             )}
                           </div>
                           {bothDisabled ? (
-                            <div className="text-xs text-green-400 font-bold">Đã mua</div>
+                            <></>
                           ) : (
                             promotionPercent > 0 ? (
                               <div className="flex flex-col items-start">
