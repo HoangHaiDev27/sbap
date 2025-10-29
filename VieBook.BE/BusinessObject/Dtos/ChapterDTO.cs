@@ -15,6 +15,7 @@ namespace BusinessObject.Dtos
         public string? ChapterAudioUrl { get; set; }
         public int DurationSec { get; set; }
         public decimal PriceSoft { get; set; }
+        public decimal? PriceAudio { get; set; } // Giá audio từ ChapterAudios
         public DateTime UploadedAt { get; set; }
         public string? Status { get; set; }
     }

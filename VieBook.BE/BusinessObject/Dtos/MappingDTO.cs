@@ -26,7 +26,11 @@ namespace BusinessObject.Dtos
                         : null));
 
             // Chapter → ChapterDTO
-            CreateMap<Chapter, ChapterDTO>();
+            CreateMap<Chapter, ChapterDTO>()
+                .ForMember(dest => dest.PriceAudio,
+                    opt => opt.MapFrom(src => src.ChapterAudios != null && src.ChapterAudios.Any()
+                        ? src.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio
+                        : null));
 
             // Book → BookDetailDTO
             CreateMap<Book, BookDetailDTO>()
@@ -37,7 +41,9 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Categories,
                     opt => opt.MapFrom(src => src.Categories.Select(c => c.Name)))
                 .ForMember(dest => dest.Chapters,
-                    opt => opt.MapFrom(src => src.Chapters))
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(ch => ch.Status == "Active") // Chỉ lấy chapter đã phát hành
+                        .OrderBy(ch => ch.ChapterId))) // Sắp xếp theo thứ tự
                 .ForMember(dest => dest.Reviews,
                     opt => opt.MapFrom(src => src.BookReviews))
                 .ForMember(dest => dest.Status,
@@ -64,12 +70,15 @@ namespace BusinessObject.Dtos
                         : 0))
                 .ForMember(dest => dest.Sold,
                     opt => opt.MapFrom(src => src.Chapters
+                        .Where(c => c.Status == "Active")
                         .SelectMany(c => c.OrderItems)
                         .Count()))
                 .ForMember(dest => dest.TotalRatings,
                     opt => opt.MapFrom(src => src.BookReviews.Count()))
                 .ForMember(dest => dest.TotalView,
-                    opt => opt.MapFrom(src => src.Chapters.Sum(c => (int?)c.ChapterView) ?? 0));
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(c => c.Status == "Active")
+                        .Sum(c => (int?)c.ChapterView) ?? 0));
 
 
 
@@ -111,11 +120,11 @@ namespace BusinessObject.Dtos
                 opt => opt.MapFrom(src => src.BookReviews.Count))
             .ForMember(dest => dest.Duration,
                 opt => opt.MapFrom(src =>
-                    (src.Chapters.Sum(c => c.DurationSec ?? 0) / 3600) + "h " +
-                    ((src.Chapters.Sum(c => c.DurationSec ?? 0) % 3600) / 60) + "m"
+                    (src.Chapters.Where(c => c.Status == "Active").Sum(c => c.DurationSec ?? 0) / 3600) + "h " +
+                    ((src.Chapters.Where(c => c.Status == "Active").Sum(c => c.DurationSec ?? 0) % 3600) / 60) + "m"
                 ))
             .ForMember(dest => dest.Chapters,
-                opt => opt.MapFrom(src => src.Chapters.Count))
+                opt => opt.MapFrom(src => src.Chapters.Count(c => c.Status == "Active")))
             .ForMember(dest => dest.Image,
                 opt => opt.MapFrom(src => src.CoverUrl))
             .ForMember(dest => dest.Description,

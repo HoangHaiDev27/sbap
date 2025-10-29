@@ -10,6 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations
 {
@@ -28,13 +29,25 @@ namespace Services.Implementations
         {
             var book = await _bookRepo.GetBookDetailAsync(id);
             if (book == null) return null;
-            return _mapper.Map<BookDetailDTO>(book);
+            
+            var bookDetailDto = _mapper.Map<BookDetailDTO>(book);
+            
+            // Check and apply promotion
+            await ApplyPromotionToBookDetail(bookDetailDto);
+            
+            return bookDetailDto;
         }
         public async Task<BookDetailDTO?> GetBookDetail(int id)
         {
             var book = await _bookRepo.GetBookDetail(id);
             if (book == null) return null;
-            return _mapper.Map<BookDetailDTO>(book);
+            
+            var bookDetailDto = _mapper.Map<BookDetailDTO>(book);
+            
+            // Check and apply promotion
+            await ApplyPromotionToBookDetail(bookDetailDto);
+            
+            return bookDetailDto;
         }
         public Task<List<Book>> GetAllAsync() => _bookRepo.GetAllAsync();
         public Task<Book?> GetByIdAsync(int id) => _bookRepo.GetByIdAsync(id);
@@ -117,6 +130,33 @@ namespace Services.Implementations
         public async Task UpdateDraftChaptersToInActiveAsync(int bookId)
         {
             await _bookRepo.UpdateDraftChaptersToInActiveAsync(bookId);
+        }
+        
+        private async Task ApplyPromotionToBookDetail(BookDetailDTO bookDetail)
+        {
+            var promotion = await GetActivePromotionForBook(bookDetail.BookId);
+            
+            if (promotion != null && promotion.DiscountType == "Percent")
+            {
+                bookDetail.HasPromotion = true;
+                bookDetail.PromotionName = promotion.PromotionName;
+                bookDetail.DiscountType = promotion.DiscountType;
+                bookDetail.DiscountValue = promotion.DiscountValue;
+                
+                // Tính giá sau khi áp dụng promotion (chỉ hỗ trợ Percent)
+                var discountAmount = bookDetail.TotalPrice * (promotion.DiscountValue / 100);
+                bookDetail.DiscountedPrice = bookDetail.TotalPrice - discountAmount;
+            }
+            else
+            {
+                bookDetail.HasPromotion = false;
+                bookDetail.DiscountedPrice = bookDetail.TotalPrice;
+            }
+        }
+        
+        private async Task<Promotion?> GetActivePromotionForBook(int bookId)
+        {
+            return await _bookRepo.GetActivePromotionForBook(bookId);
         }
     }
 }

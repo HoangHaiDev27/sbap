@@ -14,7 +14,7 @@ export default function OverviewTab({ bookDetail }) {
       ? description.substring(0, maxDescriptionLength) + "..."
       : description;
 
-  // Logic hiển thị chương
+  // Logic hiển thị chương (chỉ hiển thị chapter có status "Active" từ backend)
   const maxChaptersToShow = 5;
   const shouldTruncateChapters = chapters && chapters.length > maxChaptersToShow;
   const chaptersToShow = shouldTruncateChapters && !showAllChapters 
@@ -49,7 +49,10 @@ export default function OverviewTab({ bookDetail }) {
         {chapters && chapters.length > 0 ? (
           <div className="space-y-2">
             {chaptersToShow?.map((ch, index) => (
-              <div key={ch.chapterId} className="text-gray-300 text-sm bg-gray-800/30 rounded-lg px-3 py-2">
+              <div 
+                key={ch.chapterId} 
+                className="text-gray-300 text-sm bg-gray-800/30 rounded-lg px-3 py-2"
+              >
                 Chương {index + 1}: {ch.chapterTitle}
               </div>
             ))}
