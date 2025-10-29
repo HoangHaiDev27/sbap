@@ -61,6 +61,11 @@ namespace Repositories.Implementations
             {
                 await _chapterDao.UpdateAudioAsync(chapterId, audioUrl, durationSec, priceSoft, storageMeta);
             }
+
+            public async Task<bool> CheckChapterExistsAsync(int chapterId)
+            {
+                return await _chapterDao.CheckChapterExistsAsync(chapterId);
+            }
         }
     }
 

@@ -121,5 +121,10 @@ namespace DataAccess.DAO.Staff
                     .ThenInclude(u => u.UserProfile)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<Book?> GetBookByIdAsync(int bookId)
+        {
+            return await _context.Books.FindAsync(bookId);
+        }
     }
 }

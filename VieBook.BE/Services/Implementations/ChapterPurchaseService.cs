@@ -10,17 +10,23 @@ namespace Services.Implementations
     {
         private readonly IUserRepository _userRepository;
         private readonly IBookRepository _bookRepository;
+        private readonly IChapterRepository _chapterRepository;
+        private readonly IOrderItemRepository _orderItemRepository;
         private readonly INotificationService _notificationService;
         private readonly DataAccess.VieBookContext _context;
 
         public ChapterPurchaseService(
             IUserRepository userRepository,
             IBookRepository bookRepository,
+            IChapterRepository chapterRepository,
+            IOrderItemRepository orderItemRepository,
             INotificationService notificationService,
             DataAccess.VieBookContext context)
         {
             _userRepository = userRepository;
             _bookRepository = bookRepository;
+            _chapterRepository = chapterRepository;
+            _orderItemRepository = orderItemRepository;
             _notificationService = notificationService;
             _context = context;
         }
@@ -30,7 +36,7 @@ namespace Services.Implementations
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Lấy thông tin user và kiểm tra số dư
+                // 1. VALIDATE USER & WALLET
                 var user = await _userRepository.GetByIdAsync(userId);
                 if (user == null)
                 {
@@ -41,36 +47,51 @@ namespace Services.Implementations
                     };
                 }
 
-                // Kiểm tra user có tồn tại trong database không
-                var userExists = await _context.Users.AnyAsync(u => u.UserId == userId);
-                if (!userExists)
+                // 2. VALIDATE BOOK & OWNERSHIP
+                var book = await _bookRepository.GetByIdAsync(request.BookId);
+                if (book == null)
                 {
                     return new ChapterPurchaseResponseDTO
                     {
                         Success = false,
-                        Message = "User not found in database"
+                        Message = "Book not found"
                     };
                 }
 
-                // Lấy thông tin các chapter và tính tổng giá
+                // Kiểm tra user có phải là owner của sách không (không thể mua sách của mình)
+                if (book.OwnerId == userId)
+                {
+                    return new ChapterPurchaseResponseDTO
+                    {
+                        Success = false,
+                        Message = "You cannot purchase chapters from your own book"
+                    };
+                }
+
+                // 3. GET CHAPTERS INFO
                 var chapters = await _bookRepository.GetChaptersByBookIdAsync(request.BookId);
                 var chaptersToPurchase = chapters.Where(c => request.ChapterIds.Contains(c.ChapterId)).ToList();
 
                 if (chaptersToPurchase.Count != request.ChapterIds.Count)
                 {
+                    var foundChapterIds = chaptersToPurchase.Select(c => c.ChapterId).ToList();
+                    var missingChapterIds = request.ChapterIds.Except(foundChapterIds).ToList();
+
                     return new ChapterPurchaseResponseDTO
                     {
                         Success = false,
-                        Message = "Some chapters not found"
+                        Message = $"Some chapters not found or inactive. Missing chapter IDs: {string.Join(", ", missingChapterIds)}"
                     };
                 }
 
-                // Kiểm tra xem user đã mua chapter nào chưa
-                var existingPurchases = await GetUserPurchasedChaptersAsync(userId);
+                // 4. CHECK EXISTING PURCHASES
+                var existingPurchases = await _orderItemRepository.GetUserPurchasedChaptersAsync(userId);
                 var alreadyPurchasedChapterIds = existingPurchases
                     .Select(p => p.ChapterId)
                     .ToList();
-                var newChaptersToPurchase = chaptersToPurchase.Where(c => !alreadyPurchasedChapterIds.Contains(c.ChapterId)).ToList();
+                var newChaptersToPurchase = chaptersToPurchase
+                    .Where(c => !alreadyPurchasedChapterIds.Contains(c.ChapterId))
+                    .ToList();
 
                 if (newChaptersToPurchase.Count == 0)
                 {
@@ -81,9 +102,67 @@ namespace Services.Implementations
                     };
                 }
 
-                var totalCost = newChaptersToPurchase.Sum(c => c.PriceSoft ?? 0);
+                // 5. VALIDATE PURCHASE TYPE
+                if (request.PurchaseType != "soft" && request.PurchaseType != "audio" && request.PurchaseType != "both")
+                {
+                    return new ChapterPurchaseResponseDTO
+                    {
+                        Success = false,
+                        Message = "Invalid PurchaseType. Must be 'soft', 'audio', or 'both'"
+                    };
+                }
 
-                // Kiểm tra số dư
+                // 6. GET AUDIO PRICES (if needed)
+                Dictionary<int, decimal> audioPrices = new Dictionary<int, decimal>();
+                if (request.PurchaseType == "audio" || request.PurchaseType == "both")
+                {
+                    // Lấy giá audio từ bảng ChapterAudios (PriceAudio)
+                    var audioData = await _context.ChapterAudios
+                        .Where(ca => request.ChapterIds.Contains(ca.ChapterId))
+                        .GroupBy(ca => ca.ChapterId)
+                        .Select(g => new { ChapterId = g.Key, Price = g.FirstOrDefault()!.PriceAudio ?? 0 })
+                        .ToDictionaryAsync(x => x.ChapterId, x => x.Price);
+                    audioPrices = audioData;
+                }
+
+                // 7. CALCULATE TOTAL COST
+                decimal totalCost = 0;
+                if (request.PurchaseType == "soft")
+                {
+                    // Giá bản mềm từ PriceSoft trong Chapters
+                    totalCost = newChaptersToPurchase.Sum(c => c.PriceSoft ?? 0);
+                }
+                else if (request.PurchaseType == "audio")
+                {
+                    // Giá audio từ PriceSoft trong ChapterAudios
+                    totalCost = newChaptersToPurchase.Sum(c =>
+                        audioPrices.ContainsKey(c.ChapterId) ? audioPrices[c.ChapterId] : 0
+                    );
+                }
+                else if (request.PurchaseType == "both")
+                {
+                    // Giá cả 2 loại với giảm 10%
+                    foreach (var chapter in newChaptersToPurchase)
+                    {
+                        decimal softPrice = chapter.PriceSoft ?? 0;
+                        decimal audioPrice = audioPrices.ContainsKey(chapter.ChapterId) ? audioPrices[chapter.ChapterId] : 0;
+                        decimal bothPrice = softPrice + audioPrice;
+                        decimal discountedPrice = bothPrice * 0.9m; // Giảm 10%
+                        totalCost += discountedPrice;
+                    }
+                }
+
+                // 8. VALIDATE TOTAL COST
+                if (totalCost <= 0)
+                {
+                    return new ChapterPurchaseResponseDTO
+                    {
+                        Success = false,
+                        Message = "Total cost must be greater than 0. Some chapters may have invalid prices."
+                    };
+                }
+
+                // 9. VALIDATE WALLET BALANCE
                 if (user.Wallet < totalCost)
                 {
                     return new ChapterPurchaseResponseDTO
@@ -93,84 +172,142 @@ namespace Services.Implementations
                     };
                 }
 
-                // Tạo OrderItem cho từng chapter
-                var purchasedItems = new List<OrderItemDTO>();
+                // 10. CREATE ORDER ITEMS
+                var orderItemsToCreate = new List<OrderItem>();
+
                 foreach (var chapter in newChaptersToPurchase)
                 {
-                    // Kiểm tra chapter tồn tại
-                    var chapterExists = await _context.Chapters
-                        .AnyAsync(c => c.ChapterId == chapter.ChapterId);
-
-                    if (!chapterExists)
+                    if (request.PurchaseType == "both")
                     {
-                        return new ChapterPurchaseResponseDTO
+                        // Trường hợp mua cả 2: tạo 2 OrderItem riêng (soft và audio) với giá sau giảm
+                        decimal softPrice = chapter.PriceSoft ?? 0;
+                        decimal audioPrice = audioPrices.ContainsKey(chapter.ChapterId) ? audioPrices[chapter.ChapterId] : 0;
+                        decimal totalBoth = softPrice + audioPrice;
+                        decimal discount = totalBoth * 0.1m; // Giảm 10%
+
+                        // Giá sau giảm cho mỗi loại (chia theo tỷ lệ)
+                        decimal totalAfterDiscount = totalBoth - discount;
+                        decimal softDiscounted = softPrice > 0 ? (softPrice / totalBoth) * totalAfterDiscount : 0;
+                        decimal audioDiscounted = audioPrice > 0 ? (audioPrice / totalBoth) * totalAfterDiscount : 0;
+
+                        // Tạo OrderItem cho bản mềm
+                        var softOrderItem = new OrderItem
                         {
-                            Success = false,
-                            Message = $"Chapter {chapter.ChapterId} not found"
-                        };
-                    }
-
-                    var orderItem = new OrderItem
-                    {
-                        CustomerId = userId,
-                        ChapterId = chapter.ChapterId,
-                        UnitPrice = chapter.PriceSoft ?? 0,
-                        CashSpent = chapter.PriceSoft ?? 0,
-                        PaidAt = DateTime.UtcNow,
-                        OrderType = "BuyChapter"
-                    };
-
-                    _context.OrderItems.Add(orderItem);
-                }
-
-                // Lưu tất cả OrderItems cùng lúc
-                await _context.SaveChangesAsync();
-
-                // Tạo DTOs sau khi lưu thành công
-                foreach (var chapter in newChaptersToPurchase)
-                {
-                    var orderItem = _context.OrderItems
-                        .FirstOrDefault(oi => oi.CustomerId == userId && oi.ChapterId == chapter.ChapterId);
-
-                    if (orderItem != null)
-                    {
-                        purchasedItems.Add(new OrderItemDTO
-                        {
-                            OrderItemId = orderItem.OrderItemId,
+                            CustomerId = userId,
                             ChapterId = chapter.ChapterId,
-                            ChapterTitle = chapter.ChapterTitle,
-                            UnitPrice = orderItem.UnitPrice,
-                            CashSpent = orderItem.CashSpent,
-                            PaidAt = orderItem.PaidAt ?? DateTime.UtcNow,
-                            OrderType = orderItem.OrderType ?? "BuyChapter"
-                        });
+                            UnitPrice = softPrice,
+                            CashSpent = softDiscounted,
+                            PaidAt = DateTime.UtcNow,
+                            OrderType = "BuyChapterSoft"
+                        };
+                        orderItemsToCreate.Add(softOrderItem);
+
+                        // Tạo OrderItem cho bản audio (nếu có giá)
+                        if (audioPrice > 0)
+                        {
+                            var audioOrderItem = new OrderItem
+                            {
+                                CustomerId = userId,
+                                ChapterId = chapter.ChapterId,
+                                UnitPrice = audioPrice,
+                                CashSpent = audioDiscounted,
+                                PaidAt = DateTime.UtcNow,
+                                OrderType = "BuyChapterAudio"
+                            };
+                            orderItemsToCreate.Add(audioOrderItem);
+                        }
+                    }
+                    else
+                    {
+                        // Trường hợp mua riêng lẻ (soft hoặc audio)
+                        decimal unitPrice = 0;
+                        string orderType = "";
+                        
+                        if (request.PurchaseType == "soft")
+                        {
+                            unitPrice = chapter.PriceSoft ?? 0;
+                            orderType = "BuyChapterSoft";
+                        }
+                        else if (request.PurchaseType == "audio")
+                        {
+                            unitPrice = audioPrices.ContainsKey(chapter.ChapterId)
+                                ? audioPrices[chapter.ChapterId]
+                                : 0;
+                            orderType = "BuyChapterAudio";
+                        }
+
+                        var orderItem = new OrderItem
+                        {
+                            CustomerId = userId,
+                            ChapterId = chapter.ChapterId,
+                            UnitPrice = unitPrice,
+                            CashSpent = unitPrice,
+                            PaidAt = DateTime.UtcNow,
+                            OrderType = orderType
+                        };
+
+                        orderItemsToCreate.Add(orderItem);
                     }
                 }
 
-                // Trừ xu từ ví
+                // 11. SAVE ORDER ITEMS (bulk insert)
+                await _orderItemRepository.CreateOrderItemsAsync(orderItemsToCreate);
+
+                // 12. BUILD RESPONSE DTOs
+                var purchasedItems = await _orderItemRepository.GetUserPurchasedChaptersAsync(userId);
+                var latestPurchases = purchasedItems
+                    .Where(p => request.ChapterIds.Contains(p.ChapterId))
+                    .ToList();
+
+                // 13. UPDATE WALLETS
+                // Trừ xu từ ví người mua
                 await _userRepository.UpdateWalletBalanceAsync(userId, -totalCost);
 
-                // Lấy số dư mới sau khi cập nhật
-                var updatedUser = await _userRepository.GetByIdAsync(userId);
-                var remainingBalance = updatedUser?.Wallet ?? 0;
+                // Cộng tiền vào ví của owner (người sở hữu sách)
+                await _userRepository.UpdateWalletBalanceAsync(book.OwnerId, totalCost);
 
-                // Tạo thông báo
+                // 14. SEND NOTIFICATIONS
+                // Tạo thông báo cho owner về doanh thu
+                await _notificationService.CreateAsync(new CreateNotificationDTO
+                {
+                    UserId = book.OwnerId,
+                    Title = "Bạn có doanh thu mới",
+                    Body = $"Bạn nhận được {totalCost} xu từ việc bán {newChaptersToPurchase.Count} chương của sách '{book.Title}'",
+                    Type = "WALLET_RECHARGE"
+                });
+
+                // Tạo thông báo cho người mua
                 await _notificationService.CreateChapterPurchaseNotificationAsync(
                     userId,
                     request.BookId,
                     newChaptersToPurchase.Count,
-                    totalCost
+                    totalCost,
+                    request.PurchaseType
                 );
 
+                // 15. GET REMAINING BALANCE
+                var updatedUser = await _userRepository.GetByIdAsync(userId);
+                var remainingBalance = updatedUser?.Wallet ?? 0;
+
+                // 16. COMMIT TRANSACTION
                 await transaction.CommitAsync();
+
+                // 17. BUILD SUCCESS RESPONSE
+                string purchaseTypeMessage = request.PurchaseType switch
+                {
+                    "soft" => $"{latestPurchases.Count} bản mềm",
+                    "audio" => $"{latestPurchases.Count} bản audio",
+                    "both" => $"{newChaptersToPurchase.Count} chương (cả bản mềm và audio với giảm giá 10%)",
+                    _ => $"{latestPurchases.Count} chương"
+                };
 
                 return new ChapterPurchaseResponseDTO
                 {
                     Success = true,
-                    Message = $"Successfully purchased {newChaptersToPurchase.Count} chapters",
+                    Message = $"Successfully purchased {purchaseTypeMessage}",
                     TotalCost = totalCost,
                     RemainingBalance = remainingBalance,
-                    PurchasedItems = purchasedItems
+                    PurchasedItems = latestPurchases
                 };
             }
             catch (Exception ex)
@@ -192,57 +329,27 @@ namespace Services.Implementations
 
         public async Task<bool> CheckChapterOwnershipAsync(int userId, int chapterId)
         {
-            var existingPurchase = await _context.OrderItems
-                .FirstOrDefaultAsync(oi => oi.CustomerId == userId && oi.ChapterId == chapterId);
+            return await _orderItemRepository.CheckChapterOwnershipAsync(userId, chapterId);
+        }
 
-            return existingPurchase != null;
+        public async Task<bool> CheckChapterSoftOwnershipAsync(int userId, int chapterId)
+        {
+            return await _orderItemRepository.CheckChapterSoftOwnershipAsync(userId, chapterId);
+        }
+
+        public async Task<bool> CheckChapterAudioOwnershipAsync(int userId, int chapterId)
+        {
+            return await _orderItemRepository.CheckChapterAudioOwnershipAsync(userId, chapterId);
         }
 
         public async Task<List<OrderItemDTO>> GetUserPurchasedChaptersAsync(int userId)
         {
-            var purchasedItems = await _context.OrderItems
-                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
-                .Include(oi => oi.Chapter)
-                    .ThenInclude(c => c.Book)
-                .Select(oi => new OrderItemDTO
-                {
-                    OrderItemId = oi.OrderItemId,
-                    ChapterId = oi.ChapterId,
-                    ChapterTitle = oi.Chapter.ChapterTitle,
-                    BookId = oi.Chapter.BookId,
-                    UnitPrice = oi.UnitPrice,
-                    CashSpent = oi.CashSpent,
-                    PaidAt = oi.PaidAt ?? DateTime.UtcNow,
-                    OrderType = oi.OrderType ?? "BuyChapter"
-                })
-                .ToListAsync();
-
-            return purchasedItems ?? new List<OrderItemDTO>();
+            return await _orderItemRepository.GetUserPurchasedChaptersAsync(userId);
         }
 
         public async Task<List<UserPurchasedBooksDTO>> GetUserPurchasedBooksAsync(int userId)
         {
-            // Lấy tất cả sách mà user đã mua ít nhất 1 chapter
-            var purchasedBooks = await _context.OrderItems
-                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
-                .Include(oi => oi.Chapter)
-                    .ThenInclude(c => c.Book)
-                .GroupBy(oi => oi.Chapter.BookId)
-                .Select(g => new UserPurchasedBooksDTO
-                {
-                    BookId = g.Key,
-                    Title = g.First().Chapter.Book.Title,
-                    Description = g.First().Chapter.Book.Description,
-                    CoverUrl = g.First().Chapter.Book.CoverUrl,
-                    Author = g.First().Chapter.Book.Author,
-                    PurchasedChaptersCount = g.Count(),
-                    TotalSpent = g.Sum(oi => oi.CashSpent),
-                    LastPurchasedAt = g.Max(oi => oi.PaidAt!.Value),
-                    TotalChaptersCount = _context.Chapters.Count(c => c.BookId == g.Key && c.Status == "Active")
-                })
-                .ToListAsync();
-
-            return purchasedBooks ?? new List<UserPurchasedBooksDTO>();
+            return await _orderItemRepository.GetUserPurchasedBooksAsync(userId);
         }
     }
 }

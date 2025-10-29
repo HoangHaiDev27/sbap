@@ -16,6 +16,7 @@ namespace BusinessObject.Dtos
         public int DurationSec { get; set; }
         public decimal PriceSoft { get; set; }
         public DateTime UploadedAt { get; set; }
+        public string? Status { get; set; }
     }
     public class ChapterViewDTO
     {

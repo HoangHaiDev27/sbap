@@ -2,7 +2,7 @@ import { API_ENDPOINTS } from "../config/apiConfig";
 import { getToken, authFetch } from "./authApi";
 
 // Mua chapters
-export async function purchaseChapters(bookId, chapterIds) {
+export async function purchaseChapters(bookId, chapterIds, purchaseType = 'soft') {
   const res = await authFetch(API_ENDPOINTS.CHAPTER_PURCHASE.PURCHASE, {
     method: "POST",
     headers: {
@@ -10,7 +10,8 @@ export async function purchaseChapters(bookId, chapterIds) {
     },
     body: JSON.stringify({ 
       bookId: bookId,
-      chapterIds: chapterIds 
+      chapterIds: chapterIds,
+      purchaseType: purchaseType // 'soft' hoặc 'audio'
     }),
   });
   return res.json();

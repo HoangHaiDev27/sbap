@@ -7,6 +7,7 @@ namespace BusinessObject.Dtos
     {
         public List<int> ChapterIds { get; set; } = new List<int>();
         public int BookId { get; set; }
+        public string PurchaseType { get; set; } = "soft"; // "soft", "audio", hoặc "both"
     }
 
     public class ChapterPurchaseResponseDTO
