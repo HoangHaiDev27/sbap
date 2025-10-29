@@ -348,7 +348,7 @@ export async function updateChapterAudioPrice(audioId, price) {
   const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.UPDATE_AUDIO_PRICE(audioId), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ priceSoft: price }),
+    body: JSON.stringify({ priceAudio: price }),
   });
   if (!res.ok) throw new Error("Failed to update audio price");
   return res.json();
@@ -359,7 +359,7 @@ export async function updateChapterAudiosPrice(chapterId, price) {
   const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.UPDATE_CHAPTER_AUDIOS_PRICE(chapterId), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ priceSoft: price }),
+    body: JSON.stringify({ priceAudio: price }),
   });
   if (!res.ok) throw new Error("Failed to update audio prices");
   return res.json();

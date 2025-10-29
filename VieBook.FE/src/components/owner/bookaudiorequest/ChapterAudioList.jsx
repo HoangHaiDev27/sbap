@@ -43,7 +43,7 @@ export default function ChapterAudioList({ chapterId, onRefreshChapters }) {
         setExistingAudios(response.data || []);
         // Set giá từ audio đầu tiên (vì tất cả audio sẽ có cùng giá)
         if (response.data && response.data.length > 0) {
-          const firstPrice = response.data[0].priceSoft;
+          const firstPrice = response.data[0].priceAudio;
           setPriceValue(firstPrice ? firstPrice.toString() : "");
         }
       }
@@ -100,7 +100,7 @@ export default function ChapterAudioList({ chapterId, onRefreshChapters }) {
     setEditingPrice(false);
     // Khôi phục lại giá ban đầu
     if (existingAudios.length > 0) {
-      const firstPrice = existingAudios[0].priceSoft;
+      const firstPrice = existingAudios[0].priceAudio;
       setPriceValue(firstPrice ? firstPrice.toString() : "");
     }
   };

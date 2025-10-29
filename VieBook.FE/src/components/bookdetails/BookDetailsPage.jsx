@@ -611,7 +611,7 @@ export default function BookDetailPage() {
               <div className="space-y-2">
                 {chaptersWithAudio.length > 0 ? (
                   chaptersWithAudio.map((audioChapter, index) => {
-                      const isFree = !audioChapter.priceSoft || audioChapter.priceSoft === 0;
+                      const isFree = !audioChapter.priceAudio || audioChapter.priceAudio === 0;
 
                       return (
                         <div
@@ -643,7 +643,7 @@ export default function BookDetailPage() {
                                 </div>
                               ) : (
                                 <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
-                                  {audioChapter.priceSoft?.toLocaleString() || 0}
+                                  {audioChapter.priceAudio?.toLocaleString() || 0}
                                   <RiCoinLine className="w-4 h-4 text-yellow-400" />
                                 </div>
                               )}

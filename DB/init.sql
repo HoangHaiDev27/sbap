@@ -1704,7 +1704,7 @@ ChapterId     INT NOT NULL REFERENCES dbo.Chapters(ChapterId),
 UserId        INT NOT NULL REFERENCES dbo.Users(UserId),        
 AudioLink     VARCHAR(1000) NOT NULL,                 
 DurationSec   INT NULL,                               
-PriceSoft    DECIMAL(18,2) NULL,                     
+PriceAudio    DECIMAL(18,2) NULL,                     
 VoiceName     VARCHAR(50) NULL,                       
 CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );

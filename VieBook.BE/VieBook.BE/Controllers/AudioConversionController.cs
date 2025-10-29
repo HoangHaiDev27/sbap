@@ -134,7 +134,7 @@ namespace VieBook.BE.Controllers
                 var existingAudios = await _chapterAudioService.GetChapterAudiosByChapterIdAsync(chapterId);
                 if (existingAudios != null && existingAudios.Any())
                 {
-                    priceSoft = existingAudios.First().PriceSoft;
+                    priceSoft = existingAudios.First().PriceAudio;
                 }
 
                 // 🔹 Lưu thông tin audio vào bảng ChapterAudio
@@ -144,7 +144,7 @@ namespace VieBook.BE.Controllers
                     UserId = userId,
                     AudioLink = audioUrl,
                     DurationSec = (int)Math.Round(durationSeconds),
-                    PriceSoft = priceSoft, // Copy giá từ audio đã có
+                    PriceAudio = priceSoft, // Copy giá từ audio đã có
                     VoiceName = voiceName,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -186,7 +186,7 @@ namespace VieBook.BE.Controllers
                     UserId = ca.UserId,
                     AudioLink = ca.AudioLink,
                     DurationSec = ca.DurationSec,
-                    PriceSoft = ca.PriceSoft,
+                    PriceAudio = ca.PriceAudio,
                     CreatedAt = ca.CreatedAt,
                     VoiceName = ca.VoiceName ?? "unknown",
                     UserName = ca.User?.UserProfile?.FullName ?? ca.User?.Email ?? "Unknown"
@@ -230,7 +230,7 @@ namespace VieBook.BE.Controllers
                     UserId = latestAudio.UserId,
                     AudioLink = latestAudio.AudioLink,
                     DurationSec = latestAudio.DurationSec,
-                    PriceSoft = latestAudio.PriceSoft,
+                    PriceAudio = latestAudio.PriceAudio,
                     CreatedAt = latestAudio.CreatedAt,
                     VoiceName = latestAudio.VoiceName ?? "unknown",
                     UserName = latestAudio.User?.UserProfile?.FullName ?? latestAudio.User?.Email ?? "Unknown"
@@ -281,7 +281,7 @@ namespace VieBook.BE.Controllers
                         audioId = ca.AudioId,
                         audioLink = ca.AudioLink,
                         durationSec = ca.DurationSec,
-                        priceSoft = ca.PriceSoft,
+                        priceAudio = ca.PriceAudio,
                         voiceName = ca.VoiceName,
                         createdAt = ca.CreatedAt
                     };
@@ -331,14 +331,14 @@ namespace VieBook.BE.Controllers
                 if (chapterAudio == null)
                     return NotFound($"Audio with ID {audioId} not found.");
 
-                chapterAudio.PriceSoft = request.PriceSoft;
+                chapterAudio.PriceAudio = request.PriceAudio;
                 await _chapterAudioService.UpdateChapterAudioAsync(chapterAudio);
 
                 return Ok(new
                 {
                     success = true,
                     message = "Audio price updated successfully.",
-                    priceSoft = chapterAudio.PriceSoft
+                    priceAudio = chapterAudio.PriceAudio
                 });
             }
             catch (Exception ex)
@@ -352,13 +352,13 @@ namespace VieBook.BE.Controllers
         {
             try
             {
-                await _chapterAudioService.UpdateAllAudioPricesByChapterIdAsync(chapterId, request.PriceSoft);
+                await _chapterAudioService.UpdateAllAudioPricesByChapterIdAsync(chapterId, request.PriceAudio);
 
                 return Ok(new
                 {
                     success = true,
                     message = "All audio prices updated successfully.",
-                    priceSoft = request.PriceSoft
+                    priceAudio = request.PriceAudio
                 });
             }
             catch (Exception ex)

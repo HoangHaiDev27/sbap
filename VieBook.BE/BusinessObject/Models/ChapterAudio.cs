@@ -15,7 +15,7 @@ public partial class ChapterAudio
 
     public int? DurationSec { get; set; }          
 
-    public decimal? PriceSoft { get; set; }        
+    public decimal? PriceAudio { get; set; }        
 
     public DateTime CreatedAt { get; set; }         
 

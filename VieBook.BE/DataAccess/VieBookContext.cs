@@ -353,7 +353,7 @@ public partial class VieBookContext : DbContext
                 .HasMaxLength(1000)
                 .IsUnicode(false);
 
-            entity.Property(e => e.PriceSoft)
+            entity.Property(e => e.PriceAudio)
                 .HasColumnType("decimal(18, 2)");
 
             entity.Property(e => e.VoiceName)
