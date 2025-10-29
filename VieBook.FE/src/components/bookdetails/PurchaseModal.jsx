@@ -24,6 +24,7 @@ export default function PurchaseModal({
   bookId,
   chapters = [], 
   isOwner = false,
+  promotionPercent = 0,
   onPurchaseSuccess 
 }) {
   const [selectedChapters, setSelectedChapters] = useState([]);
@@ -125,28 +126,36 @@ export default function PurchaseModal({
   const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
   const softTotalPrice = softOnlyChapters.reduce((sum, chapterId) => {
     const chapter = chapters.find(ch => ch.chapterId === chapterId);
-    return sum + (chapter?.priceSoft || 0);
+    const basePrice = chapter?.priceSoft || 0;
+    return sum + (promotionPercent > 0 
+      ? basePrice * (1 - promotionPercent / 100) 
+      : basePrice);
   }, 0);
 
   // Tính tổng giá cho bản audio (chỉ những chapter không có trong selectedSoftChapters)
   const audioOnlyChapters = selectedAudioChapters.filter(id => !selectedSoftChapters.includes(id));
   const audioTotalPrice = audioOnlyChapters.reduce((sum, chapterId) => {
     const audioPrice = audioPrices[chapterId] || 0;
-    return sum + audioPrice;
+    return sum + (promotionPercent > 0 
+      ? audioPrice * (1 - promotionPercent / 100) 
+      : audioPrice);
   }, 0);
 
-  // Tính tổng giá cho cả hai (với giảm 10%)
+  // Tính tổng giá cho cả hai (với giảm 10% combo, và promotion nếu có)
   const bothChapters = selectedSoftChapters.filter(id => selectedAudioChapters.includes(id));
   const bothTotalPrice = bothChapters.reduce((sum, chapterId) => {
     const chapter = chapters.find(ch => ch.chapterId === chapterId);
-    const softPrice = chapter?.priceAudio || 0;
+    const softPrice = chapter?.priceSoft || 0;
     const audioPrice = audioPrices[chapterId] || 0;
     const totalBoth = softPrice + audioPrice;
-    return sum + (totalBoth * 0.9); // Giảm 10%
+    const comboPrice = totalBoth * 0.9; // Giảm 10% combo
+    return sum + (promotionPercent > 0 
+      ? comboPrice * (1 - promotionPercent / 100) 
+      : comboPrice);
   }, 0);
 
-  // Tổng giá tất cả
-  const totalPrice = softTotalPrice + audioTotalPrice + bothTotalPrice;
+  // Tổng giá tất cả (làm tròn 1 chữ số thập phân do giảm 10%)
+  const totalPrice = parseFloat((softTotalPrice + audioTotalPrice + bothTotalPrice).toFixed(1));
 
   // Xử lý chọn/bỏ chọn bản mềm
   const toggleSoftChapter = (chapterId) => {
@@ -465,11 +474,25 @@ export default function PurchaseModal({
                         <div className="flex items-center gap-2 mb-1">
                           <RiBookOpenLine className="text-sm" />
                           <span className="font-medium text-xs">Bản mềm</span>
+                          {promotionPercent > 0 && (
+                            <span className="text-[10px] bg-pink-600/80 text-white px-1 rounded">-{promotionPercent}%</span>
+                          )}
                           {softDisabled && <RiCheckLine className="text-xs" />}
                         </div>
-                        <div className="text-xs text-orange-400 font-bold">
-                          {chapter.priceSoft?.toLocaleString() || 0} xu
-                        </div>
+                        {promotionPercent > 0 ? (
+                          <div className="flex flex-col items-start">
+                            <div className="text-xs text-gray-500 line-through">
+                              {(chapter.priceSoft || 0).toLocaleString()} xu
+                            </div>
+                            <div className="text-xs text-orange-400 font-bold">
+                              {parseFloat(((chapter.priceSoft || 0) * (1 - promotionPercent / 100)).toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-orange-400 font-bold">
+                            {chapter.priceSoft?.toLocaleString() || 0} xu
+                          </div>
+                        )}
                       </button>
                       
                       {/* Bản audio */}
@@ -486,13 +509,27 @@ export default function PurchaseModal({
                           }`}
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            <RiPlayCircleLine className="text-sm" />
-                            <span className="font-medium text-xs">Bản audio</span>
+                          <RiPlayCircleLine className="text-sm" />
+                          <span className="font-medium text-xs">Bản audio</span>
+                          {promotionPercent > 0 && (
+                            <span className="text-[10px] bg-pink-600/80 text-white px-1 rounded">-{promotionPercent}%</span>
+                          )}
                             {audioDisabled && <RiCheckLine className="text-xs" />}
                           </div>
-                          <div className="text-xs text-green-400 font-bold">
-                            {audioPrices[chapter.chapterId]?.toLocaleString() || 0} xu
-                          </div>
+                          {promotionPercent > 0 ? (
+                            <div className="flex flex-col items-start">
+                              <div className="text-xs text-gray-500 line-through">
+                                {(audioPrices[chapter.chapterId] || 0).toLocaleString()} xu
+                              </div>
+                              <div className="text-xs text-green-400 font-bold">
+                                {parseFloat(((audioPrices[chapter.chapterId] || 0) * (1 - promotionPercent / 100)).toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-green-400 font-bold">
+                              {audioPrices[chapter.chapterId]?.toLocaleString() || 0} xu
+                            </div>
+                          )}
                         </button>
                       )}
                       
@@ -512,23 +549,30 @@ export default function PurchaseModal({
                           <div className="flex items-center gap-2 mb-1">
                             <RiCheckLine className="text-sm" />
                             <span className="font-medium text-xs">Cả hai</span>
-                            {bothDisabled ? (
+                            {promotionPercent > 0 && (
+                              <span className="text-[10px] bg-pink-600/80 text-white px-1 rounded">-{promotionPercent}%</span>
+                            )}
+                            {bothDisabled && (
                               <RiCheckLine className="text-xs" />
-                            ) : (
-                              <span className="text-xs bg-green-600 px-1 rounded">-10%</span>
                             )}
                           </div>
                           {bothDisabled ? (
                             <div className="text-xs text-green-400 font-bold">Đã mua</div>
                           ) : (
-                            <div className="flex flex-col items-start">
-                              <div className="text-xs text-gray-500 line-through">
-                                {((chapter.priceAudio || 0) + (audioPrices[chapter.chapterId] || 0)).toLocaleString()} xu
+                            promotionPercent > 0 ? (
+                              <div className="flex flex-col items-start">
+                                <div className="text-xs text-gray-500 line-through">
+                                  {((((chapter.priceSoft || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9).toFixed(0)).toLocaleString()} xu
+                                </div>
+                                <div className="text-xs text-blue-400 font-bold">
+                                  {parseFloat(((((chapter.priceSoft || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9 * (1 - promotionPercent / 100))).toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu
+                                </div>
                               </div>
+                            ) : (
                               <div className="text-xs text-blue-400 font-bold">
-                                {((((chapter.priceAudio || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9).toFixed(0)).toLocaleString()} xu
+                                {((((chapter.priceSoft || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9).toFixed(0)).toLocaleString()} xu
                               </div>
-                            </div>
+                            )
                           )}
                         </button>
                       )}
@@ -560,7 +604,7 @@ export default function PurchaseModal({
             <div className="text-left sm:text-right">
               <div className="text-gray-400 text-xs sm:text-sm">Tổng cộng</div>
               <div className="text-orange-500 font-bold text-base sm:text-lg md:text-xl flex items-center gap-1">
-                {totalPrice.toLocaleString()}
+                {parseFloat(totalPrice.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                 <RiCoinLine className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
               </div>
             </div>

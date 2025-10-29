@@ -21,7 +21,21 @@ namespace Repositories.Implementations
         }
         public Task<List<Book>> GetAllAsync() => _bookDao.GetAllAsync();
         public Task<Book?> GetByIdAsync(int id) => _bookDao.GetByIdAsync(id);
-        public Task<Book?> GetBookDetailAsync(int id) => _bookDao.GetBookDetailAsync(id);
+        public async Task<Book?> GetBookDetailAsync(int id)
+        {
+            // Lấy thông tin sách (đã include các navigation cần thiết)
+            var book = await _bookDao.GetBookDetailAsync(id);
+            if (book == null)
+            {
+                return null;
+            }
+
+            // Thay thế danh sách chapters bằng các chapter có Status = "Active"
+            var activeChapters = await _bookDao.GetChaptersActiveByBookIdAsync(id);
+            book.Chapters = activeChapters;
+
+            return book;
+        }
         public Task<Book?> GetBookDetail(int id) => _bookDao.GetBookDetail(id);
         public Task AddAsync(Book book) => _bookDao.AddAsync(book);
         public Task UpdateAsync(Book book) => _bookDao.UpdateAsync(book);
