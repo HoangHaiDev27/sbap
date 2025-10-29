@@ -230,9 +230,8 @@ CREATE TABLE dbo.Promotions (
   OwnerId       INT NOT NULL REFERENCES dbo.Users(UserId),
   PromotionName NVARCHAR(200) NOT NULL,
   Description   NVARCHAR(1000) NULL,
-  DiscountType  VARCHAR(10) NOT NULL,            -- Percent/Amount (không CHECK)
+  DiscountType  VARCHAR(10) NOT NULL,            -- Percent
   DiscountValue DECIMAL(10,2) NOT NULL,
-  Quantity      INT NOT NULL,
   StartAt       DATETIME2 NOT NULL,
   EndAt         DATETIME2 NOT NULL,
   IsActive      BIT NOT NULL DEFAULT(1)
@@ -911,8 +910,8 @@ IF @Book2Id IS NOT NULL
 /* =========================================================
    Promotions
    ========================================================= */
-INSERT INTO dbo.Promotions(OwnerId, PromotionName, Description, DiscountType, DiscountValue, Quantity, StartAt, EndAt, IsActive)
-VALUES (@OwnerId, N'Back to School', N'20% off selected programming chapters', 'Percent', 20.00, 100,
+INSERT INTO dbo.Promotions(OwnerId, PromotionName, Description, DiscountType, DiscountValue, StartAt, EndAt, IsActive)
+VALUES (@OwnerId, N'Back to School', N'20% off selected programming chapters', 'Percent', 20.00,
         DATEADD(DAY,-3,SYSUTCDATETIME()), DATEADD(DAY,30,SYSUTCDATETIME()), 1);
 
 IF @Book2Id IS NOT NULL
