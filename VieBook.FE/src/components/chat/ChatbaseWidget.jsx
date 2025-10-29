@@ -14,6 +14,37 @@ export default function ChatbaseWidget() {
     const uid = getUserId() || "guest";
     return `chat_history_${uid}`;
   };
+const renderTextWithLinks = (text) => {
+  if (!text) return null;
+
+  const lines = text.split(/\n+/);
+
+  return lines.map((line, idx) => {
+    const linkRegex = /\[Xem chi tiết\]\((https?:\/\/[^\s)]+)\)/;
+    const match = line.match(linkRegex);
+
+    if (match) {
+      const url = match[1];
+
+      // Thay toàn bộ đoạn [Xem chi tiết](...) bằng “Link chi tiết: <a>Xem chi tiết</a>”
+      line = line.replace(
+        linkRegex,
+        `<a href="${url}" class="underline text-blue-300 hover:text-blue-100">Xem chi tiết</a>`
+      );
+    }
+
+    // ✅ Bỏ luôn dấu ** (không hiển thị in đậm)
+    line = line.replace(/\*\*/g, "");
+
+    return (
+      <div
+        key={idx}
+        className="mb-1 break-words whitespace-pre-wrap"
+        dangerouslySetInnerHTML={{ __html: line }}
+      />
+    );
+  });
+};
 
   // Scroll xuống cuối khi có tin nhắn mới
   useEffect(() => {
@@ -83,6 +114,7 @@ export default function ChatbaseWidget() {
     return () => window.removeEventListener("auth:changed", handleAuthChanged);
   }, []);
 
+
   // Gửi tin nhắn
   const handleSend = async (customText) => {
     const text = customText || input.trim();
@@ -139,7 +171,7 @@ export default function ChatbaseWidget() {
           💬
         </button>
       ) : (
-        <div className="w-80 h-96 bg-[#0f172a] text-gray-100 rounded-xl shadow-2xl flex flex-col border border-gray-700">
+        <div className="w-[400px] h-[500px] bg-[#0f172a] text-gray-100 rounded-xl shadow-2xl flex flex-col border border-gray-700">
           {/* Header */}
           <div className="bg-[#0f172a] text-gray-100 px-4 py-3 flex items-center justify-between rounded-t-xl border-b border-gray-700">
             <div className="flex items-center gap-2">
@@ -173,13 +205,14 @@ export default function ChatbaseWidget() {
                     : "bg-gray-800 border border-gray-700 text-gray-100 mr-auto text-start rounded-bl-none"
                 }`}
                 style={{
-                  textAlign: "left",
-                  textIndent: 0,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
+                    maxWidth: '80%',        // không dài quá khung chat
+                    width: 'fit-content',   // co giãn theo nội dung
+                    minWidth: '40px',       // tránh quá nhỏ
+                    wordBreak: 'break-word',
+                    textAlign: 'left'
                 }}
               >
-                {msg.text}
+                 {renderTextWithLinks(msg.text)}
               </div>
             ))}
             {loading && <div className="italic text-gray-400 text-sm">VieBook đang lọc thông tin...</div>}
