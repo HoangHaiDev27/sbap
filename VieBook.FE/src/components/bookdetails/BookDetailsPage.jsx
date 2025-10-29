@@ -155,7 +155,18 @@ export default function BookDetailPage() {
     chapters,
     reviews,
     totalPrice,
+    hasPromotion,
+    discountType,
+    discountValue,
+    discountedPrice,
   } = bookDetail;
+
+  const computedPromotionPercent =
+    hasPromotion && discountType === 'Percent' && (discountValue || 0) > 0
+      ? (discountValue || 0)
+      : (typeof discountedPrice === 'number' && discountedPrice < totalPrice && totalPrice > 0
+          ? Math.round((1 - (discountedPrice / totalPrice)) * 100)
+          : 0);
 
   const hasAudio = chaptersWithAudio.length > 0;
   const currentUserId = getUserId();
@@ -391,6 +402,7 @@ export default function BookDetailPage() {
         bookId={id}
         chapters={chapters}
         isOwner={isOwner}
+        promotionPercent={computedPromotionPercent}
         onPurchaseSuccess={async (newlyPurchasedChapters) => {
           console.log("Newly purchased chapters:", newlyPurchasedChapters);
           // Cập nhật state ngay lập tức bằng cách thêm các chương vừa mua
@@ -462,7 +474,7 @@ export default function BookDetailPage() {
                   const isFree =
                     !chapter.priceSoft || chapter.priceSoft === 0;
                   const isDisabled =
-                    !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
+                    !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree && !isOwner);
                   const chapterNumber = index + 1;
 
                   // Debug log
@@ -484,7 +496,7 @@ export default function BookDetailPage() {
                           toast.error("Bạn phải đăng nhập để đọc chương");
                           return;
                         }
-                        if (!isOwned && !isFree) {
+                        if (!isOwned && !isFree && !isOwner) {
                           toast.error("Bạn cần mua chương này để đọc");
                           return;
                         }
@@ -505,6 +517,11 @@ export default function BookDetailPage() {
                                 "chương"
                               ) || ""}
                             </h3>
+                              {isOwner && (
+                                <span className="text-green-400 text-xs font-medium bg-green-600/20 px-2 py-0.5 rounded">
+                                  Sách của bạn – Có quyền đọc
+                                </span>
+                              )}
                             {isOwned && (
                               <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
                             )}
@@ -552,7 +569,7 @@ export default function BookDetailPage() {
                                 Bạn phải đăng nhập để đọc chương
                               </span>
                             )}
-                            {isLoggedIn && !isOwned && !isFree && (
+                            {isLoggedIn && !isOwner && !isOwned && !isFree && (
                               <span className="flex items-center gap-1 text-orange-400 font-medium">
                                 <svg
                                   className="w-4 h-4"
@@ -584,10 +601,10 @@ export default function BookDetailPage() {
                                 Chương không có bản mềm
                               </span>
                             )}
-                            {isLoggedIn && isOwned && hasSoftUrl && (
+                            {isLoggedIn && (isOwned || isOwner) && hasSoftUrl && (
                               <span className="flex items-center gap-1 text-green-400 font-medium">
                                 <RiCheckboxCircleLine className="w-4 h-4" />
-                                Đã mua
+                                {isOwner ? "Sách của bạn – Có quyền đọc" : "Đã mua"}
                               </span>
                             )}
                           </div>
