@@ -51,7 +51,10 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.TotalPrice,
                     opt => opt.MapFrom(src => src.Chapters
                         .Where(ch => ch.Status == "Active")
-                        .Sum(ch => ch.PriceSoft ?? 0))); // Chỉ tính giá Soft, không cộng audio
+                        .Sum(ch => (ch.PriceSoft ?? 0) + 
+                                   (ch.ChapterAudios != null && ch.ChapterAudios.Any() 
+                                       ? ch.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                       : 0)))); // Tính cả giá Soft + Audio
             // Book → BookDTO
             CreateMap<Book, BookDTO>()
                 .ForMember(dest => dest.OwnerName,
@@ -63,7 +66,10 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.TotalPrice,
                     opt => opt.MapFrom(src => src.Chapters
                         .Where(c => c.Status == "Active")
-                        .Sum(c => c.PriceSoft ?? 0))) // Chỉ tính giá Soft, không cộng audio
+                        .Sum(c => (c.PriceSoft ?? 0) + 
+                                  (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                      ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                      : 0)))) // Tính cả giá Soft + Audio
                 .ForMember(dest => dest.Rating,
                     opt => opt.MapFrom(src => src.BookReviews.Any()
                         ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
@@ -111,7 +117,10 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Price,
                 opt => opt.MapFrom(src => src.Chapters
                     .Where(c => c.Status == "Active")
-                    .Sum(c => c.PriceSoft ?? 0))) // Chỉ tính giá Soft, không cộng audio
+                    .Sum(c => (c.PriceSoft ?? 0) + 
+                              (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                  ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                  : 0)))) // Tính cả giá Soft + Audio
             .ForMember(dest => dest.Rating,
                 opt => opt.MapFrom(src => src.BookReviews.Any()
                     ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)

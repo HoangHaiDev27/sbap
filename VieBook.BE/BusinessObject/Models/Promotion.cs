@@ -17,8 +17,6 @@ public partial class Promotion
 
     public decimal DiscountValue { get; set; }
 
-    public int Quantity { get; set; }
-
     public DateTime StartAt { get; set; }
 
     public DateTime EndAt { get; set; }
