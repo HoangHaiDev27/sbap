@@ -7,13 +7,25 @@ import { getUserId } from "../../../api/authApi";
 const ITEMS_PER_PAGE = 6;
 
 function getPromotionStatus(promo) {
-  const now = new Date();
-  const start = new Date(promo.startAt);
-  const end = new Date(promo.endAt);
+  // So sánh timestamp chính xác đến millisecond
+  const now = new Date().getTime();
+  const start = new Date(promo.startAt).getTime();
+  const end = new Date(promo.endAt).getTime();
 
-  if (now < start) return { label: "Sắp diễn ra", className: "bg-yellow-600" };
-  if (now > end) return { label: "Kết thúc", className: "bg-gray-500" };
-  if (promo.isActive) return { label: "Đang hoạt động", className: "bg-green-600" };
+  // Ưu tiên kiểm tra thời gian trước
+  if (now < start) {
+    return { label: "Sắp diễn ra", className: "bg-yellow-600" };
+  }
+  if (now > end) {
+    return { label: "Kết thúc", className: "bg-gray-500" };
+  }
+  // Nếu đang trong khoảng thời gian, kiểm tra isActive
+  if (now >= start && now <= end) {
+    if (promo.isActive) {
+      return { label: "Đang hoạt động", className: "bg-green-600" };
+    }
+    return { label: "Không hoạt động", className: "bg-red-600" };
+  }
   return { label: "Không hoạt động", className: "bg-red-600" };
 }
 
