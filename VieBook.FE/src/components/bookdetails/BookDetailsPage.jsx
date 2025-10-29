@@ -507,7 +507,7 @@ export default function BookDetailPage() {
                         window.location.href = `/reader/${id}/chapter/${chapter.chapterId}`;
                       }}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-medium text-white text-sm sm:text-base truncate">
