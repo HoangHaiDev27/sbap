@@ -259,7 +259,7 @@ CREATE TABLE dbo.OrderItems (
 );
 ALTER TABLE dbo.OrderItems
 ADD CONSTRAINT CK_OrderItems_OrderType
-CHECK (OrderType IN ('BuyChapter', 'Refund'));
+CHECK (OrderType IN ('BuyChapter', 'BuyChapterSoft', 'BuyChapterAudio', 'BuyChapterBoth', 'Refund'));
 
 
 -- Index để tra cứu nhanh

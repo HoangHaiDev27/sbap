@@ -29,6 +29,25 @@ export default function BookCarousel({
     });
   };
 
+  // Function để hiển thị trạng thái dựa trên CompletionStatus
+  const getCompletionStatusText = (completionStatus) => {
+    if (completionStatus === "Completed") {
+      return "Đã ra trọn bộ";
+    } else if (completionStatus === "Ongoing") {
+      return "Đang phát hành";
+    }
+    return "Đang phát hành"; // Default
+  };
+
+  const getCompletionStatusColor = (completionStatus) => {
+    if (completionStatus === "Completed") {
+      return "bg-green-600";
+    } else if (completionStatus === "Ongoing") {
+      return "bg-orange-600";
+    }
+    return "bg-orange-600"; // Default
+  };
+
   return (
     <div className="space-y-6 relative">
       {/* Header */}
@@ -107,6 +126,15 @@ export default function BookCarousel({
                       className="w-full h-80 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
                     />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-lg"></div>
+                    
+                    {/* Trạng thái CompletionStatus - đè lên hình ảnh */}
+                    {book.completionStatus && (
+                      <div className="absolute top-3 left-3">
+                        <span className={`px-2 py-1 text-xs text-white rounded-full ${getCompletionStatusColor(book.completionStatus)} shadow-lg`}>
+                          {getCompletionStatusText(book.completionStatus)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <h3 className="text-base font-semibold text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
                     {book.title}

@@ -17,7 +17,7 @@ namespace VieBook.BE.Controllers
         private readonly IBookService _bookService;
         private readonly IMapper _mapper;
         private readonly IBookApprovalService _bookApprovalService;
-        
+
         public BooksController(IBookService bookService, IMapper mapper, IBookApprovalService bookApprovalService)
         {
             _bookService = bookService;
@@ -75,7 +75,7 @@ namespace VieBook.BE.Controllers
 
             // BookApproval sẽ được tạo sau khi owner submit sách để review
             // Không tự động tạo khi tạo sách
-            
+
             return Ok(new { bookId = book.BookId });
         }
 
@@ -122,6 +122,50 @@ namespace VieBook.BE.Controllers
             await _bookService.DeleteAsync(book);
             return NoContent();
         }
+        // PATCH: api/books/{id}/completion-status
+        [HttpPatch("{id:int}/completion-status")]
+        public async Task<IActionResult> UpdateCompletionStatus(int id, [FromBody] UpdateCompletionStatusDTO dto)
+        {
+            try
+            {
+                var book = await _bookService.GetByIdAsync(id);
+                if (book == null)
+                    return NotFound();
+
+                book.CompletionStatus = dto.CompletionStatus;
+
+                // Cập nhật UploadStatus nếu có
+                if (!string.IsNullOrEmpty(dto.UploadStatus))
+                {
+                    book.UploadStatus = dto.UploadStatus;
+                }
+
+                book.UpdatedAt = DateTime.UtcNow;
+
+                await _bookService.UpdateAsync(book);
+                return Ok(new { message = "Book status updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/books/{bookId}/chapters/audio-prices
+        [HttpGet("{bookId:int}/chapters/audio-prices")]
+        public async Task<IActionResult> GetChapterAudioPrices(int bookId)
+        {
+            try
+            {
+                var audioPrices = await _bookService.GetChapterAudioPricesAsync(bookId);
+                return Ok(audioPrices);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // GET: api/books/owner/{ownerId}
         [HttpGet("owner/{ownerId:int}")]
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooksByOwner(int ownerId)
@@ -153,6 +197,58 @@ namespace VieBook.BE.Controllers
             if (books == null || !books.Any())
                 return NotFound("Không có sách audio nào.");
             return Ok(books);
+        }
+
+        // GET: api/books/{bookId}/check-active-chapters
+        [HttpGet("{bookId:int}/check-active-chapters")]
+        public async Task<IActionResult> CheckActiveChapters(int bookId)
+        {
+            try
+            {
+                var hasActiveChapters = await _bookService.CheckBookHasActiveChaptersAsync(bookId);
+                return Ok(new { hasActiveChapters });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // PATCH: api/books/{bookId}/status
+        [HttpPatch("{bookId:int}/status")]
+        public async Task<IActionResult> UpdateBookStatus(int bookId, [FromBody] UpdateBookStatusDTO dto)
+        {
+            try
+            {
+                var book = await _bookService.GetByIdAsync(bookId);
+                if (book == null)
+                    return NotFound();
+
+                book.Status = dto.Status;
+                book.UpdatedAt = DateTime.UtcNow;
+
+                await _bookService.UpdateAsync(book);
+                return Ok(new { message = "Book status updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/books/{bookId}/check-all-chapters-active
+        [HttpGet("{bookId:int}/check-all-chapters-active")]
+        public async Task<IActionResult> CheckAllChaptersActive(int bookId)
+        {
+            try
+            {
+                var allChaptersActive = await _bookService.CheckAllChaptersActiveAsync(bookId);
+                return Ok(new { hasAllActive = allChaptersActive });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // GET: api/books/audio/{id}
@@ -236,6 +332,36 @@ namespace VieBook.BE.Controllers
             if (books == null || !books.Any())
                 return NotFound("Không có sách đề xuất nào.");
             return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
+        }
+
+        // GET: api/books/{bookId}/check-draft-chapters
+        [HttpGet("{bookId:int}/check-draft-chapters")]
+        public async Task<IActionResult> CheckDraftChapters(int bookId)
+        {
+            try
+            {
+                var hasDraftChapters = await _bookService.CheckBookHasDraftChaptersAsync(bookId);
+                return Ok(new { hasDraftChapters });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // PUT: api/books/{bookId}/update-draft-chapters-to-inactive
+        [HttpPut("{bookId:int}/update-draft-chapters-to-inactive")]
+        public async Task<IActionResult> UpdateDraftChaptersToInActive(int bookId)
+        {
+            try
+            {
+                await _bookService.UpdateDraftChaptersToInActiveAsync(bookId);
+                return Ok(new { message = "Draft chapters updated to InActive successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

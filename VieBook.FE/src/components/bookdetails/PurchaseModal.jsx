@@ -14,6 +14,7 @@ import { useCoinsStore } from "../../hooks/stores/coinStore";
 import { useNotificationStore } from "../../hooks/stores/notificationStore";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { purchaseChapters, getMyPurchases } from "../../api/chapterPurchaseApi";
+import { getChapterAudioPrices } from "../../api/ownerBookApi";
 import toast from "react-hot-toast";
 
 export default function PurchaseModal({ 
@@ -22,13 +23,19 @@ export default function PurchaseModal({
   bookTitle, 
   bookId,
   chapters = [], 
+  isOwner = false,
   onPurchaseSuccess 
 }) {
   const [selectedChapters, setSelectedChapters] = useState([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchasedChapters, setPurchasedChapters] = useState([]);
+  const [purchasedSoftChapters, setPurchasedSoftChapters] = useState([]);
+  const [purchasedAudioChapters, setPurchasedAudioChapters] = useState([]);
   const [loadingPurchases, setLoadingPurchases] = useState(false);
   const [buttonState, setButtonState] = useState('normal'); // Track button state: 'normal', 'selecting', 'deselecting'
+  const [selectedSoftChapters, setSelectedSoftChapters] = useState([]);
+  const [selectedAudioChapters, setSelectedAudioChapters] = useState([]);
+  const [audioPrices, setAudioPrices] = useState({});
   
   const { coins, setCoins } = useCoinsStore();
   const { addNotification } = useNotificationStore();
@@ -39,8 +46,27 @@ export default function PurchaseModal({
   useEffect(() => {
     if (isOpen && userId) {
       loadPurchasedChapters();
+      loadAudioPrices();
     }
   }, [isOpen, userId]);
+
+  // Load audio prices
+  const loadAudioPrices = async () => {
+    try {
+      const response = await getChapterAudioPrices(bookId);
+      // Backend trả về Dictionary hoặc object với chapterId làm key
+      if (response && typeof response === 'object') {
+        setAudioPrices(response);
+      } else {
+        console.warn("Audio prices response format unexpected:", response);
+        setAudioPrices({});
+      }
+    } catch (err) {
+      console.error("Failed to load audio prices:", err);
+      // Set empty object nếu lỗi để tránh crash
+      setAudioPrices({});
+    }
+  };
 
   const loadPurchasedChapters = async () => {
     try {
@@ -52,16 +78,42 @@ export default function PurchaseModal({
       const purchases = response?.data || [];
       console.log("All purchases data:", purchases);
       
-      // Lấy tất cả chương đã mua (không filter theo bookId)
+      // Phân loại chapters đã mua theo loại
       const purchasedChapterIds = [];
+      const softChapterIds = [];
+      const audioChapterIds = [];
       
       if (Array.isArray(purchases)) {
-        // Lấy tất cả chapterIds đã mua
-        purchasedChapterIds.push(...purchases.map(p => p.chapterId));
+        purchases.forEach(p => {
+          const chapterId = p.chapterId;
+          
+          // Thêm vào danh sách chung
+          if (!purchasedChapterIds.includes(chapterId)) {
+            purchasedChapterIds.push(chapterId);
+          }
+          
+          // Phân loại theo OrderType
+          if (p.orderType === 'BuyChapterSoft' || p.orderType === 'BuyChapter') {
+            if (!softChapterIds.includes(chapterId)) {
+              softChapterIds.push(chapterId);
+            }
+          }
+          
+          if (p.orderType === 'BuyChapterAudio') {
+            if (!audioChapterIds.includes(chapterId)) {
+              audioChapterIds.push(chapterId);
+            }
+          }
+        });
       }
       
       console.log("Purchased chapter IDs for all books:", purchasedChapterIds);
+      console.log("Purchased soft chapters:", softChapterIds);
+      console.log("Purchased audio chapters:", audioChapterIds);
+      
       setPurchasedChapters(purchasedChapterIds);
+      setPurchasedSoftChapters(softChapterIds);
+      setPurchasedAudioChapters(audioChapterIds);
     } catch (error) {
       console.error("Error loading purchased chapters:", error);
     } finally {
@@ -69,29 +121,76 @@ export default function PurchaseModal({
     }
   };
 
-  // Tính tổng giá
-  const totalPrice = selectedChapters.reduce((sum, chapterId) => {
+  // Tính tổng giá cho bản mềm (chỉ những chapter không có trong selectedAudioChapters)
+  const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
+  const softTotalPrice = softOnlyChapters.reduce((sum, chapterId) => {
     const chapter = chapters.find(ch => ch.chapterId === chapterId);
     return sum + (chapter?.priceAudio || 0);
   }, 0);
 
-  // Xử lý chọn/bỏ chọn chapter
-  const toggleChapter = (chapterId) => {
-    // Không cho phép chọn chương đã mua
-    if (purchasedChapters.includes(chapterId)) {
-      return;
-    }
+  // Tính tổng giá cho bản audio (chỉ những chapter không có trong selectedSoftChapters)
+  const audioOnlyChapters = selectedAudioChapters.filter(id => !selectedSoftChapters.includes(id));
+  const audioTotalPrice = audioOnlyChapters.reduce((sum, chapterId) => {
+    const audioPrice = audioPrices[chapterId] || 0;
+    return sum + audioPrice;
+  }, 0);
+
+  // Tính tổng giá cho cả hai (với giảm 10%)
+  const bothChapters = selectedSoftChapters.filter(id => selectedAudioChapters.includes(id));
+  const bothTotalPrice = bothChapters.reduce((sum, chapterId) => {
+    const chapter = chapters.find(ch => ch.chapterId === chapterId);
+    const softPrice = chapter?.priceAudio || 0;
+    const audioPrice = audioPrices[chapterId] || 0;
+    const totalBoth = softPrice + audioPrice;
+    return sum + (totalBoth * 0.9); // Giảm 10%
+  }, 0);
+
+  // Tổng giá tất cả
+  const totalPrice = softTotalPrice + audioTotalPrice + bothTotalPrice;
+
+  // Xử lý chọn/bỏ chọn bản mềm
+  const toggleSoftChapter = (chapterId) => {
+    if (purchasedChapters.includes(chapterId)) return;
     
-    setSelectedChapters(prev => 
+    setSelectedSoftChapters(prev => 
       prev.includes(chapterId) 
         ? prev.filter(id => id !== chapterId)
         : [...prev, chapterId]
     );
   };
 
+  // Xử lý chọn/bỏ chọn bản audio
+  const toggleAudioChapter = (chapterId) => {
+    if (purchasedChapters.includes(chapterId)) return;
+    
+    setSelectedAudioChapters(prev => 
+      prev.includes(chapterId) 
+        ? prev.filter(id => id !== chapterId)
+        : [...prev, chapterId]
+    );
+  };
+
+  // Xử lý mua cả hai
+  const toggleBothChapter = (chapterId) => {
+    if (purchasedChapters.includes(chapterId)) return;
+    
+    const isSelected = selectedSoftChapters.includes(chapterId) && selectedAudioChapters.includes(chapterId);
+    
+    if (isSelected) {
+      // Bỏ chọn cả hai
+      setSelectedSoftChapters(prev => prev.filter(id => id !== chapterId));
+      setSelectedAudioChapters(prev => prev.filter(id => id !== chapterId));
+    } else {
+      // Chọn cả hai
+      setSelectedSoftChapters(prev => [...prev, chapterId]);
+      setSelectedAudioChapters(prev => [...prev, chapterId]);
+    }
+  };
+
   // Xử lý mua
   const handlePurchase = async () => {
-    if (selectedChapters.length === 0) {
+    const totalSelected = selectedSoftChapters.length + selectedAudioChapters.length;
+    if (totalSelected === 0) {
       toast.error("Vui lòng chọn ít nhất một chương để mua");
       return;
     }
@@ -104,46 +203,59 @@ export default function PurchaseModal({
     setIsPurchasing(true);
     
     try {
-      // Gọi API mua chapter
-      const response = await purchaseChapters(bookId, selectedChapters);
-      console.log("Chapter purchase response:", response);
+      // Tách các chapters thành 3 nhóm: soft only, audio only, both
+      const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
+      const audioOnlyChapters = selectedAudioChapters.filter(id => !selectedSoftChapters.includes(id));
+      const bothChapters = selectedSoftChapters.filter(id => selectedAudioChapters.includes(id));
       
-      if (response.error === 0 && response.data.success) {
-        // Cập nhật số xu từ response
-        console.log("PurchaseModal - Response data:", response.data);
-        console.log("PurchaseModal - remainingBalance:", response.data.remainingBalance);
-        setCoins(response.data.remainingBalance);
-        
-        // Thêm thông báo
-        const notification = {
-          notificationId: Date.now(),
-          userId: userId,
-          type: "BOOK_PURCHASE",
-          title: "Mua chương thành công",
-          body: `Bạn đã mua thành công ${selectedChapters.length} chương của "${bookTitle}". Tổng chi phí: ${parseFloat(totalPrice.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu.`,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-          userName: "User",
-          userEmail: "user@example.com"
-        };
-        
-        addNotification(notification);
-        
-        // Đóng modal và reset
-        onClose();
-        setSelectedChapters([]);
-        
-        // Reload purchased chapters after successful purchase
-        await loadPurchasedChapters();
-        
-        if (onPurchaseSuccess) {
-          onPurchaseSuccess(selectedChapters);
-        }
-        
-        toast.success(`Mua thành công ${selectedChapters.length} chương với giá ${totalPrice.toLocaleString()} xu!`);
-      } else {
-        toast.error(response.data?.message || response.message || "Có lỗi xảy ra khi mua chương. Vui lòng thử lại.");
+      // Mua bản mềm (chỉ những chapter không có trong both)
+      if (softOnlyChapters.length > 0) {
+        await purchaseChapters(bookId, softOnlyChapters, 'soft');
       }
+      
+      // Mua bản audio (chỉ những chapter không có trong both)
+      if (audioOnlyChapters.length > 0) {
+        await purchaseChapters(bookId, audioOnlyChapters, 'audio');
+      }
+      
+      // Mua cả hai với giảm giá 10%
+      if (bothChapters.length > 0) {
+        await purchaseChapters(bookId, bothChapters, 'both');
+      }
+      
+      console.log("Chapter purchase completed");
+      
+      // Cập nhật số xu ngay lập tức (backend đã trừ xu)
+      setCoins(coins - totalPrice);
+      
+      // Thêm thông báo
+      const notification = {
+        notificationId: Date.now(),
+        userId: userId,
+        type: "BOOK_PURCHASE",
+        title: "Mua chương thành công",
+        body: `Bạn đã mua thành công ${totalSelected} chương của "${bookTitle}". Tổng chi phí: ${parseFloat(totalPrice.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu.`,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        userName: "User",
+        userEmail: "user@example.com"
+      };
+      
+      addNotification(notification);
+      
+      // Đóng modal và reset
+      onClose();
+      setSelectedSoftChapters([]);
+      setSelectedAudioChapters([]);
+      
+      // Reload purchased chapters after successful purchase
+      await loadPurchasedChapters();
+      
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess([...selectedSoftChapters, ...selectedAudioChapters]);
+      }
+      
+      toast.success(`Mua thành công ${totalSelected} chương với giá ${totalPrice.toLocaleString()} xu!`);
       
     } catch (error) {
       console.error("Error purchasing chapters:", error);
@@ -217,7 +329,23 @@ export default function PurchaseModal({
 
         {/* Content */}
         <div className="p-3 sm:p-4 md:p-5 lg:p-6 flex-1 overflow-y-auto min-h-0">
+          {/* Owner notification */}
+          {isOwner && (
+            <div className="bg-blue-600/20 border-2 border-blue-500 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <RiCheckboxCircleLine className="text-blue-400 text-2xl flex-shrink-0" />
+                <div>
+                  <h3 className="text-blue-300 font-semibold mb-1">Đây là sách của bạn</h3>
+                  <p className="text-blue-200/80 text-sm">
+                    Bạn không thể mua chapter từ sách mà bạn là chủ sở hữu.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Số dư ví */}
+          {!isOwner && (
           <div className="bg-gray-700 rounded-lg p-2.5 sm:p-3 md:p-4 mb-3 sm:mb-4 md:mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
               <div className="flex items-center gap-2">
@@ -239,40 +367,21 @@ export default function PurchaseModal({
               </div>
             </div>
           </div>
+          )}
 
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 mb-3 sm:mb-4">
-            <button
-              onClick={toggleSelectAll}
-              className={`px-4 sm:px-6 py-2 text-white text-xs sm:text-sm rounded-lg transition-all duration-300 w-full sm:w-auto ${
-                buttonState === 'selecting'
-                  ? "bg-green-600 scale-105 shadow-lg"
-                  : buttonState === 'deselecting'
-                  ? "bg-red-600 scale-105 shadow-lg"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {buttonState === 'selecting' 
-                ? "✓ Đã chọn tất cả" 
-                : buttonState === 'deselecting'
-                ? "✓ Đã bỏ chọn"
-                : selectedChapters.length > 0 
-                  ? "Bỏ chọn tất cả" 
-                  : "Chọn tất cả"
-              }
-            </button>
-            
-            {/* Debug info */}
-            <div className="text-xs text-gray-400 text-center sm:text-right">
-              {loadingPurchases ? (
-                <span>Đang tải...</span>
-              ) : (
-                <span>Đã mua: {purchasedChapters.length} chương</span>
-              )}
-            </div>
+          {/* Thông tin đã mua */}
+          {!isOwner && (
+          <div className="text-xs text-gray-400 text-center mb-4">
+            {loadingPurchases ? (
+              <span>Đang tải...</span>
+            ) : (
+              <span>Đã mua: {purchasedChapters.length} chương</span>
+            )}
           </div>
+          )}
 
           {/* Danh sách chương */}
+          {!isOwner && (
           <div className="space-y-1.5 sm:space-y-2 max-h-96 sm:max-h-80 md:max-h-96 lg:max-h-[28rem] overflow-y-auto">
             {chapters.length > 8 && (
               <div className="text-center py-2 mb-2">
@@ -283,86 +392,148 @@ export default function PurchaseModal({
               </div>
             )}
             {chapters.map((chapter, index) => {
-              const isSelected = selectedChapters.includes(chapter.chapterId);
-              const isPurchased = purchasedChapters.includes(chapter.chapterId);
+              const isPurchasedSoft = purchasedSoftChapters.includes(chapter.chapterId);
+              const isPurchasedAudio = purchasedAudioChapters.includes(chapter.chapterId);
+              const isPurchasedBoth = isPurchasedSoft && isPurchasedAudio;
+              const isPurchased = isPurchasedSoft || isPurchasedAudio;
               const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
               const duration = Math.round((chapter.durationSec || 0) / 60);
               const chapterNumber = index + 1;
-              const isDisabled = isPurchased || isFree;
+              const isDisabled = isPurchasedBoth || isFree;
               
-              // Debug log
-              console.log(`Chapter ${chapterNumber}: isPurchased=${isPurchased}, purchasedChapters=`, purchasedChapters, 'chapterId=', chapter.chapterId);
-              if (isPurchased) {
-                console.log(`✓ Chapter ${chapterNumber} (${chapter.chapterTitle}) is purchased`);
-              }
+              // Check if has audio
+              const hasAudio = audioPrices[chapter.chapterId] > 0;
+              
+              // Check selections
+              const isSoftSelected = selectedSoftChapters.includes(chapter.chapterId);
+              const isAudioSelected = selectedAudioChapters.includes(chapter.chapterId);
+              const isBothSelected = isSoftSelected && isAudioSelected;
+              
+              // Disable buttons based on purchase status
+              const softDisabled = isPurchasedSoft;
+              const audioDisabled = isPurchasedAudio;
+              const bothDisabled = isPurchasedBoth || (isPurchasedSoft && isPurchasedAudio);
               
               return (
                 <div
                   key={chapter.chapterId}
-                  className={`p-2.5 sm:p-3 md:p-4 rounded-lg border-2 transition-all ${
+                  className={`p-3 rounded-lg border-2 transition-all ${
                     isPurchased
                       ? "border-green-500 bg-green-500/10 cursor-not-allowed opacity-75"
                       : isFree
                       ? "border-gray-600 bg-gray-700/50 cursor-not-allowed opacity-60"
-                      : isSelected
-                      ? "border-orange-500 bg-orange-500/10 cursor-pointer"
-                      : "border-gray-600 hover:border-gray-500 bg-gray-700/50 cursor-pointer"
+                      : "border-gray-600 hover:border-gray-500 bg-gray-700/50"
                   }`}
-                  onClick={() => !isDisabled && toggleChapter(chapter.chapterId)}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 md:gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-                        <h3 className="font-medium text-white text-xs sm:text-sm md:text-base truncate">
-                          Chương {chapterNumber}: {chapter.chapterTitle?.replace(/chuogn/g, 'chương') || ''}
-                        </h3>
-                        {isSelected && !isPurchased && (
-                          <RiCheckLine className="text-orange-500 text-base sm:text-lg flex-shrink-0" />
-                        )}
-                        {isPurchased && (
-                          <RiCheckboxCircleLine className="text-green-500 text-base sm:text-lg flex-shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 md:gap-4 text-xs sm:text-sm text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <RiPlayCircleLine className="text-sm" />
-                          {duration} phút
-                        </span>
-                        <span className="flex items-center gap-1">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium text-white text-sm">
+                      Chương {chapterNumber}: {chapter.chapterTitle?.replace(/chuogn/g, 'chương') || ''}
+                    </h3>
+                    {isPurchasedBoth && (
+                      <span className="text-green-400 text-sm font-medium flex items-center gap-1">
+                        <RiCheckLine className="text-xs" />
+                        Đã mua cả hai
+                      </span>
+                    )}
+                    {isPurchasedSoft && !isPurchasedBoth && (
+                      <span className="text-orange-400 text-sm font-medium">Đã mua bản mềm</span>
+                    )}
+                    {isPurchasedAudio && !isPurchasedBoth && (
+                      <span className="text-green-400 text-sm font-medium">Đã mua bản audio</span>
+                    )}
+                    {isFree && !isPurchased && (
+                      <span className="text-blue-400 text-sm font-medium">Miễn phí</span>
+                    )}
+                  </div>
+                  
+                  {/* Options */}
+                  {!isDisabled && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {/* Bản mềm */}
+                      <button
+                        onClick={() => toggleSoftChapter(chapter.chapterId)}
+                        disabled={softDisabled}
+                        className={`p-2 rounded-lg border-2 transition-all ${
+                          softDisabled
+                            ? 'border-green-500 bg-green-500/20 text-green-400 cursor-not-allowed'
+                            : isSoftSelected
+                            ? 'border-orange-500 bg-orange-500/20 text-orange-400'
+                            : 'border-gray-600 bg-gray-600/20 text-gray-400 hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
                           <RiBookOpenLine className="text-sm" />
-                          {chapter.chapterView} lượt xem
-                        </span>
-                        {isPurchased && (
-                          <span className="flex items-center gap-1 text-green-400 font-medium">
-                            <RiCheckboxCircleLine className="text-sm" />
-                            Đã mua
-                          </span>
-                        )}
-                        {isFree && !isPurchased && (
-                          <span className="flex items-center gap-1 text-blue-400 font-medium">
-                            <RiCheckboxCircleLine className="text-sm" />
-                            Miễn phí
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-left sm:text-right mt-1 sm:mt-0">
-                      {isPurchased ? (
-                        <div className="text-green-500 font-bold text-sm sm:text-base md:text-lg">
-                          Đã mua
+                          <span className="font-medium text-xs">Bản mềm</span>
+                          {softDisabled && <RiCheckLine className="text-xs" />}
                         </div>
-                      ) : isFree ? (
-                        <div className="text-blue-500 font-bold text-sm sm:text-base md:text-lg">
-                          Miễn phí
+                        <div className="text-xs text-orange-400 font-bold">
+                          {chapter.priceAudio?.toLocaleString() || 0} xu
                         </div>
-                      ) : (
-                        <div className="text-orange-500 font-bold text-sm sm:text-base md:text-lg flex items-center gap-1">
-                          {chapter.priceAudio?.toLocaleString() || 0}
-                          <RiCoinLine className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
-                        </div>
+                      </button>
+                      
+                      {/* Bản audio */}
+                      {hasAudio && (
+                        <button
+                          onClick={() => toggleAudioChapter(chapter.chapterId)}
+                          disabled={audioDisabled}
+                          className={`p-2 rounded-lg border-2 transition-all ${
+                            audioDisabled
+                              ? 'border-green-500 bg-green-500/20 text-green-400 cursor-not-allowed'
+                              : isAudioSelected
+                              ? 'border-green-500 bg-green-500/20 text-green-400'
+                              : 'border-gray-600 bg-gray-600/20 text-gray-400 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <RiPlayCircleLine className="text-sm" />
+                            <span className="font-medium text-xs">Bản audio</span>
+                            {audioDisabled && <RiCheckLine className="text-xs" />}
+                          </div>
+                          <div className="text-xs text-green-400 font-bold">
+                            {audioPrices[chapter.chapterId]?.toLocaleString() || 0} xu
+                          </div>
+                        </button>
+                      )}
+                      
+                      {/* Mua cả hai */}
+                      {hasAudio && (
+                        <button
+                          onClick={() => toggleBothChapter(chapter.chapterId)}
+                          disabled={bothDisabled}
+                          className={`p-2 rounded-lg border-2 transition-all ${
+                            bothDisabled
+                              ? 'border-green-500 bg-green-500/20 text-green-400 cursor-not-allowed'
+                              : isBothSelected
+                              ? 'border-blue-500 bg-blue-500/20 text-blue-400'
+                              : 'border-gray-600 bg-gray-600/20 text-gray-400 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <RiCheckLine className="text-sm" />
+                            <span className="font-medium text-xs">Cả hai</span>
+                            {bothDisabled ? (
+                              <RiCheckLine className="text-xs" />
+                            ) : (
+                              <span className="text-xs bg-green-600 px-1 rounded">-10%</span>
+                            )}
+                          </div>
+                          {bothDisabled ? (
+                            <div className="text-xs text-green-400 font-bold">Đã mua</div>
+                          ) : (
+                            <div className="flex flex-col items-start">
+                              <div className="text-xs text-gray-500 line-through">
+                                {((chapter.priceAudio || 0) + (audioPrices[chapter.chapterId] || 0)).toLocaleString()} xu
+                              </div>
+                              <div className="text-xs text-blue-400 font-bold">
+                                {((((chapter.priceAudio || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9).toFixed(0)).toLocaleString()} xu
+                              </div>
+                            </div>
+                          )}
+                        </button>
                       )}
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
@@ -374,14 +545,16 @@ export default function PurchaseModal({
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Footer */}
+        {!isOwner && (
         <div className="p-3 sm:p-4 md:p-5 lg:p-6 border-t border-gray-700 bg-gray-700/30 flex-shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0">
             <div className="text-gray-300 text-xs sm:text-sm md:text-base">
               <span>Đã chọn: </span>
-              <span className="font-bold text-white">{selectedChapters.length}</span>
+              <span className="font-bold text-white">{selectedSoftChapters.length + selectedAudioChapters.length}</span>
               <span> chương</span>
             </div>
             <div className="text-left sm:text-right">
@@ -402,7 +575,7 @@ export default function PurchaseModal({
             </button>
             <button
               onClick={handlePurchase}
-              disabled={selectedChapters.length === 0 || coins < totalPrice || isPurchasing}
+              disabled={selectedSoftChapters.length + selectedAudioChapters.length === 0 || coins < totalPrice || isPurchasing}
               className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm md:text-base"
             >
               {isPurchasing ? (
@@ -421,6 +594,7 @@ export default function PurchaseModal({
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

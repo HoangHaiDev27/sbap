@@ -17,5 +17,6 @@ namespace Repositories.Interfaces
         Task IncrementChapterViewAsync(int chapterId);
         Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
         Task UpdateChapterAudioAsync(int chapterId, string audioUrl, int durationSec, decimal? priceAudio = null, string? storageMeta = null);
+        Task<bool> CheckChapterExistsAsync(int chapterId);
     }
 }

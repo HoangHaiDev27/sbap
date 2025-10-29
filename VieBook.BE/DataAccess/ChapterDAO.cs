@@ -76,13 +76,12 @@ namespace DataAccess
             }
         }
 
-        // Lấy danh sách chapter theo BookId
+        // Lấy danh sách chapter theo BookId (chỉ lấy Active)
         public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
         {
             return await _context.Chapters
-                                 .Include(c => c.Book)
-                                 .Include(c => c.ChapterAudios) 
-                                 .Where(c => c.BookId == bookId)
+                                 .Where(c => c.BookId == bookId && c.Status == "Active")
+                                 .Include(c => c.ChapterAudios)
                                  .OrderBy(c => c.ChapterId)
                                  .ToListAsync();
         }
@@ -99,6 +98,12 @@ namespace DataAccess
                 chapter.StorageMeta = storageMeta;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        // Kiểm tra chapter có tồn tại không (chỉ Active)
+        public async Task<bool> CheckChapterExistsAsync(int chapterId)
+        {
+            return await _context.Chapters.AnyAsync(c => c.ChapterId == chapterId && c.Status == "Active");
         }
     }
 }

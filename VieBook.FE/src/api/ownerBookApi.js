@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from "../config/apiConfig";
+import { API_ENDPOINTS, API_BASE_URL } from "../config/apiConfig";
 
 // Lấy tất cả sách theo ownerId
 export async function getBooksByOwner(ownerId) {
@@ -71,6 +71,73 @@ export async function deleteBook(bookId) {
   });
   if (!res.ok) throw new Error("Không thể xóa sách");
   return true;
+}
+
+// Cập nhật trạng thái hoàn thành
+export async function updateCompletionStatus(bookId, completionStatus, uploadStatus = null) {
+  const body = { completionStatus };
+  if (uploadStatus) {
+    body.uploadStatus = uploadStatus;
+  }
+  
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_COMPLETION_STATUS(bookId), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update completion status");
+  }
+
+  return res.json();
+}
+
+// Cập nhật trạng thái upload
+export async function updateUploadStatus(bookId, uploadStatus) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_COMPLETION_STATUS(bookId), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uploadStatus }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update upload status");
+  }
+
+  return res.json();
+}
+
+// Gửi yêu cầu kiểm duyệt cho Seller
+export async function submitForApproval(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKAPPROVAL.ADD, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      bookId: bookId,
+      action: "Pending",
+      createdAt: new Date().toISOString()
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to submit for approval");
+  }
+
+  return res.json();
+}
+
+// Lấy giá audio từ ChapterAudios
+export async function getChapterAudioPrices(bookId) {
+  // Sử dụng endpoint đúng: /api/books/{bookId}/chapters/audio-prices
+  const res = await fetch(`${API_BASE_URL}/api/books/${bookId}/chapters/audio-prices`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch audio prices: ${res.status}`);
+  }
+  return res.json();
 }
 
 // Lấy tất cả categories
@@ -302,5 +369,54 @@ export async function updateChapterAudiosPrice(chapterId, price) {
 export async function getSubscriptionStatus(userId) {
   const res = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_SUBSCRIPTION_STATUS(userId));
   if (!res.ok) throw new Error("Failed to fetch subscription status");
+  return res.json();
+}
+
+// Kiểm tra xem book có chapter nào có status = Active không
+export async function checkBookHasActiveChapter(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.CHECK_ACTIVE_CHAPTERS(bookId));
+  if (!res.ok) throw new Error("Failed to check active chapters");
+  return res.json();
+}
+
+// Cập nhật book status
+export async function updateBookStatus(bookId, status) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_STATUS(bookId), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update book status");
+  }
+
+  return res.json();
+}
+
+// Kiểm tra tất cả chapters của book có status = Active không
+export async function checkAllChaptersActive(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.CHECK_ALL_CHAPTERS_ACTIVE(bookId));
+  if (!res.ok) throw new Error("Failed to check all chapters status");
+  return res.json();
+}
+
+// Kiểm tra book có chương nào có status = Draft không
+export async function checkBookHasDraftChapters(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.CHECK_DRAFT_CHAPTERS(bookId));
+  if (!res.ok) throw new Error("Failed to check draft chapters");
+  return res.json();
+}
+
+// Cập nhật tất cả chương Draft thành InActive
+export async function updateDraftChaptersToInActive(bookId) {
+  const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_DRAFT_CHAPTERS_TO_INACTIVE(bookId), {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error("Failed to update draft chapters to InActive");
   return res.json();
 }

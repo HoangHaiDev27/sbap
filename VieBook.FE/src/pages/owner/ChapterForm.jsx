@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-import { uploadChapterFile, createChapter } from "../../api/ownerBookApi";
+import { uploadChapterFile, createChapter, getBookById, checkBookHasActiveChapter, updateBookStatus, checkAllChaptersActive } from "../../api/ownerBookApi";
 import { checkSpelling as checkSpellingApi, checkMeaning as checkMeaningApi, moderation as moderationApi, checkPlagiarism as checkPlagiarismApi, generateEmbeddings as generateEmbeddingsApi } from "../../api/openAiApi";
 import { useLocation } from "react-router-dom";
 
@@ -90,12 +90,12 @@ export default function ChapterForm() {
   // Step 1 - Spelling check
   const [spellingErrors, setSpellingErrors] = useState([]);
   const [isCheckingSpelling, setIsCheckingSpelling] = useState(false);
-  const [correctedText, setCorrectedText] = useState("");
   const [hasCheckedSpelling, setHasCheckedSpelling] = useState(false);
   const [isSpellingValid, setIsSpellingValid] = useState(false);
   const [contentHasMeaning, setContentHasMeaning] = useState(null); // Track if content has meaningful content (null: not checked, true: meaningful, false: not meaningful)
   const [meaningScore, setMeaningScore] = useState(null); // Track meaning score (0-100)
   const [meaningReason, setMeaningReason] = useState(""); // Track reason for meaning assessment
+  const [showHighlightedContent, setShowHighlightedContent] = useState(false); // Toggle để hiển thị nội dung có tô đậm lỗi
   const contentAreaRef = useRef(null);
   
   // Step 3 - Approval states
@@ -108,10 +108,67 @@ export default function ChapterForm() {
   const [meaningProgress, setMeaningProgress] = useState(0);
   const [policyProgress, setPolicyProgress] = useState(0);
   const [plagiarismProgress, setPlagiarismProgress] = useState(0);
+  
+  // Book info để kiểm tra UploaderType
+  const [bookInfo, setBookInfo] = useState(null);
   const [hasAutoChecked, setHasAutoChecked] = useState(false);
   const [lastCheckedContent, setLastCheckedContent] = useState("");
   
   const [bookTitle, setBookTitle] = useState(location.state?.bookTitle || "Không xác định");
+
+  // Load book info để kiểm tra UploaderType
+  useEffect(() => {
+    async function fetchBookInfo() {
+      try {
+        const bookData = await getBookById(bookId);
+        setBookInfo(bookData);
+      } catch (err) {
+        console.error("Failed to fetch book info:", err);
+      }
+    }
+
+    fetchBookInfo();
+  }, [bookId]);
+
+  // Function để thay thế từ lỗi bằng từ gợi ý
+  const replaceWord = useCallback((wrongWord, suggestedWord) => {
+    // Chỉ thay thế từ đầu tiên tìm thấy
+    const newContent = content.replace(wrongWord, suggestedWord);
+    setContent(newContent);
+    
+    // Cập nhật danh sách lỗi sau khi sửa
+    const updatedErrors = spellingErrors.filter(error => error.wrong !== wrongWord);
+    setSpellingErrors(updatedErrors);
+    
+    // Nếu không còn lỗi nào, tắt chế độ tô đậm
+    if (updatedErrors.length === 0) {
+      setShowHighlightedContent(false);
+    }
+    
+    window.dispatchEvent(
+      new CustomEvent("app:toast", {
+        detail: { type: "success", message: `Đã sửa "${wrongWord}" thành "${suggestedWord}"` },
+      })
+    );
+  }, [content, spellingErrors]);
+
+  // Thêm global function để xử lý click trên từ lỗi
+  useEffect(() => {
+    window.replaceWord = (wrongWord, suggestedWord) => {
+      replaceWord(wrongWord, suggestedWord);
+    };
+    
+    return () => {
+      delete window.replaceWord;
+    };
+  }, [replaceWord]);
+
+  // Set default status for Seller
+  useEffect(() => {
+    if (bookInfo?.uploaderType === "Seller") {
+      setStatus("Active");
+    }
+  }, [bookInfo?.uploaderType]);
   
   // Terms and conditions popup
   const [showTermsPopup, setShowTermsPopup] = useState(false);
@@ -135,7 +192,19 @@ export default function ChapterForm() {
 
   // Handler cho content input - sử dụng useCallback để tránh re-render
   const handleContentChange = useCallback((e) => {
-    setContent(e.target.value);
+    const newContent = e.target.value;
+    
+    // Kiểm tra giới hạn 50000 ký tự
+    if (newContent.length > 50000) {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: { type: "error", message: "Nội dung không được vượt quá 50,000 ký tự" },
+        })
+      );
+      return; // Không cập nhật content nếu vượt quá giới hạn
+    }
+    
+    setContent(newContent);
     // Clear content validation error when user types
     if (validationErrors.content) {
       setValidationErrors(prev => ({ ...prev, content: "" }));
@@ -145,9 +214,9 @@ export default function ChapterForm() {
     setMeaningScore(null);
     setMeaningReason("");
     setSpellingErrors([]);
-    setCorrectedText("");
     setHasCheckedSpelling(false);
     setIsSpellingValid(false);
+    setShowHighlightedContent(false); // Reset trạng thái tô đậm khi nội dung thay đổi
   }, [validationErrors.content]);
 
   // Validation functions
@@ -298,6 +367,43 @@ export default function ChapterForm() {
     return null;
   }, [file]);
 
+  // Function để tạo nội dung với các từ lỗi được tô đậm
+  const createHighlightedContent = useCallback((text, errors) => {
+    if (!errors || errors.length === 0) return text;
+    
+    let highlightedText = text;
+    
+    // Tìm tất cả vị trí của từ lỗi trong text
+    const errorPositions = [];
+    errors.forEach(error => {
+      if (error.wrong) {
+        let index = 0;
+        while ((index = highlightedText.indexOf(error.wrong, index)) !== -1) {
+          errorPositions.push({
+            ...error,
+            startIndex: index,
+            endIndex: index + error.wrong.length
+          });
+          index += error.wrong.length;
+        }
+      }
+    });
+    
+    // Sắp xếp theo vị trí từ cuối lên đầu để tránh conflict khi thay thế
+    errorPositions.sort((a, b) => b.startIndex - a.startIndex);
+    
+    // Thay thế từng từ lỗi bằng HTML highlighted
+    errorPositions.forEach(error => {
+      const before = highlightedText.substring(0, error.startIndex);
+      const highlighted = `<span class="bg-red-500 text-white font-bold px-1 rounded cursor-pointer hover:bg-red-600 transition-colors" title="Gợi ý: ${error.suggestion || 'Không có gợi ý'}" onclick="replaceWord('${error.wrong.replace(/'/g, "\\'")}', '${(error.suggestion || error.wrong).replace(/'/g, "\\'")}')">${error.wrong}</span>`;
+      const after = highlightedText.substring(error.endIndex);
+      
+      highlightedText = before + highlighted + after;
+    });
+    
+    return highlightedText;
+  }, []);
+
   // Terms and conditions handlers
   const handleAcceptTerms = () => {
     setAcceptedTerms(true);
@@ -312,7 +418,10 @@ export default function ChapterForm() {
 
   // Step navigation functions
   const nextStep = () => {
-    if (currentStep < 3) {
+    const isSeller = bookInfo?.uploaderType === "Seller";
+    const maxStep = isSeller ? 2 : 3;
+    
+    if (currentStep < maxStep) {
       // Validate current step before proceeding
       if (currentStep === 1) {
         const titleError = validateTitle(title);
@@ -340,8 +449,8 @@ export default function ChapterForm() {
       }
 
       const next = currentStep + 1;
-      // If moving to step 3 and content changed, invalidate previous checks
-      if (next === 3 && content.trim() && content !== lastCheckedContent) {
+      // If moving to step 3 and content changed, invalidate previous checks (chỉ cho Owner)
+      if (next === 3 && !isSeller && content.trim() && content !== lastCheckedContent) {
         setHasAutoChecked(false);
       }
       setCurrentStep(next);
@@ -400,7 +509,6 @@ export default function ChapterForm() {
         explanation: e.explanation || "",
       }));
       setSpellingErrors(normalizedErrors);
-      setCorrectedText(resultObj?.correctedText || "");
 
       // Cập nhật thông tin ý nghĩa nội dung
       const hasMeaning = resultObj?.hasMeaning !== false; // Default to true if not provided
@@ -414,13 +522,17 @@ export default function ChapterForm() {
       const hasErrors = normalizedErrors.length > 0 || (resultObj?.isCorrect === false);
       setHasCheckedSpelling(true);
       setIsSpellingValid(!hasErrors);
-      if (hasErrors) {
+      
+      // Tự động hiển thị tô đậm lỗi nếu có lỗi
+      if (hasErrors && normalizedErrors.length > 0) {
+        setShowHighlightedContent(true);
         window.dispatchEvent(
           new CustomEvent("app:toast", {
-            detail: { type: "warning", message: `Tìm thấy ${normalizedErrors.length} lỗi chính tả/ngữ pháp` },
+            detail: { type: "warning", message: `Tìm thấy ${normalizedErrors.length} lỗi chính tả/ngữ pháp - Đã tự động tô đậm` },
           })
         );
       } else {
+        setShowHighlightedContent(false);
         window.dispatchEvent(
           new CustomEvent("app:toast", {
             detail: { type: "success", message: "Không tìm thấy lỗi chính tả" },
@@ -441,6 +553,17 @@ export default function ChapterForm() {
   // Auto-run all checks sequentially
   const runAutoChecks = async () => {
     if (!content.trim()) return;
+
+    // Bỏ qua kiểm duyệt cho Seller
+    if (bookInfo?.uploaderType === "Seller") {
+      console.log("Seller detected - skipping approval steps");
+      setPolicyResult({ passed: true, message: "Bỏ qua kiểm duyệt cho Seller" });
+      setPlagiarismResult({ passed: true, message: "Bỏ qua kiểm duyệt cho Seller" });
+      setContentHasMeaning(true);
+      setMeaningScore(100);
+      setMeaningReason("Bỏ qua kiểm duyệt cho Seller");
+      return;
+    }
 
     // Reset states
     setPolicyResult(null);
@@ -639,32 +762,34 @@ export default function ChapterForm() {
       return;
     }
 
-    // Kiểm tra tất cả bước kiểm duyệt phải pass
-    if (contentHasMeaning !== true) {
-      window.dispatchEvent(
-        new CustomEvent("app:toast", {
-          detail: { type: "error", message: "Nội dung chưa được kiểm tra ý nghĩa hoặc không đạt yêu cầu" },
-        })
-      );
-      return;
-    }
+    // Kiểm tra tất cả bước kiểm duyệt phải pass (chỉ cho Owner)
+    if (bookInfo?.uploaderType === "Owner") {
+      if (contentHasMeaning !== true) {
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { type: "error", message: "Nội dung chưa được kiểm tra ý nghĩa hoặc không đạt yêu cầu" },
+          })
+        );
+        return;
+      }
 
-    if (!policyResult || !policyResult.passed) {
-      window.dispatchEvent(
-        new CustomEvent("app:toast", {
-          detail: { type: "error", message: "Nội dung chưa được kiểm tra chính sách hoặc không đạt yêu cầu" },
-        })
-      );
-      return;
-    }
+      if (!policyResult || !policyResult.passed) {
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { type: "error", message: "Nội dung chưa được kiểm tra chính sách hoặc không đạt yêu cầu" },
+          })
+        );
+        return;
+      }
 
-    if (!plagiarismResult || !plagiarismResult.passed) {
-      window.dispatchEvent(
-        new CustomEvent("app:toast", {
-          detail: { type: "error", message: "Nội dung chưa được kiểm tra đạo văn hoặc không đạt yêu cầu" },
-        })
-      );
-      return;
+      if (!plagiarismResult || !plagiarismResult.passed) {
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { type: "error", message: "Nội dung chưa được kiểm tra đạo văn hoặc không đạt yêu cầu" },
+          })
+        );
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -699,6 +824,9 @@ export default function ChapterForm() {
         }
       }
 
+      // Kiểm tra và cập nhật book status theo các trường hợp
+      await handleBookStatusUpdate();
+
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "success", message: "Đã lưu chương thành công!" },
@@ -719,38 +847,65 @@ export default function ChapterForm() {
     }
   };
 
+  // Xử lý cập nhật book status theo các trường hợp
+  const handleBookStatusUpdate = async () => {
+    if (!bookInfo) return;
+
+    const { uploaderType, status: bookStatus, uploadStatus, completionStatus } = bookInfo;
+
+    // Trường hợp 1 & 3: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Incomplete, CompletionStatus = Ongoing
+    if (bookStatus === "PendingChapters" && uploadStatus === "Incomplete" && completionStatus === "Ongoing") {
+      // Chỉ cập nhật book status thành Active nếu chương vừa thêm có status = "Active"
+      if (status === "Active") {
+        try {
+          await updateBookStatus(bookId, "Active");
+          console.log("Book status updated to Active due to new active chapter");
+        } catch (error) {
+          console.error("Error updating book status:", error);
+        }
+      }
+    }
+    // Nếu Status hiện tại = "Approved" thì không cập nhật gì (không có logic xử lý)
+  };
+
   // Step components - sử dụng useMemo để tránh re-render
-  const StepIndicator = useMemo(() => (
-    <div className="flex items-center justify-center mb-8">
-      <div className="flex items-center space-x-4">
-        {[1, 2, 3].map((step) => (
-          <div key={step} className="flex items-center">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition ${
-                step === currentStep
-                  ? "bg-orange-500 text-white"
-                  : step < currentStep
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-600 text-gray-300"
-              }`}
-            >
-              {step}
-            </div>
-            {step < 3 && (
+  const StepIndicator = useMemo(() => {
+    const isSeller = bookInfo?.uploaderType === "Seller";
+    const totalSteps = isSeller ? 2 : 3;
+    const steps = isSeller ? [1, 2] : [1, 2, 3];
+    
+    return (
+      <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center space-x-4">
+          {steps.map((step) => (
+            <div key={step} className="flex items-center">
               <div
-                className={`w-16 h-1 mx-2 transition ${
-                  step < currentStep ? "bg-purple-600" : "bg-gray-600"
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition ${
+                  step === currentStep
+                    ? "bg-orange-500 text-white"
+                    : step < currentStep
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-600 text-gray-300"
                 }`}
-              />
-            )}
-          </div>
-        ))}
+              >
+                {step}
+              </div>
+              {step < totalSteps && (
+                <div
+                  className={`w-16 h-1 mx-2 transition ${
+                    step < currentStep ? "bg-purple-600" : "bg-gray-600"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="ml-6 text-sm text-gray-400">
+          Bước {currentStep}/{totalSteps}
+        </div>
       </div>
-      <div className="ml-6 text-sm text-gray-400">
-        Bước {currentStep}/3
-      </div>
-    </div>
-  ), [currentStep]);
+    );
+  }, [currentStep, bookInfo?.uploaderType]);
 
   const Step1 = useMemo(() => (
     <div className="bg-slate-800 p-6 rounded-lg shadow-md mb-6">
@@ -816,21 +971,24 @@ export default function ChapterForm() {
           <div className="flex flex-col ml-6">
             <label className="block text-sm mb-1">Trạng thái</label>
             <div className="flex space-x-3">
-              <label
-                className={`px-3 py-1 rounded-lg cursor-pointer transition ${
-                  status === "Draft" ? "bg-purple-600 text-white" : "bg-gray-700 hover:bg-gray-600"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="chapterStatus"
-                  value="Draft"
-                  checked={status === "Draft"}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="hidden"
-                />
-                Bản nháp
-              </label>
+              {/* Chỉ hiển thị nút "Bản nháp" cho Owner, không hiển thị cho Seller */}
+              {bookInfo?.uploaderType !== "Seller" && (
+                <label
+                  className={`px-3 py-1 rounded-lg cursor-pointer transition ${
+                    status === "Draft" ? "bg-purple-600 text-white" : "bg-gray-700 hover:bg-gray-600"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="chapterStatus"
+                    value="Draft"
+                    checked={status === "Draft"}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="hidden"
+                  />
+                  Bản nháp
+                </label>
+              )}
               <label
                 className={`px-3 py-1 rounded-lg cursor-pointer transition ${
                   status === "Active" ? "bg-green-600 text-white" : "bg-gray-700 hover:bg-gray-600"
@@ -853,122 +1011,148 @@ export default function ChapterForm() {
     </div>
   ), [title, price, isFree, status, handleTitleChange]);
 
-  const Step2 = useMemo(() => (
-    <div className="bg-slate-800 p-6 rounded-lg shadow-md mb-6">
-      <h2 className="text-lg font-semibold mb-4 text-orange-400">Bước 2: Upload & chỉnh sửa nội dung</h2>
-      
-      {/* Upload file */}
-      <div
-        className="bg-slate-700 p-6 rounded-lg mb-6 border-2 border-dashed border-gray-500 cursor-pointer hover:border-gray-400 flex flex-col items-center justify-center transition"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.pdf" onChange={handleFileChange} />
-        <p className="text-center">
-          {file ? file.name : "Chọn file chương (TXT hoặc PDF)"} {getFileTag()}
-        </p>
-        {file && (
-          <p className="text-xs text-gray-400 mt-1 text-center">
-            {formatFileSize(file.size)}
-            {pdfPages && ` • Số trang: ${pdfPages}`}
+  const Step2 = useMemo(() => {
+    const isSeller = bookInfo?.uploaderType === "Seller";
+    
+    return (
+      <div className="bg-slate-800 p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-lg font-semibold mb-4 text-orange-400">
+          Bước 2: {isSeller ? "Upload nội dung chương" : "Upload & chỉnh sửa nội dung"}
+        </h2>
+        
+        {/* Upload file */}
+        <div
+          className="bg-slate-700 p-6 rounded-lg mb-6 border-2 border-dashed border-gray-500 cursor-pointer hover:border-gray-400 flex flex-col items-center justify-center transition"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.pdf" onChange={handleFileChange} />
+          <p className="text-center">
+            {file ? file.name : "Chọn file chương (TXT hoặc PDF)"} {getFileTag()}
           </p>
-        )}
-      </div>
+          {file && (
+            <p className="text-xs text-gray-400 mt-1 text-center">
+              {formatFileSize(file.size)}
+              {pdfPages && ` • Số trang: ${pdfPages}`}
+            </p>
+          )}
+        </div>
 
-      {/* Nội dung có thể chỉnh sửa */}
-      <div>
-        <label className="block text-sm mb-1">Nội dung chương</label>
-        <textarea
-          placeholder="Nội dung sẽ được trích xuất từ file hoặc bạn có thể nhập trực tiếp..."
-          value={content}
-          onChange={handleContentChange}
-          rows={20}
-          ref={contentAreaRef}
-          className={`w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent border ${
-            validationErrors.content 
-              ? "border-red-500 focus:ring-red-500" 
-              : "border-gray-600 focus:ring-orange-500"
-          }`}
-        />
-        <div className="flex justify-between items-center mt-2">
-          <div className="flex flex-col">
-            <div className="text-xs text-gray-400">{content.length}/50000 ký tự</div>
-            {validationErrors.content && (
-              <div className="text-xs text-red-400 mt-1">{validationErrors.content}</div>
+        {/* Nội dung */}
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-sm">Nội dung chương</label>
+            {/* Toggle button để hiển thị/ẩn tô đậm lỗi - chỉ hiển thị khi có lỗi */}
+            {!isSeller && spellingErrors.length > 0 && (
+              <button
+                onClick={() => setShowHighlightedContent(!showHighlightedContent)}
+                className={`px-3 py-1 rounded text-xs transition ${
+                  showHighlightedContent 
+                    ? "bg-red-600 hover:bg-red-700" 
+                    : "bg-gray-600 hover:bg-gray-500"
+                }`}
+                title={showHighlightedContent ? "Ẩn tô đậm lỗi" : "Hiển thị tô đậm lỗi"}
+              >
+                {showHighlightedContent ? "Ẩn tô đậm" : "Hiển thị tô đậm"}
+              </button>
             )}
           </div>
-          <button
-            onClick={handleCheckSpelling}
-            disabled={isCheckingSpelling || !content.trim()}
-            className={`px-4 py-2 rounded-lg text-sm transition ${
-              isCheckingSpelling || !content.trim()
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-purple-600 hover:bg-purple-700"
-            }`}
-            title="Kiểm tra chính tả"
-          >
-            {isCheckingSpelling ? "Đang kiểm tra..." : "Kiểm tra chính tả"}
-          </button>
+          
+          {showHighlightedContent && spellingErrors.length > 0 ? (
+            // Hiển thị nội dung với tô đậm lỗi
+            <div 
+              className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white min-h-[400px] max-h-[500px] overflow-auto border border-gray-600"
+              dangerouslySetInnerHTML={{ 
+                __html: createHighlightedContent(content, spellingErrors) 
+              }}
+            />
+          ) : (
+            // Hiển thị textarea thông thường
+            <textarea
+              placeholder="Nội dung sẽ được trích xuất từ file hoặc bạn có thể nhập trực tiếp..."
+              value={content}
+              onChange={handleContentChange}
+              rows={20}
+              ref={contentAreaRef}
+              maxLength={50000}
+              className={`w-full px-3 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent border ${
+                validationErrors.content 
+                  ? "border-red-500 focus:ring-red-500" 
+                  : "border-gray-600 focus:ring-orange-500"
+              }`}
+            />
+          )}
+          
+          <div className="flex justify-between items-center mt-2">
+            <div className="flex flex-col">
+              <div className={`text-xs ${
+                content.length > 45000 ? "text-red-400" : 
+                content.length > 40000 ? "text-yellow-400" : 
+                "text-gray-400"
+              }`}>
+                {content.length}/50000 ký tự
+                {content.length > 45000 && " (Gần đạt giới hạn)"}
+              </div>
+              {validationErrors.content && (
+                <div className="text-xs text-red-400 mt-1">{validationErrors.content}</div>
+              )}
+              {showHighlightedContent && spellingErrors.length > 0 && (
+                <div className="text-xs text-yellow-400 mt-1">
+                  💡 Click vào từ được tô đậm để sửa lỗi chính tả (tự động hiển thị khi có lỗi)
+                </div>
+              )}
+            </div>
+            {/* Chỉ hiển thị nút kiểm tra chính tả cho Owner (không phải Seller) */}
+            {!isSeller && (
+              <button
+                onClick={handleCheckSpelling}
+                disabled={isCheckingSpelling || !content.trim()}
+                className={`px-4 py-2 rounded-lg text-sm transition ${
+                  isCheckingSpelling || !content.trim()
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700"
+                }`}
+                title="Kiểm tra chính tả"
+              >
+                {isCheckingSpelling ? "Đang kiểm tra..." : "Kiểm tra chính tả"}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-
-      {/* Hiển thị lỗi chính tả từ API và gợi ý sửa */}
-      {(spellingErrors.length > 0 || correctedText) && (
-        <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4 mt-4">
-          {spellingErrors.length > 0 && (
-            <>
-              <h3 className="text-yellow-400 font-semibold mb-2">Lỗi chính tả/ngữ pháp:</h3>
-              <div className="space-y-2">
-                {spellingErrors.map((error, index) => (
-                  <div key={index} className="text-sm">
-                    <div>
-                      <span className="text-red-400">{error.wrong ? `"${error.wrong}"` : "(không rõ)"}</span>
-                      {error.suggestion && (
-                        <span className="ml-2">→ Gợi ý: <span className="text-green-400">{error.suggestion}</span></span>
+        {/* Hiển thị lỗi chính tả từ API và gợi ý sửa - chỉ cho Owner */}
+        {!isSeller && spellingErrors.length > 0 && (
+          <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4 mt-4">
+            {spellingErrors.length > 0 && (
+              <>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-yellow-400 font-semibold">Lỗi chính tả/ngữ pháp:</h3>
+                  <div className="text-xs text-yellow-300">
+                    💡 Lỗi đã được tự động tô đậm trong nội dung - Click vào từ lỗi để sửa
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {spellingErrors.map((error, index) => (
+                    <div key={index} className="text-sm">
+                      <div>
+                        <span className="text-red-400">{error.wrong ? `"${error.wrong}"` : "(không rõ)"}</span>
+                        {error.suggestion && (
+                          <span className="ml-2">→ Gợi ý: <span className="text-green-400">{error.suggestion}</span></span>
+                        )}
+                      </div>
+                      {error.explanation && (
+                        <div className="text-gray-300 ml-4">{error.explanation}</div>
                       )}
                     </div>
-                    {error.explanation && (
-                      <div className="text-gray-300 ml-4">{error.explanation}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                  ))}
+                </div>
+              </>
+            )}
 
-          {correctedText && (
-            <div className="mt-4">
-              <h4 className="text-yellow-300 font-semibold mb-2">Bản đã sửa tự động:</h4>
-              <div className="bg-slate-900/60 border border-yellow-500/30 rounded p-3 text-sm whitespace-pre-wrap max-h-64 overflow-auto">{correctedText}</div>
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => {
-                    const next = typeof correctedText === "string" ? correctedText : JSON.stringify(correctedText);
-                    setContent(next || "");
-                    // focus textarea and move caret to start
-                    try {
-                      contentAreaRef.current?.focus();
-                      contentAreaRef.current?.setSelectionRange(0, 0);
-                    } catch {}
-                    window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Đã áp dụng bản sửa" } }));
-                  }}
-                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded text-sm"
-                >
-                  Áp dụng bản đã sửa vào nội dung
-                </button>
-                <button
-                  onClick={() => setCorrectedText("")}
-                  className="px-3 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-sm"
-                >
-                  Ẩn bản sửa
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  ), [content, file, pdfPages, spellingErrors, isCheckingSpelling, contentHasMeaning, meaningScore, meaningReason, handleContentChange, handleFileChange, handleCheckSpelling, getFileTag, formatFileSize]);
+          </div>
+        )}
+      </div>
+    );
+  }, [content, file, pdfPages, spellingErrors, isCheckingSpelling, contentHasMeaning, meaningScore, meaningReason, showHighlightedContent, handleContentChange, handleFileChange, handleCheckSpelling, getFileTag, formatFileSize, createHighlightedContent, bookInfo?.uploaderType]);
 
   const Step3 = () => (
     <div className="bg-slate-800 p-6 rounded-lg shadow-md mb-6">
@@ -1242,7 +1426,9 @@ export default function ChapterForm() {
       {/* Thông báo trạng thái kiểm duyệt */}
       {currentStep === 3 && (
         <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mt-4">
-          <h4 className="text-blue-400 font-semibold mb-2">Trạng thái kiểm duyệt</h4>
+          <h4 className="text-blue-400 font-semibold mb-2">
+            {bookInfo?.uploaderType === "Seller" ? "Trạng thái (Seller - Bỏ qua kiểm duyệt)" : "Trạng thái kiểm duyệt"}
+          </h4>
           <div className="space-y-1 text-sm">
             <div className={`flex items-center gap-2 ${
               contentHasMeaning === true ? "text-green-400" : 
@@ -1383,7 +1569,7 @@ export default function ChapterForm() {
       {/* Step content */}
       {currentStep === 1 && Step1}
       {currentStep === 2 && Step2}
-      {currentStep === 3 && <Step3 />}
+      {currentStep === 3 && bookInfo?.uploaderType !== "Seller" && <Step3 />}
 
       {/* Navigation buttons */}
       <div className="flex justify-between">
@@ -1409,54 +1595,84 @@ export default function ChapterForm() {
             Hủy
           </button>
           
-          {currentStep < 3 ? (
-            <button
-              onClick={nextStep}
-              disabled={
-                (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) // Step 1 validation
-                // Step 2: Không disable nút "Tiếp tục" - luôn có thể bấm
-              }
-              className={`px-4 py-2 rounded-lg transition ${
-                (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree)))
-                  ? "bg-gray-600 cursor-not-allowed opacity-50"
-                  : "bg-orange-500 hover:bg-orange-600"
-              }`}
-            >
-              Tiếp tục
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => setCurrentStep(2)}
-                className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition"
-              >
-                Chỉnh sửa nội dung
-              </button>
-              <button
-                onClick={handleSaveChapter}
-                disabled={
-                  isSaving || 
-                  contentHasMeaning !== true ||
-                  !policyResult?.passed || 
-                  !plagiarismResult?.passed ||
-                  !title.trim() ||
-                  !content.trim()
-                }
-                className={`px-4 py-2 rounded-lg transition ${
-                  isSaving || 
-                  contentHasMeaning !== true ||
-                  !policyResult?.passed || 
-                  !plagiarismResult?.passed ||
-                  !title.trim() ||
-                  !content.trim()
-                    ? "bg-gray-500 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700"
-                }`}
-              >
-                {isSaving ? "Đang xử lý..." : "Thêm chương"}
-              </button>
-            </>
-          )}
+          {(() => {
+            const isSeller = bookInfo?.uploaderType === "Seller";
+            const maxStep = isSeller ? 2 : 3;
+            
+            // Seller ở bước 2: Hiển thị nút "Lưu chương"
+            if (isSeller && currentStep === 2) {
+              return (
+                <button
+                  onClick={handleSaveChapter}
+                  disabled={isSaving || !title.trim() || !content.trim()}
+                  className={`px-4 py-2 rounded-lg transition ${
+                    isSaving || !title.trim() || !content.trim()
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {isSaving ? "Đang xử lý..." : "Lưu chương"}
+                </button>
+              );
+            }
+            
+            // Owner ở bước 3: Hiển thị nút "Chỉnh sửa nội dung" và "Thêm chương"
+            if (!isSeller && currentStep === 3) {
+              return (
+                <>
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition"
+                  >
+                    Chỉnh sửa nội dung
+                  </button>
+                  <button
+                    onClick={handleSaveChapter}
+                    disabled={
+                      isSaving || 
+                      contentHasMeaning !== true ||
+                      !policyResult?.passed || 
+                      !plagiarismResult?.passed ||
+                      !title.trim() ||
+                      !content.trim()
+                    }
+                    className={`px-4 py-2 rounded-lg transition ${
+                      isSaving || 
+                      contentHasMeaning !== true ||
+                      !policyResult?.passed || 
+                      !plagiarismResult?.passed ||
+                      !title.trim() ||
+                      !content.trim()
+                        ? "bg-gray-500 cursor-not-allowed"
+                        : "bg-green-600 hover:bg-green-700"
+                    }`}
+                  >
+                    {isSaving ? "Đang xử lý..." : "Thêm chương"}
+                  </button>
+                </>
+              );
+            }
+            
+            // Các trường hợp khác: Hiển thị nút "Tiếp tục"
+            if (currentStep < maxStep) {
+              return (
+                <button
+                  onClick={nextStep}
+                  disabled={
+                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) // Step 1 validation
+                    // Step 2: Không disable nút "Tiếp tục" - luôn có thể bấm
+                  }
+                  className={`px-4 py-2 rounded-lg transition ${
+                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree)))
+                      ? "bg-gray-600 cursor-not-allowed opacity-50"
+                      : "bg-orange-500 hover:bg-orange-600"
+                  }`}
+                >
+                  Tiếp tục
+                </button>
+              );
+            }
+          })()}
         </div>
       </div>
     </div>
