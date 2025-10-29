@@ -6,7 +6,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
   const [form, setForm] = useState({
     name: "",
     value: "",
-    limit: "",
     startDate: "",
     endDate: "",
     books: [],
@@ -28,7 +27,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         setForm({
           name: editingPromotion.promotionName,
           value: editingPromotion.discountValue,
-          limit: editingPromotion.quantity,
           startDate: editingPromotion.startAt.slice(0, 16),
           endDate: editingPromotion.endAt.slice(0, 16),
           books: Array.isArray(editingPromotion.books) ? editingPromotion.books.map(b => b.bookId) : [],
@@ -38,7 +36,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         setForm({
           name: "",
           value: "",
-          limit: "",
           startDate: "",
           endDate: "",
           books: [],
@@ -53,13 +50,8 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
   const handleSubmit = async () => {
     try {
-      if (!form.name || !form.value || !form.limit || !form.startDate || !form.endDate || !form.books?.length) {
+      if (!form.name || !form.value || !form.startDate || !form.endDate || !form.books?.length) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Vui lòng điền đầy đủ thông tin" }}));
-        return;
-      }
-
-      if (parseInt(form.limit, 10) <= 0) {
-        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Số lượt sử dụng phải lớn hơn 0" }}));
         return;
       }
 
@@ -83,7 +75,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         promotionName: form.name,
         description: form.description,
         discountPercent: parseFloat(form.value),
-        quantity: parseInt(form.limit, 10),
         startAt: form.startDate,
         endAt: form.endDate,
         bookIds: form.books,
@@ -137,16 +128,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
               className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="text-sm">Số lượt sử dụng tối đa *</label>
-            <input
-              type="number"
-              min="1"
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
-              value={form.limit}
-              onChange={(e) => setForm({ ...form, limit: e.target.value })}
             />
           </div>
         </div>

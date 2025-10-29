@@ -374,8 +374,7 @@ namespace DataAccess.DAO
                 .Where(p => p.Books.Any(b => b.BookId == bookId) // Book thuộc promotion này
                     && p.IsActive // Promotion còn active
                     && p.StartAt <= now // Đã bắt đầu
-                    && p.EndAt >= now // Chưa hết hạn
-                    && p.Quantity > 0) // Còn số lượng
+                    && p.EndAt >= now) // Chưa hết hạn
                 .OrderByDescending(p => p.DiscountValue) // Ưu tiên promotion có giá trị cao nhất
                 .FirstOrDefaultAsync();
             

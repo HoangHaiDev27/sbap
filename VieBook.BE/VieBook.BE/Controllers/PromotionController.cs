@@ -41,7 +41,6 @@ namespace VieBookAPI.Controllers
                     Description = p.Description,
                     DiscountType = p.DiscountType,
                     DiscountValue = p.DiscountValue,
-                    Quantity = p.Quantity,
                     StartAt = p.StartAt,
                     EndAt = p.EndAt,
                     IsActive = p.IsActive,
@@ -108,7 +107,6 @@ namespace VieBookAPI.Controllers
                 Description = dto.Description,
                 DiscountType = "Percent",
                 DiscountValue = dto.DiscountPercent,
-                Quantity = dto.Quantity,
                 StartAt = startUtc,
                 EndAt = endUtc,
                 IsActive = true
@@ -126,7 +124,6 @@ namespace VieBookAPI.Controllers
                     Description = created.Description,
                     DiscountType = created.DiscountType,
                     DiscountValue = created.DiscountValue,
-                    Quantity = created.Quantity,
                     StartAt = created.StartAt,
                     EndAt = created.EndAt,
                     IsActive = created.IsActive,
@@ -168,7 +165,6 @@ namespace VieBookAPI.Controllers
             existing.Description = dto.Description;
             existing.DiscountType = "Percent";
             existing.DiscountValue = dto.DiscountPercent;
-            existing.Quantity = dto.Quantity;
             // Chuẩn hóa UTC khi cập nhật
             existing.StartAt = dto.StartAt.Kind == DateTimeKind.Utc ? dto.StartAt : dto.StartAt.ToUniversalTime();
             existing.EndAt = dto.EndAt.Kind == DateTimeKind.Utc ? dto.EndAt : dto.EndAt.ToUniversalTime();
@@ -185,7 +181,6 @@ namespace VieBookAPI.Controllers
                     Description = updated.Description,
                     DiscountType = updated.DiscountType,
                     DiscountValue = updated.DiscountValue,
-                    Quantity = updated.Quantity,
                     StartAt = updated.StartAt,
                     EndAt = updated.EndAt,
                     IsActive = updated.IsActive,
@@ -237,7 +232,6 @@ namespace VieBookAPI.Controllers
                 PromotionName = promotion.PromotionName,
                 Description = promotion.Description,
                 DiscountValue = promotion.DiscountValue,
-                Quantity = promotion.Quantity,
                 StartAt = promotion.StartAt,
                 EndAt = promotion.EndAt,
                 IsActive = promotion.IsActive,

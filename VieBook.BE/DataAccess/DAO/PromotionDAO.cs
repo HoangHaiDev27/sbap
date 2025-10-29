@@ -24,7 +24,6 @@ namespace DataAccess.DAO
             var upcoming = promotions.Count(p => p.StartAt > now);
             var expired = promotions.Count(p => p.EndAt < now);
             var totalBooksApplied = promotions.Sum(p => p.Books.Count);
-            var totalQuantity = promotions.Sum(p => p.Quantity);
 
             return new BusinessObject.Dtos.PromotionStatsDTO
             {
@@ -33,7 +32,6 @@ namespace DataAccess.DAO
                 ExpiredCount = expired,
                 TotalPromotions = promotions.Count,
                 TotalBooksApplied = totalBooksApplied,
-                TotalQuantity = totalQuantity,
                 TotalUses = 0,
                 TotalRevenue = 0
             };

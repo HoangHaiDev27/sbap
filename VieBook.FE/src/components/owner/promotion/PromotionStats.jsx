@@ -31,7 +31,7 @@ export default function PromotionStats() {
   const cards = [
     { title: "Đang hoạt động", value: String(stats.activeCount), sub: `${stats.totalPromotions} khuyến mãi` },
     { title: "Sắp diễn ra", value: String(stats.upcomingCount), sub: `${stats.totalBooksApplied} sách áp dụng` },
-    { title: "Đã kết thúc", value: String(stats.expiredCount), sub: `${stats.totalQuantity} lượt tối đa` },
+    { title: "Đã kết thúc", value: String(stats.expiredCount), sub: `${stats.totalPromotions} tổng cộng` },
     { title: "Doanh thu từ khuyến mãi", value: `${stats.totalRevenue?.toLocaleString()} đ`, sub: `${stats.totalUses} lượt sử dụng` },
   ];
 

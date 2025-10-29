@@ -61,7 +61,6 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
               <th className="p-3">Loại & Giá trị</th>
               <th className="p-3">Thời gian</th>
               <th className="p-3">Trạng thái</th>
-              <th className="p-3">Hiệu quả</th>
               <th className="p-3 text-center w-28">Hành động</th>
             </tr>
           </thead>
@@ -114,9 +113,6 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
                     <span className={`${status.className} text-white px-2 py-1 rounded-lg text-xs whitespace-nowrap`}>
                       {status.label}
                     </span>
-                  </td>
-                  <td className="p-3 align-top whitespace-nowrap">
-                    {0}/{promo.quantity} lượt
                   </td>
                   <td className="p-3 align-top flex gap-2 justify-center">
                     <button
