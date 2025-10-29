@@ -84,14 +84,61 @@ namespace Services.Implementations
                     };
                 }
 
-                // 4. CHECK EXISTING PURCHASES
+                // 4. CHECK EXISTING PURCHASES (phân biệt theo OrderType)
                 var existingPurchases = await _orderItemRepository.GetUserPurchasedChaptersAsync(userId);
-                var alreadyPurchasedChapterIds = existingPurchases
+
+                // Xác định OrderType cần check dựa trên PurchaseType
+                List<string> orderTypesToCheck = new List<string>();
+                if (request.PurchaseType == "soft")
+                {
+                    orderTypesToCheck.Add("BuyChapterSoft");
+                    orderTypesToCheck.Add("BuyChapter"); // Legacy order type
+                }
+                else if (request.PurchaseType == "audio")
+                {
+                    orderTypesToCheck.Add("BuyChapterAudio");
+                }
+                else if (request.PurchaseType == "both")
+                {
+                    // Nếu mua "both", cần check xem đã có cả soft và audio chưa
+                    orderTypesToCheck.Add("BuyChapterSoft");
+                    orderTypesToCheck.Add("BuyChapter");
+                    orderTypesToCheck.Add("BuyChapterAudio");
+                }
+
+                // Lọc các chapter đã mua theo OrderType tương ứng
+                var alreadyPurchasedByType = existingPurchases
+                    .Where(p => orderTypesToCheck.Contains(p.OrderType))
                     .Select(p => p.ChapterId)
                     .ToList();
-                var newChaptersToPurchase = chaptersToPurchase
-                    .Where(c => !alreadyPurchasedChapterIds.Contains(c.ChapterId))
-                    .ToList();
+
+                // Nếu mua "both", cần check xem đã có cả soft VÀ audio chưa
+                List<Chapter> newChaptersToPurchase;
+                if (request.PurchaseType == "both")
+                {
+                    // Lấy các chapter đã mua cả soft và audio
+                    var chaptersWithBoth = existingPurchases
+                        .Where(p => p.OrderType == "BuyChapterSoft" || p.OrderType == "BuyChapter")
+                        .Select(p => p.ChapterId)
+                        .Intersect(
+                            existingPurchases
+                                .Where(p => p.OrderType == "BuyChapterAudio")
+                                .Select(p => p.ChapterId)
+                        )
+                        .ToList();
+
+                    // Chỉ lọc bỏ các chapter đã mua CẢ HAI
+                    newChaptersToPurchase = chaptersToPurchase
+                        .Where(c => !chaptersWithBoth.Contains(c.ChapterId))
+                        .ToList();
+                }
+                else
+                {
+                    // Với soft hoặc audio, chỉ check OrderType tương ứng
+                    newChaptersToPurchase = chaptersToPurchase
+                        .Where(c => !alreadyPurchasedByType.Contains(c.ChapterId))
+                        .ToList();
+                }
 
                 if (newChaptersToPurchase.Count == 0)
                 {
@@ -125,30 +172,66 @@ namespace Services.Implementations
                     audioPrices = audioData;
                 }
 
-                // 7. CALCULATE TOTAL COST
+                // 6.5. GET ACTIVE PROMOTION FOR BOOK
+                var promotion = await _bookRepository.GetActivePromotionForBook(request.BookId);
+                decimal? promotionPercent = null;
+                if (promotion != null && promotion.DiscountType == "Percent")
+                {
+                    promotionPercent = promotion.DiscountValue;
+                }
+
+                // 7. CALCULATE TOTAL COST (với promotion nếu có)
                 decimal totalCost = 0;
                 if (request.PurchaseType == "soft")
                 {
                     // Giá bản mềm từ PriceSoft trong Chapters
-                    totalCost = newChaptersToPurchase.Sum(c => c.PriceSoft ?? 0);
+                    decimal baseTotal = newChaptersToPurchase.Sum(c => c.PriceSoft ?? 0);
+                    // Áp dụng promotion nếu có
+                    if (promotionPercent.HasValue)
+                    {
+                        totalCost = baseTotal * (1 - promotionPercent.Value / 100);
+                    }
+                    else
+                    {
+                        totalCost = baseTotal;
+                    }
                 }
                 else if (request.PurchaseType == "audio")
                 {
-                    // Giá audio từ PriceSoft trong ChapterAudios
-                    totalCost = newChaptersToPurchase.Sum(c =>
+                    // Giá audio từ PriceAudio trong ChapterAudios
+                    decimal baseTotal = newChaptersToPurchase.Sum(c =>
                         audioPrices.ContainsKey(c.ChapterId) ? audioPrices[c.ChapterId] : 0
                     );
+                    // Áp dụng promotion nếu có
+                    if (promotionPercent.HasValue)
+                    {
+                        totalCost = baseTotal * (1 - promotionPercent.Value / 100);
+                    }
+                    else
+                    {
+                        totalCost = baseTotal;
+                    }
                 }
                 else if (request.PurchaseType == "both")
                 {
-                    // Giá cả 2 loại với giảm 10%
+                    // Giá cả 2 loại với giảm 10% combo, sau đó áp dụng promotion nếu có
+                    decimal comboTotal = 0;
                     foreach (var chapter in newChaptersToPurchase)
                     {
                         decimal softPrice = chapter.PriceSoft ?? 0;
                         decimal audioPrice = audioPrices.ContainsKey(chapter.ChapterId) ? audioPrices[chapter.ChapterId] : 0;
                         decimal bothPrice = softPrice + audioPrice;
-                        decimal discountedPrice = bothPrice * 0.9m; // Giảm 10%
-                        totalCost += discountedPrice;
+                        decimal comboDiscountPrice = bothPrice * 0.9m; // Giảm 10% combo
+                        comboTotal += comboDiscountPrice;
+                    }
+                    // Áp dụng promotion nếu có
+                    if (promotionPercent.HasValue)
+                    {
+                        totalCost = comboTotal * (1 - promotionPercent.Value / 100);
+                    }
+                    else
+                    {
+                        totalCost = comboTotal;
                     }
                 }
 
@@ -172,23 +255,32 @@ namespace Services.Implementations
                     };
                 }
 
-                // 10. CREATE ORDER ITEMS
+                // 10. CREATE ORDER ITEMS (với promotion nếu có)
                 var orderItemsToCreate = new List<OrderItem>();
 
                 foreach (var chapter in newChaptersToPurchase)
                 {
                     if (request.PurchaseType == "both")
                     {
-                        // Trường hợp mua cả 2: tạo 2 OrderItem riêng (soft và audio) với giá sau giảm
+                        // Trường hợp mua cả 2: tạo 2 OrderItem riêng (soft và audio)
                         decimal softPrice = chapter.PriceSoft ?? 0;
                         decimal audioPrice = audioPrices.ContainsKey(chapter.ChapterId) ? audioPrices[chapter.ChapterId] : 0;
                         decimal totalBoth = softPrice + audioPrice;
-                        decimal discount = totalBoth * 0.1m; // Giảm 10%
+                        decimal comboDiscount = totalBoth * 0.1m; // Giảm 10% combo
+                        decimal totalAfterCombo = totalBoth - comboDiscount;
 
-                        // Giá sau giảm cho mỗi loại (chia theo tỷ lệ)
-                        decimal totalAfterDiscount = totalBoth - discount;
-                        decimal softDiscounted = softPrice > 0 ? (softPrice / totalBoth) * totalAfterDiscount : 0;
-                        decimal audioDiscounted = audioPrice > 0 ? (audioPrice / totalBoth) * totalAfterDiscount : 0;
+                        // Áp dụng promotion nếu có
+                        decimal finalTotal = promotionPercent.HasValue
+                            ? totalAfterCombo * (1 - promotionPercent.Value / 100)
+                            : totalAfterCombo;
+
+                        // Giá sau giảm cho mỗi loại (chia theo tỷ lệ, bao gồm cả promotion)
+                        decimal softFinalPrice = softPrice > 0 && totalBoth > 0
+                            ? (softPrice / totalBoth) * finalTotal
+                            : 0;
+                        decimal audioFinalPrice = audioPrice > 0 && totalBoth > 0
+                            ? (audioPrice / totalBoth) * finalTotal
+                            : 0;
 
                         // Tạo OrderItem cho bản mềm
                         var softOrderItem = new OrderItem
@@ -196,9 +288,10 @@ namespace Services.Implementations
                             CustomerId = userId,
                             ChapterId = chapter.ChapterId,
                             UnitPrice = softPrice,
-                            CashSpent = softDiscounted,
+                            CashSpent = softFinalPrice,
                             PaidAt = DateTime.UtcNow,
-                            OrderType = "BuyChapterSoft"
+                            OrderType = "BuyChapterSoft",
+                            PromotionId = promotion?.PromotionId // Lưu PromotionId nếu có
                         };
                         orderItemsToCreate.Add(softOrderItem);
 
@@ -210,9 +303,10 @@ namespace Services.Implementations
                                 CustomerId = userId,
                                 ChapterId = chapter.ChapterId,
                                 UnitPrice = audioPrice,
-                                CashSpent = audioDiscounted,
+                                CashSpent = audioFinalPrice,
                                 PaidAt = DateTime.UtcNow,
-                                OrderType = "BuyChapterAudio"
+                                OrderType = "BuyChapterAudio",
+                                PromotionId = promotion?.PromotionId // Lưu PromotionId nếu có
                             };
                             orderItemsToCreate.Add(audioOrderItem);
                         }
@@ -222,7 +316,7 @@ namespace Services.Implementations
                         // Trường hợp mua riêng lẻ (soft hoặc audio)
                         decimal unitPrice = 0;
                         string orderType = "";
-                        
+
                         if (request.PurchaseType == "soft")
                         {
                             unitPrice = chapter.PriceSoft ?? 0;
@@ -236,14 +330,20 @@ namespace Services.Implementations
                             orderType = "BuyChapterAudio";
                         }
 
+                        // Áp dụng promotion nếu có
+                        decimal finalPrice = promotionPercent.HasValue
+                            ? unitPrice * (1 - promotionPercent.Value / 100)
+                            : unitPrice;
+
                         var orderItem = new OrderItem
                         {
                             CustomerId = userId,
                             ChapterId = chapter.ChapterId,
                             UnitPrice = unitPrice,
-                            CashSpent = unitPrice,
+                            CashSpent = finalPrice, // Giá sau promotion
                             PaidAt = DateTime.UtcNow,
-                            OrderType = orderType
+                            OrderType = orderType,
+                            PromotionId = promotion?.PromotionId // Lưu PromotionId nếu có
                         };
 
                         orderItemsToCreate.Add(orderItem);

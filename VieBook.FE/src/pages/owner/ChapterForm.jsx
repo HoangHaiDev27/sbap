@@ -1068,7 +1068,7 @@ export default function ChapterForm() {
           ) : (
             // Hiển thị textarea thông thường
             <textarea
-              placeholder="Nội dung sẽ được trích xuất từ file hoặc bạn có thể nhập trực tiếp..."
+              placeholder="Nội dung sẽ được trích xuất từ file hoặc bạn có thể nhập trực tiếp. Yêu cầu: Tối thiểu 50 ký tự, tối đa 50,000 ký tự."
               value={content}
               onChange={handleContentChange}
               rows={20}
@@ -1087,10 +1087,15 @@ export default function ChapterForm() {
               <div className={`text-xs ${
                 content.length > 45000 ? "text-red-400" : 
                 content.length > 40000 ? "text-yellow-400" : 
+                content.length < 50 ? "text-orange-400" :
                 "text-gray-400"
               }`}>
                 {content.length}/50000 ký tự
                 {content.length > 45000 && " (Gần đạt giới hạn)"}
+                {content.length > 0 && content.length < 50 && ` (Tối thiểu 50 ký tự)`}
+              </div>
+              <div className="text-xs text-gray-500 mt-0.5">
+                Yêu cầu: Tối thiểu 50 ký tự, tối đa 50,000 ký tự
               </div>
               {validationErrors.content && (
                 <div className="text-xs text-red-400 mt-1">{validationErrors.content}</div>

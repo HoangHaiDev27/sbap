@@ -255,7 +255,8 @@ CREATE TABLE dbo.OrderItems (
     UnitPrice     DECIMAL(18,2) NOT NULL, -- giá chương tại thời điểm mua (xu)
     CashSpent     DECIMAL(18,2) NOT NULL, -- số xu user đã trả
     PaidAt        DATETIME2 NULL,
-    OrderType     VARCHAR(20) NULL        -- ví dụ: BuyChapter, BuyBundle
+    OrderType     VARCHAR(20) NULL,       -- ví dụ: BuyChapter, BuyBundle
+    PromotionId   INT NULL                 -- ID của promotion nếu có (không tham chiếu foreign key)
 );
 ALTER TABLE dbo.OrderItems
 ADD CONSTRAINT CK_OrderItems_OrderType
