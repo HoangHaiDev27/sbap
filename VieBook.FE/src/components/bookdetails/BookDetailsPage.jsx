@@ -424,7 +424,7 @@ export default function BookDetailPage() {
                     });
                   }
                   const isFree =
-                    !chapter.priceAudio || chapter.priceAudio === 0;
+                    !chapter.priceSoft || chapter.priceSoft === 0;
                   const isDisabled =
                     !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
                   const chapterNumber = index + 1;
@@ -563,7 +563,7 @@ export default function BookDetailPage() {
                             </div>
                           ) : (
                             <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
-                              {chapter.priceAudio?.toLocaleString() || 0}
+                              {chapter.priceSoft?.toLocaleString() || 0}
                               <RiCoinLine className="w-4 h-4 text-yellow-400" />
                             </div>
                           )}

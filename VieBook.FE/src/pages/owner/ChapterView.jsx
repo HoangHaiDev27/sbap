@@ -38,8 +38,8 @@ export default function ChapterView() {
       try {
         const data = await getChapterById(chapterId);
         setTitle(data.chapterTitle || "");
-        setPrice(data.priceAudio || 0);
-        setIsFree(data.priceAudio === 0);
+        setPrice(data.priceSoft || 0);
+        setIsFree(data.priceSoft === 0);
         setBookTitle(data.bookTitle || "Không xác định");
         setStatus(data.status || "Draft");
 

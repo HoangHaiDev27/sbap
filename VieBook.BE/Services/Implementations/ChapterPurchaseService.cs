@@ -116,21 +116,27 @@ namespace Services.Implementations
                 Dictionary<int, decimal> audioPrices = new Dictionary<int, decimal>();
                 if (request.PurchaseType == "audio" || request.PurchaseType == "both")
                 {
-                    audioPrices = await _bookRepository.GetChapterAudioPricesAsync(request.BookId);
+                    // Lấy giá audio từ bảng ChapterAudios (PriceAudio)
+                    var audioData = await _context.ChapterAudios
+                        .Where(ca => request.ChapterIds.Contains(ca.ChapterId))
+                        .GroupBy(ca => ca.ChapterId)
+                        .Select(g => new { ChapterId = g.Key, Price = g.FirstOrDefault()!.PriceAudio ?? 0 })
+                        .ToDictionaryAsync(x => x.ChapterId, x => x.Price);
+                    audioPrices = audioData;
                 }
 
                 // 7. CALCULATE TOTAL COST
                 decimal totalCost = 0;
                 if (request.PurchaseType == "soft")
                 {
-                    // Giá bản mềm từ PriceAudio trong Chapters
-                    totalCost = newChaptersToPurchase.Sum(c => c.PriceAudio ?? 0);
+                    // Giá bản mềm từ PriceSoft trong Chapters
+                    totalCost = newChaptersToPurchase.Sum(c => c.PriceSoft ?? 0);
                 }
                 else if (request.PurchaseType == "audio")
                 {
-                    // Giá audio từ PriceAudio trong ChapterAudios
+                    // Giá audio từ PriceSoft trong ChapterAudios
                     totalCost = newChaptersToPurchase.Sum(c =>
-                        audioPrices.ContainsKey(c.ChapterId) ? audioPrices[c.ChapterId] : (c.PriceAudio ?? 0)
+                        audioPrices.ContainsKey(c.ChapterId) ? audioPrices[c.ChapterId] : 0
                     );
                 }
                 else if (request.PurchaseType == "both")
@@ -138,7 +144,7 @@ namespace Services.Implementations
                     // Giá cả 2 loại với giảm 10%
                     foreach (var chapter in newChaptersToPurchase)
                     {
-                        decimal softPrice = chapter.PriceAudio ?? 0;
+                        decimal softPrice = chapter.PriceSoft ?? 0;
                         decimal audioPrice = audioPrices.ContainsKey(chapter.ChapterId) ? audioPrices[chapter.ChapterId] : 0;
                         decimal bothPrice = softPrice + audioPrice;
                         decimal discountedPrice = bothPrice * 0.9m; // Giảm 10%
@@ -174,7 +180,7 @@ namespace Services.Implementations
                     if (request.PurchaseType == "both")
                     {
                         // Trường hợp mua cả 2: tạo 2 OrderItem riêng (soft và audio) với giá sau giảm
-                        decimal softPrice = chapter.PriceAudio ?? 0;
+                        decimal softPrice = chapter.PriceSoft ?? 0;
                         decimal audioPrice = audioPrices.ContainsKey(chapter.ChapterId) ? audioPrices[chapter.ChapterId] : 0;
                         decimal totalBoth = softPrice + audioPrice;
                         decimal discount = totalBoth * 0.1m; // Giảm 10%
@@ -215,15 +221,19 @@ namespace Services.Implementations
                     {
                         // Trường hợp mua riêng lẻ (soft hoặc audio)
                         decimal unitPrice = 0;
+                        string orderType = "";
+                        
                         if (request.PurchaseType == "soft")
                         {
-                            unitPrice = chapter.PriceAudio ?? 0;
+                            unitPrice = chapter.PriceSoft ?? 0;
+                            orderType = "BuyChapterSoft";
                         }
                         else if (request.PurchaseType == "audio")
                         {
                             unitPrice = audioPrices.ContainsKey(chapter.ChapterId)
                                 ? audioPrices[chapter.ChapterId]
-                                : (chapter.PriceAudio ?? 0);
+                                : 0;
+                            orderType = "BuyChapterAudio";
                         }
 
                         var orderItem = new OrderItem
@@ -233,7 +243,7 @@ namespace Services.Implementations
                             UnitPrice = unitPrice,
                             CashSpent = unitPrice,
                             PaidAt = DateTime.UtcNow,
-                            OrderType = request.PurchaseType == "soft" ? "BuyChapterSoft" : "BuyChapterAudio"
+                            OrderType = orderType
                         };
 
                         orderItemsToCreate.Add(orderItem);

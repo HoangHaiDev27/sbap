@@ -465,9 +465,7 @@ export default function OwnerChapters() {
         <div className="bg-slate-800 p-4 rounded-lg flex items-center space-x-3">
           <RiCheckLine size={28} className="text-green-400" />
           <div>
-            <p className="text-xl font-bold">
-              {chapters.filter((ch) => ch.priceAudio > 0).length}
-            </p>
+            <p className="text-xl font-bold">{chapters.filter((ch) => ch.priceSoft > 0).length}</p>
             <p className="text-sm text-gray-400">Có tính phí</p>
           </div>
         </div>
@@ -475,9 +473,7 @@ export default function OwnerChapters() {
         <div className="bg-slate-800 p-4 rounded-lg flex items-center space-x-3">
           <RiGiftLine size={28} className="text-yellow-400" />
           <div>
-            <p className="text-xl font-bold">
-              {chapters.filter((ch) => ch.priceAudio === 0).length}
-            </p>
+            <p className="text-xl font-bold">{chapters.filter((ch) => ch.priceSoft === 0).length}</p>
             <p className="text-sm text-gray-400">Chương miễn phí</p>
           </div>
         </div>
@@ -502,10 +498,11 @@ export default function OwnerChapters() {
           </p>
         ) : (
           <div className="space-y-3">
-            {paginatedChapters.map((ch, index) => {
-              const globalIndex = (currentPage - 1) * pageSize + index + 1;
-              const isFree = ch.priceAudio === 0;
-              const hasAudio = !!ch.chapterAudioUrl;
+            {
+              paginatedChapters.map((ch, index) => {
+                const globalIndex = (currentPage - 1) * pageSize + index + 1;
+                const isFree = ch.priceSoft === 0;
+                const hasAudio = !!ch.chapterAudioUrl;
 
               // status badge
               let statusBadge = null;
@@ -585,7 +582,7 @@ export default function OwnerChapters() {
                           </span>
                         ) : (
                           <span className="text-orange-400 font-semibold text-sm whitespace-nowrap">
-                            Chương: {ch.priceAudio.toLocaleString()} xu
+                            Chương: {ch.priceSoft.toLocaleString()} xu
                           </span>
                         )}
                       </div>

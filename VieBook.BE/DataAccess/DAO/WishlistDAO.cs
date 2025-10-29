@@ -86,7 +86,7 @@ namespace DataAccess.DAO
                         ChapterSoftUrl = c.ChapterSoftUrl,
                         ChapterAudioUrl = c.ChapterAudioUrl,
                         DurationSec = c.DurationSec ?? 0,
-                        PriceAudio = c.PriceAudio ?? 0,
+                        PriceSoft = c.PriceSoft ?? 0,
                         UploadedAt = c.UploadedAt
                     }).ToList(),
                     Categories = w.Book.Categories.Select(cat => new CategoryDTO

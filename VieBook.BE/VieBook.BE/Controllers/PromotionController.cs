@@ -60,8 +60,8 @@ namespace VieBookAPI.Controllers
                     Author = b.Author,
                     OwnerId = b.OwnerId,
                     Status = b.Status,
-                    TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
-                    DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
+                    TotalPrice = b.Chapters.Sum(c => c.PriceSoft ?? 0),
+                    DiscountedPrice = b.Chapters.Sum(c => c.PriceSoft ?? 0) *
                         (1 - (p.DiscountType == "Percent" ? (p.DiscountValue / 100) : 0)),
                     Sold = 0,
                     Rating = 0,
@@ -182,8 +182,8 @@ namespace VieBookAPI.Controllers
                     Title = b.Title,
                     Description = b.Description,
                     CoverUrl = b.CoverUrl,
-                    TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
-                    DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
+                    TotalPrice = b.Chapters.Sum(c => c.PriceSoft ?? 0),
+                    DiscountedPrice = b.Chapters.Sum(c => c.PriceSoft ?? 0) *
                                       (1 - (updated.DiscountType == "Percent" ? (updated.DiscountValue / 100) : 0)),
                 }).ToList();
 
@@ -222,8 +222,8 @@ namespace VieBookAPI.Controllers
                     Title = b.Title,
                     Description = b.Description,
                     CoverUrl = b.CoverUrl,
-                    TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
-                    DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
+                    TotalPrice = b.Chapters.Sum(c => c.PriceSoft ?? 0),
+                    DiscountedPrice = b.Chapters.Sum(c => c.PriceSoft ?? 0) *
                                       (1 - (promotion.DiscountType == "Percent" ? (promotion.DiscountValue / 100) : 0)),
                 }).ToList()
             };

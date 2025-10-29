@@ -85,8 +85,8 @@ export default function ChapterEdit() {
             try {
                 const data = await getChapterById(chapterId);
                 setTitle(data.chapterTitle || "");
-                setPrice(data.priceAudio || 10);
-                setIsFree(data.priceAudio === 0);
+                setPrice(data.priceSoft || 10);
+                setIsFree(data.priceSoft === 0);
                 setBookTitle(data.bookTitle || "Không xác định");
                 setStatus(data.status || "Draft"); // ✅ lấy status từ BE
 
@@ -170,7 +170,7 @@ export default function ChapterEdit() {
                 chapterSoftUrl: chapterUrl,
                 chapterAudioUrl: null,
                 durationSec: null,
-                priceAudio: price,
+                priceSoft: price,
                 uploadedAt: new Date().toISOString(),
                 status: status,
             });

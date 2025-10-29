@@ -117,7 +117,7 @@ namespace Tests
                         ChapterTitle = "Chapter 1",
                         ChapterSoftUrl = "https://example.com/ch1.pdf",
                         DurationSec = 600,
-                        PriceAudio = 15000
+                        PriceSoft = 15000
                     });
                     context.SaveChanges();
 

@@ -47,7 +47,7 @@ namespace Services.Implementations
 
         public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId) => await _chapterRepository.GetChaptersByBookIdAsync(bookId);
 
-        public async Task UpdateChapterAudioAsync(int chapterId, string audioUrl, int durationSec, decimal? priceAudio = null, string? storageMeta = null) =>
-            await _chapterRepository.UpdateChapterAudioAsync(chapterId, audioUrl, durationSec, priceAudio, storageMeta);
+        public async Task UpdateChapterAudioAsync(int chapterId, string audioUrl, int durationSec, decimal? priceSoft = null, string? storageMeta = null) =>
+            await _chapterRepository.UpdateChapterAudioAsync(chapterId, audioUrl, durationSec, priceSoft, storageMeta);
     }
 }

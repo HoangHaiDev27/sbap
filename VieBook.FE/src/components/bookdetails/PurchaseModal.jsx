@@ -125,7 +125,7 @@ export default function PurchaseModal({
   const softOnlyChapters = selectedSoftChapters.filter(id => !selectedAudioChapters.includes(id));
   const softTotalPrice = softOnlyChapters.reduce((sum, chapterId) => {
     const chapter = chapters.find(ch => ch.chapterId === chapterId);
-    return sum + (chapter?.priceAudio || 0);
+    return sum + (chapter?.priceSoft || 0);
   }, 0);
 
   // Tính tổng giá cho bản audio (chỉ những chapter không có trong selectedSoftChapters)
@@ -270,7 +270,7 @@ export default function PurchaseModal({
     const availableChapters = chapters
       .filter(ch => {
         const isPurchased = purchasedChapters.includes(ch.chapterId);
-        const isFree = !ch.priceAudio || ch.priceAudio === 0;
+        const isFree = !ch.priceSoft || ch.priceSoft === 0;
         return !isPurchased && !isFree;
       })
       .map(ch => ch.chapterId);
@@ -395,8 +395,8 @@ export default function PurchaseModal({
               const isPurchasedSoft = purchasedSoftChapters.includes(chapter.chapterId);
               const isPurchasedAudio = purchasedAudioChapters.includes(chapter.chapterId);
               const isPurchasedBoth = isPurchasedSoft && isPurchasedAudio;
-              const isPurchased = isPurchasedSoft || isPurchasedAudio;
-              const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
+              const isPurchased = purchasedChapters.includes(chapter.chapterId);
+              const isFree = !chapter.priceSoft || chapter.priceSoft === 0;
               const duration = Math.round((chapter.durationSec || 0) / 60);
               const chapterNumber = index + 1;
               const isDisabled = isPurchasedBoth || isFree;
@@ -468,7 +468,7 @@ export default function PurchaseModal({
                           {softDisabled && <RiCheckLine className="text-xs" />}
                         </div>
                         <div className="text-xs text-orange-400 font-bold">
-                          {chapter.priceAudio?.toLocaleString() || 0} xu
+                          {chapter.priceSoft?.toLocaleString() || 0} xu
                         </div>
                       </button>
                       

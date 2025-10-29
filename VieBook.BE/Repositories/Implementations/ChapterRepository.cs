@@ -57,9 +57,9 @@ namespace Repositories.Implementations
                 return await _chapterDao.GetChaptersByBookIdAsync(bookId);
             }
 
-            public async Task UpdateChapterAudioAsync(int chapterId, string audioUrl, int durationSec, decimal? priceAudio = null, string? storageMeta = null)
+            public async Task UpdateChapterAudioAsync(int chapterId, string audioUrl, int durationSec, decimal? priceSoft = null, string? storageMeta = null)
             {
-                await _chapterDao.UpdateAudioAsync(chapterId, audioUrl, durationSec, priceAudio, storageMeta);
+                await _chapterDao.UpdateAudioAsync(chapterId, audioUrl, durationSec, priceSoft, storageMeta);
             }
 
             public async Task<bool> CheckChapterExistsAsync(int chapterId)

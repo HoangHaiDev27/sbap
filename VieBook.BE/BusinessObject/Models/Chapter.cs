@@ -21,7 +21,7 @@ public partial class Chapter
 
     public int? DurationSec { get; set; }
 
-    public decimal? PriceAudio { get; set; }
+    public decimal? PriceSoft { get; set; }
 
     public string? StorageMeta { get; set; }
 

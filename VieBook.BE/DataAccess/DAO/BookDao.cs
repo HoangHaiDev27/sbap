@@ -72,7 +72,7 @@ namespace DataAccess.DAO
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                 .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null)) // chỉ sách có audio
                 .ToListAsync();
@@ -84,7 +84,7 @@ namespace DataAccess.DAO
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                     .ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
                 .FirstOrDefaultAsync(b => b.BookId == id && b.Chapters.Any(c => c.ChapterAudioUrl != null));
@@ -192,7 +192,7 @@ namespace DataAccess.DAO
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                 .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null) // chỉ sách có audio
                             && b.Categories.Any(c => c.CategoryId == categoryId)) // thuộc category
@@ -222,7 +222,7 @@ namespace DataAccess.DAO
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                 .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null)) // chỉ sách có audio
                 .OrderByDescending(b => b.Chapters.Sum(c => c.OrderItems.Count)) // sắp xếp theo tổng lượt mua

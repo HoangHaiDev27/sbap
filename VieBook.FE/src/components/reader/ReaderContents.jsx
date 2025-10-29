@@ -106,7 +106,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
               const isLoggedIn = getUserId() !== null;
               // Ưu tiên sử dụng purchasedChapters prop, fallback về chapterOwnership
               const isOwned = purchasedChapters.includes(chapter.chapterId) || chapterOwnership[chapter.chapterId] || false;
-              const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
+              const isFree = !chapter.priceSoft || chapter.priceSoft === 0;
               const isDisabled = !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
               const chapterNumber = index + 1;
               
@@ -121,7 +121,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                 isDisabled: isDisabled,
                 purchasedChapters: purchasedChapters,
                 chapterOwnership: chapterOwnership,
-                priceAudio: chapter.priceAudio,
+                priceSoft: chapter.priceSoft,
                 purchasedChaptersIncludes: purchasedChapters.includes(chapter.chapterId),
                 chapterOwnershipValue: chapterOwnership[chapter.chapterId]
               });
@@ -187,9 +187,9 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                             <span className="text-green-400 font-medium">
                               Miễn phí
                             </span>
-                          ) : chapter.priceAudio && (
+                          ) : chapter.priceSoft && (
                             <span className="text-orange-400 flex items-center gap-1">
-                              {chapter.priceAudio.toLocaleString()}
+                              {chapter.priceSoft.toLocaleString()}
                               <RiCoinLine className="w-4 h-4" />
                             </span>
                           )}
