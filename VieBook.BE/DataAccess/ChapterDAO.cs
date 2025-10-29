@@ -99,5 +99,11 @@ namespace DataAccess
                 await _context.SaveChangesAsync();
             }
         }
+
+        // Kiểm tra chapter có tồn tại không (chỉ Active)
+        public async Task<bool> CheckChapterExistsAsync(int chapterId)
+        {
+            return await _context.Chapters.AnyAsync(c => c.ChapterId == chapterId && c.Status == "Active");
+        }
     }
 }

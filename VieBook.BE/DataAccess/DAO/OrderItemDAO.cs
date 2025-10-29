@@ -1,3 +1,4 @@
+using BusinessObject.Dtos;
 using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using DataAccess;
@@ -105,6 +106,108 @@ namespace DataAccess.DAO
                 CompletedOrders = completedOrders,
                 RefundedOrders = refundedOrders
             };
+        }
+
+        /// <summary>
+        /// Tạo một OrderItem mới
+        /// </summary>
+        public async Task<OrderItem> CreateOrderItemAsync(OrderItem orderItem)
+        {
+            _context.OrderItems.Add(orderItem);
+            await _context.SaveChangesAsync();
+            return orderItem;
+        }
+
+        /// <summary>
+        /// Tạo nhiều OrderItems cùng lúc
+        /// </summary>
+        public async Task CreateOrderItemsAsync(List<OrderItem> orderItems)
+        {
+            _context.OrderItems.AddRange(orderItems);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Kiểm tra user có sở hữu chapter không (bất kỳ loại nào)
+        /// </summary>
+        public async Task<bool> CheckChapterOwnershipAsync(int userId, int chapterId)
+        {
+            return await _context.OrderItems
+                .AnyAsync(oi => oi.CustomerId == userId
+                    && oi.ChapterId == chapterId
+                    && oi.PaidAt != null);
+        }
+
+        /// <summary>
+        /// Kiểm tra user có quyền đọc bản mềm không
+        /// </summary>
+        public async Task<bool> CheckChapterSoftOwnershipAsync(int userId, int chapterId)
+        {
+            return await _context.OrderItems
+                .AnyAsync(oi => oi.CustomerId == userId
+                    && oi.ChapterId == chapterId
+                    && oi.PaidAt != null
+                    && (oi.OrderType == "BuyChapterSoft" || oi.OrderType == "BuyChapterBoth"));
+        }
+
+        /// <summary>
+        /// Kiểm tra user có quyền nghe bản audio không
+        /// </summary>
+        public async Task<bool> CheckChapterAudioOwnershipAsync(int userId, int chapterId)
+        {
+            return await _context.OrderItems
+                .AnyAsync(oi => oi.CustomerId == userId
+                    && oi.ChapterId == chapterId
+                    && oi.PaidAt != null
+                    && (oi.OrderType == "BuyChapterAudio" || oi.OrderType == "BuyChapterBoth"));
+        }
+
+        /// <summary>
+        /// Lấy danh sách chapters đã mua của user
+        /// </summary>
+        public async Task<List<OrderItemDTO>> GetUserPurchasedChaptersAsync(int userId)
+        {
+            return await _context.OrderItems
+                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
+                .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
+                .Select(oi => new OrderItemDTO
+                {
+                    OrderItemId = oi.OrderItemId,
+                    ChapterId = oi.ChapterId,
+                    ChapterTitle = oi.Chapter.ChapterTitle,
+                    BookId = oi.Chapter.BookId,
+                    UnitPrice = oi.UnitPrice,
+                    CashSpent = oi.CashSpent,
+                    PaidAt = oi.PaidAt ?? DateTime.UtcNow,
+                    OrderType = oi.OrderType ?? "BuyChapter"
+                })
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Lấy danh sách sách đã mua của user (group by book)
+        /// </summary>
+        public async Task<List<UserPurchasedBooksDTO>> GetUserPurchasedBooksAsync(int userId)
+        {
+            return await _context.OrderItems
+                .Where(oi => oi.CustomerId == userId && oi.PaidAt != null)
+                .Include(oi => oi.Chapter)
+                    .ThenInclude(c => c.Book)
+                .GroupBy(oi => oi.Chapter.BookId)
+                .Select(g => new UserPurchasedBooksDTO
+                {
+                    BookId = g.Key,
+                    Title = g.First().Chapter.Book.Title,
+                    Description = g.First().Chapter.Book.Description,
+                    CoverUrl = g.First().Chapter.Book.CoverUrl,
+                    Author = g.First().Chapter.Book.Author,
+                    PurchasedChaptersCount = g.Count(),
+                    TotalSpent = g.Sum(oi => oi.CashSpent),
+                    LastPurchasedAt = g.Max(oi => oi.PaidAt!.Value),
+                    TotalChaptersCount = _context.Chapters.Count(c => c.BookId == g.Key && c.Status == "Active")
+                })
+                .ToListAsync();
         }
     }
 }
