@@ -2,19 +2,24 @@ import React, { useState, useRef, useEffect } from "react";
 import { RiUserLine, RiAddLine, RiCoinLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
+import { useUserStore } from "../../hooks/stores/userStore";
 import { logout, getCurrentRole } from "../../api/authApi";
-import { getCurrentUser } from "../../api/userApi";
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
   const [showAvatar, setShowAvatar] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userAvatar, setUserAvatar] = useState(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
   
+  // Get user data from store
+  const { user, fetchUser } = useUserStore();
+  const coins = useCoinsStore((state) => state.coins);
+  
+  // Extract avatar URL from user data
+  const userAvatar = user?.userProfile?.avatarUrl || null;
+  
   // Debug logging
-  console.log("UserMenu - Current user:", currentUser);
+  console.log("UserMenu - Current user:", user);
   console.log("UserMenu - User avatar:", userAvatar);
   console.log("UserMenu - Show avatar:", showAvatar);
   
@@ -38,8 +43,6 @@ export default function UserMenu() {
     await logout();
     navigate("/auth");
   };
-  // Lấy số đồng xu hiện tại
-  const coins = useCoinsStore((state) => state.coins);
   
   // Debug logging
   console.log("UserMenu - Current coins:", coins);
@@ -51,37 +54,25 @@ export default function UserMenu() {
 
   // Load user data on component mount
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const userData = await getCurrentUser();
-        console.log("UserMenu - Loaded user data:", userData);
-        setCurrentUser(userData);
-        const avatarUrl = userData?.userProfile?.avatarUrl;
-        setUserAvatar(avatarUrl);
-        // Reset showAvatar khi có avatar mới
-        if (avatarUrl) {
-          setShowAvatar(true);
-        }
-      } catch (error) {
-        console.error("UserMenu - Error loading user data:", error);
-        // Fallback to localStorage data
-        const localUser = JSON.parse(localStorage.getItem("auth_user") || "null");
-        setCurrentUser(localUser);
-        const avatarUrl = localUser?.userProfile?.avatarUrl;
-        setUserAvatar(avatarUrl);
-        if (avatarUrl) {
-          setShowAvatar(true);
-        }
-      }
+    fetchUser();
+  }, [fetchUser]);
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleProfileUpdate = (event) => {
+      console.log("UserMenu - Profile updated:", event.detail);
+      // Reset showAvatar to show new avatar
+      setShowAvatar(true);
     };
-    
-    loadUserData();
+
+    window.addEventListener("user:profile:updated", handleProfileUpdate);
+    return () => window.removeEventListener("user:profile:updated", handleProfileUpdate);
   }, []);
 
   // Reset showAvatar khi user thay đổi
   useEffect(() => {
     setShowAvatar(true);
-  }, [currentUser]);
+  }, [user]);
 
   return (
     <div className="relative" ref={menuRef}>

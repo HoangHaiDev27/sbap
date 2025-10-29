@@ -313,7 +313,7 @@ export default function TransactionsManagement() {
                 </div>
                 <div>
                   <div className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-red-600`}>
-                    -{(stats?.chapterPurchaseAmount || 0).toLocaleString("vi-VN")} xu
+                    {(stats?.chapterPurchaseAmount || 0).toLocaleString("vi-VN")} xu
                   </div>
                   <div className="text-gray-600">Mua chương</div>
                 </div>
@@ -479,7 +479,7 @@ export default function TransactionsManagement() {
                           )}
                           {t.type === "chapter_purchase" && (
                             <div className="text-red-600">
-                              -{t.amountCoin?.toLocaleString("vi-VN")} xu
+                              {t.amountCoin?.toLocaleString("vi-VN")} xu
                             </div>
                           )}
                           {t.type === "withdrawal_request" && (
@@ -587,7 +587,7 @@ export default function TransactionsManagement() {
                         )}
                         {t.type === "chapter_purchase" && (
                           <div className="text-red-600 font-semibold">
-                            -{t.amountCoin?.toLocaleString("vi-VN")} xu
+                            {t.amountCoin?.toLocaleString("vi-VN")} xu
                           </div>
                         )}
                         {t.type === "withdrawal_request" && (

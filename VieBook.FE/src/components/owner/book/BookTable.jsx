@@ -106,7 +106,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
         new CustomEvent("app:toast", {
           detail: {
             type: "success",
-            message: `Đã xóa sách "${selectedBook.title}" thành công!`,
+            message: `Đã chuyển sách "${selectedBook.title}" sang trạng thái tạm dừng!`,
           },
         })
       );
@@ -117,7 +117,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
         new CustomEvent("app:toast", {
           detail: {
             type: "error",
-            message: err.message || "Có lỗi khi xóa sách!",
+            message: err.message || "Có lỗi khi chuyển trạng thái sách!",
           },
         })
       );
@@ -220,7 +220,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
 
                   <button
                     className="p-2 bg-red-500 rounded hover:bg-red-600 transition"
-                    title="Xóa"
+                    title="Tạm dừng"
                     onClick={() => setSelectedBook(book)}
                   >
                     <RiDeleteBinLine className="text-white text-lg" />
@@ -321,19 +321,19 @@ export default function BookTable({ books, categories, onBookDeleted }) {
         </div>
       )}
 
-      {/* Popup xóa */}
+      {/* Popup tạm dừng */}
       {selectedBook && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
           <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-96">
             <h2 className="text-xl font-semibold text-white mb-4">
-              Xác nhận xóa
+              Xác nhận tạm dừng
             </h2>
             <p className="text-gray-300 mb-6">
-              Bạn có chắc chắn muốn xóa sách{" "}
+              Bạn có chắc chắn muốn chuyển sách{" "}
               <span className="font-bold text-orange-400">
                 {selectedBook.title}
               </span>{" "}
-              không?
+              sang trạng thái tạm dừng không?
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -347,7 +347,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                 disabled={loadingDelete}
                 className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {loadingDelete ? "Đang xóa..." : "Xóa"}
+                {loadingDelete ? "Đang cập nhật..." : "Tạm dừng"}
               </button>
             </div>
           </div>

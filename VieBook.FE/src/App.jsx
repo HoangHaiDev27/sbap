@@ -7,6 +7,7 @@ import PlayerManager from "./layouts/PlayerManager";
 import AppRoutes from "./routes/AppRoutes";
 import { useLocation } from "react-router-dom";
 import { useCoinsStore } from "./hooks/stores/coinStore";
+import { useUserStore } from "./hooks/stores/userStore";
 import { getRole, getUserId, getCurrentRole } from "./api/authApi";
 import Toast from "./components/common/Toast";
 import { Toaster } from "react-hot-toast";
@@ -18,10 +19,12 @@ function App() {
   const noLayoutRoutes = ["/auth", "/auth/verify-email", "/access-denied"];
   const hideLayout = noLayoutRoutes.includes(location.pathname);
   const fetchCoins = useCoinsStore((state) => state.fetchCoins);
+  const fetchUser = useUserStore((state) => state.fetchUser);
   useEffect(() => {
     const userId = getUserId();
     if (userId) {
       fetchCoins(userId);
+      fetchUser(); // Initialize user data
     }
     const r = getCurrentRole();
     if (r) setRole(String(r).toLowerCase());
@@ -57,17 +60,19 @@ function App() {
         console.log("App - Auth changed, user:", user, "userId:", userId);
         if (userId) {
           fetchCoins(userId);
+          fetchUser(); // Fetch user data when logged in
         }
       } else {
-        // If user is null (logout), reset coins
-        console.log("App - User logged out, resetting coins");
+        // If user is null (logout), reset coins and user data
+        console.log("App - User logged out, resetting coins and user data");
         useCoinsStore.getState().setCoins(0);
+        useUserStore.getState().setUser(null);
       }
     };
     
     window.addEventListener("auth:changed", onAuthChanged);
     return () => window.removeEventListener("auth:changed", onAuthChanged);
-  }, [fetchCoins]);
+  }, [fetchCoins, fetchUser]);
   if (hideLayout) {
     return (
       <>
@@ -80,6 +85,7 @@ function App() {
   // Kiểm tra layout đặc biệt
   const isReaderPage = location.pathname.startsWith("/reader");
   const isPlayerPage = location.pathname.startsWith("/player");
+  const isListenPage = location.pathname.startsWith("/listen");
 
   // Nếu là trang Reader - chỉ render AppRoutes, ReaderManager sẽ được render bên trong ReaderPage
   if (isReaderPage) {
@@ -91,12 +97,22 @@ function App() {
     );
   }
 
-  // Nếu là trang Player
+  // Nếu là trang Player (old)
   if (isPlayerPage) {
     return (
       <PlayerManager>
         <AppRoutes />
       </PlayerManager>
+    );
+  }
+
+  // Nếu là trang Listen (new) - standalone, không có header/sidebar
+  if (isListenPage) {
+    return (
+      <>
+        <AppRoutes />
+        <Toast />
+      </>
     );
   }
 
