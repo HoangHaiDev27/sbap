@@ -364,7 +364,7 @@ export default function BookDetailPage() {
           </div>
 
           {/* Nội dung Tab */}
-          {activeTab === "overview" && <OverviewTab bookDetail={bookDetail} />}
+          {activeTab === "overview" && <OverviewTab bookDetail={bookDetail} chaptersWithAudio={chaptersWithAudio} />}
           {activeTab === "details" && <DetailsTab bookDetail={bookDetail} />}
           {activeTab === "reviews" && <ReviewsTab bookId={id} reviews={reviews} />}
         </div>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { RiPlayCircleLine } from "react-icons/ri";
 
-export default function OverviewTab({ bookDetail }) {
+export default function OverviewTab({ bookDetail, chaptersWithAudio = [] }) {
   const { description, chapters } = bookDetail;
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showAllChapters, setShowAllChapters] = useState(false);
@@ -20,6 +21,9 @@ export default function OverviewTab({ bookDetail }) {
   const chaptersToShow = shouldTruncateChapters && !showAllChapters 
     ? chapters.slice(0, maxChaptersToShow) 
     : chapters;
+  
+  // Tạo Set của chapterId có audio để tra cứu nhanh
+  const audioChapterIds = new Set(chaptersWithAudio.map(ch => ch.chapterId));
 
   return (
     <div>
@@ -48,14 +52,28 @@ export default function OverviewTab({ bookDetail }) {
         
         {chapters && chapters.length > 0 ? (
           <div className="space-y-2">
-            {chaptersToShow?.map((ch, index) => (
-              <div 
-                key={ch.chapterId} 
-                className="text-gray-300 text-sm bg-gray-800/30 rounded-lg px-3 py-2"
-              >
-                Chương {index + 1}: {ch.chapterTitle}
-              </div>
-            ))}
+            {chaptersToShow?.map((ch, index) => {
+              const hasAudio = audioChapterIds.has(ch.chapterId);
+              
+              return (
+                <div 
+                  key={ch.chapterId} 
+                  className="text-gray-300 text-sm bg-gray-800/30 rounded-lg px-3 py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1">
+                      Chương {index + 1}: {ch.chapterTitle}
+                    </span>
+                    {hasAudio && (
+                      <div className="flex items-center gap-1 text-green-400 text-xs font-medium bg-green-500/10 px-2 py-0.5 rounded">
+                        <RiPlayCircleLine className="w-3.5 h-3.5" />
+                        <span>Audio</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
             
             {shouldTruncateChapters && (
               <div className="text-center pt-2">
