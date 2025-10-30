@@ -19,6 +19,8 @@ public partial class OrderItem
 
     public string? OrderType { get; set; }
 
+    public int? PromotionId { get; set; } // ID của promotion nếu có (không tham chiếu foreign key)
+
     public virtual Chapter Chapter { get; set; } = null!;
 
     public virtual User Customer { get; set; } = null!;

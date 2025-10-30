@@ -104,10 +104,12 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
             {chapters.map((chapter, index) => {
               const hasSoftUrl = chapter.chapterSoftUrl && chapter.chapterSoftUrl.trim() !== "";
               const isLoggedIn = getUserId() !== null;
+              const currentUserId = getUserId();
+              const isOwner = isLoggedIn && (String(currentUserId) === String(book?.ownerId));
               // Ưu tiên sử dụng purchasedChapters prop, fallback về chapterOwnership
               const isOwned = purchasedChapters.includes(chapter.chapterId) || chapterOwnership[chapter.chapterId] || false;
-              const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
-              const isDisabled = !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
+              const isFree = !chapter.priceSoft || chapter.priceSoft === 0;
+              const isDisabled = !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree && !isOwner);
               const chapterNumber = index + 1;
               
               // Debug logs
@@ -121,7 +123,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                 isDisabled: isDisabled,
                 purchasedChapters: purchasedChapters,
                 chapterOwnership: chapterOwnership,
-                priceAudio: chapter.priceAudio,
+                priceSoft: chapter.priceSoft,
                 purchasedChaptersIncludes: purchasedChapters.includes(chapter.chapterId),
                 chapterOwnershipValue: chapterOwnership[chapter.chapterId]
               });
@@ -139,7 +141,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                       toast.error("Bạn phải đăng nhập để đọc chương");
                       return;
                     }
-                    if (!isOwned && !isFree) {
+                    if (!isOwned && !isFree && !isOwner) {
                       toast.error("Bạn cần mua chương này để đọc");
                       return;
                     }
@@ -167,12 +169,17 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                         <h4 className="font-semibold text-white mb-1 truncate">
                           {chapter.chapterTitle}
                         </h4>
+                        {isOwner && (
+                          <p className="text-xs text-green-400 mb-1">
+                            Sách của bạn – Có quyền đọc
+                          </p>
+                        )}
                         {!isLoggedIn && (
                           <p className="text-xs text-red-400 mb-1">
                             Vui lòng đăng nhập để đọc chương
                           </p>
                         )}
-                        {isLoggedIn && !isOwned && !isFree && (
+                        {isLoggedIn && !isOwner && !isOwned && !isFree && (
                           <p className="text-xs text-orange-400 mb-1">
                             Cần mua chương này để đọc
                           </p>
@@ -187,9 +194,9 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                             <span className="text-green-400 font-medium">
                               Miễn phí
                             </span>
-                          ) : chapter.priceAudio && (
+                          ) : chapter.priceSoft && (
                             <span className="text-orange-400 flex items-center gap-1">
-                              {chapter.priceAudio.toLocaleString()}
+                              {chapter.priceSoft.toLocaleString()}
                               <RiCoinLine className="w-4 h-4" />
                             </span>
                           )}
@@ -201,7 +208,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                         <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
-                      ) : !isOwned && !isFree ? (
+                      ) : !isOwner && !isOwned && !isFree ? (
                         <svg className="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>

@@ -125,7 +125,7 @@ export default function StoryFilters({
 
       {/* Các nút sắp xếp */}
       <div className="flex flex-wrap gap-3 mt-6">
-        {["Mới nhất", "Phổ biến nhất", "Đánh giá cao", "Thời lượng ngắn"].map(
+        {["Mới nhất", "Phổ biến nhất", "Đánh giá cao", "Thời lượng ngắn", "Đang khuyến mãi"].map(
           (option) => (
             <button
               key={option}
@@ -136,6 +136,7 @@ export default function StoryFilters({
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
             >
+              {option === "Đang khuyến mãi" && "🔥 "}
               {option}
             </button>
           )

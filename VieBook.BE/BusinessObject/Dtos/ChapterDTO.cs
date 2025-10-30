@@ -14,7 +14,8 @@ namespace BusinessObject.Dtos
         public string? ChapterSoftUrl { get; set; }
         public string? ChapterAudioUrl { get; set; }
         public int DurationSec { get; set; }
-        public decimal PriceAudio { get; set; }
+        public decimal PriceSoft { get; set; }
+        public decimal? PriceAudio { get; set; } // Giá audio từ ChapterAudios
         public DateTime UploadedAt { get; set; }
         public string? Status { get; set; }
     }
@@ -28,7 +29,7 @@ namespace BusinessObject.Dtos
         public int? TotalPage { get; set; }
         public string? ChapterAudioUrl { get; set; }
         public int? DurationSec { get; set; }
-        public decimal? PriceAudio { get; set; }
+        public decimal? PriceSoft { get; set; }
         public decimal? AudioPrice { get; set; } 
         public string? StorageMeta { get; set; }
         public DateTime UploadedAt { get; set; }

@@ -122,7 +122,7 @@ CREATE TABLE dbo.Books (
   CoverUrl    VARCHAR(1000) NULL,
   ISBN        VARCHAR(20) NULL,
   Language    VARCHAR(20) NULL,
-  Status      VARCHAR(20) NOT NULL,              -- KHÔNG đặt CHECK/DEFAULT
+  Status      VARCHAR(20) NOT NULL,            
   TotalView   INT NOT NULL DEFAULT(0),
   CreatedAt   DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
   UpdatedAt   DATETIME2 NULL
@@ -146,7 +146,8 @@ CREATE TABLE dbo.Chapters (
   TotalPage        INT NULL,
   ChapterAudioUrl  VARCHAR(1000) NULL,
   DurationSec      INT NULL,
-  PriceAudio       DECIMAL(18,2) NULL,
+  PriceSoft       DECIMAL(18,2) NULL,
+  Status           NVARCHAR(255) NULL,
   StorageMeta      NVARCHAR(1000) NULL,
   UploadedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
@@ -229,9 +230,8 @@ CREATE TABLE dbo.Promotions (
   OwnerId       INT NOT NULL REFERENCES dbo.Users(UserId),
   PromotionName NVARCHAR(200) NOT NULL,
   Description   NVARCHAR(1000) NULL,
-  DiscountType  VARCHAR(10) NOT NULL,            -- Percent/Amount (không CHECK)
+  DiscountType  VARCHAR(10) NOT NULL,            -- Percent
   DiscountValue DECIMAL(10,2) NOT NULL,
-  Quantity      INT NOT NULL,
   StartAt       DATETIME2 NOT NULL,
   EndAt         DATETIME2 NOT NULL,
   IsActive      BIT NOT NULL DEFAULT(1)
@@ -255,7 +255,8 @@ CREATE TABLE dbo.OrderItems (
     UnitPrice     DECIMAL(18,2) NOT NULL, -- giá chương tại thời điểm mua (xu)
     CashSpent     DECIMAL(18,2) NOT NULL, -- số xu user đã trả
     PaidAt        DATETIME2 NULL,
-    OrderType     VARCHAR(20) NULL        -- ví dụ: BuyChapter, BuyBundle
+    OrderType     VARCHAR(20) NULL,       -- ví dụ: BuyChapter, BuyBundle
+    PromotionId   INT NULL                 -- ID của promotion nếu có (không tham chiếu foreign key)
 );
 ALTER TABLE dbo.OrderItems
 ADD CONSTRAINT CK_OrderItems_OrderType
@@ -879,18 +880,18 @@ DECLARE @Book_KhiMoiDieuKhongNhuY INT = (SELECT BookId FROM dbo.Books WHERE Titl
 -- Chapters (guard null)
 IF @Book1Id IS NOT NULL
 BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
   VALUES
-    (@Book1Id, N'Why Read',             50, 'https://cdn/vb/b1/ch1.pdf', 12, 'https://cdn/vb/b1/ch1.mp3', 600, 12),
-    (@Book1Id, N'Building a Habit',     40, 'https://cdn/vb/b1/ch2.pdf', 10, 'https://cdn/vb/b1/ch2.mp3', 540, 12),
-    (@Book1Id, N'Choosing Books',       30, 'https://cdn/vb/b1/ch3.pdf', 11, 'https://cdn/vb/b1/ch3.mp3', 570, 12);
+    (@Book1Id, N'Why Read',             50, 'https://cdn/vb/b1/ch1.pdf', 12, 'https://cdn/vb/b1/ch1.mp3', 600, 12, 'Active'),
+    (@Book1Id, N'Building a Habit',     40, 'https://cdn/vb/b1/ch2.pdf', 10, 'https://cdn/vb/b1/ch2.mp3', 540, 12, 'Active'),
+    (@Book1Id, N'Choosing Books',       30, 'https://cdn/vb/b1/ch3.pdf', 11, 'https://cdn/vb/b1/ch3.mp3', 570, 12, 'Active');
 END
 IF @Book2Id IS NOT NULL
 BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
   VALUES
-    (@Book2Id, N'Hello C#',             45, 'https://cdn/vb/b2/ch1.pdf', 14, 'https://cdn/vb/b2/ch1.mp3', 660, 15),
-    (@Book2Id, N'Variables & Types',    40, 'https://cdn/vb/b2/ch2.pdf', 16, 'https://cdn/vb/b2/ch2.mp3', 780, 15);
+    (@Book2Id, N'Hello C#',             45, 'https://cdn/vb/b2/ch1.pdf', 14, 'https://cdn/vb/b2/ch1.mp3', 660, 15, 'Active'),
+    (@Book2Id, N'Variables & Types',    40, 'https://cdn/vb/b2/ch2.pdf', 16, 'https://cdn/vb/b2/ch2.mp3', 780, 15, 'Active');
 END
 
 DECLARE @B1C1 INT = (SELECT TOP 1 ChapterId FROM dbo.Chapters WHERE BookId=@Book1Id ORDER BY ChapterId);
@@ -909,8 +910,8 @@ IF @Book2Id IS NOT NULL
 /* =========================================================
    Promotions
    ========================================================= */
-INSERT INTO dbo.Promotions(OwnerId, PromotionName, Description, DiscountType, DiscountValue, Quantity, StartAt, EndAt, IsActive)
-VALUES (@OwnerId, N'Back to School', N'20% off selected programming chapters', 'Percent', 20.00, 100,
+INSERT INTO dbo.Promotions(OwnerId, PromotionName, Description, DiscountType, DiscountValue, StartAt, EndAt, IsActive)
+VALUES (@OwnerId, N'Back to School', N'20% off selected programming chapters', 'Percent', 20.00,
         DATEADD(DAY,-3,SYSUTCDATETIME()), DATEADD(DAY,30,SYSUTCDATETIME()), 1);
 
 IF @Book2Id IS NOT NULL
@@ -1024,28 +1025,28 @@ DECLARE @Book6Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Mindfulness E
 
 
 -- Chapters cho "Learning SQL" (có audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
 VALUES
-  (@Book3Id, N'Introduction to SQL', 20, 'https://cdn/vb/b3/ch1.pdf', 18, 'https://cdn/vb/b3/ch1.mp3', 800, 20),
-  (@Book3Id, N'Joins and Queries',   15, 'https://cdn/vb/b3/ch2.pdf', 22, 'https://cdn/vb/b3/ch2.mp3', 900, 22);
+  (@Book3Id, N'Introduction to SQL', 20, 'https://cdn/vb/b3/ch1.pdf', 18, 'https://cdn/vb/b3/ch1.mp3', 800, 20, 'Active'),
+  (@Book3Id, N'Joins and Queries',   15, 'https://cdn/vb/b3/ch2.pdf', 22, 'https://cdn/vb/b3/ch2.mp3', 900, 22, 'Active');
 
 -- Chapters cho "Tiếng Việt Thực Hành" (không audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
 VALUES
-  (@Book4Id, N'Chính tả và Ngữ pháp', 25, 'https://cdn/vb/b4/ch1.pdf', 30, NULL, NULL, NULL),
-  (@Book4Id, N'Từ vựng nâng cao',     18, 'https://cdn/vb/b4/ch2.pdf', 28, NULL, NULL, NULL);
+  (@Book4Id, N'Chính tả và Ngữ pháp', 25, 'https://cdn/vb/b4/ch1.pdf', 30, NULL, NULL, NULL, 'Active'),
+  (@Book4Id, N'Từ vựng nâng cao',     18, 'https://cdn/vb/b4/ch2.pdf', 28, NULL, NULL, NULL, 'Active');
 
 -- Chapters cho "The Power of Habit" (có audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
 VALUES
-  (@Book5Id, N'Keystone Habits', 60, 'https://cdn/vb/b5/ch1.pdf', 20, 'https://cdn/vb/b5/ch1.mp3', 1000, 25),
-  (@Book5Id, N'Small Wins',      45, 'https://cdn/vb/b5/ch2.pdf', 18, 'https://cdn/vb/b5/ch2.mp3', 880, 22);
+  (@Book5Id, N'Keystone Habits', 60, 'https://cdn/vb/b5/ch1.pdf', 20, 'https://cdn/vb/b5/ch1.mp3', 1000, 25, 'Active'),
+  (@Book5Id, N'Small Wins',      45, 'https://cdn/vb/b5/ch2.pdf', 18, 'https://cdn/vb/b5/ch2.mp3', 880, 22, 'Active');
 
 -- Chapters cho "Mindfulness Everyday" (không audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
 VALUES
-  (@Book6Id, N'Breathing Awareness', 40, 'https://cdn/vb/b6/ch1.pdf', 15, NULL, NULL, NULL),
-  (@Book6Id, N'Walking Meditation',  35, 'https://cdn/vb/b6/ch2.pdf', 16, NULL, NULL, NULL);
+  (@Book6Id, N'Breathing Awareness', 40, 'https://cdn/vb/b6/ch1.pdf', 15, NULL, NULL, NULL, 'Active'),
+  (@Book6Id, N'Walking Meditation',  35, 'https://cdn/vb/b6/ch2.pdf', 16, NULL, NULL, NULL, 'Active');
 
 
 -- Notifications
@@ -1209,15 +1210,15 @@ WHERE bc.BookId IS NULL;
   GROUP BY b.BookId
   HAVING COUNT(c.ChapterId) = 0
 )
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
 SELECT bwc.BookId, N'Chương 1', 0,
        CONCAT('https://cdn/vb/b', bwc.BookId, '/ch1.pdf'), 10,
-       CONCAT('https://cdn/vb/b', bwc.BookId, '/ch1.mp3'), 600, 10
+       CONCAT('https://cdn/vb/b', bwc.BookId, '/ch1.mp3'), 600, 10, 'Active'
 FROM BooksWithoutChapters bwc
 UNION ALL
 SELECT bwc.BookId, N'Chương 2', 0,
        CONCAT('https://cdn/vb/b', bwc.BookId, '/ch2.pdf'), 12,
-       CONCAT('https://cdn/vb/b', bwc.BookId, '/ch2.mp3'), 660, 12
+       CONCAT('https://cdn/vb/b', bwc.BookId, '/ch2.mp3'), 660, 12, 'Active'
 FROM BooksWithoutChapters bwc;
 
 /* =========================================================
@@ -1261,10 +1262,10 @@ BEGIN
     INSERT INTO dbo.BookCategories(BookId, CategoryId) VALUES (@Book_MienBac, @CatHistory2);
   IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@Book_MienBac)
   BEGIN
-    INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+    INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
     VALUES
-      (@Book_MienBac, N'Chương 1', 0, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch1.pdf'), 16, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch1.mp3'), 900, 12),
-      (@Book_MienBac, N'Chương 2', 0, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch2.pdf'), 14, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch2.mp3'), 840, 12);
+      (@Book_MienBac, N'Chương 1', 0, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch1.pdf'), 16, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch1.mp3'), 900, 12, 'Active'),
+      (@Book_MienBac, N'Chương 2', 0, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch2.pdf'), 14, CONCAT('https://cdn/vb/b', @Book_MienBac, '/ch2.mp3'), 840, 12, 'Active');
   END
 END
 
@@ -1275,10 +1276,10 @@ BEGIN
     INSERT INTO dbo.BookCategories(BookId, CategoryId) VALUES (@Book_DiaTrungHai, @CatHistory2);
   IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@Book_DiaTrungHai)
   BEGIN
-    INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+    INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
     VALUES
-      (@Book_DiaTrungHai, N'Chương 1', 0, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch1.pdf'), 20, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch1.mp3'), 1000, 15),
-      (@Book_DiaTrungHai, N'Chương 2', 0, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch2.pdf'), 18, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch2.mp3'), 920, 15);
+      (@Book_DiaTrungHai, N'Chương 1', 0, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch1.pdf'), 20, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch1.mp3'), 1000, 15, 'Active'),
+      (@Book_DiaTrungHai, N'Chương 2', 0, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch2.pdf'), 18, CONCAT('https://cdn/vb/b', @Book_DiaTrungHai, '/ch2.mp3'), 920, 15, 'Active');
   END
 END
 
@@ -1289,10 +1290,10 @@ BEGIN
     INSERT INTO dbo.BookCategories(BookId, CategoryId) VALUES (@Book_BaiGiangAnNam, @CatHistory2);
   IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@Book_BaiGiangAnNam)
   BEGIN
-    INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+    INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
     VALUES
-      (@Book_BaiGiangAnNam, N'Chương 1', 0, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch1.pdf'), 16, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch1.mp3'), 860, 12),
-      (@Book_BaiGiangAnNam, N'Chương 2', 0, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch2.pdf'), 14, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch2.mp3'), 780, 12);
+      (@Book_BaiGiangAnNam, N'Chương 1', 0, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch1.pdf'), 16, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch1.mp3'), 860, 12, 'Active'),
+      (@Book_BaiGiangAnNam, N'Chương 2', 0, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch2.pdf'), 14, CONCAT('https://cdn/vb/b', @Book_BaiGiangAnNam, '/ch2.mp3'), 780, 12, 'Active');
   END
 END
 
@@ -1318,12 +1319,12 @@ BEGIN
 END
 
 -- Chapters cho nhóm Self-Help (nếu chưa có)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
-SELECT b.BookId, N'Chương 1', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch1.pdf'), 12, NULL, NULL, NULL
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
+SELECT b.BookId, N'Chương 1', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch1.pdf'), 12, NULL, NULL, NULL, 'Active'
 FROM @BooksSelfHelp b
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Chapters c WHERE c.BookId=b.BookId)
 UNION ALL
-SELECT b.BookId, N'Chương 2', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch2.pdf'), 12, NULL, NULL, NULL
+SELECT b.BookId, N'Chương 2', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch2.pdf'), 12, NULL, NULL, NULL, 'Active'
 FROM @BooksSelfHelp b
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Chapters c WHERE c.BookId=b.BookId);
 
@@ -1348,12 +1349,12 @@ BEGIN
 END
 
 -- Chapters cho nhóm Văn học (không audio) nếu chưa có
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
-SELECT b.BookId, N'Chương 1', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch1.pdf'), 14, NULL, NULL, NULL
+INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
+SELECT b.BookId, N'Chương 1', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch1.pdf'), 14, NULL, NULL, NULL, 'Active'
 FROM @BooksLiterature b
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Chapters c WHERE c.BookId=b.BookId)
 UNION ALL
-SELECT b.BookId, N'Chương 2', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch2.pdf'), 16, NULL, NULL, NULL
+SELECT b.BookId, N'Chương 2', 0, CONCAT('https://cdn/vb/b', b.BookId, '/ch2.pdf'), 16, NULL, NULL, NULL, 'Active'
 FROM @BooksLiterature b
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Chapters c WHERE c.BookId=b.BookId);
 
@@ -1431,30 +1432,28 @@ IF NOT EXISTS (SELECT 1 FROM dbo.BookCategories WHERE BookId=@BHS3 AND CategoryI
 -- Thêm chapters mẫu cho mỗi sách nếu chưa có
 IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@BHS1)
 BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
   VALUES
-    (@BHS1, N'Chương 1: Gặp gỡ', 5, 'https://cdn/vb/hm1/ch1.pdf', 12, 'https://cdn/vb/hm1/ch1.mp3', 600, 10),
-    (@BHS1, N'Chương 2: Hoàn cảnh', 3, 'https://cdn/vb/hm1/ch2.pdf', 10, 'https://cdn/vb/hm1/ch2.mp3', 540, 10);
+    (@BHS1, N'Chương 1: Gặp gỡ', 5, 'https://cdn/vb/hm1/ch1.pdf', 12, 'https://cdn/vb/hm1/ch1.mp3', 600, 10, 'Active'),
+    (@BHS1, N'Chương 2: Hoàn cảnh', 3, 'https://cdn/vb/hm1/ch2.pdf', 10, 'https://cdn/vb/hm1/ch2.mp3', 540, 10, 'Active');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@BHS2)
 BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
   VALUES
-    (@BHS2, N'Chương 1: Thế gia mở đầu', 5, 'https://cdn/vb/hm2/ch1.pdf', 18, 'https://cdn/vb/hm2/ch1.mp3', 900, 12),
-    (@BHS2, N'Chương 2: Sự kiện tiêu biểu', 4, 'https://cdn/vb/hm2/ch2.pdf', 16, 'https://cdn/vb/hm2/ch2.mp3', 840, 12);
+    (@BHS2, N'Chương 1: Thế gia mở đầu', 5, 'https://cdn/vb/hm2/ch1.pdf', 18, 'https://cdn/vb/hm2/ch1.mp3', 900, 12, 'Active'),
+    (@BHS2, N'Chương 2: Sự kiện tiêu biểu', 4, 'https://cdn/vb/hm2/ch2.pdf', 16, 'https://cdn/vb/hm2/ch2.mp3', 840, 12, 'Active');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@BHS3)
 BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceAudio)
+  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
   VALUES
-    (@BHS3, N'Chương 1: Hai đứa trẻ', 6, 'https://cdn/vb/hm3/ch1.pdf', 14, NULL, NULL, NULL),
-    (@BHS3, N'Chương 2: Dưới bóng hoàng lan', 4, 'https://cdn/vb/hm3/ch2.pdf', 12, NULL, NULL, NULL);
+    (@BHS3, N'Chương 1: Hai đứa trẻ', 6, 'https://cdn/vb/hm3/ch1.pdf', 14, NULL, NULL, NULL, 'Active'),
+    (@BHS3, N'Chương 2: Dưới bóng hoàng lan', 4, 'https://cdn/vb/hm3/ch2.pdf', 12, NULL, NULL, NULL, 'Active');
 END
 
-ALTER TABLE Chapters
-ADD Status NVARCHAR(255) NULL;
 -- Thêm Users
 INSERT INTO Users (Email, PasswordHash, Status, CreatedAt, LastLoginAt, Wallet)
 VALUES 

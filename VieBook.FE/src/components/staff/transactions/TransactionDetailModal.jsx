@@ -34,6 +34,8 @@ export default function TransactionDetailModal({ transaction, onClose }) {
         return "Mua chương";
       case "withdrawal_request":
         return "Rút tiền";
+      case "subscription_purchase":
+        return "Mua gói";
       default:
         return type;
     }
@@ -43,11 +45,14 @@ export default function TransactionDetailModal({ transaction, onClose }) {
     switch (status) {
       case "Succeeded":
       case "Paid":
+      case "Active":
         return "bg-green-100 text-green-800";
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
       case "Failed":
       case "Rejected":
+      case "Cancelled":
+      case "Expired":
         return "bg-red-100 text-red-800";
       case "Processing":
         return "bg-blue-100 text-blue-800";
@@ -62,6 +67,8 @@ export default function TransactionDetailModal({ transaction, onClose }) {
         return "Thành công";
       case "Paid":
         return "Đã thanh toán";
+      case "Active":
+        return "Đang hoạt động";
       case "Pending":
         return "Đang xử lý";
       case "Processing":
@@ -70,6 +77,10 @@ export default function TransactionDetailModal({ transaction, onClose }) {
         return "Thất bại";
       case "Rejected":
         return "Từ chối";
+      case "Cancelled":
+        return "Đã hủy";
+      case "Expired":
+        return "Đã hết hạn";
       default:
         return status;
     }
@@ -210,6 +221,31 @@ export default function TransactionDetailModal({ transaction, onClose }) {
                       <p className="text-gray-900">📄 {transactionDetail.chapterTitle}</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Subscription Info */}
+              {(transactionDetail.planName || transactionDetail.period) && (
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">Thông tin gói đăng ký</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {transactionDetail.planName && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tên gói
+                        </label>
+                        <p className="text-gray-900">📦 {transactionDetail.planName}</p>
+                      </div>
+                    )}
+                    {transactionDetail.period && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Chu kỳ
+                        </label>
+                        <p className="text-gray-900">🔄 {transactionDetail.period}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

@@ -41,7 +41,6 @@ namespace VieBookAPI.Controllers
                     Description = p.Description,
                     DiscountType = p.DiscountType,
                     DiscountValue = p.DiscountValue,
-                    Quantity = p.Quantity,
                     StartAt = p.StartAt,
                     EndAt = p.EndAt,
                     IsActive = p.IsActive,
@@ -60,8 +59,18 @@ namespace VieBookAPI.Controllers
                     Author = b.Author,
                     OwnerId = b.OwnerId,
                     Status = b.Status,
-                    TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
-                    DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
+                    TotalPrice = b.Chapters
+                                  .Where(c => c.Status == "Active")
+                                  .Sum(c => (c.PriceSoft ?? 0) + 
+                                            (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                : 0)),
+                    DiscountedPrice = b.Chapters
+                                       .Where(c => c.Status == "Active")
+                                       .Sum(c => (c.PriceSoft ?? 0) + 
+                                                 (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                     ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                     : 0)) *
                         (1 - (p.DiscountType == "Percent" ? (p.DiscountValue / 100) : 0)),
                     Sold = 0,
                     Rating = 0,
@@ -87,6 +96,10 @@ namespace VieBookAPI.Controllers
             if (dto.DiscountPercent <= 0 || dto.DiscountPercent > 100)
                 return BadRequest(new { message = "Giá trị giảm phải nằm trong khoảng 1% - 100%." });
 
+            // Frontend đã gửi ISO UTC string, chỉ cần đảm bảo Kind là UTC
+            var startUtc = DateTime.SpecifyKind(dto.StartAt, DateTimeKind.Utc);
+            var endUtc = DateTime.SpecifyKind(dto.EndAt, DateTimeKind.Utc);
+
             var promotion = new Promotion
             {
                 OwnerId = dto.OwnerId,
@@ -94,9 +107,8 @@ namespace VieBookAPI.Controllers
                 Description = dto.Description,
                 DiscountType = "Percent",
                 DiscountValue = dto.DiscountPercent,
-                Quantity = dto.Quantity,
-                StartAt = dto.StartAt,
-                EndAt = dto.EndAt,
+                StartAt = startUtc,
+                EndAt = endUtc,
                 IsActive = true
             };
 
@@ -112,7 +124,6 @@ namespace VieBookAPI.Controllers
                     Description = created.Description,
                     DiscountType = created.DiscountType,
                     DiscountValue = created.DiscountValue,
-                    Quantity = created.Quantity,
                     StartAt = created.StartAt,
                     EndAt = created.EndAt,
                     IsActive = created.IsActive,
@@ -154,9 +165,9 @@ namespace VieBookAPI.Controllers
             existing.Description = dto.Description;
             existing.DiscountType = "Percent";
             existing.DiscountValue = dto.DiscountPercent;
-            existing.Quantity = dto.Quantity;
-            existing.StartAt = dto.StartAt;
-            existing.EndAt = dto.EndAt;
+            // Frontend đã gửi ISO UTC string, chỉ cần đảm bảo Kind là UTC
+            existing.StartAt = DateTime.SpecifyKind(dto.StartAt, DateTimeKind.Utc);
+            existing.EndAt = DateTime.SpecifyKind(dto.EndAt, DateTimeKind.Utc);
 
             try
             {
@@ -170,7 +181,6 @@ namespace VieBookAPI.Controllers
                     Description = updated.Description,
                     DiscountType = updated.DiscountType,
                     DiscountValue = updated.DiscountValue,
-                    Quantity = updated.Quantity,
                     StartAt = updated.StartAt,
                     EndAt = updated.EndAt,
                     IsActive = updated.IsActive,
@@ -182,8 +192,18 @@ namespace VieBookAPI.Controllers
                     Title = b.Title,
                     Description = b.Description,
                     CoverUrl = b.CoverUrl,
-                    TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
-                    DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
+                    TotalPrice = b.Chapters
+                                  .Where(c => c.Status == "Active")
+                                  .Sum(c => (c.PriceSoft ?? 0) + 
+                                            (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                : 0)),
+                    DiscountedPrice = b.Chapters
+                                       .Where(c => c.Status == "Active")
+                                       .Sum(c => (c.PriceSoft ?? 0) + 
+                                                 (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                     ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                     : 0)) *
                                       (1 - (updated.DiscountType == "Percent" ? (updated.DiscountValue / 100) : 0)),
                 }).ToList();
 
@@ -212,7 +232,6 @@ namespace VieBookAPI.Controllers
                 PromotionName = promotion.PromotionName,
                 Description = promotion.Description,
                 DiscountValue = promotion.DiscountValue,
-                Quantity = promotion.Quantity,
                 StartAt = promotion.StartAt,
                 EndAt = promotion.EndAt,
                 IsActive = promotion.IsActive,
@@ -222,8 +241,18 @@ namespace VieBookAPI.Controllers
                     Title = b.Title,
                     Description = b.Description,
                     CoverUrl = b.CoverUrl,
-                    TotalPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0),
-                    DiscountedPrice = b.Chapters.Sum(c => c.PriceAudio ?? 0) *
+                    TotalPrice = b.Chapters
+                                  .Where(c => c.Status == "Active")
+                                  .Sum(c => (c.PriceSoft ?? 0) + 
+                                            (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                : 0)),
+                    DiscountedPrice = b.Chapters
+                                       .Where(c => c.Status == "Active")
+                                       .Sum(c => (c.PriceSoft ?? 0) + 
+                                                 (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                     ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                     : 0)) *
                                       (1 - (promotion.DiscountType == "Percent" ? (promotion.DiscountValue / 100) : 0)),
                 }).ToList()
             };

@@ -26,7 +26,11 @@ namespace BusinessObject.Dtos
                         : null));
 
             // Chapter → ChapterDTO
-            CreateMap<Chapter, ChapterDTO>();
+            CreateMap<Chapter, ChapterDTO>()
+                .ForMember(dest => dest.PriceAudio,
+                    opt => opt.MapFrom(src => src.ChapterAudios != null && src.ChapterAudios.Any()
+                        ? src.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio
+                        : null));
 
             // Book → BookDetailDTO
             CreateMap<Book, BookDetailDTO>()
@@ -37,7 +41,9 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Categories,
                     opt => opt.MapFrom(src => src.Categories.Select(c => c.Name)))
                 .ForMember(dest => dest.Chapters,
-                    opt => opt.MapFrom(src => src.Chapters))
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(ch => ch.Status == "Active") // Chỉ lấy chapter đã phát hành
+                        .OrderBy(ch => ch.ChapterId))) // Sắp xếp theo thứ tự
                 .ForMember(dest => dest.Reviews,
                     opt => opt.MapFrom(src => src.BookReviews))
                 .ForMember(dest => dest.Status,
@@ -45,7 +51,10 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.TotalPrice,
                     opt => opt.MapFrom(src => src.Chapters
                         .Where(ch => ch.Status == "Active")
-                        .Sum(ch => (ch.PriceAudio ?? 0) + (ch.ChapterAudios.FirstOrDefault() != null ? ch.ChapterAudios.FirstOrDefault()!.PriceAudio ?? 0 : 0))));
+                        .Sum(ch => (ch.PriceSoft ?? 0) + 
+                                   (ch.ChapterAudios != null && ch.ChapterAudios.Any() 
+                                       ? ch.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                       : 0)))); // Tính cả giá Soft + Audio
             // Book → BookDTO
             CreateMap<Book, BookDTO>()
                 .ForMember(dest => dest.OwnerName,
@@ -57,19 +66,25 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.TotalPrice,
                     opt => opt.MapFrom(src => src.Chapters
                         .Where(c => c.Status == "Active")
-                        .Sum(c => (c.PriceAudio ?? 0) + (c.ChapterAudios.FirstOrDefault() != null ? c.ChapterAudios.FirstOrDefault()!.PriceAudio ?? 0 : 0))))
+                        .Sum(c => (c.PriceSoft ?? 0) + 
+                                  (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                      ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                      : 0)))) // Tính cả giá Soft + Audio
                 .ForMember(dest => dest.Rating,
                     opt => opt.MapFrom(src => src.BookReviews.Any()
                         ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
                         : 0))
                 .ForMember(dest => dest.Sold,
                     opt => opt.MapFrom(src => src.Chapters
+                        .Where(c => c.Status == "Active")
                         .SelectMany(c => c.OrderItems)
                         .Count()))
                 .ForMember(dest => dest.TotalRatings,
                     opt => opt.MapFrom(src => src.BookReviews.Count()))
                 .ForMember(dest => dest.TotalView,
-                    opt => opt.MapFrom(src => src.Chapters.Sum(c => (int?)c.ChapterView) ?? 0));
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(c => c.Status == "Active")
+                        .Sum(c => (int?)c.ChapterView) ?? 0));
 
 
 
@@ -102,7 +117,10 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Price,
                 opt => opt.MapFrom(src => src.Chapters
                     .Where(c => c.Status == "Active")
-                    .Sum(c => (c.PriceAudio ?? 0) + (c.ChapterAudios.FirstOrDefault() != null ? c.ChapterAudios.FirstOrDefault()!.PriceAudio ?? 0 : 0))))
+                    .Sum(c => (c.PriceSoft ?? 0) + 
+                              (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                  ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                  : 0)))) // Tính cả giá Soft + Audio
             .ForMember(dest => dest.Rating,
                 opt => opt.MapFrom(src => src.BookReviews.Any()
                     ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
@@ -111,11 +129,17 @@ namespace BusinessObject.Dtos
                 opt => opt.MapFrom(src => src.BookReviews.Count))
             .ForMember(dest => dest.Duration,
                 opt => opt.MapFrom(src =>
-                    (src.Chapters.Sum(c => c.DurationSec ?? 0) / 3600) + "h " +
-                    ((src.Chapters.Sum(c => c.DurationSec ?? 0) % 3600) / 60) + "m"
+                    src.Chapters
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .Sum(ca => ca.DurationSec ?? 0) / 3600 + "h " +
+                    (src.Chapters
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .Sum(ca => ca.DurationSec ?? 0) % 3600) / 60 + "m"
                 ))
             .ForMember(dest => dest.Chapters,
-                opt => opt.MapFrom(src => src.Chapters.Count))
+                opt => opt.MapFrom(src => src.Chapters.Count(c => c.Status == "Active")))
             .ForMember(dest => dest.Image,
                 opt => opt.MapFrom(src => src.CoverUrl))
             .ForMember(dest => dest.Description,
@@ -123,9 +147,10 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Narrator,
                 opt => opt.MapFrom(src =>
                     src.Chapters
-                        .Where(c => c.ChapterAudioUrl != null && !string.IsNullOrEmpty(c.VoiceName))
-                        .OrderByDescending(c => c.ChapterId)
-                        .Select(c => c.VoiceName)
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .OrderByDescending(ca => ca.CreatedAt)
+                        .Select(ca => ca.VoiceName)
                         .FirstOrDefault()));
 
             CreateMap<User, StaffDTO>()
@@ -133,7 +158,7 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
-                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address != null ? src.UserProfile.Address : ""))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address!= null ? src.UserProfile.Address : ""))
                 .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
                 .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
 
@@ -204,16 +229,13 @@ namespace BusinessObject.Dtos
             // Map giữa Chapter ↔ ChapterViewDTO
             CreateMap<Chapter, ChapterViewDTO>()
                 .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))
-                .ForMember(dest => dest.AudioPrice, opt => opt.MapFrom(src =>
-                    src.ChapterAudios.FirstOrDefault() != null
-                        ? src.ChapterAudios.FirstOrDefault()!.PriceAudio
+                .ForMember(dest => dest.AudioPrice, opt => opt.MapFrom(src => 
+                    src.ChapterAudios.FirstOrDefault() != null 
+                        ? src.ChapterAudios.FirstOrDefault()!.PriceAudio 
                         : null));
 
             CreateMap<ChapterViewDTO, Chapter>()
                 .ForMember(dest => dest.Book, opt => opt.Ignore())
-                .ForMember(dest => dest.BookmarkChapterListens, opt => opt.Ignore())
-                .ForMember(dest => dest.BookmarkChapterReads, opt => opt.Ignore())
-                .ForMember(dest => dest.OrderItems, opt => opt.Ignore())
                 .ForMember(dest => dest.ChapterAudios, opt => opt.Ignore());
 
             // Bookmark mappings

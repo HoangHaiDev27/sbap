@@ -24,10 +24,20 @@ namespace DataAccess.DAO
                             .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                             .Include(b => b.Categories)
                             .Include(b => b.Chapters)
+                                .ThenInclude(c => c.ChapterAudios) // Include ChapterAudios để lấy PriceAudio
                             .Include(b => b.BookReviews)
                                 .ThenInclude(r => r.User)
                                 .ThenInclude(u => u.UserProfile)
                             .FirstOrDefaultAsync(b => b.BookId == id);
+
+            if (book != null && book.Chapters != null)
+            {
+                // Chỉ giữ các chapter có Status = "Active" để phục vụ màn hình mua/đọc
+                book.Chapters = book.Chapters
+                    .Where(c => c.Status == "Active")
+                    .OrderBy(c => c.ChapterId)
+                    .ToList();
+            }
 
             return book;
         }
@@ -38,6 +48,7 @@ namespace DataAccess.DAO
                             .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                             .Include(b => b.Categories)
                             .Include(b => b.Chapters)
+                                .ThenInclude(c => c.ChapterAudios) // Include ChapterAudios để lấy PriceAudio
                             .Include(b => b.BookReviews)
                                 .ThenInclude(r => r.User)
                                 .ThenInclude(u => u.UserProfile)
@@ -61,20 +72,28 @@ namespace DataAccess.DAO
         public async Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId)
         {
             return await _context.Chapters
+                .Where(c => c.BookId == bookId)
+                .OrderBy(c => c.ChapterId)
+                .ToListAsync();
+        }
+        public async Task<List<Chapter>> GetChaptersActiveByBookIdAsync(int bookId)
+        {
+            return await _context.Chapters
                 .Where(c => c.BookId == bookId && c.Status == "Active")
                 .OrderBy(c => c.ChapterId)
                 .ToListAsync();
         }
-        // lấy sách audio
+        // lấy sách audio - dựa vào bảng ChapterAudios
         public async Task<List<Book>> GetAudioBooksAsync()
         {
             return await _context.Books
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
-                .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null)) // chỉ sách có audio
+                .Include(b => b.Promotions) // Include promotions
+                .Where(b => b.Chapters.Any(c => c.ChapterAudios.Any() && c.Status == "Active")) // sách có ít nhất 1 chapter active có audio
                 .ToListAsync();
         }
 
@@ -84,10 +103,11 @@ namespace DataAccess.DAO
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                     .ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
-                .FirstOrDefaultAsync(b => b.BookId == id && b.Chapters.Any(c => c.ChapterAudioUrl != null));
+                .Include(b => b.Promotions) // Include promotions
+                .FirstOrDefaultAsync(b => b.BookId == id && b.Chapters.Any(c => c.ChapterAudios.Any() && c.Status == "Active"));
         }
 
 
@@ -192,7 +212,7 @@ namespace DataAccess.DAO
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                 .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null) // chỉ sách có audio
                             && b.Categories.Any(c => c.CategoryId == categoryId)) // thuộc category
@@ -222,7 +242,7 @@ namespace DataAccess.DAO
                 .Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
                 .Include(b => b.Categories)
-                .Include(b => b.Chapters)
+                .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                 .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null)) // chỉ sách có audio
                 .OrderByDescending(b => b.Chapters.Sum(c => c.OrderItems.Count)) // sắp xếp theo tổng lượt mua
@@ -345,6 +365,22 @@ namespace DataAccess.DAO
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        // Get active promotion for book
+        public async Task<Promotion?> GetActivePromotionForBook(int bookId)
+        {
+            var now = DateTime.UtcNow;
+            
+            var promotion = await _context.Promotions
+                .Where(p => p.Books.Any(b => b.BookId == bookId) // Book thuộc promotion này
+                    && p.IsActive // Promotion còn active
+                    && p.StartAt <= now // Đã bắt đầu
+                    && p.EndAt >= now) // Chưa hết hạn
+                .OrderByDescending(p => p.DiscountValue) // Ưu tiên promotion có giá trị cao nhất
+                .FirstOrDefaultAsync();
+            
+            return promotion;
         }
 
     }

@@ -64,6 +64,30 @@ export default function AudiobookGrid({
     case "Mới nhất":
       sortedBooks.sort((a, b) => (b.id || 0) - (a.id || 0));
       break;
+    case "Đang giảm giá":
+      // Sách có promotion lên đầu, sau đó sort theo % giảm giá
+      sortedBooks.sort((a, b) => {
+        const aHasPromo = a.hasPromotion ? 1 : 0;
+        const bHasPromo = b.hasPromotion ? 1 : 0;
+        if (aHasPromo !== bHasPromo) return bHasPromo - aHasPromo;
+        // Nếu cả 2 đều có promotion, sort theo % giảm
+        return (b.discountValue || 0) - (a.discountValue || 0);
+      });
+      break;
+    case "Giá thấp đến cao":
+      sortedBooks.sort((a, b) => {
+        const priceA = a.hasPromotion ? (a.discountedPrice || a.price || 0) : (a.price || 0);
+        const priceB = b.hasPromotion ? (b.discountedPrice || b.price || 0) : (b.price || 0);
+        return priceA - priceB;
+      });
+      break;
+    case "Giá cao đến thấp":
+      sortedBooks.sort((a, b) => {
+        const priceA = a.hasPromotion ? (a.discountedPrice || a.price || 0) : (a.price || 0);
+        const priceB = b.hasPromotion ? (b.discountedPrice || b.price || 0) : (b.price || 0);
+        return priceB - priceA;
+      });
+      break;
     case "A-Z":
       sortedBooks.sort((a, b) =>
         (a.title || "").localeCompare(b.title || "", "vi")
@@ -152,6 +176,15 @@ function AudiobookCard({ book }) {
             ))}
         </div>
 
+        {/* Promotion badge */}
+        {book.hasPromotion && (
+          <div className="absolute bottom-3 left-3">
+            <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
+              🎉 -{book.discountValue}%
+            </span>
+          </div>
+        )}
+
         {/* Icon đọc */}
         <div className="absolute top-3 right-3">
           <span className="bg-gray/90 hover:bg-orange-500 hover:text-white text-orange-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm transition-all duration-300 cursor-pointer">
@@ -222,22 +255,48 @@ function Rating({ rating, reviews }) {
 
 // --- Footer ---
 function BookFooter({ book }) {
+  const hasPromotion = book.hasPromotion;
+  const originalPrice = book.price || 0;
+  const discountedPrice = book.discountedPrice || originalPrice;
+  
   return (
-    <div className="flex items-center justify-between mt-2">
-      <div className="flex flex-col">
-        <span className="text-orange-400 font-semibold flex items-center space-x-1">
-          <span>{(book.price || 0).toLocaleString()}</span>
-          <RiCoinLine className="text-yellow-400 w-5 h-5" />
-        </span>
+    <div className="flex items-end justify-between mt-2">
+      <div className="flex flex-col gap-1">
+        {/* Phần giá - luôn có min-height để đồng nhất */}
+        <div className="min-h-[48px] flex flex-col justify-end gap-1">
+          {hasPromotion ? (
+            <>
+              {/* Giá sau giảm */}
+              <div className="flex items-center gap-1">
+                <span className="text-orange-400 font-bold text-base flex items-center gap-1">
+                  {discountedPrice.toLocaleString()}
+                  <RiCoinLine className="text-yellow-400 w-4 h-4" />
+                </span>
+                {/* Badge giảm giá */}
+                <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded font-bold">
+                  -{book.discountValue}%
+                </span>
+              </div>
+              {/* Giá gốc gạch ngang */}
+              <span className="text-gray-500 line-through text-sm flex items-center gap-1">
+                {originalPrice.toLocaleString()}
+                <RiCoinLine className="text-gray-500 w-3 h-3" />
+              </span>
+            </>
+          ) : (
+            <span className="text-orange-400 font-bold text-base flex items-center gap-1">
+              <span>{originalPrice.toLocaleString()}</span>
+              <RiCoinLine className="text-yellow-400 w-4 h-4" />
+            </span>
+          )}
+        </div>
         <span className="text-xs text-gray-400">{book.chapters} chương</span>
       </div>
 
-      <div className="flex space-x-2">
-        <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-full shadow-md transition-all duration-200">
-          <RiBookOpenLine className="w-5 h-5" />
-          <span>Đọc</span>
-        </button>
-      </div>
+      <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-full shadow-md transition-all duration-200 hover:scale-105">
+        <RiBookOpenLine className="w-5 h-5" />
+        <span>Đọc</span>
+      </button>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function AudiobookFilters({
 }) {
   const [categories, setCategories] = useState(["Tất cả"]);
   const [authors, setAuthors] = useState(["Tất cả"]);
-  const sortOptions = ["Phổ biến", "Mới nhất", "A-Z", "Z-A"];
+  const sortOptions = ["Phổ biến", "Mới nhất", "Đang giảm giá", "Giá thấp đến cao", "Giá cao đến thấp", "A-Z", "Z-A"];
   const ratings = [5, 4, 3, 2, 1];
 
   useEffect(() => {

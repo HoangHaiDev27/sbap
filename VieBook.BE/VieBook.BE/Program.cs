@@ -216,7 +216,13 @@ builder.Services.AddAuthentication()
         options.ClientSecret = builder.Configuration["GoogleAuth:ClientSecret"] ?? throw new Exception("Google ClientSecret not found");
     });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Sử dụng custom UTC DateTime converter
+        options.JsonSerializerOptions.Converters.Add(new VieBook.BE.Helpers.UtcDateTimeConverter());
+    });
+
 //CORS
 builder.Services.AddCors(options =>
 {

@@ -102,6 +102,24 @@ export default function StoryGrid({
         (a, b) => parseFloat(a.duration) - parseFloat(b.duration)
       );
       break;
+    case "Đang khuyến mãi":
+      // Ưu tiên sách có promotion, sau đó sort theo % giảm giá cao nhất
+      sortedStories.sort((a, b) => {
+        const aHasPromo = a.hasPromotion ? 1 : 0;
+        const bHasPromo = b.hasPromotion ? 1 : 0;
+        
+        if (aHasPromo !== bHasPromo) {
+          return bHasPromo - aHasPromo; // Sách có promotion lên trước
+        }
+        
+        // Nếu cả 2 đều có promotion, sort theo % giảm giá
+        if (aHasPromo && bHasPromo) {
+          return (b.discountValue || 0) - (a.discountValue || 0);
+        }
+        
+        return 0;
+      });
+      break;
     default:
       break;
   }
@@ -156,10 +174,19 @@ export default function StoryGrid({
                   className="w-full h-64 object-cover object-top"
                 />
 
-                {/* Thể loại */}
+                {/* Thể loại & Giảm giá */}
                 <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[80%]">
+                  {/* Badge giảm giá */}
+                  {story.hasPromotion && story.discountValue && (
+                    <span className="bg-gradient-to-r from-red-600 to-orange-500 
+                                   text-white px-2 py-1 rounded-full text-xs 
+                                   font-bold shadow-lg backdrop-blur-sm animate-pulse">
+                      🔥 -{Math.round(story.discountValue)}%
+                    </span>
+                  )}
+                  {/* Categories */}
                   {Array.isArray(story.categories)
-                    ? story.categories.map((cat, i) => (
+                    ? story.categories.slice(0, 2).map((cat, i) => (
                         <span
                           key={i}
                           className="bg-gradient-to-r from-purple-600 to-purple-400 
@@ -213,9 +240,24 @@ export default function StoryGrid({
                     <span>{story.rating} ({story.reviews})</span>
                   </div>
                   {/* Price */}
-                  <div className="flex items-center gap-1 text-sm text-yellow-400 font-semibold">
-                    {story.price}
-                    <RiCoinLine className="w-5 h-5" />
+                  <div className="flex flex-col items-end">
+                    {story.hasPromotion && story.discountedPrice != null ? (
+                      <>
+                        <div className="flex items-center gap-1 text-sm text-yellow-400 font-bold">
+                          {Math.round(story.discountedPrice).toLocaleString()}
+                          <RiCoinLine className="w-5 h-5" />
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 line-through">
+                          {Math.round(story.price).toLocaleString()}
+                          <RiCoinLine className="w-4 h-4" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-1 text-sm text-yellow-400 font-semibold">
+                        {Math.round(story.price).toLocaleString()}
+                        <RiCoinLine className="w-5 h-5" />
+                      </div>
+                    )}
                   </div>
                   {/* Play Button */}
                   <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap flex items-center">

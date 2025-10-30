@@ -7,13 +7,25 @@ import { getUserId } from "../../../api/authApi";
 const ITEMS_PER_PAGE = 6;
 
 function getPromotionStatus(promo) {
-  const now = new Date();
-  const start = new Date(promo.startAt);
-  const end = new Date(promo.endAt);
+  // So sánh timestamp chính xác đến millisecond
+  const now = new Date().getTime();
+  const start = new Date(promo.startAt).getTime();
+  const end = new Date(promo.endAt).getTime();
 
-  if (now < start) return { label: "Sắp diễn ra", className: "bg-yellow-600" };
-  if (now > end) return { label: "Kết thúc", className: "bg-gray-500" };
-  if (promo.isActive) return { label: "Đang hoạt động", className: "bg-green-600" };
+  // Ưu tiên kiểm tra thời gian trước
+  if (now < start) {
+    return { label: "Sắp diễn ra", className: "bg-yellow-600" };
+  }
+  if (now > end) {
+    return { label: "Kết thúc", className: "bg-gray-500" };
+  }
+  // Nếu đang trong khoảng thời gian, kiểm tra isActive
+  if (now >= start && now <= end) {
+    if (promo.isActive) {
+      return { label: "Đang hoạt động", className: "bg-green-600" };
+    }
+    return { label: "Không hoạt động", className: "bg-red-600" };
+  }
   return { label: "Không hoạt động", className: "bg-red-600" };
 }
 
@@ -61,7 +73,6 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
               <th className="p-3">Loại & Giá trị</th>
               <th className="p-3">Thời gian</th>
               <th className="p-3">Trạng thái</th>
-              <th className="p-3">Hiệu quả</th>
               <th className="p-3 text-center w-28">Hành động</th>
             </tr>
           </thead>
@@ -98,11 +109,11 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
                         ? `${promo.discountValue}%`
                         : `${promo.discountValue.toLocaleString()} đ`}
                     </p>
-                    {/* Tổng giá và giá sau giảm là minh hoạ theo 1 sách, ẩn khi nhiều sách */}
-                    {Array.isArray(promo.books) && promo.books.length === 1 && (
+                    {/* Hiển thị tổng giá của tất cả sách trong promotion */}
+                    {Array.isArray(promo.books) && promo.books.length > 0 && (
                       <p className="text-xs opacity-70 flex items-center gap-1">
-                        {promo.books[0]?.totalPrice?.toLocaleString()} <RiCoinLine className="inline text-yellow-400" /> →{" "}
-                        {promo.books[0]?.discountedPrice?.toLocaleString()} <RiCoinLine className="inline text-yellow-400" />
+                        {promo.books.reduce((sum, b) => sum + (b.totalPrice || 0), 0).toLocaleString()} <RiCoinLine className="inline text-yellow-400" /> →{" "}
+                        {promo.books.reduce((sum, b) => sum + (b.discountedPrice || 0), 0).toLocaleString()} <RiCoinLine className="inline text-yellow-400" />
                       </p>
                     )}
                   </td>
@@ -114,9 +125,6 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
                     <span className={`${status.className} text-white px-2 py-1 rounded-lg text-xs whitespace-nowrap`}>
                       {status.label}
                     </span>
-                  </td>
-                  <td className="p-3 align-top whitespace-nowrap">
-                    {0}/{promo.quantity} lượt
                   </td>
                   <td className="p-3 align-top flex gap-2 justify-center">
                     <button

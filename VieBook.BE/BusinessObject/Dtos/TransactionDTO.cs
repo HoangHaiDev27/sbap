@@ -17,6 +17,10 @@ namespace BusinessObject.Dtos
         public string? BookTitle { get; set; }
         public string? ChapterTitle { get; set; }
         public string? OrderType { get; set; }
+        // Subscription fields
+        public string? PlanName { get; set; }
+        public string? Period { get; set; }
+        public string? Currency { get; set; }
     }
 
     public class TransactionListResponse
@@ -38,6 +42,7 @@ namespace BusinessObject.Dtos
         public decimal WalletTopupAmount { get; set; }
         public decimal ChapterPurchaseAmount { get; set; }
         public decimal WithdrawalAmount { get; set; }
+        public decimal SubscriptionAmount { get; set; }
     }
 
     public class TransactionDetailResponse
@@ -61,6 +66,10 @@ namespace BusinessObject.Dtos
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        // Subscription fields
+        public string? PlanName { get; set; }
+        public string? Period { get; set; }
+        public string? Currency { get; set; }
     }
 
     // Internal result classes for DAO layer
@@ -81,6 +90,10 @@ namespace BusinessObject.Dtos
         public string? BookTitle { get; set; }
         public string? ChapterTitle { get; set; }
         public string? OrderType { get; set; }
+        // Subscription fields
+        public string? PlanName { get; set; }
+        public string? Period { get; set; }
+        public string? Currency { get; set; }
     }
 
     public class TransactionListResult
@@ -99,6 +112,7 @@ namespace BusinessObject.Dtos
         public decimal WalletTopupAmount { get; set; }
         public decimal ChapterPurchaseAmount { get; set; }
         public decimal WithdrawalAmount { get; set; }
+        public decimal SubscriptionAmount { get; set; }
     }
 
     public class TransactionDetailResult
@@ -122,5 +136,9 @@ namespace BusinessObject.Dtos
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        // Subscription fields
+        public string? PlanName { get; set; }
+        public string? Period { get; set; }
+        public string? Currency { get; set; }
     }
 }

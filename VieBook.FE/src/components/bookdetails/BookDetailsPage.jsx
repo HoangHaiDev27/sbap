@@ -155,7 +155,18 @@ export default function BookDetailPage() {
     chapters,
     reviews,
     totalPrice,
+    hasPromotion,
+    discountType,
+    discountValue,
+    discountedPrice,
   } = bookDetail;
+
+  const computedPromotionPercent =
+    hasPromotion && discountType === 'Percent' && (discountValue || 0) > 0
+      ? (discountValue || 0)
+      : (typeof discountedPrice === 'number' && discountedPrice < totalPrice && totalPrice > 0
+          ? Math.round((1 - (discountedPrice / totalPrice)) * 100)
+          : 0);
 
   const hasAudio = chaptersWithAudio.length > 0;
   const currentUserId = getUserId();
@@ -275,9 +286,45 @@ export default function BookDetailPage() {
         <div className="lg:col-span-2">
           <h1 className="text-3xl font-bold mb-2">{title}</h1>
           <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
-          <p className="text-yellow-400 font-bold text-xl mb-4 flex items-center gap-1">
-            {totalPrice.toLocaleString()} <RiCoinLine className="w-5 h-5" />
-          </p>
+          
+          {/* Hiển thị giá với/không có promotion */}
+          <div className="mb-4">
+            {bookDetail.hasPromotion ? (
+              <div className="space-y-2">
+                {/* Tên promotion */}
+                <div className="inline-block bg-red-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                  🎉 {bookDetail.promotionName}
+                </div>
+                
+                {/* Giá sau giảm */}
+                <div className="flex items-center gap-3">
+                  <p className="text-yellow-400 font-bold text-2xl flex items-center gap-1">
+                    {bookDetail.discountedPrice?.toLocaleString()} <RiCoinLine className="w-6 h-6" />
+                  </p>
+                  
+                  {/* Giá gốc (gạch ngang) */}
+                  <p className="text-gray-500 line-through text-lg flex items-center gap-1">
+                    {totalPrice.toLocaleString()} <RiCoinLine className="w-4 h-4" />
+                  </p>
+                  
+                  {/* % giảm giá */}
+                  <span className="bg-red-500 text-white text-sm px-2 py-1 rounded font-bold">
+                    -{bookDetail.discountValue}%
+                  </span>
+                </div>
+                
+                {/* Tiết kiệm được */}
+                <p className="text-green-400 text-sm">
+                  Tiết kiệm: {(totalPrice - (bookDetail.discountedPrice || 0)).toLocaleString()} xu
+                </p>
+              </div>
+            ) : (
+              /* Không có promotion - hiển thị giá bình thường */
+              <p className="text-yellow-400 font-bold text-xl flex items-center gap-1">
+                {totalPrice.toLocaleString()} <RiCoinLine className="w-5 h-5" />
+              </p>
+            )}
+          </div>
 
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-4">
@@ -328,7 +375,7 @@ export default function BookDetailPage() {
           </div>
 
           {/* Nội dung Tab */}
-          {activeTab === "overview" && <OverviewTab bookDetail={bookDetail} />}
+          {activeTab === "overview" && <OverviewTab bookDetail={bookDetail} chaptersWithAudio={chaptersWithAudio} />}
           {activeTab === "details" && <DetailsTab bookDetail={bookDetail} />}
           {activeTab === "reviews" && <ReviewsTab bookId={id} reviews={reviews} />}
         </div>
@@ -355,6 +402,7 @@ export default function BookDetailPage() {
         bookId={id}
         chapters={chapters}
         isOwner={isOwner}
+        promotionPercent={computedPromotionPercent}
         onPurchaseSuccess={async (newlyPurchasedChapters) => {
           console.log("Newly purchased chapters:", newlyPurchasedChapters);
           // Cập nhật state ngay lập tức bằng cách thêm các chương vừa mua
@@ -424,9 +472,9 @@ export default function BookDetailPage() {
                     });
                   }
                   const isFree =
-                    !chapter.priceAudio || chapter.priceAudio === 0;
+                    !chapter.priceSoft || chapter.priceSoft === 0;
                   const isDisabled =
-                    !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree);
+                    !hasSoftUrl || !isLoggedIn || (!isOwned && !isFree && !isOwner);
                   const chapterNumber = index + 1;
 
                   // Debug log
@@ -448,7 +496,7 @@ export default function BookDetailPage() {
                           toast.error("Bạn phải đăng nhập để đọc chương");
                           return;
                         }
-                        if (!isOwned && !isFree) {
+                        if (!isOwned && !isFree && !isOwner) {
                           toast.error("Bạn cần mua chương này để đọc");
                           return;
                         }
@@ -459,7 +507,7 @@ export default function BookDetailPage() {
                         window.location.href = `/reader/${id}/chapter/${chapter.chapterId}`;
                       }}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-medium text-white text-sm sm:text-base truncate">
@@ -469,6 +517,11 @@ export default function BookDetailPage() {
                                 "chương"
                               ) || ""}
                             </h3>
+                              {isOwner && (
+                                <span className="text-green-400 text-xs font-medium bg-green-600/20 px-2 py-0.5 rounded">
+                                  Sách của bạn – Có quyền đọc
+                                </span>
+                              )}
                             {isOwned && (
                               <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
                             )}
@@ -516,7 +569,7 @@ export default function BookDetailPage() {
                                 Bạn phải đăng nhập để đọc chương
                               </span>
                             )}
-                            {isLoggedIn && !isOwned && !isFree && (
+                            {isLoggedIn && !isOwner && !isOwned && !isFree && (
                               <span className="flex items-center gap-1 text-orange-400 font-medium">
                                 <svg
                                   className="w-4 h-4"
@@ -548,24 +601,37 @@ export default function BookDetailPage() {
                                 Chương không có bản mềm
                               </span>
                             )}
-                            {isLoggedIn && isOwned && hasSoftUrl && (
+                            {isLoggedIn && (isOwned || isOwner) && hasSoftUrl && (
                               <span className="flex items-center gap-1 text-green-400 font-medium">
                                 <RiCheckboxCircleLine className="w-4 h-4" />
-                                Đã mua
+                                {isOwner ? "Sách của bạn – Có quyền đọc" : "Đã mua"}
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="text-left sm:text-right">
+                        <div className="text-left sm:text-right space-y-1">
                           {isFree ? (
                             <div className="text-green-500 font-bold text-base sm:text-lg">
                               Miễn phí
                             </div>
                           ) : (
-                            <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
-                              {chapter.priceAudio?.toLocaleString() || 0}
-                              <RiCoinLine className="w-4 h-4 text-yellow-400" />
-                            </div>
+                            <>
+                              {/* Giá bản mềm (đọc) */}
+                              <div className="text-orange-500 font-bold text-base sm:text-lg flex items-center gap-1">
+                                <RiBookOpenLine className="w-4 h-4" />
+                                {chapter.priceSoft?.toLocaleString() || 0}
+                                <RiCoinLine className="w-4 h-4 text-yellow-400" />
+                              </div>
+                              
+                              {/* Giá audio (nếu có) */}
+                              {chapter.priceAudio != null && chapter.priceAudio > 0 && (
+                                <div className="text-green-500 font-bold text-sm sm:text-base flex items-center gap-1">
+                                  <RiPlayCircleLine className="w-4 h-4" />
+                                  {chapter.priceAudio?.toLocaleString()}
+                                  <RiCoinLine className="w-3 h-3 text-yellow-400" />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>

@@ -94,17 +94,24 @@ namespace DataAccess.DAO
                 .Where(oi => oi.Chapter.Book.OwnerId == ownerId && oi.PaidAt != null)
                 .ToListAsync();
 
-            var totalRevenue = orders.Sum(oi => oi.CashSpent);
             var totalOrders = orders.Count;
-            var completedOrders = orders.Count(oi => oi.OrderType == "BuyChapter");
-            var refundedOrders = orders.Count(oi => oi.OrderType == "Refund");
+            
+            // Đếm số chapter soft
+            var softChapters = orders.Count(oi => oi.OrderType == "BuyChapterSoft");
+            
+            // Đếm số chapter audio
+            var audioChapters = orders.Count(oi => oi.OrderType == "BuyChapterAudio");
+            
+            var totalRevenue = orders
+                .Where(oi => oi.OrderType != "Refund")
+                .Sum(oi => oi.CashSpent);
 
             return new
             {
                 TotalRevenue = totalRevenue,
                 TotalOrders = totalOrders,
-                CompletedOrders = completedOrders,
-                RefundedOrders = refundedOrders
+                SoftChapters = softChapters,
+                AudioChapters = audioChapters
             };
         }
 

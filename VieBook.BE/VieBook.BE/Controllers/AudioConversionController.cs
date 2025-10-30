@@ -130,11 +130,11 @@ namespace VieBook.BE.Controllers
                 }
 
                 // 🔹 Lấy giá từ audio đã có trong cùng chapter (nếu có)
-                decimal? priceAudio = null;
+                decimal? priceSoft = null;
                 var existingAudios = await _chapterAudioService.GetChapterAudiosByChapterIdAsync(chapterId);
                 if (existingAudios != null && existingAudios.Any())
                 {
-                    priceAudio = existingAudios.First().PriceAudio;
+                    priceSoft = existingAudios.First().PriceAudio;
                 }
 
                 // 🔹 Lưu thông tin audio vào bảng ChapterAudio
@@ -144,7 +144,7 @@ namespace VieBook.BE.Controllers
                     UserId = userId,
                     AudioLink = audioUrl,
                     DurationSec = (int)Math.Round(durationSeconds),
-                    PriceAudio = priceAudio, // Copy giá từ audio đã có
+                    PriceAudio = priceSoft, // Copy giá từ audio đã có
                     VoiceName = voiceName,
                     CreatedAt = DateTime.UtcNow
                 };

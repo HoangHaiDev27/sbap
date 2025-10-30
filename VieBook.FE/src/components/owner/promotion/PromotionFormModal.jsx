@@ -6,7 +6,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
   const [form, setForm] = useState({
     name: "",
     value: "",
-    limit: "",
     startDate: "",
     endDate: "",
     books: [],
@@ -14,6 +13,7 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
   });
   const [books, setBooks] = useState([]);
   const [bookSearch, setBookSearch] = useState(""); // search state
+  const [isSubmitting, setIsSubmitting] = useState(false); // loading state
 
   useEffect(() => {
     if (isOpen) {
@@ -23,14 +23,28 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
           .then((data) => setBooks(data))
           .catch((err) => console.error("Lỗi load sách:", err));
       }
+      
+      // Reset submitting state khi mở modal
+      setIsSubmitting(false);
 
       if (editingPromotion) {
+        // Convert UTC string từ backend về local datetime string cho datetime-local input
+        // datetime-local input cần format "YYYY-MM-DDTHH:mm" trong local timezone
+        const toLocalDatetimeString = (utcString) => {
+          const date = new Date(utcString);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+        
         setForm({
           name: editingPromotion.promotionName,
           value: editingPromotion.discountValue,
-          limit: editingPromotion.quantity,
-          startDate: editingPromotion.startAt.slice(0, 16),
-          endDate: editingPromotion.endAt.slice(0, 16),
+          startDate: toLocalDatetimeString(editingPromotion.startAt),
+          endDate: toLocalDatetimeString(editingPromotion.endAt),
           books: Array.isArray(editingPromotion.books) ? editingPromotion.books.map(b => b.bookId) : [],
           description: editingPromotion.description || "",
         });
@@ -38,7 +52,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         setForm({
           name: "",
           value: "",
-          limit: "",
           startDate: "",
           endDate: "",
           books: [],
@@ -52,20 +65,19 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent double submit
+    
     try {
-      if (!form.name || !form.value || !form.limit || !form.startDate || !form.endDate || !form.books?.length) {
+      if (!form.name || !form.value || !form.startDate || !form.endDate || !form.books?.length) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Vui lòng điền đầy đủ thông tin" }}));
         return;
       }
+      
+      setIsSubmitting(true);
 
-      if (parseInt(form.limit, 10) <= 0) {
-        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Số lượt sử dụng phải lớn hơn 0" }}));
-        return;
-      }
-
-      const start = new Date(form.startDate);
-      const end = new Date(form.endDate);
-      const now = new Date();
+      const start = new Date(form.startDate).getTime();
+      const end = new Date(form.endDate).getTime();
+      const now = new Date().getTime();
       
       if (start <= now) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Ngày bắt đầu phải sau thời điểm hiện tại" }}));
@@ -78,14 +90,18 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
       }
 
       const ownerId = getUserId();
+      
+      // Convert local datetime-local input sang ISO UTC string
+      const startAtUTC = new Date(form.startDate).toISOString();
+      const endAtUTC = new Date(form.endDate).toISOString();
+      
       const payload = {
         ownerId,
         promotionName: form.name,
         description: form.description,
         discountPercent: parseFloat(form.value),
-        quantity: parseInt(form.limit, 10),
-        startAt: form.startDate,
-        endAt: form.endDate,
+        startAt: startAtUTC,
+        endAt: endAtUTC,
         bookIds: form.books,
       };
 
@@ -97,11 +113,14 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Tạo promotion thành công" }}));
       }
 
-      if (onCreated) onCreated();
+      // Reload data trước khi đóng modal
+      if (onCreated) await onCreated();
       onClose();
     } catch (err) {
       console.error("Lỗi thao tác promotion:", err);
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Thao tác thất bại" }}));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -137,16 +156,6 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
               className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="text-sm">Số lượt sử dụng tối đa *</label>
-            <input
-              type="number"
-              min="1"
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
-              value={form.limit}
-              onChange={(e) => setForm({ ...form, limit: e.target.value })}
             />
           </div>
         </div>
@@ -222,9 +231,26 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
         {/* Actions */}
         <div className="flex justify-end gap-3 mt-6">
-          <button className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500" onClick={onClose}>Hủy</button>
-          <button className="px-4 py-2 rounded bg-orange-500 hover:bg-orange-600" onClick={handleSubmit}>
-            {editingPromotion ? "Cập nhật" : "Tạo Khuyến mãi"}
+          <button 
+            className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500" 
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Hủy
+          </button>
+          <button 
+            className={`px-4 py-2 rounded ${
+              isSubmitting 
+                ? "bg-orange-400 cursor-not-allowed" 
+                : "bg-orange-500 hover:bg-orange-600"
+            }`}
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting 
+              ? "Đang xử lý..." 
+              : (editingPromotion ? "Cập nhật" : "Tạo Khuyến mãi")
+            }
           </button>
         </div>
       </div>

@@ -388,6 +388,9 @@ namespace Services.Implementations
             return orderType switch
             {
                 "BuyChapter" => "Hoàn thành",
+                "BuyChapterSoft" => "Hoàn thành",
+                "BuyChapterAudio" => "Hoàn thành",
+                "BuyChapterBoth" => "Hoàn thành",
                 "Refund" => "Đã hoàn tiền",
                 _ => "Không xác định"
             };

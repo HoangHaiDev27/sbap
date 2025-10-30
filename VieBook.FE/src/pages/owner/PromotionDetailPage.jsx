@@ -68,8 +68,8 @@ export default function PromotionDetailPage() {
               <img src={b.coverUrl} alt={b.title} className="w-12 h-16 object-cover rounded" />
               <div className="flex-1">
                 <p className="font-semibold">{b.title}</p>
-                <p className="text-xs opacity-70">Giá gốc: {b.totalPrice?.toLocaleString()} đ</p>
-                <p className="text-xs opacity-70">Giá sau giảm: {b.discountedPrice?.toLocaleString()} đ</p>
+                <p className="text-xs opacity-70">Giá gốc: {b.totalPrice?.toLocaleString()} xu</p>
+                <p className="text-xs opacity-70">Giá sau giảm: {b.discountedPrice?.toLocaleString()} xu</p>
               </div>
             </div>
           ))}

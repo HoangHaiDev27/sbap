@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RiPlayFill, RiDeleteBin6Line, RiEditLine, RiCheckLine, RiCloseLine } from "react-icons/ri";
+import { RiPlayFill, RiStopFill, RiDeleteBin6Line, RiEditLine, RiCheckLine, RiCloseLine } from "react-icons/ri";
 import { getChapterAudios, deleteChapterAudio, updateChapterAudiosPrice } from "../../../api/ownerBookApi";
 import toast from "react-hot-toast";
 
@@ -20,12 +20,19 @@ export default function ChapterAudioList({ chapterId, onRefreshChapters }) {
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceValue, setPriceValue] = useState("");
   const [audio] = useState(new Audio());
+  const [playingAudioId, setPlayingAudioId] = useState(null);
 
   // Lấy danh sách audio đã có của chapter
   useEffect(() => {
     if (chapterId) {
       fetchExistingAudios();
     }
+    
+    // Cleanup: dừng audio khi chuyển chapter hoặc unmount
+    return () => {
+      audio.pause();
+      setPlayingAudioId(null);
+    };
   }, [chapterId]);
 
   const fetchExistingAudios = async () => {
@@ -99,15 +106,33 @@ export default function ChapterAudioList({ chapterId, onRefreshChapters }) {
   };
 
   // 🔊 Nghe thử giọng đọc demo
-  const handlePlaySample = (url) => {
+  const handlePlaySample = (audioId, url) => {
     if (!url) return;
     try {
       audio.pause();
       audio.src = url;
       audio.currentTime = 0;
       audio.play();
+      setPlayingAudioId(audioId);
+      
+      // Lắng nghe sự kiện kết thúc để reset trạng thái
+      audio.onended = () => {
+        setPlayingAudioId(null);
+      };
     } catch (err) {
       console.error("Không thể phát thử:", err);
+      setPlayingAudioId(null);
+    }
+  };
+
+  // 🛑 Dừng audio
+  const handleStopAudio = () => {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      setPlayingAudioId(null);
+    } catch (err) {
+      console.error("Không thể dừng:", err);
     }
   };
 
@@ -193,13 +218,23 @@ export default function ChapterAudioList({ chapterId, onRefreshChapters }) {
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handlePlaySample(audio.audioLink)}
-                      className="p-1 bg-green-600 rounded hover:bg-green-500 transition"
-                      title="Nghe"
-                    >
-                      <RiPlayFill className="text-white text-sm" />
-                    </button>
+                    {playingAudioId === audio.audioId ? (
+                      <button
+                        onClick={handleStopAudio}
+                        className="p-1 bg-orange-600 rounded hover:bg-orange-500 transition"
+                        title="Dừng"
+                      >
+                        <RiStopFill className="text-white text-sm" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handlePlaySample(audio.audioId, audio.audioLink)}
+                        className="p-1 bg-green-600 rounded hover:bg-green-500 transition"
+                        title="Nghe"
+                      >
+                        <RiPlayFill className="text-white text-sm" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteAudio(audio.audioId)}
                       className="p-1 bg-red-600 rounded hover:bg-red-500 transition"

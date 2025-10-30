@@ -27,5 +27,12 @@ namespace BusinessObject.Dtos
         public List<ChapterDTO> Chapters { get; set; } = new();
         public List<BookReviewDTO> Reviews { get; set; } = new();
         public decimal TotalPrice { get; set; }
+        
+        // Promotion information (only Percent discount supported)
+        public bool HasPromotion { get; set; }
+        public string? PromotionName { get; set; }
+        public string? DiscountType { get; set; } // Always "Percent"
+        public decimal? DiscountValue { get; set; } // Percent value (e.g., 10, 20, 50)
+        public decimal? DiscountedPrice { get; set; }
     }
 }

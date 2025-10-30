@@ -105,7 +105,7 @@ export default function AudioPlayer({ bookId }) {
               chapterId: chapter.chapterId,
               audioUrl: audioUrl,
               duration: audio?.durationSec || audio?.duration || audio?.audioLength || 0,
-              priceAudio: audio?.priceAudio || 0,
+              priceSoft: audio?.priceAudio || 0,
               hasAudio: !!audio,
             };
           })

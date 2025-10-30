@@ -12,6 +12,30 @@ import {
 } from "react-icons/ri";
 import orderItemApi from "../../api/orderItemApi";
 
+// Helper function to format order type
+const getOrderTypeLabel = (orderType) => {
+  const typeMap = {
+    'BuyChapter': 'Mua chương',
+    'BuyChapterSoft': 'Bản mềm',
+    'BuyChapterAudio': 'Bản audio',
+    'BuyChapterBoth': 'Cả hai (Soft + Audio)',
+    'Refund': 'Hoàn tiền'
+  };
+  return typeMap[orderType] || orderType;
+};
+
+// Helper function to get order type badge color
+const getOrderTypeBadgeColor = (orderType) => {
+  const colorMap = {
+    'BuyChapter': 'bg-blue-600',
+    'BuyChapterSoft': 'bg-purple-600',
+    'BuyChapterAudio': 'bg-indigo-600',
+    'BuyChapterBoth': 'bg-green-600',
+    'Refund': 'bg-red-600'
+  };
+  return colorMap[orderType] || 'bg-gray-600';
+};
+
 export default function OrderDetail() {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -160,21 +184,16 @@ export default function OrderDetail() {
                 <p className="text-white font-semibold">ORD-{order.orderItemId}</p>
               </div>
               <div>
-                <label className="text-gray-400 text-sm">Trạng thái</label>
-                <div className="flex items-center mt-1">
-                  {getStatusIcon(order.status)}
-                  <span className={`ml-2 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                    {order.status}
+                <label className="text-gray-400 text-sm">Loại giao dịch</label>
+                <div className="mt-1">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getOrderTypeBadgeColor(order.orderType)}`}>
+                    {getOrderTypeLabel(order.orderType)}
                   </span>
                 </div>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="text-gray-400 text-sm">Thời gian thanh toán</label>
                 <p className="text-white">{new Date(order.paidAt).toLocaleString('vi-VN')}</p>
-              </div>
-              <div>
-                <label className="text-gray-400 text-sm">Loại giao dịch</label>
-                <p className="text-white">{order.orderType}</p>
               </div>
             </div>
           </div>
@@ -237,16 +256,22 @@ export default function OrderDetail() {
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-400">Giá chương:</span>
+                <span className="text-gray-400">Giá gốc:</span>
                 <span className="text-white">{order.unitPrice.toLocaleString()} xu</span>
               </div>
+              {order.unitPrice !== order.cashSpent && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Giảm giá:</span>
+                  <span className="text-green-400">-{(order.unitPrice - order.cashSpent).toLocaleString()} xu</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-400">Phí dịch vụ:</span>
                 <span className="text-white">0 xu</span>
               </div>
               <hr className="border-gray-600" />
               <div className="flex justify-between text-lg font-bold">
-                <span>Tổng cộng:</span>
+                <span>Khách hàng đã trả:</span>
                 <span className="text-orange-400">{order.cashSpent.toLocaleString()} xu</span>
               </div>
             </div>
