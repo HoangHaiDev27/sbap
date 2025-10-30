@@ -47,7 +47,10 @@ namespace Services.Implementations
                     TransactionId = t.TransactionId,
                     BookTitle = t.BookTitle,
                     ChapterTitle = t.ChapterTitle,
-                    OrderType = t.OrderType
+                    OrderType = t.OrderType,
+                    PlanName = t.PlanName,
+                    Period = t.Period,
+                    Currency = t.Currency
                 }).ToList(),
                 TotalCount = result.TotalCount,
                 Page = page,
@@ -74,7 +77,8 @@ namespace Services.Implementations
                 TotalRevenue = stats.TotalRevenue,
                 WalletTopupAmount = stats.WalletTopupAmount,
                 ChapterPurchaseAmount = stats.ChapterPurchaseAmount,
-                WithdrawalAmount = stats.WithdrawalAmount
+                WithdrawalAmount = stats.WithdrawalAmount,
+                SubscriptionAmount = stats.SubscriptionAmount
             };
         }
 
@@ -103,7 +107,10 @@ namespace Services.Implementations
                 OrderType = transaction.OrderType,
                 Notes = transaction.Notes,
                 CreatedAt = transaction.CreatedAt,
-                UpdatedAt = transaction.UpdatedAt
+                UpdatedAt = transaction.UpdatedAt,
+                PlanName = transaction.PlanName,
+                Period = transaction.Period,
+                Currency = transaction.Currency
             };
         }
 

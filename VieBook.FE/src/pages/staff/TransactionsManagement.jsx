@@ -135,6 +135,8 @@ export default function TransactionsManagement() {
         return "Mua chương";
       case "withdrawal_request":
         return "Rút tiền";
+      case "subscription_purchase":
+        return "Mua gói";
       default:
         return type;
     }
@@ -144,11 +146,14 @@ export default function TransactionsManagement() {
     switch (status) {
       case "Succeeded":
       case "Paid":
+      case "Active":
         return "bg-green-100 text-green-800";
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
       case "Failed":
       case "Rejected":
+      case "Cancelled":
+      case "Expired":
         return "bg-red-100 text-red-800";
       case "Processing":
         return "bg-blue-100 text-blue-800";
@@ -163,6 +168,8 @@ export default function TransactionsManagement() {
         return "Thành công";
       case "Paid":
         return "Đã thanh toán";
+      case "Active":
+        return "Đang hoạt động";
       case "Pending":
         return "Đang xử lý";
       case "Processing":
@@ -171,6 +178,10 @@ export default function TransactionsManagement() {
         return "Thất bại";
       case "Rejected":
         return "Từ chối";
+      case "Cancelled":
+        return "Đã hủy";
+      case "Expired":
+        return "Đã hết hạn";
       default:
         return status;
     }
@@ -303,13 +314,19 @@ export default function TransactionsManagement() {
                 <div className="text-sm text-gray-700">Thất bại</div>
               </div>
             </div>
-            <div className="border-t text-center py-4">
-              <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'} text-sm`}>
+              <div className="border-t text-center py-4">
+              <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-2 md:grid-cols-4 gap-4'} text-sm`}>
                 <div>
                   <div className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-green-600`}>
                     +{(stats?.walletTopupAmount || 0).toLocaleString("vi-VN")}đ
                   </div>
                   <div className="text-gray-600">Nạp tiền</div>
+                </div>
+                <div>
+                  <div className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-blue-600`}>
+                    {(stats?.subscriptionAmount || 0).toLocaleString("vi-VN")} xu
+                  </div>
+                  <div className="text-gray-600">Mua gói</div>
                 </div>
                 <div>
                   <div className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-red-600`}>
@@ -351,6 +368,7 @@ export default function TransactionsManagement() {
                     <option value="wallet_topup">Nạp tiền</option>
                     <option value="chapter_purchase">Mua chương</option>
                     <option value="withdrawal_request">Rút tiền</option>
+                    <option value="subscription_purchase">Mua gói</option>
                 </select>
                   
                 <select
@@ -361,9 +379,12 @@ export default function TransactionsManagement() {
                   <option value="all">Tất cả trạng thái</option>
                     <option value="Succeeded">Thành công</option>
                     <option value="Paid">Đã thanh toán</option>
+                    <option value="Active">Đang hoạt động</option>
                     <option value="Pending">Đang xử lý</option>
                     <option value="Failed">Thất bại</option>
                     <option value="Rejected">Từ chối</option>
+                    <option value="Cancelled">Đã hủy</option>
+                    <option value="Expired">Đã hết hạn</option>
                 </select>
                   
                 <select
@@ -487,6 +508,16 @@ export default function TransactionsManagement() {
                               -{t.amountCoin?.toLocaleString("vi-VN")} xu
                             </div>
                           )}
+                          {t.type === "subscription_purchase" && (
+                            <div>
+                              <div className="text-blue-600 font-semibold">
+                                {t.amountCoin?.toLocaleString("vi-VN")} xu
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {t.planName} - {t.period}
+                              </div>
+                            </div>
+                          )}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -593,6 +624,16 @@ export default function TransactionsManagement() {
                         {t.type === "withdrawal_request" && (
                           <div className="text-orange-600 font-semibold">
                             -{t.amountCoin?.toLocaleString("vi-VN")} xu
+                          </div>
+                        )}
+                        {t.type === "subscription_purchase" && (
+                          <div>
+                            <div className="text-blue-600 font-semibold">
+                              {t.amountCoin?.toLocaleString("vi-VN")} xu
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {t.planName} - {t.period}
+                            </div>
                           </div>
                         )}
                       </div>
