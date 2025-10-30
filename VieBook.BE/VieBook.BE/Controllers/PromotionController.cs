@@ -96,9 +96,9 @@ namespace VieBookAPI.Controllers
             if (dto.DiscountPercent <= 0 || dto.DiscountPercent > 100)
                 return BadRequest(new { message = "Giá trị giảm phải nằm trong khoảng 1% - 100%." });
 
-            // Chuẩn hóa thời gian sang UTC để đồng bộ với kiểm tra hiệu lực (DateTime.UtcNow)
-            var startUtc = dto.StartAt.Kind == DateTimeKind.Utc ? dto.StartAt : dto.StartAt.ToUniversalTime();
-            var endUtc = dto.EndAt.Kind == DateTimeKind.Utc ? dto.EndAt : dto.EndAt.ToUniversalTime();
+            // Frontend đã gửi ISO UTC string, chỉ cần đảm bảo Kind là UTC
+            var startUtc = DateTime.SpecifyKind(dto.StartAt, DateTimeKind.Utc);
+            var endUtc = DateTime.SpecifyKind(dto.EndAt, DateTimeKind.Utc);
 
             var promotion = new Promotion
             {
@@ -165,9 +165,9 @@ namespace VieBookAPI.Controllers
             existing.Description = dto.Description;
             existing.DiscountType = "Percent";
             existing.DiscountValue = dto.DiscountPercent;
-            // Chuẩn hóa UTC khi cập nhật
-            existing.StartAt = dto.StartAt.Kind == DateTimeKind.Utc ? dto.StartAt : dto.StartAt.ToUniversalTime();
-            existing.EndAt = dto.EndAt.Kind == DateTimeKind.Utc ? dto.EndAt : dto.EndAt.ToUniversalTime();
+            // Frontend đã gửi ISO UTC string, chỉ cần đảm bảo Kind là UTC
+            existing.StartAt = DateTime.SpecifyKind(dto.StartAt, DateTimeKind.Utc);
+            existing.EndAt = DateTime.SpecifyKind(dto.EndAt, DateTimeKind.Utc);
 
             try
             {

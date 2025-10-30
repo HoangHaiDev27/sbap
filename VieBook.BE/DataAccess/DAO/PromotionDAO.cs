@@ -25,6 +25,20 @@ namespace DataAccess.DAO
             var expired = promotions.Count(p => p.EndAt < now);
             var totalBooksApplied = promotions.Sum(p => p.Books.Count);
 
+            // Lấy danh sách promotionId của owner
+            var promotionIds = promotions.Select(p => p.PromotionId).ToList();
+
+            // Tính TotalUses và TotalRevenue từ OrderItem có PromotionId
+            var orderItemStats = await _context.OrderItems
+                .Where(oi => oi.PromotionId.HasValue && promotionIds.Contains(oi.PromotionId.Value))
+                .GroupBy(oi => 1) // Group tất cả lại để tính tổng
+                .Select(g => new
+                {
+                    TotalUses = g.Count(),
+                    TotalRevenue = g.Sum(oi => oi.CashSpent)
+                })
+                .FirstOrDefaultAsync();
+
             return new BusinessObject.Dtos.PromotionStatsDTO
             {
                 ActiveCount = active,
@@ -32,8 +46,8 @@ namespace DataAccess.DAO
                 ExpiredCount = expired,
                 TotalPromotions = promotions.Count,
                 TotalBooksApplied = totalBooksApplied,
-                TotalUses = 0,
-                TotalRevenue = 0
+                TotalUses = orderItemStats?.TotalUses ?? 0,
+                TotalRevenue = orderItemStats?.TotalRevenue ?? 0
             };
         }
 

@@ -52,7 +52,7 @@ export default function PromotionPage() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Quản lý Khuyến mãi</h1>
 
-      <PromotionStats promotions={filteredPromotions} />
+      <PromotionStats refreshTrigger={promotions.length} />
 
       <div className="flex justify-between items-center">
         <input

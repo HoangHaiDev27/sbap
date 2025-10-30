@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getPromotionStats } from "../../../api/promotionApi";
 import { getUserId } from "../../../api/authApi";
 
-export default function PromotionStats() {
+export default function PromotionStats({ refreshTrigger }) {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
 
@@ -12,7 +12,7 @@ export default function PromotionStats() {
     getPromotionStats(ownerId)
       .then(setStats)
       .catch((e) => setError(e.message || "Lỗi lấy thống kê"));
-  }, []);
+  }, [refreshTrigger]); // Re-fetch khi refreshTrigger thay đổi
 
   if (error) {
     return <div className="text-red-400">{error}</div>;
@@ -32,7 +32,7 @@ export default function PromotionStats() {
     { title: "Đang hoạt động", value: String(stats.activeCount), sub: `${stats.totalPromotions} khuyến mãi` },
     { title: "Sắp diễn ra", value: String(stats.upcomingCount), sub: `${stats.totalBooksApplied} sách áp dụng` },
     { title: "Đã kết thúc", value: String(stats.expiredCount), sub: `${stats.totalPromotions} tổng cộng` },
-    { title: "Doanh thu từ khuyến mãi", value: `${stats.totalRevenue?.toLocaleString()} đ`, sub: `${stats.totalUses} lượt sử dụng` },
+    { title: "Doanh thu từ khuyến mãi", value: `${stats.totalRevenue?.toLocaleString()} xu`, sub: `${stats.totalUses} lượt sử dụng` },
   ];
 
   return (

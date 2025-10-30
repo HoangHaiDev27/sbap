@@ -83,7 +83,7 @@ namespace DataAccess.DAO
                 .OrderBy(c => c.ChapterId)
                 .ToListAsync();
         }
-        // lấy sách audio
+        // lấy sách audio - dựa vào bảng ChapterAudios
         public async Task<List<Book>> GetAudioBooksAsync()
         {
             return await _context.Books
@@ -92,7 +92,8 @@ namespace DataAccess.DAO
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
-                .Where(b => b.Chapters.Any(c => c.ChapterAudioUrl != null)) // chỉ sách có audio
+                .Include(b => b.Promotions) // Include promotions
+                .Where(b => b.Chapters.Any(c => c.ChapterAudios.Any() && c.Status == "Active")) // sách có ít nhất 1 chapter active có audio
                 .ToListAsync();
         }
 
@@ -105,7 +106,8 @@ namespace DataAccess.DAO
                 .Include(b => b.Chapters).ThenInclude(c => c.ChapterAudios)
                 .Include(b => b.BookReviews)
                     .ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
-                .FirstOrDefaultAsync(b => b.BookId == id && b.Chapters.Any(c => c.ChapterAudioUrl != null));
+                .Include(b => b.Promotions) // Include promotions
+                .FirstOrDefaultAsync(b => b.BookId == id && b.Chapters.Any(c => c.ChapterAudios.Any() && c.Status == "Active"));
         }
 
 

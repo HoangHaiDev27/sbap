@@ -5,6 +5,30 @@ import OrderStatsSkeleton from "../../components/owner/orders/OrderStatsSkeleton
 import OrderTableSkeleton from "../../components/owner/orders/OrderTableSkeleton";
 import orderItemApi from "../../api/orderItemApi";
 
+// Helper function to format order type
+const getOrderTypeLabel = (orderType) => {
+  const typeMap = {
+    'BuyChapter': 'Mua chương',
+    'BuyChapterSoft': 'Bản mềm',
+    'BuyChapterAudio': 'Bản audio',
+    'BuyChapterBoth': 'Cả hai',
+    'Refund': 'Hoàn tiền'
+  };
+  return typeMap[orderType] || orderType;
+};
+
+// Helper function to get order type badge color
+const getOrderTypeBadgeColor = (orderType) => {
+  const colorMap = {
+    'BuyChapter': 'bg-blue-600',
+    'BuyChapterSoft': 'bg-purple-600',
+    'BuyChapterAudio': 'bg-indigo-600',
+    'BuyChapterBoth': 'bg-green-600',
+    'Refund': 'bg-red-600'
+  };
+  return colorMap[orderType] || 'bg-gray-600';
+};
+
 export default function OwnerOrders() {
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
@@ -27,15 +51,22 @@ export default function OwnerOrders() {
         // Transform data để phù hợp với component hiện tại
         const transformedOrders = ordersResponse.data.map(order => ({
           id: `ORD-${order.orderItemId}`,
+          orderItemId: order.orderItemId,
           customer: order.customerName,
           customerEmail: order.customerEmail,
+          customerId: order.customerId,
           status: order.status,
           total: order.cashSpent,
           date: new Date(order.paidAt).toLocaleString('vi-VN'),
+          paidAt: order.paidAt,
           image: order.bookCoverUrl || "https://via.placeholder.com/60x80.png?text=Book",
           bookTitle: order.bookTitle,
+          bookId: order.bookId,
           chapterTitle: order.chapterTitle,
+          chapterId: order.chapterId,
           orderType: order.orderType,
+          orderTypeLabel: getOrderTypeLabel(order.orderType),
+          orderTypeBadgeColor: getOrderTypeBadgeColor(order.orderType),
           unitPrice: order.unitPrice
         }));
         

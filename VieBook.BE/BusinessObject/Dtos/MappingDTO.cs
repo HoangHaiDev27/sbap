@@ -129,8 +129,14 @@ namespace BusinessObject.Dtos
                 opt => opt.MapFrom(src => src.BookReviews.Count))
             .ForMember(dest => dest.Duration,
                 opt => opt.MapFrom(src =>
-                    (src.Chapters.Where(c => c.Status == "Active").Sum(c => c.DurationSec ?? 0) / 3600) + "h " +
-                    ((src.Chapters.Where(c => c.Status == "Active").Sum(c => c.DurationSec ?? 0) % 3600) / 60) + "m"
+                    src.Chapters
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .Sum(ca => ca.DurationSec ?? 0) / 3600 + "h " +
+                    (src.Chapters
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .Sum(ca => ca.DurationSec ?? 0) % 3600) / 60 + "m"
                 ))
             .ForMember(dest => dest.Chapters,
                 opt => opt.MapFrom(src => src.Chapters.Count(c => c.Status == "Active")))
@@ -141,9 +147,10 @@ namespace BusinessObject.Dtos
             .ForMember(dest => dest.Narrator,
                 opt => opt.MapFrom(src =>
                     src.Chapters
-                        .Where(c => c.ChapterAudioUrl != null && !string.IsNullOrEmpty(c.VoiceName))
-                        .OrderByDescending(c => c.ChapterId)
-                        .Select(c => c.VoiceName)
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .OrderByDescending(ca => ca.CreatedAt)
+                        .Select(ca => ca.VoiceName)
                         .FirstOrDefault()));
 
             CreateMap<User, StaffDTO>()

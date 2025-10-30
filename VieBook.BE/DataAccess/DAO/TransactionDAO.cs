@@ -81,7 +81,10 @@ namespace DataAccess.DAO
                     TransactionId = wt.TransactionId,
                     BookTitle = null,
                     ChapterTitle = null,
-                    OrderType = null
+                    OrderType = null,
+                    PlanName = null,
+                    Period = null,
+                    Currency = null
                 }));
             }
 
@@ -145,7 +148,10 @@ namespace DataAccess.DAO
                     TransactionId = null,
                     BookTitle = oi.Chapter.Book.Title,
                     ChapterTitle = $"Chương {oi.Chapter.ChapterId}: {oi.Chapter.ChapterTitle}",
-                    OrderType = oi.OrderType
+                    OrderType = oi.OrderType,
+                    PlanName = null,
+                    Period = null,
+                    Currency = null
                 }));
             }
 
@@ -203,7 +209,73 @@ namespace DataAccess.DAO
                     TransactionId = null,
                     BookTitle = null,
                     ChapterTitle = null,
-                    OrderType = null
+                    OrderType = null,
+                    PlanName = null,
+                    Period = null,
+                    Currency = null
+                }));
+            }
+
+            // Lấy Subscriptions (mua gói)
+            if (typeFilter == "all" || typeFilter == "subscription_purchase")
+            {
+                var subscriptionQuery = _context.Subscriptions
+                    .Include(s => s.User)
+                        .ThenInclude(u => u.UserProfile)
+                    .Include(s => s.Plan)
+                    .AsQueryable();
+
+                if (userId.HasValue)
+                    subscriptionQuery = subscriptionQuery.Where(s => s.UserId == userId.Value);
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    subscriptionQuery = subscriptionQuery.Where(s => 
+                        s.User.Email.Contains(searchTerm) ||
+                        s.User.UserProfile.FullName.Contains(searchTerm) ||
+                        s.Plan.Name.Contains(searchTerm));
+                }
+
+                if (statusFilter != "all")
+                {
+                    subscriptionQuery = subscriptionQuery.Where(s => s.Status == statusFilter);
+                }
+
+                if (dateFilter != "all")
+                {
+                    var dateFilterValue = GetDateFilter(dateFilter);
+                    if (dateFilterValue.HasValue)
+                    {
+                        subscriptionQuery = subscriptionQuery.Where(s => s.CreatedAt >= dateFilterValue.Value);
+                    }
+                }
+
+                var subscriptions = await subscriptionQuery
+                    .OrderByDescending(s => s.CreatedAt)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                transactions.AddRange(subscriptions.Select(s => new TransactionResult
+                {
+                    Id = $"SUB{s.SubscriptionId}",
+                    UserId = s.UserId,
+                    UserName = s.User.UserProfile?.FullName ?? s.User.Email,
+                    Type = "subscription_purchase",
+                    Description = $"Mua gói {s.Plan.Name}",
+                    AmountMoney = null,
+                    AmountCoin = s.Plan.Price,
+                    Status = s.Status,
+                    Date = s.CreatedAt.ToString("yyyy-MM-dd"),
+                    Time = s.CreatedAt.ToString("HH:mm:ss"),
+                    Provider = null,
+                    TransactionId = null,
+                    BookTitle = null,
+                    ChapterTitle = null,
+                    OrderType = null,
+                    PlanName = s.Plan.Name,
+                    Period = s.Plan.Period,
+                    Currency = s.Plan.Currency
                 }));
             }
 
@@ -255,19 +327,30 @@ namespace DataAccess.DAO
 
             var paymentStats = await paymentQuery.ToListAsync();
 
-            var totalTransactions = walletStats.Count + orderStats.Count + paymentStats.Count;
+            // Thống kê Subscriptions
+            var subscriptionQuery = _context.Subscriptions.Include(s => s.Plan).AsQueryable();
+            if (userId.HasValue) subscriptionQuery = subscriptionQuery.Where(s => s.UserId == userId.Value);
+            if (dateFilterValue.HasValue) subscriptionQuery = subscriptionQuery.Where(s => s.CreatedAt >= dateFilterValue.Value);
+            if (statusFilter != "all") subscriptionQuery = subscriptionQuery.Where(s => s.Status == statusFilter);
+
+            var subscriptionStats = await subscriptionQuery.ToListAsync();
+
+            var totalTransactions = walletStats.Count + orderStats.Count + paymentStats.Count + subscriptionStats.Count;
             var successfulTransactions = walletStats.Count(wt => wt.Status == "Succeeded") + 
                                         orderStats.Count + 
-                                        paymentStats.Count(pr => pr.Status == "Succeeded");
+                                        paymentStats.Count(pr => pr.Status == "Succeeded") +
+                                        subscriptionStats.Count(s => s.Status == "Active");
             var pendingTransactions = walletStats.Count(wt => wt.Status == "Pending") + 
                                     paymentStats.Count(pr => pr.Status == "Pending");
             var failedTransactions = walletStats.Count(wt => wt.Status == "Failed") + 
-                                   paymentStats.Count(pr => pr.Status == "Rejected");
+                                   paymentStats.Count(pr => pr.Status == "Rejected") +
+                                   subscriptionStats.Count(s => s.Status == "Cancelled" || s.Status == "Expired");
 
             var totalRevenue = walletStats.Where(wt => wt.Status == "Succeeded").Sum(wt => wt.AmountMoney);
             var walletTopupAmount = walletStats.Where(wt => wt.Status == "Succeeded").Sum(wt => wt.AmountMoney);
             var chapterPurchaseAmount = orderStats.Sum(oi => oi.CashSpent);
             var withdrawalAmount = paymentStats.Where(pr => pr.Status == "Succeeded").Sum(pr => pr.RequestedCoin);
+            var subscriptionAmount = subscriptionStats.Where(s => s.Status == "Active").Sum(s => s.Plan.Price);
 
             return new TransactionStatsResult
             {
@@ -278,7 +361,8 @@ namespace DataAccess.DAO
                 TotalRevenue = totalRevenue,
                 WalletTopupAmount = walletTopupAmount,
                 ChapterPurchaseAmount = chapterPurchaseAmount,
-                WithdrawalAmount = withdrawalAmount
+                WithdrawalAmount = withdrawalAmount,
+                SubscriptionAmount = subscriptionAmount
             };
         }
 
@@ -314,7 +398,10 @@ namespace DataAccess.DAO
                     OrderType = null,
                     Notes = null,
                     CreatedAt = walletTransaction.CreatedAt,
-                    UpdatedAt = walletTransaction.CreatedAt
+                    UpdatedAt = walletTransaction.CreatedAt,
+                    PlanName = null,
+                    Period = null,
+                    Currency = null
                 };
             }
             else if (transactionId.StartsWith("OI"))
@@ -349,7 +436,10 @@ namespace DataAccess.DAO
                     OrderType = orderItem.OrderType,
                     Notes = null,
                     CreatedAt = orderItem.PaidAt ?? DateTime.MinValue,
-                    UpdatedAt = orderItem.PaidAt ?? DateTime.MinValue
+                    UpdatedAt = orderItem.PaidAt ?? DateTime.MinValue,
+                    PlanName = null,
+                    Period = null,
+                    Currency = null
                 };
             }
             else if (transactionId.StartsWith("PR"))
@@ -382,7 +472,47 @@ namespace DataAccess.DAO
                     OrderType = null,
                     Notes = null,
                     CreatedAt = paymentRequest.RequestDate,
-                    UpdatedAt = paymentRequest.AcceptDate ?? paymentRequest.RequestDate
+                    UpdatedAt = paymentRequest.AcceptDate ?? paymentRequest.RequestDate,
+                    PlanName = null,
+                    Period = null,
+                    Currency = null
+                };
+            }
+            else if (transactionId.StartsWith("SUB"))
+            {
+                var id = long.Parse(transactionId.Substring(3));
+                var subscription = await _context.Subscriptions
+                    .Include(s => s.User)
+                        .ThenInclude(u => u.UserProfile)
+                    .Include(s => s.Plan)
+                    .FirstOrDefaultAsync(s => s.SubscriptionId == id);
+
+                if (subscription == null) return null;
+
+                return new TransactionDetailResult
+                {
+                    Id = $"SUB{subscription.SubscriptionId}",
+                    UserId = subscription.UserId,
+                    UserName = subscription.User.UserProfile?.FullName ?? subscription.User.Email,
+                    UserEmail = subscription.User.Email,
+                    Type = "subscription_purchase",
+                    Description = $"Mua gói {subscription.Plan.Name} - Chu kỳ: {subscription.Plan.Period}",
+                    AmountMoney = null,
+                    AmountCoin = subscription.Plan.Price,
+                    Status = subscription.Status,
+                    Date = subscription.CreatedAt.ToString("yyyy-MM-dd"),
+                    Time = subscription.CreatedAt.ToString("HH:mm:ss"),
+                    Provider = null,
+                    TransactionId = null,
+                    BookTitle = null,
+                    ChapterTitle = null,
+                    OrderType = null,
+                    Notes = $"Bắt đầu: {subscription.StartAt:yyyy-MM-dd} | Kết thúc: {subscription.EndAt:yyyy-MM-dd}",
+                    CreatedAt = subscription.CreatedAt,
+                    UpdatedAt = subscription.CreatedAt,
+                    PlanName = subscription.Plan.Name,
+                    Period = subscription.Plan.Period,
+                    Currency = subscription.Plan.Currency
                 };
             }
 
@@ -487,6 +617,24 @@ namespace DataAccess.DAO
                                     pr.User.UserProfile.FullName.Contains(searchTerm));
                 }
                 totalCount += await paymentQuery.CountAsync();
+            }
+
+            // Đếm Subscriptions
+            if (typeFilter == "all" || typeFilter == "subscription_purchase")
+            {
+                var subscriptionQuery = _context.Subscriptions.AsQueryable();
+                if (userId.HasValue) subscriptionQuery = subscriptionQuery.Where(s => s.UserId == userId.Value);
+                if (dateFilterValue.HasValue) subscriptionQuery = subscriptionQuery.Where(s => s.CreatedAt >= dateFilterValue.Value);
+                if (statusFilter != "all") subscriptionQuery = subscriptionQuery.Where(s => s.Status == statusFilter);
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    subscriptionQuery = subscriptionQuery.Include(s => s.User).ThenInclude(u => u.UserProfile)
+                        .Include(s => s.Plan)
+                        .Where(s => s.User.Email.Contains(searchTerm) ||
+                                    s.User.UserProfile.FullName.Contains(searchTerm) ||
+                                    s.Plan.Name.Contains(searchTerm));
+                }
+                totalCount += await subscriptionQuery.CountAsync();
             }
 
             return totalCount;
