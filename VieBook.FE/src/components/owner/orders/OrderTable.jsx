@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 // Export to CSV function with proper UTF-8 BOM for Vietnamese characters
 const exportToCSV = (data, filename = 'orders.csv') => {
-  const headers = ['Ma don', 'Khach hang', 'Email', 'Sach', 'Chuong', 'Trang thai', 'Tong tien (xu)', 'Thoi gian'];
+  const headers = ['Ma don', 'Khach hang', 'Email', 'Sach', 'Chuong', 'Loai', 'Tong tien (xu)', 'Gia goc (xu)', 'Thoi gian'];
   const csvContent = [
     headers.join(','),
     ...data.map(order => [
@@ -12,8 +12,9 @@ const exportToCSV = (data, filename = 'orders.csv') => {
       `"${order.customerEmail.replace(/"/g, '""')}"`,
       `"${order.bookTitle.replace(/"/g, '""')}"`,
       `"${order.chapterTitle.replace(/"/g, '""')}"`,
-      `"${order.status.replace(/"/g, '""')}"`,
+      `"${(order.orderTypeLabel || order.orderType).replace(/"/g, '""')}"`,
       order.total,
+      order.unitPrice || order.total,
       `"${order.date.replace(/"/g, '""')}"`
     ].join(','))
   ].join('\n');
@@ -34,7 +35,7 @@ const exportToCSV = (data, filename = 'orders.csv') => {
 export default function OrderTable({ orders }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [orderType, setOrderType] = useState("all");
   const pageSize = 6;
 
   const filtered = orders.filter((o) => {
@@ -42,9 +43,9 @@ export default function OrderTable({ orders }) {
       o.customer.toLowerCase().includes(search.toLowerCase()) ||
       o.id.toLowerCase().includes(search.toLowerCase()) ||
       o.bookTitle.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = status === "all" || o.status === status;
+    const matchOrderType = orderType === "all" || o.orderType === orderType;
     
-    return matchSearch && matchStatus;
+    return matchSearch && matchOrderType;
   });
 
   const totalPages = Math.ceil(filtered.length / pageSize);
@@ -54,7 +55,7 @@ export default function OrderTable({ orders }) {
     <div className="bg-slate-800 p-4 rounded-lg shadow">
       {/* Filter */}
       <div className="space-y-4 mb-4">
-        {/* Search and Status */}
+        {/* Search and Filters */}
         <div className="flex flex-col md:flex-row md:items-center gap-3">
         <input
           type="text"
@@ -67,27 +68,29 @@ export default function OrderTable({ orders }) {
           className="px-3 py-2 rounded bg-gray-700 text-white flex-1"
         />
         <select
-          value={status}
+          value={orderType}
           onChange={(e) => {
-            setStatus(e.target.value);
+            setOrderType(e.target.value);
             setPage(1);
           }}
           className="px-3 py-2 rounded bg-gray-700 text-white"
         >
-          <option value="all">Tất cả trạng thái</option>
-          <option value="Hoàn thành">Hoàn thành</option>
-          <option value="Đang chờ">Đang chờ</option>
-          <option value="Đã hoàn tiền">Đã hoàn tiền</option>
+          <option value="all">Tất cả loại</option>
+          <option value="BuyChapter">Mua chương</option>
+          <option value="BuyChapterSoft">Bản mềm</option>
+          <option value="BuyChapterAudio">Bản audio</option>
+          <option value="BuyChapterBoth">Cả hai</option>
+          <option value="Refund">Hoàn tiền</option>
         </select>
       </div>
 
         {/* Clear filters button */}
-        {(search || status !== "all") && (
+        {(search || orderType !== "all") && (
           <div className="flex justify-center">
             <button
               onClick={() => {
                 setSearch("");
-                setStatus("all");
+                setOrderType("all");
                 setPage(1);
               }}
               className="px-4 py-2 rounded bg-orange-600 hover:bg-orange-700 text-white text-sm transition-colors"
@@ -126,7 +129,7 @@ export default function OrderTable({ orders }) {
           <button
             onClick={() => {
               setSearch("");
-              setStatus("all");
+              setOrderType("all");
               setPage(1);
             }}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -142,8 +145,8 @@ export default function OrderTable({ orders }) {
             <th className="p-3">Mã</th>
             <th className="p-3">Sách / Chương</th>
             <th className="p-3">Khách hàng</th>
-            <th className="p-3">Trạng thái</th>
-            <th className="p-3">Tổng tiền</th>
+            <th className="p-3">Loại</th>
+            <th className="p-3">Số tiền</th>
             <th className="p-3">Thời gian</th>
             <th className="p-3">Hành động</th>
           </tr>
@@ -154,40 +157,52 @@ export default function OrderTable({ orders }) {
               <td className="p-3">{o.id}</td>
 
               {/* Sách / Chương */}
-              <td className="p-3 flex items-center space-x-3">
-                <img
-                  src={o.image}
-                  alt={o.bookTitle}
-                  className="w-10 h-14 object-cover rounded"
-                />
-                <div className="flex flex-col">
-                  <span className="text-white text-sm font-medium">{o.bookTitle}</span>
-                  <span className="text-gray-400 text-xs mt-1">{o.chapterTitle}</span>
+              <td className="p-3">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={o.image}
+                    alt={o.bookTitle}
+                    className="w-10 h-14 object-cover rounded"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-white text-sm font-medium">{o.bookTitle}</span>
+                    <span className="text-gray-400 text-xs mt-1">{o.chapterTitle}</span>
+                  </div>
                 </div>
               </td>
 
-              <td className="p-3">{o.customer}</td>
-
               <td className="p-3">
-                <span
-                  className={`px-2 py-1 rounded text-xs ${o.status === "Hoàn thành"
-                      ? "bg-green-600"
-                      : o.status === "Đang chờ"
-                        ? "bg-yellow-600"
-                        : "bg-red-600"
-                    }`}
-                >
-                  {o.status}
+                <div className="flex flex-col">
+                  <span className="text-white text-sm">{o.customer}</span>
+                  <span className="text-gray-400 text-xs">{o.customerEmail}</span>
+                </div>
+              </td>
+
+              {/* Order Type Badge */}
+              <td className="p-3">
+                <span className={`px-2 py-1 rounded text-xs ${o.orderTypeBadgeColor || 'bg-gray-600'}`}>
+                  {o.orderTypeLabel || o.orderType}
                 </span>
               </td>
 
-              <td className="p-3">{o.total.toLocaleString()} xu</td>
-              <td className="p-3">{o.date}</td>
+              {/* Price with discount indicator */}
+              <td className="p-3">
+                <div className="flex flex-col">
+                  <span className="text-white font-medium">{o.total.toLocaleString()} xu</span>
+                  {o.unitPrice && o.unitPrice !== o.total && (
+                    <span className="text-gray-400 text-xs line-through">
+                      {o.unitPrice.toLocaleString()} xu
+                    </span>
+                  )}
+                </div>
+              </td>
+
+              <td className="p-3 text-xs text-gray-300">{o.date}</td>
 
               <td className="p-3">
                 <Link
-                  to={`/owner/orders/${o.id}`}
-                  className="px-3 py-1 bg-blue-500 hover:bg-blue-600 rounded text-sm text-white"
+                  to={`/owner/orders/${o.orderItemId}`}
+                  className="px-3 py-1 bg-blue-500 hover:bg-blue-600 rounded text-sm text-white transition-colors"
                 >
                   Chi tiết
                 </Link>
