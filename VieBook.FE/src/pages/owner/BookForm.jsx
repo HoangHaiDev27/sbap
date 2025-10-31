@@ -83,6 +83,10 @@ export default function BookForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Limit description to 5000 characters
+    if (name === "description" && value.length > 5000) {
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === "isbn") setIsbnError("");
   };
@@ -137,6 +141,10 @@ export default function BookForm() {
     // If Seller, ISBN is required
     if (form.uploaderType === "Seller" && !form.isbn.trim()) {
       errs.isbn = "Mã ISBN là bắt buộc đối với Chủ shop";
+    }
+    // If Seller, certificate is required
+    if (form.uploaderType === "Seller" && !form.certificateFile) {
+      errs.certificate = "Giấy chứng nhận bản quyền là bắt buộc đối với Chủ shop";
     }
     return errs;
   };
@@ -551,7 +559,7 @@ export default function BookForm() {
       {form.uploaderType === "Seller" && (
         <div className="mt-6">
           <label className="block mb-2 text-sm font-medium text-white">
-            Giấy chứng nhận bản quyền (tùy chọn)
+            Giấy chứng nhận bản quyền *
           </label>
           <div
             className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-700 cursor-pointer hover:border-blue-500"
@@ -581,20 +589,31 @@ export default function BookForm() {
           <p className="text-xs text-gray-400 mt-2">
             Tải lên giấy chứng nhận bản quyền hoặc giấy phép phân phối hợp pháp
           </p>
+          {errors.certificate && <p className="text-red-400 text-sm mt-1">{errors.certificate}</p>}
         </div>
       )}
 
       {/* Mô tả */}
       <div className="mt-6">
-        <label className="block mb-2 text-sm font-medium text-white">Mô tả *</label>
+        <label className="block mb-2 text-sm font-medium text-white">
+          Mô tả * <span className="text-gray-400 text-xs font-normal">({form.description.length}/5000)</span>
+        </label>
         <textarea
           rows={8}
           name="description"
           value={form.description}
           onChange={handleChange}
           placeholder="Mô tả nội dung sách..."
+          maxLength={5000}
           className="w-full px-3 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
         />
+        <p className="text-gray-400 text-xs mt-1">
+          {form.description.length >= 4500 && (
+            <span className="text-orange-400">
+              Còn {5000 - form.description.length} ký tự
+            </span>
+          )}
+        </p>
         {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description}</p>}
       </div>
 

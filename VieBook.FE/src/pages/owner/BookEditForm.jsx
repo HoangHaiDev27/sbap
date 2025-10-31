@@ -110,6 +110,10 @@ export default function BookEditForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Limit description to 5000 characters
+    if (name === "description" && value.length > 5000) {
+      return;
+    }
     setForm((p) => ({ ...p, [name]: value }));
     if (name === "isbn") setIsbnError("");
   };
@@ -168,6 +172,12 @@ export default function BookEditForm() {
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
+
+    // Check if Seller requires certificate
+    if (form.uploaderType === "Seller" && !certFile && !certificateUrl) {
+      setErrors({ certificate: "Giấy chứng nhận bản quyền là bắt buộc đối với Chủ shop" });
+      return;
+    }
 
     setUploading(true);
 
@@ -351,7 +361,9 @@ export default function BookEditForm() {
 
             {/* certificate upload/replace */}
             <div className="md:col-span-2 mt-6">
-              <label className="block mb-2 text-sm font-medium">Giấy chứng nhận</label>
+              <label className="block mb-2 text-sm font-medium">
+                Giấy chứng nhận{form.uploaderType === "Seller" && " *"}
+              </label>
               <div
                 className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-700 cursor-pointer hover:border-blue-500"
                 onClick={() => document.getElementById("certInput").click()}
@@ -414,15 +426,31 @@ export default function BookEditForm() {
               <p className="text-xs text-gray-400 mt-2">
                 Upload giấy chứng nhận bản quyền hoặc giấy phép phân phối hợp pháp
               </p>
+              {errors.certificate && <p className="text-red-400 text-sm mt-1">{errors.certificate}</p>}
             </div>
           </div>
 
           {/* description */}
           <div className="mt-6">
-            <label className="block mb-2 text-sm font-medium">Mô tả *</label>
-            <textarea name="description" value={form.description} onChange={handleChange} rows={10}
-              className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" />
-            {errors.description && <p className="text-red-400 text-sm">{errors.description}</p>}
+            <label className="block mb-2 text-sm font-medium">
+              Mô tả * <span className="text-gray-400 text-xs font-normal">({form.description.length}/5000)</span>
+            </label>
+            <textarea 
+              name="description" 
+              value={form.description} 
+              onChange={handleChange} 
+              rows={10}
+              maxLength={5000}
+              className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" 
+            />
+            <p className="text-gray-400 text-xs mt-1">
+              {form.description.length >= 4500 && (
+                <span className="text-orange-400">
+                  Còn {5000 - form.description.length} ký tự
+                </span>
+              )}
+            </p>
+            {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description}</p>}
           </div>
 
           <div className="mt-6 flex justify-end space-x-4">

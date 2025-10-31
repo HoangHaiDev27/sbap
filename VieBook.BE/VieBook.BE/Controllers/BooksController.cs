@@ -82,7 +82,7 @@ namespace VieBook.BE.Controllers
 
         // update
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> PutBook(int id, BookDTO dto)
+        public async Task<IActionResult> PutBook(int id, UpdateBookDTO dto)
         {
             try
             {
