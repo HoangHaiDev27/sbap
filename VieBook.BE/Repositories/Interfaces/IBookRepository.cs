@@ -20,6 +20,7 @@ namespace Repositories.Interfaces
         Task AddCategoriesToBookAsync(int bookId, List<int> categoryIds);
         Task RemoveCategoriesByBookIdAsync(int bookId);
         Task<bool> IsIsbnExistsAsync(string isbn);
+        Task<bool> IsIsbnExistsExcludingAsync(string isbn, int excludeBookId);
         Task<List<Book>> GetBooksByOwnerId(int ownerId);
         Task<List<Chapter>> GetChaptersByBookIdAsync(int bookId);
         Task<List<Book>> GetReadBooksAsync();
