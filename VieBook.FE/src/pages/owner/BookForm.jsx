@@ -178,7 +178,7 @@ export default function BookForm() {
         certificateUrl = await uploadCertificate(certData); // Upload to certificate endpoint
       }
 
-      // Luôn set Status = PendingChapters và CompletionStatus = Ongoing cho tất cả trường hợp
+      // Luôn set Status = Active và CompletionStatus = Ongoing cho tất cả trường hợp
       const payload = {
         title: form.title,
         description: form.description,
@@ -187,7 +187,7 @@ export default function BookForm() {
         language: null,
         ownerId,
         categoryIds: form.categoryIds,
-        status: "PendingChapters", // Luôn là PendingChapters
+        status: "Active", // Luôn là Active
         author: form.author,
         uploaderType: form.uploaderType,
         uploadStatus: form.uploadStatus,
