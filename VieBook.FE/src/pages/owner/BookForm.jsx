@@ -136,7 +136,7 @@ export default function BookForm() {
     }
     // If Seller, ISBN is required
     if (form.uploaderType === "Seller" && !form.isbn.trim()) {
-      errs.isbn = "Mã ISBN là bắt buộc đối với người bán";
+      errs.isbn = "Mã ISBN là bắt buộc đối với Chủ shop";
     }
     return errs;
   };
@@ -263,7 +263,7 @@ export default function BookForm() {
         >
           <div className="text-center">
             <div className="text-7xl mb-4">🏪</div>
-            <h3 className="text-xl font-semibold text-white mb-2">Người bán</h3>
+            <h3 className="text-xl font-semibold text-white mb-2">Chủ shop</h3>
             <p className="text-gray-400 text-sm">
               Bạn bán sách của tác giả khác. Cần cung cấp mã ISBN và giấy chứng nhận bản quyền.
             </p>
@@ -370,7 +370,7 @@ export default function BookForm() {
               : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
           }`}>
             <span className="text-lg">{form.uploaderType === "Owner" ? "✍️" : "🏪"}</span>
-            <span>{form.uploaderType === "Owner" ? "Tác giả" : "Người bán"}</span>
+            <span>{form.uploaderType === "Owner" ? "Tác giả" : "Chủ shop"}</span>
           </div>
           
           {/* Upload Status */}

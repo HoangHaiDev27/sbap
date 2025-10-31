@@ -4,8 +4,10 @@ import AudioPlayerContent from "./AudioPlayerContent";
 import AudioChapterList from "./AudioChapterList";
 import { saveReadingProgress } from "../../api/readingHistoryApi";
 import { API_ENDPOINTS } from "../../config/apiConfig";
+import { getUserId } from "../../api/authApi";
+import { getMyPurchases } from "../../api/chapterPurchaseApi";
 
-export default function AudioPlayer({ bookId }) {
+export default function AudioPlayer({ bookId, chapterId }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -28,6 +30,8 @@ export default function AudioPlayer({ bookId }) {
   const [currentAudioUrl, setCurrentAudioUrl] = useState(""); // Current audio URL to play
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [purchasedAudioChapters, setPurchasedAudioChapters] = useState([]); // Lưu danh sách chương đã mua audio
+  const [isOwner, setIsOwner] = useState(false); // Kiểm tra xem có phải owner không
   
   // Audio ref
   const audioRef = useRef(null);
@@ -46,6 +50,26 @@ export default function AudioPlayer({ bookId }) {
         }
         if (!bookRes.ok) throw new Error("Không thể tải thông tin sách");
         const bookData = await bookRes.json();
+
+        // Check if user is owner
+        const currentUserId = getUserId();
+        const userIsOwner = currentUserId && bookData.ownerId && currentUserId === bookData.ownerId;
+        setIsOwner(userIsOwner);
+
+        // Load purchased audio chapters if logged in
+        if (currentUserId) {
+          try {
+            const purchasesResponse = await getMyPurchases();
+            const purchases = purchasesResponse?.data || [];
+            const audioPurchases = purchases.filter(p => 
+              p.orderType === "BuyChapterAudio" || p.orderType === "BuyChapterBoth"
+            );
+            const purchasedAudioChapterIds = audioPurchases.map((p) => p.chapterId);
+            setPurchasedAudioChapters(purchasedAudioChapterIds);
+          } catch (error) {
+            console.error("Error loading purchased audio chapters:", error);
+          }
+        }
 
         // Fetch chapters
         const chaptersRes = await fetch(API_ENDPOINTS.CHAPTERS.GET_BY_BOOK_ID(bookId));
@@ -85,7 +109,7 @@ export default function AudioPlayer({ bookId }) {
 
         // Map chapters with audio info
         const chaptersWithAudio = chaptersData
-          .map(chapter => {
+          .map((chapter, index) => {
             let audio = null;
             if (Array.isArray(audioData) && audioData.length > 0) {
               audio = audioData.find(a => a.chapterId === chapter.chapterId);
@@ -101,11 +125,11 @@ export default function AudioPlayer({ bookId }) {
             return {
               id: chapter.chapterId,
               title: chapter.chapterTitle, // Bỏ "Chương X:" vì đã có badge số
-              chapterNumber: chapter.chapterNumber,
+              chapterNumber: audio?.chapterNumber, // Lấy chapterNumber từ audio data (backend tính từ toàn bộ chapters)
               chapterId: chapter.chapterId,
               audioUrl: audioUrl,
               duration: audio?.durationSec || audio?.duration || audio?.audioLength || 0,
-              priceSoft: audio?.priceAudio || 0,
+              priceAudio: audio?.priceAudio || 0, // Giá audio
               hasAudio: !!audio,
             };
           })
@@ -144,9 +168,21 @@ export default function AudioPlayer({ bookId }) {
         setChapters(chaptersWithAudio);
         
         if (chaptersWithAudio.length > 0) {
-          setDuration(chaptersWithAudio[0].duration);
+          // Find chapter index based on chapterId from URL
+          let initialChapterIndex = 0;
+          if (chapterId) {
+            const foundIndex = chaptersWithAudio.findIndex(
+              ch => ch.chapterId === parseInt(chapterId)
+            );
+            if (foundIndex >= 0) {
+              initialChapterIndex = foundIndex;
+            }
+          }
+          
+          setCurrentChapter(initialChapterIndex);
+          setDuration(chaptersWithAudio[initialChapterIndex].duration);
           // Set initial audio URL
-          setCurrentAudioUrl(chaptersWithAudio[0].audioUrl || "");
+          setCurrentAudioUrl(chaptersWithAudio[initialChapterIndex].audioUrl || "");
         }
 
         setLoading(false);
@@ -159,7 +195,7 @@ export default function AudioPlayer({ bookId }) {
     if (bookId) {
       fetchBookData();
     }
-  }, [bookId]);
+  }, [bookId, chapterId]);
 
   // Fetch all audios for current chapter when chapter changes
   useEffect(() => {
@@ -534,6 +570,8 @@ export default function AudioPlayer({ bookId }) {
           allAudioData={allAudioData}
           selectedVoice={selectedVoice}
           setSelectedVoice={setSelectedVoice}
+          purchasedAudioChapters={purchasedAudioChapters}
+          isOwner={isOwner}
         />
       )}
     </div>

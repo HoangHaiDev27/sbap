@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { RiVoiceprintLine } from "react-icons/ri";
+import { RiVoiceprintLine, RiCheckboxCircleLine, RiPlayCircleLine } from "react-icons/ri";
 import { API_ENDPOINTS } from "../../config/apiConfig";
+import { getUserId } from "../../api/authApi";
+import toast from "react-hot-toast";
 
 export default function AudioChapterList({
   chapters,
@@ -12,6 +14,8 @@ export default function AudioChapterList({
   allAudioData,
   selectedVoice,
   setSelectedVoice,
+  purchasedAudioChapters,
+  isOwner,
 }) {
   const [chapterAudios, setChapterAudios] = useState({}); // { chapterId: [audios] }
   const [expandedChapters, setExpandedChapters] = useState(new Set([currentChapter]));
@@ -91,6 +95,11 @@ export default function AudioChapterList({
             const audios = chapterAudios[chapter.chapterId] || [];
             const isExpanded = expandedChapters.has(index);
             const isCurrentChapter = currentChapter === index;
+            const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
+            const isLoggedIn = getUserId() !== null;
+            const isOwned = purchasedAudioChapters.includes(chapter.chapterId);
+            const hasAudioAccess = isOwned || isOwner || isFree;
+            const isDisabled = !isLoggedIn || (!hasAudioAccess && !isOwner);
             
             return (
               <div key={chapter.id} className="space-y-2">
@@ -98,6 +107,8 @@ export default function AudioChapterList({
                 <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
                   isCurrentChapter
                     ? "bg-blue-600 text-white shadow-md"
+                    : isDisabled
+                    ? "bg-gray-700 opacity-60"
                     : "bg-gray-700"
                 }`}>
                   {/* Chapter Number Badge */}
@@ -106,18 +117,41 @@ export default function AudioChapterList({
                       ? "bg-blue-700" 
                       : "bg-gray-600"
                   }`}>
-                    {index + 1}
+                    {chapter.chapterNumber}
                   </div>
                   
                   {/* Chapter Info - clickable */}
                   <button
                     onClick={() => {
+                      if (!isLoggedIn) {
+                        toast.error("Bạn phải đăng nhập để nghe audio");
+                        return;
+                      }
+                      if (!hasAudioAccess && !isOwner) {
+                        toast.error("Bạn cần mua audio này để nghe");
+                        return;
+                      }
                       jumpToChapter(index);
                       setShowChapters(false);
                     }}
-                    className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                    className={`flex-1 min-w-0 text-left transition-opacity ${
+                      isDisabled ? "cursor-not-allowed opacity-60" : "hover:opacity-80"
+                    }`}
                   >
-                    <div className="font-medium truncate">{chapter.title}</div>
+                    <div className="flex items-center gap-2">
+                      <RiPlayCircleLine className={`text-lg flex-shrink-0 ${
+                        hasAudioAccess ? "text-green-500" : "text-gray-500"
+                      }`} />
+                      <div className="font-medium truncate">{chapter.title}</div>
+                      {isOwner && (
+                        <span className="text-green-400 text-xs font-medium bg-green-600/20 px-2 py-0.5 rounded">
+                          Sách của bạn
+                        </span>
+                      )}
+                      {!isOwner && isOwned && (
+                        <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
+                      )}
+                    </div>
                     <div className={`text-xs mt-1 flex items-center gap-2 ${isCurrentChapter ? "text-blue-200" : "text-gray-400"}`}>
                       <span>⏱ {formatTime(chapter.duration)}</span>
                       {audios.length > 0 && (

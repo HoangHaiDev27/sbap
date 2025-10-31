@@ -76,6 +76,7 @@ function AppRoutes() {
       <Route path="/reader/:id/chapter/:chapterId" element={<ReaderPage />} />
       {/* New audio listening page with /listen/:bookId structure */}
       <Route path="/listen/:bookId" element={<AudioListenPage />} />
+      <Route path="/listen/:bookId/chapter/:chapterId" element={<AudioListenPage />} />
       {/* Old player page kept for reference */}
       <Route path="/player/:id" element={<PlayerPage />} />
       {/* Routes cho staff/admin */}

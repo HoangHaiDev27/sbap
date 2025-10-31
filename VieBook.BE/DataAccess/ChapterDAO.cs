@@ -82,6 +82,7 @@ namespace DataAccess
             return await _context.Chapters
                                  .Where(c => c.BookId == bookId)
                                  .Include(c => c.ChapterAudios)
+                                 .Include(c => c.Book)
                                  .OrderBy(c => c.ChapterId)
                                  .ToListAsync();
         }
