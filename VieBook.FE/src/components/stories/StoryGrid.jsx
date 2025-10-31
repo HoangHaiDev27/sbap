@@ -12,6 +12,7 @@ import {
   RiCoinLine,
 } from "react-icons/ri";
 import { getAudioBooks } from "../../api/audioBookApi";
+import { getChapterAudioPrices } from "../../api/ownerBookApi";
 
 export default function StoryGrid({
   selectedCategory,
@@ -22,6 +23,7 @@ export default function StoryGrid({
   const [stories, setStories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const [audioTotalsByBook, setAudioTotalsByBook] = useState({});
 
   useEffect(() => {
     async function fetchAudioBooks() {
@@ -34,6 +36,8 @@ export default function StoryGrid({
     }
     fetchAudioBooks();
   }, []);
+
+  // (sẽ chuyển xuống dưới, sau khi currentStories được định nghĩa)
 
   // --- Filter ---
   const filteredStories = stories.filter((story) => {
@@ -130,6 +134,42 @@ export default function StoryGrid({
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentStories = sortedStories.slice(indexOfFirst, indexOfLast);
 
+  // Tải tổng giá audio (raw) cho các sách đang hiển thị ở trang hiện tại
+  useEffect(() => {
+    const loadAudioTotals = async () => {
+      try {
+        const bookIds = currentStories.map((s) => s.id).filter(Boolean);
+        if (bookIds.length === 0) return;
+
+        const fetches = bookIds.map(async (bookId) => {
+          try {
+            const priceMap = await getChapterAudioPrices(bookId);
+            // priceMap có thể là object { chapterId: price } hoặc array
+            let total = 0;
+            if (Array.isArray(priceMap)) {
+              total = priceMap.reduce((sum, p) => sum + (p?.priceAudio || p?.price || 0), 0);
+            } else if (priceMap && typeof priceMap === "object") {
+              total = Object.values(priceMap).reduce((sum, v) => sum + (Number(v) || 0), 0);
+            }
+            return [bookId, total];
+          } catch {
+            return [bookId, 0];
+          }
+        });
+
+        const results = await Promise.all(fetches);
+        setAudioTotalsByBook((prev) => {
+          const next = { ...prev };
+          for (const [bookId, total] of results) next[bookId] = total;
+          return next;
+        });
+      } catch {
+        // ignore
+      }
+    };
+    loadAudioTotals();
+  }, [currentStories]);
+
   const getPageNumbers = () => {
     const maxVisiblePages = 5;
     const pages = [];
@@ -161,7 +201,14 @@ export default function StoryGrid({
     <div>
       {/* Grid stories */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {currentStories.map((story) => (
+        {currentStories.map((story) => {
+          const audioRaw = Math.round(audioTotalsByBook[story.id] || 0);
+          const hasPromo = !!story?.hasPromotion && (story?.discountValue || 0) > 0;
+          const audioDiscounted = hasPromo
+            ? Math.max(0, Math.round(audioRaw * (1 - (story.discountValue || 0) / 100)))
+            : null;
+
+          return (
           <div
             key={story.id}
             className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors flex flex-col h-full"
@@ -239,22 +286,22 @@ export default function StoryGrid({
                     <RiStarFill className="text-yellow-400 mr-1" />
                     <span>{story.rating} ({story.reviews})</span>
                   </div>
-                  {/* Price */}
+                  {/* Audio-only Price (with promotion if any) */}
                   <div className="flex flex-col items-end">
-                    {story.hasPromotion && story.discountedPrice != null ? (
+                    {hasPromo && audioRaw > 0 ? (
                       <>
                         <div className="flex items-center gap-1 text-sm text-yellow-400 font-bold">
-                          {Math.round(story.discountedPrice).toLocaleString()}
+                          {audioDiscounted?.toLocaleString()}
                           <RiCoinLine className="w-5 h-5" />
                         </div>
                         <div className="flex items-center gap-1 text-xs text-gray-500 line-through">
-                          {Math.round(story.price).toLocaleString()}
+                          {audioRaw.toLocaleString()}
                           <RiCoinLine className="w-4 h-4" />
                         </div>
                       </>
                     ) : (
-                      <div className="flex items-center gap-1 text-sm text-yellow-400 font-semibold">
-                        {Math.round(story.price).toLocaleString()}
+                      <div className="flex items-center gap-1 text-sm text-green-400 font-semibold">
+                        {audioRaw.toLocaleString()}
                         <RiCoinLine className="w-5 h-5" />
                       </div>
                     )}
@@ -267,7 +314,7 @@ export default function StoryGrid({
               </div>
             </Link>
           </div>
-        ))}
+        );})}
       </div>
 
       {/* Empty */}

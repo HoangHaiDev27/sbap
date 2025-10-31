@@ -5,6 +5,7 @@ import {
   RiGiftLine,
   RiDraftLine,
   RiEyeLine,
+  RiVoiceprintLine,
 } from "react-icons/ri";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -607,8 +608,18 @@ export default function OwnerChapters() {
                       {formatDateSafe(ch.uploadedAt)}
                     </span>
 
-                    {/* CHỨC NĂNG: Sửa / Xem / Xóa */}
+                    {/* CHỨC NĂNG: Audio / Sửa / Xem / Xóa */}
                     <div className="flex space-x-2">
+                      <Link
+                        to={`/owner/books/${bookId}/audio`}
+                        state={{ bookTitle }}
+                        className="px-2 py-1 min-w-[50px] text-center bg-blue-500 rounded text-xs text-white hover:bg-blue-600 flex items-center justify-center gap-1"
+                        aria-label="Quản lý Audio"
+                      >
+                        <RiVoiceprintLine className="text-sm" />
+                        Audio
+                      </Link>
+
                       <Link
                         to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
                         state={{ bookTitle }}

@@ -15,7 +15,9 @@ public class ChatService : IChatService
     private readonly IChatRepository _chatRepository;
     private readonly IUserRepository _userRepository;
 
-    public ChatService(IChatRepository chatRepository, IUserRepository userRepository)
+    public ChatService(
+        IChatRepository chatRepository, 
+        IUserRepository userRepository)
     {
         _chatRepository = chatRepository;
         _userRepository = userRepository;
@@ -70,8 +72,10 @@ public class ChatService : IChatService
         );
 
         var savedMessage = await _chatRepository.GetMessageByIdAsync(message.MessageId);
+        var messageDTO = MapToMessageDTO(savedMessage!);
         
-        return MapToMessageDTO(savedMessage!);
+        // Note: WebSocket broadcast sẽ được xử lý ở Controller layer
+        return messageDTO;
     }
 
     public async Task<List<ConversationListResponse>> GetUserConversationsAsync(int userId)

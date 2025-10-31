@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { getBookById, getCategories, updateBook, uploadBookImage, removeOldBookImage } from "../../api/ownerBookApi";
+import { getBookById, getCategories, updateBook, uploadBookImage, uploadCertificate, removeOldBookImage } from "../../api/ownerBookApi";
 
 export default function BookEditForm() {
   const { bookId } = useParams();
@@ -13,11 +13,17 @@ export default function BookEditForm() {
     description: "",
     categoryIds: [],
     status: "Active",
+    uploaderType: null,
+    uploadStatus: null,
+    completionStatus: null,
     createdAt: null,
   });
 
   const [coverUrl, setCoverUrl] = useState("");
+  const [certificateUrl, setCertificateUrl] = useState("");
   const [file, setFile] = useState(null);
+  const [certFile, setCertFile] = useState(null);
+  const [certPreview, setCertPreview] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [preview, setPreview] = useState(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -84,12 +90,16 @@ export default function BookEditForm() {
           description: bookData.description ?? "",
           categoryIds: initialCategoryIds,
           status: bookData.status ?? "Active",
+          uploaderType: bookData.uploaderType ?? null,
+          uploadStatus: bookData.uploadStatus ?? null,
+          completionStatus: bookData.completionStatus ?? null,
           createdAt: bookData.createdAt ?? null,
         });
 
         setCoverUrl(bookData.coverUrl ?? "");
+        setCertificateUrl(bookData.certificateUrl ?? "");
       } catch (err) {
-        console.error("Lỗi khi load dữ liệu edit:", err);
+        // Error loading data
       } finally {
         setLoading(false);
       }
@@ -100,6 +110,10 @@ export default function BookEditForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Limit description to 5000 characters
+    if (name === "description" && value.length > 5000) {
+      return;
+    }
     setForm((p) => ({ ...p, [name]: value }));
     if (name === "isbn") setIsbnError("");
   };
@@ -127,6 +141,17 @@ export default function BookEditForm() {
     reader.readAsDataURL(selected);
   };
 
+  const handleCertFileChange = (e) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    setCertFile(selected);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCertPreview(reader.result);
+    };
+    reader.readAsDataURL(selected);
+  };
+
   // validate dữ liệu nhập
   const validate = () => {
     const errs = {};
@@ -148,9 +173,16 @@ export default function BookEditForm() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
+    // Check if Seller requires certificate
+    if (form.uploaderType === "Seller" && !certFile && !certificateUrl) {
+      setErrors({ certificate: "Giấy chứng nhận bản quyền là bắt buộc đối với Chủ shop" });
+      return;
+    }
+
     setUploading(true);
 
     let finalCoverUrl = coverUrl;
+    let finalCertUrl = certificateUrl;
 
     try {
       if (file) {
@@ -158,7 +190,7 @@ export default function BookEditForm() {
           try {
             await removeOldBookImage(coverUrl);
           } catch (err) {
-            console.warn("Xóa ảnh cũ thất bại:", err);
+            // Failed to remove old image
           }
         }
 
@@ -167,17 +199,26 @@ export default function BookEditForm() {
         finalCoverUrl = await uploadBookImage(formData);
       }
 
+      if (certFile) {
+        const certFormData = new FormData();
+        certFormData.append("file", certFile);
+        finalCertUrl = await uploadCertificate(certFormData);
+      }
 
       const payload = {
         bookId: Number(bookId),
         title: form.title,
         author: form.author,
-        isbn: form.isbn,
+        isbn: form.isbn?.trim() || null,
         description: form.description,
         language: null, // luôn lưu NULL
         coverUrl: finalCoverUrl,
+        certificateUrl: finalCertUrl || null,
         categoryIds: form.categoryIds,
         status: "Active",
+        uploaderType: form.uploaderType,
+        uploadStatus: form.uploadStatus,
+        completionStatus: form.completionStatus,
         createdAt: form.createdAt,
       };
 
@@ -188,8 +229,11 @@ export default function BookEditForm() {
       }));
       navigate("/owner/books");
     } catch (err) {
-      const errorMsg = err?.message || err?.response?.data || "";
-      if (errorMsg.includes("ISBN")) {
+      const errorMsg = err?.message || "";
+      const status = err?.status;
+      
+      // Only treat as ISBN error if it's a Conflict (409) status or explicitly mentions ISBN
+      if (status === 409 || (errorMsg.includes("ISBN") && errorMsg.includes("tồn tại"))) {
         setIsbnError("Mã ISBN đã tồn tại, vui lòng nhập mã khác.");
         window.dispatchEvent(new CustomEvent("app:toast", {
           detail: { type: "error", message: "Mã ISBN đã tồn tại, vui lòng nhập mã khác." }
@@ -314,14 +358,99 @@ export default function BookEditForm() {
                 />
               </div>
             </div>
+
+            {/* certificate upload/replace */}
+            <div className="md:col-span-2 mt-6">
+              <label className="block mb-2 text-sm font-medium">
+                Giấy chứng nhận{form.uploaderType === "Seller" && " *"}
+              </label>
+              <div
+                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-6 bg-gray-700 cursor-pointer hover:border-blue-500"
+                onClick={() => document.getElementById("certInput").click()}
+              >
+                {certPreview || certificateUrl ? (
+                  (certPreview || certificateUrl).toLowerCase().endsWith('.pdf') ? (
+                    <div className="text-center">
+                      <div className="text-6xl mb-2">📄</div>
+                      <p className="text-gray-400 text-sm mb-2">Tài liệu PDF</p>
+                      {certPreview ? (
+                        <p className="text-green-400 text-sm">Tài liệu mới đã chọn</p>
+                      ) : (
+                        <a
+                          href={certificateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 underline"
+                        >
+                          Xem chứng chỉ
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={certPreview || certificateUrl}
+                        alt="Certificate"
+                        className="max-w-full max-h-60 object-contain rounded"
+                      />
+                      {certPreview && (
+                        <p className="text-green-400 text-sm mt-2">Ảnh mới đã chọn</p>
+                      )}
+                      {!certPreview && certificateUrl && (
+                        <a
+                          href={certificateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 underline mt-2"
+                        >
+                          Xem ở trang mới
+                        </a>
+                      )}
+                    </>
+                  )
+                ) : (
+                  <div className="text-center">
+                    <div className="text-6xl mb-2">📄</div>
+                    <p className="text-gray-400 text-sm">Click để chọn file giấy chứng nhận</p>
+                    <p className="text-xs text-gray-500 mt-1">(PNG, JPG, PDF)</p>
+                  </div>
+                )}
+                <input
+                  id="certInput"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={handleCertFileChange}
+                  className="hidden"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                Upload giấy chứng nhận bản quyền hoặc giấy phép phân phối hợp pháp
+              </p>
+              {errors.certificate && <p className="text-red-400 text-sm mt-1">{errors.certificate}</p>}
+            </div>
           </div>
 
           {/* description */}
           <div className="mt-6">
-            <label className="block mb-2 text-sm font-medium">Mô tả *</label>
-            <textarea name="description" value={form.description} onChange={handleChange} rows={10}
-              className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" />
-            {errors.description && <p className="text-red-400 text-sm">{errors.description}</p>}
+            <label className="block mb-2 text-sm font-medium">
+              Mô tả * <span className="text-gray-400 text-xs font-normal">({form.description.length}/5000)</span>
+            </label>
+            <textarea 
+              name="description" 
+              value={form.description} 
+              onChange={handleChange} 
+              rows={10}
+              maxLength={5000}
+              className="w-full px-3 py-2 rounded bg-gray-700 focus:outline-none" 
+            />
+            <p className="text-gray-400 text-xs mt-1">
+              {form.description.length >= 4500 && (
+                <span className="text-orange-400">
+                  Còn {5000 - form.description.length} ký tự
+                </span>
+              )}
+            </p>
+            {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description}</p>}
           </div>
 
           <div className="mt-6 flex justify-end space-x-4">

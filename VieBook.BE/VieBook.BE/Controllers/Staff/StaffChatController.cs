@@ -1,8 +1,10 @@
 using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Services.Interfaces;
 using System.Security.Claims;
+using VieBook.BE.Hubs;
 
 namespace VieBook.BE.Controllers.Staff;
 
@@ -12,10 +14,12 @@ namespace VieBook.BE.Controllers.Staff;
 public class StaffChatController : ControllerBase
 {
     private readonly IChatService _chatService;
+    private readonly IHubContext<ChatHub> _hubContext;
 
-    public StaffChatController(IChatService chatService)
+    public StaffChatController(IChatService chatService, IHubContext<ChatHub> hubContext)
     {
         _chatService = chatService;
+        _hubContext = hubContext;
     }
 
     private int GetCurrentUserId()
@@ -85,6 +89,19 @@ public class StaffChatController : ControllerBase
             }
             
             var message = await _chatService.SendMessageAsync(staffId, request);
+            
+            // Broadcast tin nhắn qua WebSocket
+            try
+            {
+                await ChatHub.SendMessageToConversation(_hubContext, message.ConversationId, message);
+                Console.WriteLine($"✅ Broadcasted message to conversation {message.ConversationId}");
+            }
+            catch (Exception wsEx)
+            {
+                Console.WriteLine($"⚠️ Failed to broadcast via WebSocket: {wsEx.Message}");
+                // Không throw lỗi để không ảnh hưởng đến flow chính
+            }
+            
             return Ok(message);
         }
         catch (UnauthorizedAccessException ex)

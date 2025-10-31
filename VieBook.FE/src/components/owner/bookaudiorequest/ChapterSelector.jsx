@@ -1,21 +1,6 @@
 export default function ChapterSelector({ chapters, selected, setSelected }) {
   const toggleChapter = (id) => {
-
     setSelected(selected === id ? null : id);
-  };
-
-  const formatDuration = (seconds) => {
-    if (!seconds || seconds <= 0) return "0 giây";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-
-    let result = [];
-    if (h > 0) result.push(`${h} giờ`);
-    if (m > 0) result.push(`${m} phút`);
-    if (s > 0 || result.length === 0) result.push(`${s} giây`);
-
-    return result.join(" ");
   };
 
   return (
@@ -48,19 +33,6 @@ export default function ChapterSelector({ chapters, selected, setSelected }) {
                 />
                 <span className="font-medium">{ch.title}</span>
               </div>
-              <p className="text-xs text-gray-400 ml-6 mt-1">
-                {ch.hasAudio ? (
-                  <>
-                    Thời lượng:{" "}
-                    <span className="text-green-400 font-medium">
-                      {formatDuration(ch.duration)}
-                    </span>{" "}
-                    <span className="text-green-500">(Đã có audio)</span>
-                  </>
-                ) : (
-                  <>Ước tính: {formatDuration(ch.duration)}</>
-                )}
-              </p>
             </div>
           );
         })}
