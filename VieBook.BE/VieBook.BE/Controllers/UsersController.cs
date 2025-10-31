@@ -21,13 +21,15 @@ namespace VieBook.BE.Controllers
         private readonly IMapper _mapper;
         private readonly IWalletTransactionService _walletTransactionService;
         private readonly INotificationService _notificationService;
+        private readonly ISubscriptionService _subscriptionService;
         
-        public UsersController(IUserService userService, IMapper mapper, IWalletTransactionService walletTransactionService, INotificationService notificationService)
+        public UsersController(IUserService userService, IMapper mapper, IWalletTransactionService walletTransactionService, INotificationService notificationService, ISubscriptionService subscriptionService)
         {
             _userService = userService;
             _mapper = mapper;
             _walletTransactionService = walletTransactionService;
             _notificationService = notificationService;
+            _subscriptionService = subscriptionService;
         }
 
         [Authorize]
@@ -454,6 +456,29 @@ namespace VieBook.BE.Controllers
                 if (!string.Equals(plan.ForRole, "Owner", StringComparison.OrdinalIgnoreCase))
                 {
                     return BadRequest(new { message = "Gói này không dành cho Owner" });
+                }
+
+                // Kiểm tra subscription active hiện tại
+                var activeSubscription = await _subscriptionService.GetActiveSubscriptionByUserIdAsync(userId);
+                if (activeSubscription != null)
+                {
+                    var now = DateTime.UtcNow;
+                    // Chỉ cho phép mua gói mới nếu:
+                    // 1. Gói hiện tại đã hết hạn (EndAt <= now), HOẶC
+                    // 2. Gói hiện tại đã hết lượt chuyển đổi (RemainingConversions <= 0)
+                    bool canPurchase = now >= activeSubscription.EndAt || activeSubscription.RemainingConversions <= 0;
+                    
+                    if (!canPurchase)
+                    {
+                        var daysRemaining = (activeSubscription.EndAt - now).Days;
+                        var remainingConversions = activeSubscription.RemainingConversions;
+                        return BadRequest(new 
+                        { 
+                            message = $"Bạn đang có gói '{activeSubscription.Plan?.Name}' còn hiệu lực. " +
+                                      $"Gói còn {daysRemaining} ngày và {remainingConversions} lượt chuyển đổi. " +
+                                      $"Chỉ có thể mua gói mới khi gói hiện tại hết hạn hoặc hết lượt chuyển đổi." 
+                        });
+                    }
                 }
 
                 // Tính thời gian kết thúc theo period
