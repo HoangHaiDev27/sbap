@@ -216,12 +216,10 @@ builder.Services.AddAuthentication()
         options.ClientSecret = builder.Configuration["GoogleAuth:ClientSecret"] ?? throw new Exception("Google ClientSecret not found");
     });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Sử dụng custom UTC DateTime converter
-        options.JsonSerializerOptions.Converters.Add(new VieBook.BE.Helpers.UtcDateTimeConverter());
-    });
+builder.Services.AddControllers();
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 //CORS
 builder.Services.AddCors(options =>
@@ -231,10 +229,10 @@ builder.Services.AddCors(options =>
         if (builder.Environment.IsDevelopment())
         {
             policy
-                .AllowAnyOrigin()
+                .SetIsOriginAllowed(origin => true)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .SetIsOriginAllowed(origin => true);
+                .AllowCredentials();
         }
         else
         {
@@ -242,8 +240,7 @@ builder.Services.AddCors(options =>
                 .WithOrigins(ApiConfiguration.Cors.ALLOWED_ORIGINS)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials()
-                .SetIsOriginAllowedToAllowWildcardSubdomains();
+                .AllowCredentials();
         }
     });
 });
@@ -276,6 +273,9 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<VieBook.BE.Hubs.ChatHub>("/chathub");
 
 app.Run();
 

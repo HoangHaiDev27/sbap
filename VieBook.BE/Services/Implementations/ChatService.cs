@@ -15,7 +15,9 @@ public class ChatService : IChatService
     private readonly IChatRepository _chatRepository;
     private readonly IUserRepository _userRepository;
 
-    public ChatService(IChatRepository chatRepository, IUserRepository userRepository)
+    public ChatService(
+        IChatRepository chatRepository, 
+        IUserRepository userRepository)
     {
         _chatRepository = chatRepository;
         _userRepository = userRepository;
@@ -70,8 +72,10 @@ public class ChatService : IChatService
         );
 
         var savedMessage = await _chatRepository.GetMessageByIdAsync(message.MessageId);
+        var messageDTO = MapToMessageDTO(savedMessage!);
         
-        return MapToMessageDTO(savedMessage!);
+        // Note: WebSocket broadcast sẽ được xử lý ở Controller layer
+        return messageDTO;
     }
 
     public async Task<List<ConversationListResponse>> GetUserConversationsAsync(int userId)
@@ -235,11 +239,20 @@ public class ChatService : IChatService
             
         Console.WriteLine($"📋 Found {conversations.Count} conversations with owner {ownerId}");
         
-        // Tìm conversation có owner và staff này (group chat)
-        var conversation = conversations.FirstOrDefault(c => 
-            c.ChatParticipants.Any(p => p.UserId == ownerId) &&
-            c.ChatParticipants.Any(p => p.UserId == staffId) &&
-            c.ChatParticipants.Any(p => p.User.Roles.Any(r => r.RoleName.ToLower() == "staff")));
+        // Lọc các conversation có owner và staff này (group chat)
+        var candidateConversations = conversations
+            .Where(c =>
+                c.ChatParticipants.Any(p => p.UserId == ownerId) &&
+                c.ChatParticipants.Any(p => p.UserId == staffId) &&
+                c.ChatParticipants.Any(p => p.User.Roles.Any(r => r.RoleName.ToLower() == "staff")))
+            .ToList();
+
+        // Chọn conversation mới nhất theo thời điểm tin nhắn cuối hoặc ngày tạo
+        var conversation = candidateConversations
+            .OrderByDescending(c => c.ChatMessages.Any()
+                ? c.ChatMessages.Max(m => m.SentAt)
+                : c.CreatedAt)
+            .FirstOrDefault();
         
         Console.WriteLine($"📋 Found conversation: {conversation?.ConversationId ?? 0}");
         

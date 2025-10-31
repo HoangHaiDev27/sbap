@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sendMessage, getChatHistory } from "../../api/chatbaseApi";
 import { getUserId } from "../../api/authApi";
+import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 
 export default function ChatbaseWidget() {
@@ -8,43 +9,58 @@ export default function ChatbaseWidget() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const chatEndRef = useRef(null);
 
   const getStorageKey = () => {
     const uid = getUserId() || "guest";
     return `chat_history_${uid}`;
   };
-const renderTextWithLinks = (text) => {
-  if (!text) return null;
+ const renderTextWithLinks = (text) => {
+    if (!text) return null;
+    const lines = text.split(/\n+/);
 
-  const lines = text.split(/\n+/);
+    return lines.map((line, idx) => {
+      // Nhận tất cả dạng markdown [label](url)
+      const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
 
-  return lines.map((line, idx) => {
-    const linkRegex = /\[Xem chi tiết\]\((https?:\/\/[^\s)]+)\)/;
-    const match = line.match(linkRegex);
+      // Chuyển markdown → thẻ <a>
+      line = line.replace(linkRegex, (match, label, url) => {
+        if (/chi tiết/i.test(label)) {
+          return `<strong>Link chi tiết:</strong> <a href="${url}" class="text-blue-400 underline hover:text-blue-200 transition">${label}</a>`;
+        }
+        return `<a href="${url}" class="text-blue-400 underline hover:text-blue-200 transition">${label}</a>`;
+      });
 
-    if (match) {
-      const url = match[1];
+      // Bỏ dấu ** in đậm
+      line = line.replace(/\*\*/g, "");
 
-      // Thay toàn bộ đoạn [Xem chi tiết](...) bằng “Link chi tiết: <a>Xem chi tiết</a>”
-      line = line.replace(
-        linkRegex,
-        `<a href="${url}" class="underline text-blue-300 hover:text-blue-100">Xem chi tiết</a>`
+      return (
+        <div
+          key={idx}
+          className="mb-1 break-words whitespace-pre-wrap"
+          // ✅ Khi click link → điều hướng nội bộ
+          onClick={(e) => {
+            if (e.target.tagName === "A") {
+              e.preventDefault();
+              const fullUrl = e.target.getAttribute("href");
+
+              try {
+                // ✅ Chỉ lấy phần path để navigate (VD: /vip hoặc /bookdetails/34)
+                const url = new URL(fullUrl);
+                navigate(url.pathname + url.search);
+              } catch {
+                // Nếu không parse được (link ngoài), fallback mở trực tiếp
+                window.location.href = fullUrl;
+              }
+            }
+          }}
+          dangerouslySetInnerHTML={{ __html: line }}
+        />
       );
-    }
+    });
+  };
 
-    // ✅ Bỏ luôn dấu ** (không hiển thị in đậm)
-    line = line.replace(/\*\*/g, "");
-
-    return (
-      <div
-        key={idx}
-        className="mb-1 break-words whitespace-pre-wrap"
-        dangerouslySetInnerHTML={{ __html: line }}
-      />
-    );
-  });
-};
 
   // Scroll xuống cuối khi có tin nhắn mới
   useEffect(() => {

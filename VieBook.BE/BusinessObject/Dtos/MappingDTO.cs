@@ -105,6 +105,23 @@ namespace BusinessObject.Dtos
             CreateMap<BookDTO, Book>()
                 .ForMember(dest => dest.Categories, opt => opt.Ignore());
 
+            // UpdateBookDTO → Book mapping (chỉ map fields được phép update)
+            CreateMap<UpdateBookDTO, Book>()
+                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
+                .ForMember(dest => dest.TotalView, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Categories, opt => opt.Ignore())
+                .ForMember(dest => dest.BookApprovals, opt => opt.Ignore())
+                .ForMember(dest => dest.BookOffers, opt => opt.Ignore())
+                .ForMember(dest => dest.BookReviews, opt => opt.Ignore())
+                .ForMember(dest => dest.Bookmarks, opt => opt.Ignore())
+                .ForMember(dest => dest.Chapters, opt => opt.Ignore())
+                .ForMember(dest => dest.Owner, opt => opt.Ignore())
+                .ForMember(dest => dest.ReadingSchedules, opt => opt.Ignore())
+                .ForMember(dest => dest.Wishlists, opt => opt.Ignore())
+                .ForMember(dest => dest.Posts, opt => opt.Ignore())
+                .ForMember(dest => dest.Promotions, opt => opt.Ignore());
+
             // Category → CategoryDTO
             CreateMap<Category, CategoryDTO>().ReverseMap();
             // Book → BookResponseDTO

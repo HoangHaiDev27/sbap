@@ -182,32 +182,49 @@ namespace VieBook.BE.Controllers
 
         // update
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> PutBook(int id, BookDTO dto)
+        public async Task<IActionResult> PutBook(int id, UpdateBookDTO dto)
         {
-            if (id != dto.BookId)
-                return BadRequest("Id không khớp.");
-
-            var existing = await _bookService.GetByIdAsync(id);
-            if (existing == null)
-                return NotFound();
-
-            var currentOwnerId = existing.OwnerId;
-
-            _mapper.Map(dto, existing);
-
-            existing.OwnerId = currentOwnerId;
-            existing.UpdatedAt = DateTime.UtcNow;
-
-            await _bookService.UpdateAsync(existing);
-
-            // Xử lý lại categories
-            await _bookService.RemoveCategoriesByBookIdAsync(id);
-            if (dto.CategoryIds != null && dto.CategoryIds.Any())
+            try
             {
-                await _bookService.AddCategoriesToBookAsync(id, dto.CategoryIds);
-            }
+                if (id != dto.BookId)
+                    return BadRequest("Id không khớp.");
 
-            return NoContent();
+                var existing = await _bookService.GetByIdAsync(id);
+                if (existing == null)
+                    return NotFound();
+
+                // Check ISBN duplication if ISBN is provided
+                if (!string.IsNullOrWhiteSpace(dto.Isbn) && dto.Isbn != existing.Isbn)
+                {
+                    var isbnExists = await _bookService.IsIsbnExistsExcludingAsync(dto.Isbn, id);
+                    if (isbnExists)
+                    {
+                        return Conflict("ISBN đã tồn tại");
+                    }
+                }
+
+                var currentOwnerId = existing.OwnerId;
+
+                _mapper.Map(dto, existing);
+
+                existing.OwnerId = currentOwnerId;
+                existing.UpdatedAt = DateTime.UtcNow;
+
+                await _bookService.UpdateAsync(existing);
+
+                // Xử lý lại categories
+                await _bookService.RemoveCategoriesByBookIdAsync(id);
+                if (dto.CategoryIds != null && dto.CategoryIds.Any())
+                {
+                    await _bookService.AddCategoriesToBookAsync(id, dto.CategoryIds);
+                }
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Cập nhật sách thất bại: {ex.Message}" });
+            }
         }
 
 

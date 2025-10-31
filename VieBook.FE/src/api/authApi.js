@@ -166,22 +166,68 @@ export async function authFetch(input, init = {}) {
   
   let response = await fetch(input, { ...init, headers });
   
-  // If token expired, try to refresh
-  if (response.status === 401 && getRefreshToken()) {
-    try {
-      await refreshToken();
-      // Retry the original request with new token
-      const newToken = getToken();
-      if (newToken) {
-        headers.set("Authorization", `Bearer ${newToken}`);
-        response = await fetch(input, { ...init, headers });
+  // ===== XỬ LÝ 401: Token hết hạn =====
+  if (response.status === 401) {
+    const refreshTokenValue = getRefreshToken();
+    
+    if (refreshTokenValue) {
+      try {
+        await refreshToken();
+        const newToken = getToken();
+        if (newToken) {
+          headers.set("Authorization", `Bearer ${newToken}`);
+          response = await fetch(input, { ...init, headers });
+          
+          if (response.status === 401) {
+            // Vẫn 401 sau khi refresh → redirect login
+            handleUnauthorized();
+          }
+        }
+      } catch (error) {
+        handleUnauthorized();
       }
-    } catch (error) {
-      // Refresh failed, continue with original response
+    } else {
+      handleUnauthorized();
     }
   }
   
+  // ===== XỬ LÝ 403: Không có quyền =====
+  if (response.status === 403) {
+    handleForbidden();
+  }
+  
   return response;
+}
+
+// Xử lý 401
+function handleUnauthorized() {
+  console.warn("⚠️ 401 - Redirecting to login...");
+  clearAuth();
+  
+  window.dispatchEvent(
+    new CustomEvent("app:toast", {
+      detail: { type: "error", message: "Phiên đăng nhập đã hết hạn." }
+    })
+  );
+  
+  setTimeout(() => {
+    window.location.href = "/auth";
+  }, 500);
+}
+
+// Xử lý 403
+function handleForbidden() {
+  console.warn("⚠️ 403 - No permission");
+  
+  window.dispatchEvent(
+    new CustomEvent("app:toast", {
+      detail: { type: "error", message: "Bạn không có quyền truy cập." }
+    })
+  );
+  
+  setTimeout(() => {
+    window.location.href = "/access-denied";
+  }, 500);
 }
 
 export function getRole() {
