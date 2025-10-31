@@ -154,5 +154,14 @@ public class ChatHub : Hub
             }
         }
     }
+
+    /// <summary>
+    /// Broadcast an event to all connected clients (fallback when per-user mapping isn't ready yet)
+    /// </summary>
+    public static async Task BroadcastToAll(IHubContext<ChatHub> hubContext, string eventName, object data)
+    {
+        await hubContext.Clients.All.SendAsync(eventName, data);
+        Console.WriteLine($"📢 Broadcast {eventName} to all connected clients");
+    }
 }
 

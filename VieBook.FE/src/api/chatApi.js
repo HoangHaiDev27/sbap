@@ -144,3 +144,36 @@ export async function sendStaffMessage(messageData) {
   );
 }
 
+// Tìm kiếm owners (cho staff)
+export async function searchOwnersForStaff(query) {
+  const token = getToken();
+  const q = encodeURIComponent(query || "");
+  return handleFetch(
+    `${API_ENDPOINTS.CHAT.STAFF.SEARCH_OWNERS}?q=${q}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    },
+    "Không thể tìm kiếm owner"
+  );
+}
+
+// Staff khởi tạo conversation với owner
+export async function startConversationWithOwnerForStaff(ownerId) {
+  const token = getToken();
+  return handleFetch(
+    API_ENDPOINTS.CHAT.STAFF.START_WITH_OWNER(ownerId),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    },
+    "Không thể khởi tạo cuộc trò chuyện với owner"
+  );
+}
+
