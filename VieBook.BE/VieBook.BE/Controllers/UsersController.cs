@@ -20,12 +20,14 @@ namespace VieBook.BE.Controllers
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
         private readonly IWalletTransactionService _walletTransactionService;
+        private readonly INotificationService _notificationService;
         
-        public UsersController(IUserService userService, IMapper mapper, IWalletTransactionService walletTransactionService)
+        public UsersController(IUserService userService, IMapper mapper, IWalletTransactionService walletTransactionService, INotificationService notificationService)
         {
             _userService = userService;
             _mapper = mapper;
             _walletTransactionService = walletTransactionService;
+            _notificationService = notificationService;
         }
 
         [Authorize]
@@ -473,6 +475,31 @@ namespace VieBook.BE.Controllers
 
                 // Tạo subscription
                 var sub = await _userService.CreateSubscriptionAsync(userId, plan, startAt, endAt);
+
+                // Tạo thông báo cho người dùng
+                try
+                {
+                    string periodMessage = plan.Period.ToLower() switch
+                    {
+                        "weekly" => "tuần",
+                        "monthly" => "tháng",
+                        "yearly" => "năm",
+                        _ => "kỳ"
+                    };
+
+                    await _notificationService.CreateAsync(new CreateNotificationDTO
+                    {
+                        UserId = userId,
+                        Type = NotificationTypes.BOOK_PURCHASE,
+                        Title = "Mua gói thành công",
+                        Body = $"Bạn đã mua thành công gói \"{plan.Name}\" ({periodMessage}) với giá {plan.Price:N0} xu. Bạn có {plan.ConversionLimit} lượt chuyển đổi sách sang audio. Gói có hiệu lực đến {endAt:dd/MM/yyyy HH:mm}."
+                    });
+                }
+                catch (Exception notifEx)
+                {
+                    // Log lỗi nhưng không làm gián đoạn flow mua gói
+                    Console.WriteLine($"[WARNING] Failed to create notification for plan purchase: {notifEx.Message}");
+                }
 
                 return Ok(new
                 {

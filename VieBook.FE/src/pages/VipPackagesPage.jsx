@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { isBookOwner } from "../api/authApi";
+import { isBookOwner, getUserId } from "../api/authApi";
 import { getOwnerPlans, purchaseOwnerPlan } from "../api/userApi";
 import { useCoinsStore } from "../hooks/stores/coinStore";
+import { useNotificationStore } from "../hooks/stores/notificationStore";
 
 export default function VipPackagesPage() {
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -11,6 +12,7 @@ export default function VipPackagesPage() {
 
   const coins = useCoinsStore((s) => s.coins || 0);
   const fetchCoins = useCoinsStore((s) => s.fetchCoins);
+  const { fetchNotifications, fetchUnreadCount } = useNotificationStore();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmPlan, setConfirmPlan] = useState(null);
@@ -64,7 +66,7 @@ export default function VipPackagesPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-2">
-            Gói chuyển sách sang audio (dành cho chủ sách)
+            Gói chuyển sách sang audio
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             Thanh toán bằng coin trong ví. Mỗi gói có giới hạn số lượt chuyển
@@ -73,9 +75,9 @@ export default function VipPackagesPage() {
           <div className="mt-4 inline-flex items-center gap-2 bg-gray-800 border border-gray-700 px-4 py-2 rounded-full text-sm">
             <i className="ri-wallet-3-line text-orange-400"></i>
             <span>
-              Coin hiện có:{" "}
+              Xu hiện có:{" "}
               <span className="font-semibold text-white">
-                {Number(coins).toLocaleString("vi-VN")} coin
+                {Number(coins).toLocaleString("vi-VN")} xu
               </span>
             </span>
           </div>
@@ -84,67 +86,62 @@ export default function VipPackagesPage() {
         {/* Ẩn thông báo đối với user bình thường theo yêu cầu */}
 
         {/* Owner Plans (hiển thị cho tất cả, chỉ owner mới mua được) */}
-        <div className="mb-12">
-          <div className="text-center mb-12">
-            {isOwner ? (
-              <>
-                <h2 className="text-3xl font-bold mb-4">Gói dành cho chủ sách</h2>
-                <p className="text-gray-400">
-                  Mua gói để chuyển sách sang audio theo hạn mức
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-3xl font-bold mb-4">Các gói chuyển sách sang audio</h2>
-                <p className="text-gray-400">
-                  Dành cho chủ sách. Vui lòng trở thành chủ sách để mua.
-                </p>
-              </>
-            )}
-          </div>
-          
+        <div className="mb-16">
           {hasPlans ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {displayPlans.map((p) => (
                 <div
                   key={p.planId || p.name}
-                  className="bg-gray-800 rounded-2xl p-6 border border-gray-700"
+                  className="group bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 hover:-translate-y-1"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-semibold">{p.name}</h3>
-                    <span className="text-xs px-2 py-1 rounded-full bg-gray-700 border border-gray-600 uppercase">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-white">{p.name}</h3>
+                    <span className="text-xs px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 font-medium uppercase">
                       {p.period}
                     </span>
                   </div>
-                  <div className="text-2xl font-bold text-orange-500 mb-3">
-                    {p.price?.toLocaleString("vi-VN")} coin
+                  <div className="mb-6 pb-4 border-b border-gray-700/50">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-orange-500">
+                        {p.price?.toLocaleString("vi-VN")}
+                      </span>
+                      <span className="text-base font-medium text-orange-400">Xu</span>
+                    </div>
                   </div>
-                  <ul className="text-sm text-gray-300 space-y-2 mb-4">
+                  <ul className="text-sm text-gray-300 space-y-3 mb-6">
                     <li className="flex items-start">
-                      <i className="ri-sound-module-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Số lượt chuyển đổi:{" "}
-                      <span className="ml-1 text-white font-medium">
-                        {p.conversionLimit} lần/kỳ
+                      <i className="ri-sound-module-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Số lượt chuyển đổi:{" "}
+                        <span className="ml-1 text-white font-semibold">
+                          {p.conversionLimit} lần/{String(p.period || '').toLowerCase()}
+                        </span>
                       </span>
                     </li>
                     <li className="flex items-start">
-                      <i className="ri-time-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Chu kỳ:{" "}
-                      <span className="ml-1 capitalize">
-                        {String(p.period || '').toLowerCase()}
+                      <i className="ri-time-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Chu kỳ:{" "}
+                        <span className="ml-1 capitalize text-white font-medium">
+                          {String(p.period || '').toLowerCase()}
+                        </span>
                       </span>
                     </li>
                     <li className="flex items-start">
-                      <i className="ri-recycle-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Tự gia hạn: <span className="ml-1">Không (mua lẻ)</span>
+                      <i className="ri-recycle-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Tự gia hạn: <span className="ml-1 text-gray-400">Không</span>
+                      </span>
                     </li>
                     <li className="flex items-start">
-                      <i className="ri-book-open-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Phạm vi: Chuyển đổi sách sang audio trực tuyến
+                      <i className="ri-book-open-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>Chuyển đổi sách sang audio trực tuyến</span>
                     </li>
                     <li className="flex items-start">
-                      <i className="ri-customer-service-2-line text-orange-400 mr-2 mt-0.5"></i>{" "}
-                      Hỗ trợ: Trong giờ hành chính
+                      <i className="ri-customer-service-2-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Hỗ trợ: <span className="ml-1 text-green-400 font-semibold">24/7</span>
+                      </span>
                     </li>
                   </ul>
                   {isOwner && p.planId ? (
@@ -154,14 +151,14 @@ export default function VipPackagesPage() {
                         setConfirmPlan(p);
                         setConfirmOpen(true);
                       }}
-                      className="w-full py-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium"
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-semibold transition-all duration-200 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                      Mua bằng coin
+                      {loading ? "Đang xử lý..." : "Mua bằng Xu"}
                     </button>
                   ) : (
                     <button
                       disabled
-                      className="w-full py-3 rounded-lg bg-gray-700 text-gray-300 cursor-not-allowed"
+                      className="w-full py-3 rounded-xl bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600/50"
                       title={isOwner ? "Gói minh họa - vui lòng đăng nhập để xem gói thực" : "Chỉ chủ sách (book owner) mới có thể mua"}
                     >
                       {isOwner ? "Gói minh họa" : "Chỉ dành cho chủ sách"}
@@ -193,34 +190,54 @@ export default function VipPackagesPage() {
 
         {/* Modal xác nhận mua gói */}
         {confirmOpen && confirmPlan && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md text-white">
-              <h3 className="text-xl font-semibold mb-3">Xác nhận mua gói</h3>
-              <div className="text-sm text-gray-300 mb-4">
-                <p className="mb-1">
-                  Gói:{" "}
-                  <span className="text-white font-medium">
-                    {confirmPlan.name}
-                  </span>{" "}
-                  ({confirmPlan.period})
-                </p>
-                <p className="mb-1">
-                  Giá:{" "}
-                  <span className="text-orange-400 font-semibold">
-                    {confirmPlan.price?.toLocaleString("vi-VN")} coin
-                  </span>
-                </p>
-                <p>
-                  Lượt chuyển đổi:{" "}
-                  <span className="text-white font-medium">
-                    {confirmPlan.conversionLimit}
-                  </span>{" "}
-                  lần/kỳ
-                </p>
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => {
+              if (!loading) {
+                setConfirmOpen(false);
+                setConfirmPlan(null);
+              }
+            }}
+          >
+            <div 
+              className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl p-6 w-full max-w-md text-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                  <i className="ri-checkbox-circle-line text-orange-400 text-2xl"></i>
+                </div>
+                <h3 className="text-2xl font-bold">Xác nhận mua gói</h3>
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="bg-gray-800/50 rounded-xl p-4 mb-6 space-y-3 border border-gray-700/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Gói:</span>
+                  <span className="text-white font-semibold">
+                    {confirmPlan.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Chu kỳ:</span>
+                  <span className="text-white font-medium capitalize">
+                    {String(confirmPlan.period || '').toLowerCase()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-700">
+                  <span className="text-gray-400">Giá:</span>
+                  <span className="text-orange-400 font-bold text-lg">
+                    {confirmPlan.price?.toLocaleString("vi-VN")} xu
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Lượt chuyển đổi:</span>
+                  <span className="text-white font-semibold">
+                    {confirmPlan.conversionLimit} lần/kỳ
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-3">
                 <button
-                  className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600"
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 transition-colors font-medium"
                   onClick={() => {
                     setConfirmOpen(false);
                     setConfirmPlan(null);
@@ -229,7 +246,7 @@ export default function VipPackagesPage() {
                   Hủy
                 </button>
                 <button
-                  className="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-500"
+                  className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-semibold transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                   onClick={async () => {
                     try {
@@ -238,6 +255,20 @@ export default function VipPackagesPage() {
 
                       // 🔥 Reload coin ngay sau khi mua
                       await fetchCoins();
+
+                      // 🔔 Fetch notifications để hiển thị thông báo mua gói thành công
+                      const userId = getUserId();
+                      if (userId) {
+                        try {
+                          await Promise.all([
+                            fetchNotifications(userId),
+                            fetchUnreadCount(userId)
+                          ]);
+                        } catch (notifError) {
+                          console.error("Error fetching notifications:", notifError);
+                          // Không làm gián đoạn flow nếu fetch notification lỗi
+                        }
+                      }
 
                       setConfirmOpen(false);
                       setConfirmPlan(null);
@@ -267,45 +298,42 @@ export default function VipPackagesPage() {
           </div>
         )}
 
+        {/* Divider */}
+        <div className="my-16 flex items-center gap-4">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+          <i className="ri-question-line text-gray-600 text-2xl"></i>
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+        </div>
+
         {/* FAQ */}
         <div>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Câu hỏi thường gặp</h2>
-            <p className="text-gray-400">Giải đáp những thắc mắc của bạn</p>
+            <h2 className="text-3xl font-bold mb-4 text-white">Câu hỏi thường gặp</h2>
+            <p className="text-gray-400 text-lg">Giải đáp những thắc mắc của bạn</p>
           </div>
           <div className="max-w-4xl mx-auto">
             {faqs.map((faq, i) => (
               <div key={i} className="mb-4">
                 <button
-                  className="w-full bg-gray-800 rounded-lg p-6 text-left hover:bg-gray-750 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 text-left hover:from-gray-700 hover:to-gray-700/50 transition-all duration-300 border border-gray-700 hover:border-orange-500/30 focus:outline-none focus:ring-2 focus:ring-orange-500/50 shadow-lg hover:shadow-xl"
                   onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold pr-4">
+                    <h3 className="text-lg font-semibold pr-4 text-white">
                       {faq.question}
                     </h3>
                     <div
-                      className={`transform transition-transform duration-200 ${
+                      className={`transform transition-transform duration-300 flex-shrink-0 ${
                         expandedFaq === i ? "rotate-180" : ""
                       }`}
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                      <i className={`ri-arrow-down-s-line text-2xl text-orange-400 ${expandedFaq === i ? 'text-orange-500' : ''}`}></i>
                     </div>
                   </div>
                   {expandedFaq === i && (
-                    <div className="mt-4 text-gray-400">{faq.answer}</div>
+                    <div className="mt-4 pt-4 border-t border-gray-700 text-gray-300 leading-relaxed">
+                      {faq.answer}
+                    </div>
                   )}
                 </button>
               </div>
