@@ -436,12 +436,19 @@ export default function ChapterForm() {
           return;
         }
       } else if (currentStep === 2) {
-        // Bước 2: Không kiểm tra validation - luôn cho phép tiếp tục
-        // Chỉ cần có nội dung cơ bản
+        // Bước 2: Yêu cầu nội dung tối thiểu 50 ký tự
         if (!content.trim()) {
           window.dispatchEvent(
             new CustomEvent("app:toast", {
               detail: { type: "error", message: "Vui lòng nhập nội dung chương" },
+            })
+          );
+          return;
+        }
+        if (content.trim().length < 50) {
+          window.dispatchEvent(
+            new CustomEvent("app:toast", {
+              detail: { type: "error", message: "Nội dung chương phải có ít nhất 50 ký tự" },
             })
           );
           return;
@@ -1664,11 +1671,12 @@ export default function ChapterForm() {
                 <button
                   onClick={nextStep}
                   disabled={
-                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) // Step 1 validation
-                    // Step 2: Không disable nút "Tiếp tục" - luôn có thể bấm
+                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) ||
+                    (currentStep === 2 && (content.trim().length < 50))
                   }
                   className={`px-4 py-2 rounded-lg transition ${
-                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree)))
+                    ((currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) ||
+                    (currentStep === 2 && (content.trim().length < 50)))
                       ? "bg-gray-600 cursor-not-allowed opacity-50"
                       : "bg-orange-500 hover:bg-orange-600"
                   }`}
