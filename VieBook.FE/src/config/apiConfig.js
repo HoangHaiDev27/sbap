@@ -150,6 +150,7 @@ export const API_ENDPOINTS = {
     GET_ALL_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/books/owner/${ownerId}`,
     GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/detail/${bookId}`,
     CREATE: `${API_BASE_URL}/api/books`,
+    CREATE_WITH_SIGNATURE: `${API_BASE_URL}/api/books/create-with-signature`,
     UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     UPDATE_COMPLETION_STATUS: (bookId) => `${API_BASE_URL}/api/books/${bookId}/completion-status`,
