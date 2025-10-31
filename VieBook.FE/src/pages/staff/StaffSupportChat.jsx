@@ -3,6 +3,15 @@ import { RiSendPlane2Line, RiSearchLine } from "react-icons/ri";
 import { getUserName, getUserId } from "../../api/authApi";
 import { getOwnerListForStaff, getChatWithOwner, sendStaffMessage } from "../../api/chatApi";
 import { toast } from "react-toastify";
+import chatWebSocket from "../../services/chatWebSocket";
+
+// Helper function to convert time string to seconds for comparison
+const parseTimeToSeconds = (timeStr) => {
+  if (!timeStr) return 0;
+  const [time] = timeStr.split(' ');
+  const [hours, minutes] = time.split(':').map(Number);
+  return (hours * 3600) + (minutes * 60);
+};
 
 export default function StaffSupportChat() {
   const [owners, setOwners] = useState([]);
@@ -14,6 +23,7 @@ export default function StaffSupportChat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [conversationId, setConversationId] = useState(null);
   const messagesEndRef = useRef(null);
+  const joinedConversationsRef = useRef(new Set());
   const staffName = getUserName() || "Staff";
   const currentUserId = parseInt(getUserId());
 
@@ -43,13 +53,88 @@ export default function StaffSupportChat() {
     loadOwners();
   }, []);
 
-  // Load chat history khi chọn owner và polling để real-time
+  // Join tất cả conversations để nhận message cho sidebar ngay cả khi không mở
+  useEffect(() => {
+    if (!currentUserId || !owners || owners.length === 0) return;
+
+    owners.forEach((o) => {
+      if (o.conversationId && !joinedConversationsRef.current.has(o.conversationId)) {
+        chatWebSocket.joinConversation(o.conversationId, [currentUserId]);
+        joinedConversationsRef.current.add(o.conversationId);
+      }
+    });
+
+    return () => {
+      // cleanup only on unmount: leave all joined groups
+      // (không rời khi owners thay đổi để tránh churn kết nối)
+    };
+  }, [owners, currentUserId]);
+
+  // WebSocket real-time connection và lắng nghe new conversations
+  useEffect(() => {
+    // Kết nối WebSocket khi component mount
+    chatWebSocket.connect();
+    
+    // Lắng nghe new conversation events
+    const unsubscribeNewConversation = chatWebSocket.onNewConversation(async (data) => {
+      console.log("🆕 Staff - New conversation notification:", data);
+      
+      // Reload danh sách owners để hiển thị conversation mới
+      try {
+        const updatedOwners = await getOwnerListForStaff();
+        setOwners(updatedOwners);
+        toast.info(`Conversation mới từ ${data.ownerName || data.ownerEmail}`);
+      } catch (error) {
+        console.error("Error reloading owners after new conversation:", error);
+      }
+    });
+    
+    return () => {
+      // Ngắt kết nối khi component unmount
+      unsubscribeNewConversation();
+      if (conversationId) {
+        chatWebSocket.leaveConversation(conversationId);
+      }
+    };
+  }, [conversationId]);
+
+  // Cập nhật sidebar theo tin nhắn real-time (ReceiveMessage)
+  useEffect(() => {
+    const unsubscribeSidebarUpdate = chatWebSocket.onMessage((message) => {
+      // Cập nhật last message và reorder list cho owner tương ứng
+      setOwners((prev) => {
+        if (!Array.isArray(prev) || prev.length === 0) return prev;
+
+        const updated = prev.map((owner) => {
+          if (owner.conversationId === message.conversationId) {
+            return {
+              ...owner,
+              lastMessageText: message.messageText,
+              lastMessageTime: message.sentAt,
+              lastRepliedByStaffName: message.senderId !== owner.ownerId ? message.senderName : owner.lastRepliedByStaffName,
+              lastRepliedByStaffId: message.senderId !== owner.ownerId ? message.senderId : owner.lastRepliedByStaffId,
+            };
+          }
+          return owner;
+        });
+
+        // Reorder: most recent conversation first
+        return [...updated].sort(
+          (a, b) => new Date(b.lastMessageTime || 0) - new Date(a.lastMessageTime || 0)
+        );
+      });
+    });
+
+    return () => unsubscribeSidebarUpdate();
+  }, []);
+
+  // Load chat history khi chọn owner và thiết lập WebSocket
   useEffect(() => {
     if (!selectedOwner) return;
 
     const loadChatHistory = async () => {
       try {
-        console.log(`🔄 Staff polling chat with owner ${selectedOwner.ownerId}`);
+        console.log(`🔄 Staff loading chat with owner ${selectedOwner.ownerId}`);
         
         // Nếu owner chưa có conversation, tạo mới
         if (!selectedOwner.conversationId) {
@@ -68,11 +153,12 @@ export default function StaffSupportChat() {
             console.log(`Message from ${msg.senderName} (ID: ${msg.senderId}), Current: ${currentUserId}, Match: ${msg.senderId === currentUserId}`);
             return {
               sender: msg.senderId === currentUserId ? "me" : "other",
-              senderType: msg.senderRole === "staff" ? "staff" : "owner",
+              senderType: msg.senderId === selectedOwner.ownerId ? "owner" : "staff",
               text: msg.messageText,
               time: new Date(msg.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
               senderName: msg.senderName,
-              senderAvatar: msg.senderAvatar
+              senderAvatar: msg.senderAvatar,
+              messageId: msg.messageId
             };
           });
           console.log(`📝 Setting ${formattedMessages.length} messages`);
@@ -90,12 +176,61 @@ export default function StaffSupportChat() {
     };
 
     loadChatHistory();
-    
-    // Polling mỗi 3 giây để cập nhật tin nhắn mới
-    const interval = setInterval(loadChatHistory, 3000);
-    
-    return () => clearInterval(interval);
   }, [selectedOwner, currentUserId]);
+
+  // Join conversation và lắng nghe tin nhắn mới qua WebSocket
+  useEffect(() => {
+    if (!conversationId || !currentUserId) return;
+    
+    // Join vào conversation để nhận tin nhắn real-time
+    chatWebSocket.joinConversation(conversationId, [currentUserId]);
+    
+    // Lắng nghe tin nhắn mới từ WebSocket
+    const unsubscribe = chatWebSocket.onMessage((message) => {
+      console.log("📨 Staff - Received message via WebSocket:", message);
+      
+      // Chỉ cập nhật nếu tin nhắn thuộc conversation này
+      if (message.conversationId === conversationId) {
+        const newMessage = {
+          sender: message.senderId === currentUserId ? "me" : "other",
+          senderType: message.senderId === selectedOwner.ownerId ? "owner" : "staff",
+          text: message.messageText,
+          time: new Date(message.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          senderName: message.senderName,
+          senderAvatar: message.senderAvatar,
+          messageId: message.messageId
+        };
+        
+        // Thêm tin nhắn mới vào danh sách (tránh duplicate)
+        setMessages(prev => {
+          // Bỏ qua temp messages
+          const nonTempMessages = prev.filter(m => !m.isTemp);
+          
+          // Kiểm tra xem tin nhắn đã tồn tại chưa
+          const isDuplicate = nonTempMessages.some(m => 
+            // Ưu tiên check bằng messageId nếu có
+            (m.messageId && m.messageId === newMessage.messageId) ||
+            // Fallback: check bằng text + sender + time gần nhau
+            (m.text === newMessage.text && 
+             m.sender === newMessage.sender &&
+             Math.abs(parseTimeToSeconds(m.time) - parseTimeToSeconds(newMessage.time)) < 5)
+          );
+          
+          if (isDuplicate) {
+            console.log("🔄 Duplicate message detected, skipping...");
+            return prev;
+          }
+          
+          return [...nonTempMessages, newMessage];
+        });
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+      chatWebSocket.leaveConversation(conversationId);
+    };
+  }, [conversationId, currentUserId]);
 
   const quickReplies = [
     "Cảm ơn bạn!",
@@ -109,12 +244,15 @@ export default function StaffSupportChat() {
     const text = msgText || input.trim();
     if (!text || !selectedOwner || sending) return;
     
+    const tempId = `temp-${Date.now()}`;
     const tempMsg = { 
       sender: "me", 
       senderType: "staff",
       text, 
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      senderName: staffName
+      senderName: staffName,
+      tempId: tempId,
+      isTemp: true
     };
     
     setMessages(prev => [...prev, tempMsg]);
@@ -127,10 +265,15 @@ export default function StaffSupportChat() {
         recipientId: selectedOwner.ownerId,
         messageText: text
       });
+      
+      // Remove temp message after successful send
+      // WebSocket will broadcast the real message
+      setMessages(prev => prev.filter(m => m.tempId !== tempId));
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error(error.message || "Không thể gửi tin nhắn");
-      setMessages(prev => prev.filter(m => m !== tempMsg));
+      // Remove temp message on error
+      setMessages(prev => prev.filter(m => m.tempId !== tempId));
     } finally {
       setSending(false);
     }
@@ -143,7 +286,7 @@ export default function StaffSupportChat() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-slate-900 text-white items-center justify-center">
+      <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Đang tải...</p>
@@ -153,9 +296,9 @@ export default function StaffSupportChat() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-900 text-white">
+    <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white overflow-hidden">
       {/* Sidebar - Danh sách Owners */}
-      <div className="w-96 border-r border-slate-700 flex flex-col bg-slate-900 min-h-0">
+      <div className="w-80 lg:w-96 border-r border-slate-700 flex flex-col bg-slate-900 flex-shrink-0">
         <div className="p-4 font-bold text-lg border-b border-slate-700">Danh sách Book Owners</div>
         
         {/* Search box */}
@@ -173,7 +316,7 @@ export default function StaffSupportChat() {
         </div>
 
         {/* Danh sách owners */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
           {filteredOwners.length === 0 ? (
             <div className="p-4 text-center text-gray-400">
               {searchQuery ? "Không tìm thấy owner" : "Chưa có owner nào"}
@@ -254,9 +397,9 @@ export default function StaffSupportChat() {
 
       {/* Chat window */}
       {selectedOwner ? (
-        <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-shrink-0">
+          <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-shrink-0 bg-slate-900">
             <div className="flex items-center gap-3 min-w-0">
               {selectedOwner.ownerAvatar ? (
                 <img 
@@ -287,7 +430,7 @@ export default function StaffSupportChat() {
           </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950 scroll-smooth min-h-0 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950 scrollbar-hide scroll-smooth">
           {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center text-gray-400">
@@ -323,9 +466,9 @@ export default function StaffSupportChat() {
                     <div>
                       <div
                         className={`px-4 py-2 rounded-2xl break-words border ${
-                          m.senderType === "owner"
-                            ? "bg-blue-600 text-white rounded-bl-sm border-blue-400"
-                            : "bg-green-600 text-white rounded-br-sm border-green-400"
+                          m.senderType === "staff"
+                            ? "bg-orange-500 text-white rounded-br-sm border-orange-400"
+                            : "bg-slate-800 text-gray-200 rounded-bl-sm border-slate-600"
                         }`}
                       >
                         {m.text}
@@ -333,7 +476,7 @@ export default function StaffSupportChat() {
                       <div className="text-[10px] text-gray-400 mt-1 px-2 flex justify-between">
                         <span>{m.time}</span>
                         {m.senderType === "staff" && m.senderName && (
-                          <span className="opacity-60">- {m.senderName}</span>
+                          <span className="opacity-60">{m.senderName}</span>
                         )}
                       </div>
                     </div>
@@ -350,7 +493,7 @@ export default function StaffSupportChat() {
           </div>
 
           {/* Quick replies */}
-          <div className="px-4 py-2 flex gap-2 justify-center border-t border-slate-700 bg-slate-900 flex-shrink-0">
+          <div className="px-4 py-2 flex gap-2 justify-center border-t border-slate-700 bg-slate-900 flex-shrink-0 overflow-x-auto">
             {quickReplies.map((qr, i) => (
             <button
               key={i}
@@ -359,7 +502,7 @@ export default function StaffSupportChat() {
                 sendMessage(qr);
               }}
               disabled={sending}
-              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-xs whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-xs whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
             >
               {qr}
             </button>
@@ -383,7 +526,7 @@ export default function StaffSupportChat() {
             />
             <button 
               onClick={() => sendMessage()} 
-              className="p-3 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="p-3 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
               disabled={!input.trim() || sending}
               title="Gửi tin nhắn"
             >
