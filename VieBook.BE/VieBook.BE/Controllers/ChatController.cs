@@ -1,9 +1,11 @@
 using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Services.Interfaces;
 using Repositories.Interfaces;
 using System.Security.Claims;
+using VieBook.BE.Hubs;
 
 namespace VieBook.BE.Controllers;
 
@@ -14,11 +16,16 @@ public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
     private readonly IUserRepository _userRepository;
+    private readonly IHubContext<ChatHub> _hubContext;
 
-    public ChatController(IChatService chatService, IUserRepository userRepository)
+    public ChatController(
+        IChatService chatService, 
+        IUserRepository userRepository,
+        IHubContext<ChatHub> hubContext)
     {
         _chatService = chatService;
         _userRepository = userRepository;
+        _hubContext = hubContext;
     }
 
     private int GetCurrentUserId()
@@ -75,6 +82,19 @@ public class ChatController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var message = await _chatService.SendMessageAsync(userId, request);
+            
+            // Broadcast tin nhắn qua WebSocket
+            try
+            {
+                await ChatHub.SendMessageToConversation(_hubContext, message.ConversationId, message);
+                Console.WriteLine($"✅ Broadcasted message to conversation {message.ConversationId}");
+            }
+            catch (Exception wsEx)
+            {
+                Console.WriteLine($"⚠️ Failed to broadcast via WebSocket: {wsEx.Message}");
+                // Không throw lỗi để không ảnh hưởng đến flow chính
+            }
+            
             return Ok(message);
         }
         catch (UnauthorizedAccessException ex)
@@ -129,6 +149,30 @@ public class ChatController : ControllerBase
             Console.WriteLine($"Creating group chat with Owner {userId} and {staffUsers.Count} staff members");
             
             var conversationId = await _chatService.GetOrCreateGroupConversationAsync(allUserIds, roleHints);
+
+            // Broadcast notification đến tất cả staff về conversation mới
+            try
+            {
+                var staffUserIds = staffUsers.Select(s => s.UserId).ToList();
+                var currentUser = await _userRepository.GetByIdWithProfileAndRolesAsync(userId);
+                var notificationData = new
+                {
+                    conversationId,
+                    ownerId = userId,
+                    ownerName = currentUser?.UserProfile?.FullName ?? currentUser?.Email,
+                    ownerEmail = currentUser?.Email,
+                    ownerAvatar = currentUser?.UserProfile?.AvatarUrl,
+                    message = "New conversation created"
+                };
+                
+                await ChatHub.SendNotificationToStaffUsers(_hubContext, staffUserIds, "NewConversation", notificationData);
+                Console.WriteLine($"✅ Broadcasted NewConversation to {staffUserIds.Count} staff members");
+            }
+            catch (Exception wsEx)
+            {
+                Console.WriteLine($"⚠️ Failed to broadcast NewConversation: {wsEx.Message}");
+                // Không throw lỗi để không ảnh hưởng đến flow chính
+            }
 
             return Ok(new { conversationId });
         }
