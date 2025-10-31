@@ -43,6 +43,16 @@ namespace DataAccess.DAO
                 .Include(s => s.Plan)
                 .FirstOrDefaultAsync(s => s.SubscriptionId == subscriptionId);
         }
+
+        // Lấy tất cả subscriptions của user (bao gồm lịch sử mua gói)
+        public async Task<List<Subscription>> GetSubscriptionsByUserIdAsync(int userId)
+        {
+            return await _context.Subscriptions
+                .Include(s => s.Plan)
+                .Where(s => s.UserId == userId)
+                .OrderByDescending(s => s.CreatedAt)
+                .ToListAsync();
+        }
     }
 }
 
