@@ -149,10 +149,18 @@ public class ChatController : ControllerBase
                 isNewConversation = existingConversation == null;
             }
             
+            // Nếu owner gửi, kiểm tra xem conversation (nếu đã xác định) hiện có tin nhắn nào chưa
+            bool firstMessageInExistingConversation = false;
+            if (isOwner && request.ConversationId.HasValue)
+            {
+                var hasMessages = await _chatService.ConversationHasMessages(request.ConversationId.Value);
+                firstMessageInExistingConversation = !hasMessages;
+            }
+
             var message = await _chatService.SendMessageAsync(userId, request);
             
             // Nếu là conversation mới từ owner, thông báo đến tất cả staff
-            if (isNewConversation && isOwner)
+            if ((isNewConversation || firstMessageInExistingConversation) && isOwner)
             {
                 try
                 {
