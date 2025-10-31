@@ -97,7 +97,7 @@ namespace DataAccess.DAO
                 .Include(ca => ca.Chapter)
                 .Include(ca => ca.User)
                     .ThenInclude(u => u.UserProfile)
-                .Where(ca => ca.Chapter.BookId == bookId)
+                .Where(ca => ca.Chapter.BookId == bookId && ca.Chapter.Status == "Active")
                 .OrderBy(ca => ca.ChapterId) // Sort theo ChapterId (chapter tạo trước có ID nhỏ hơn)
                 .ThenByDescending(ca => ca.CreatedAt) // Nếu cùng chapter thì lấy audio mới nhất
                 .ToListAsync();

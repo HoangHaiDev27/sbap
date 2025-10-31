@@ -48,15 +48,18 @@ export async function updateBook(bookId, payload) {
 
   if (!res.ok) {
     let errorMessage = "Cập nhật sách thất bại";
+    let errorData = {};
     try {
       const data = await res.json();
       errorMessage = data.message || errorMessage;
+      errorData = data;
     } catch {
-      if (res.status === 500) {
-        errorMessage = "ISBN đã tồn tại hoặc dữ liệu không hợp lệ.";
-      }
+      errorMessage = "Cập nhật sách thất bại";
     }
-    throw new Error(errorMessage);
+    const error = new Error(errorMessage);
+    error.status = res.status;
+    error.data = errorData;
+    throw error;
   }
 
   return true;

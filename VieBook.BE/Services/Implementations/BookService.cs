@@ -59,6 +59,9 @@ namespace Services.Implementations
         public Task<bool> IsIsbnExistsAsync(string isbn)
             => _bookRepo.IsIsbnExistsAsync(isbn);
 
+        public Task<bool> IsIsbnExistsExcludingAsync(string isbn, int excludeBookId)
+            => _bookRepo.IsIsbnExistsExcludingAsync(isbn, excludeBookId);
+
         public Task<List<Book>> GetBooksByOwnerId(int ownerId)
             => _bookRepo.GetBooksByOwnerId(ownerId);
 

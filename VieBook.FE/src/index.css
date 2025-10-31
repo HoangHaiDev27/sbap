@@ -42,6 +42,43 @@
   scrollbar-width: none; /* Firefox */
 }
 
+/* Custom scrollbar cho danh sách chương */
+.chapters-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chapters-scrollable::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 3px;
+}
+
+.chapters-scrollable::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 3px;
+}
+
+.chapters-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
+/* Custom scrollbar cho mô tả */
+.description-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.description-scrollable::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 3px;
+}
+
+.description-scrollable::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 3px;
+}
+
+.description-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
 
   
   

@@ -22,6 +22,7 @@ namespace BusinessObject.Dtos
         public string? UploadStatus { get; set; }
         public string? CompletionStatus { get; set; }
         public string? UploaderType { get; set; }
+        public string? CertificateUrl { get; set; }
         public string OwnerName { get; set; } = string.Empty;
         public List<string> Categories { get; set; } = new();
         public List<ChapterDTO> Chapters { get; set; } = new();
