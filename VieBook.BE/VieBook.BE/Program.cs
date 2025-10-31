@@ -229,11 +229,10 @@ builder.Services.AddCors(options =>
         if (builder.Environment.IsDevelopment())
         {
             policy
-                .AllowAnyOrigin()
+                .SetIsOriginAllowed(origin => true)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials()
-                .SetIsOriginAllowed(origin => true);
+                .AllowCredentials();
         }
         else
         {
@@ -241,8 +240,7 @@ builder.Services.AddCors(options =>
                 .WithOrigins(ApiConfiguration.Cors.ALLOWED_ORIGINS)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials()
-                .SetIsOriginAllowedToAllowWildcardSubdomains();
+                .AllowCredentials();
         }
     });
 });

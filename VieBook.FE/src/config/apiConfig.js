@@ -71,6 +71,8 @@ export const API_ENDPOINTS = {
     START_SUPPORT_CHAT: `${API_BASE_URL}/api/chat/start-support-chat`,
     STAFF: {
       GET_OWNERS: `${API_BASE_URL}/api/staff/staffchat/owners`,
+        SEARCH_OWNERS: `${API_BASE_URL}/api/staff/staffchat/owners/search`,
+        START_WITH_OWNER: (ownerId) => `${API_BASE_URL}/api/staff/staffchat/owners/${ownerId}/start`,
       GET_OWNER_MESSAGES: `${API_BASE_URL}/api/staff/staffchat/owners`,
       SEND_MESSAGE: `${API_BASE_URL}/api/staff/staffchat/messages`,
     },

@@ -5,6 +5,7 @@ import {
   RiWallet3Line,
   RiRefund2Line,
   RiArrowDownCircleLine,
+  RiVipCrownLine,
 } from "react-icons/ri";
 import { getUserTransactionHistory } from "../../api/transactionApi";
 
@@ -72,6 +73,8 @@ export default function UserTransactionHistory() {
         default:
           return <RiWallet3Line className="text-gray-400 text-xl" />;
       }
+    } else if (transaction.type === "subscription") {
+      return <RiVipCrownLine className="text-purple-400 text-xl" />;
     }
     return null;
   };
@@ -125,6 +128,14 @@ export default function UserTransactionHistory() {
                     <p className="text-sm text-gray-400">
                       Trạng thái: {tx.status}
                     </p>
+                  </div>
+                ) : tx.type === "subscription" ? (
+                  <div>
+                    <p className="text-white font-medium">{tx.planName || "Gói"}</p>
+                    <p className="text-sm text-gray-400">
+                      {tx.description} - {tx.amount?.toLocaleString()}đ
+                    </p>
+                    <p className="text-sm text-gray-400">Trạng thái: {tx.status}</p>
                   </div>
                 ) : null}
               </div>
@@ -216,7 +227,7 @@ export default function UserTransactionHistory() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : selectedTx.type === "wallet" ? (
               <div>
                 <h3 className="text-xl font-semibold text-white mb-4">
                   Chi tiết giao dịch ví
@@ -247,6 +258,40 @@ export default function UserTransactionHistory() {
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Ngày giao dịch</p>
+                    <p className="text-white">
+                      {new Date(selectedTx.date).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4">
+                  Chi tiết mua gói
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-gray-400 text-sm">Gói</p>
+                    <p className="text-white font-medium">{selectedTx.planName}</p>
+                  </div>
+                  {selectedTx.period && (
+                    <div>
+                      <p className="text-gray-400 text-sm">Chu kỳ</p>
+                      <p className="text-white">{selectedTx.period}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-gray-400 text-sm">Số tiền</p>
+                    <p className="text-purple-400 font-bold text-lg">
+                      {selectedTx.amount?.toLocaleString()}đ
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Trạng thái</p>
+                    <p className="text-white">{selectedTx.status}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Ngày mua</p>
                     <p className="text-white">
                       {new Date(selectedTx.date).toLocaleString('vi-VN')}
                     </p>

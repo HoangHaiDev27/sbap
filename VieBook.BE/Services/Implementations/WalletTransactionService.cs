@@ -12,13 +12,15 @@ namespace Services.Implementations
         private readonly IUserRepository _userRepository;
         private readonly INotificationService _notificationService;
         private readonly OrderItemDAO _orderItemDAO;
+        private readonly SubscriptionDAO _subscriptionDAO;
 
-        public WalletTransactionService(IWalletTransactionRepository walletTransactionRepository, IUserRepository userRepository, INotificationService notificationService, OrderItemDAO orderItemDAO)
+        public WalletTransactionService(IWalletTransactionRepository walletTransactionRepository, IUserRepository userRepository, INotificationService notificationService, OrderItemDAO orderItemDAO, SubscriptionDAO subscriptionDAO)
         {
             _walletTransactionRepository = walletTransactionRepository;
             _userRepository = userRepository;
             _notificationService = notificationService;
             _orderItemDAO = orderItemDAO;
+            _subscriptionDAO = subscriptionDAO;
         }
 
         public async Task<WalletTransaction> ProcessPaymentAsync(PayOSWebhookDTO webhookData)
@@ -152,6 +154,24 @@ namespace Services.Implementations
                     ChapterTitle = oi.Chapter.ChapterTitle,
                     Date = oi.PaidAt ?? DateTime.UtcNow,
                     Status = "completed"
+                });
+            }
+
+            // Lấy lịch sử mua gói (Subscriptions)
+            var subscriptions = await _subscriptionDAO.GetSubscriptionsByUserIdAsync(userId);
+            foreach (var s in subscriptions)
+            {
+                history.Add(new
+                {
+                    Id = $"SUB{s.SubscriptionId}",
+                    Type = "subscription",
+                    TransactionType = "subscription_purchase",
+                    Amount = s.Plan.Price,
+                    Description = $"Mua gói: {s.Plan.Name}",
+                    PlanName = s.Plan.Name,
+                    Period = s.Plan.Period,
+                    Date = s.CreatedAt,
+                    Status = s.Status
                 });
             }
 
