@@ -45,6 +45,9 @@ namespace Repositories.Implementations
         public Task<bool> IsIsbnExistsAsync(string isbn)
             => _bookDao.IsIsbnExistsAsync(isbn);
 
+        public Task<bool> IsIsbnExistsExcludingAsync(string isbn, int excludeBookId)
+            => _bookDao.IsIsbnExistsExcludingAsync(isbn, excludeBookId);
+
         public Task<List<Book>> GetBooksByOwnerId(int ownerId)
             => _bookDao.GetBooksByOwnerId(ownerId);
 

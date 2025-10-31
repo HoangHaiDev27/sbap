@@ -20,6 +20,7 @@ namespace Services.Interfaces
         Task AddCategoriesToBookAsync(int bookId, List<int> categoryIds);
         Task RemoveCategoriesByBookIdAsync(int bookId);
         Task<bool> IsIsbnExistsAsync(string isbn);
+        Task<bool> IsIsbnExistsExcludingAsync(string isbn, int excludeBookId);
         Task<List<Book>> GetBooksByOwnerId(int ownerId);
         Task<List<BookResponseDTO>> GetReadBooksAsync();
         Task<List<BookResponseDTO>> GetAudioBooksAsync();

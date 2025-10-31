@@ -154,6 +154,13 @@ namespace DataAccess.DAO
         {
             return await _context.Books.AnyAsync(b => b.Isbn == isbn);
         }
+
+        // check isbn excluding a book
+        public async Task<bool> IsIsbnExistsExcludingAsync(string isbn, int excludeBookId)
+        {
+            return await _context.Books.AnyAsync(b => b.Isbn == isbn && b.BookId != excludeBookId);
+        }
+
         public async Task UpdateAsync(Book book)
         {
             _context.Books.Update(book);
