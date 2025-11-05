@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-import { uploadChapterFile, createChapter, getBookById, checkBookHasActiveChapter, updateBookStatus, checkAllChaptersActive } from "../../api/ownerBookApi";
+import { uploadChapterFile, createChapter, getBookById, checkBookHasActiveChapter, checkAllChaptersActive } from "../../api/ownerBookApi";
 import { checkSpelling as checkSpellingApi, checkMeaning as checkMeaningApi, moderation as moderationApi, checkPlagiarism as checkPlagiarismApi, generateEmbeddings as generateEmbeddingsApi } from "../../api/openAiApi";
 import { useLocation } from "react-router-dom";
 
@@ -831,9 +831,6 @@ export default function ChapterForm() {
         }
       }
 
-      // Kiểm tra và cập nhật book status theo các trường hợp
-      await handleBookStatusUpdate();
-
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "success", message: "Đã lưu chương thành công!" },
@@ -852,27 +849,6 @@ export default function ChapterForm() {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // Xử lý cập nhật book status theo các trường hợp
-  const handleBookStatusUpdate = async () => {
-    if (!bookInfo) return;
-
-    const { uploaderType, status: bookStatus, uploadStatus, completionStatus } = bookInfo;
-
-    // Trường hợp 1 & 3: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Incomplete, CompletionStatus = Ongoing
-    if (bookStatus === "PendingChapters" && uploadStatus === "Incomplete" && completionStatus === "Ongoing") {
-      // Chỉ cập nhật book status thành Active nếu chương vừa thêm có status = "Active"
-      if (status === "Active") {
-        try {
-          await updateBookStatus(bookId, "Active");
-          console.log("Book status updated to Active due to new active chapter");
-        } catch (error) {
-          console.error("Error updating book status:", error);
-        }
-      }
-    }
-    // Nếu Status hiện tại = "Approved" thì không cập nhật gì (không có logic xử lý)
   };
 
   // Step components - sử dụng useMemo để tránh re-render

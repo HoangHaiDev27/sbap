@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import WithdrawDetailModal from "../../components/staff/withdrawals/WithdrawDetailModal";
 import WithdrawApproveModal from "../../components/staff/withdrawals/WithdrawApproveModal";
 import WithdrawRejectModal from "../../components/staff/withdrawals/WithdrawRejectModal";
+import { getAllPaymentRequests } from "../../api/paymentRequestApi";
 
 const WithdrawApprovalPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -9,29 +10,106 @@ const WithdrawApprovalPage = () => {
   const [selectedWithdraw, setSelectedWithdraw] = useState(null);
   const [approveWithdraw, setApproveWithdraw] = useState(null);
   const [rejectWithdraw, setRejectWithdraw] = useState(null);
+  const [withdraws, setWithdraws] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
+  useEffect(() => {
+    loadPaymentRequests();
+  }, []);
+
+  const loadPaymentRequests = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getAllPaymentRequests();
+      
+      // Map dữ liệu từ API sang format của component
+      const mappedData = data.map((item) => {
+        // Map status từ API sang tiếng Việt
+        let statusText = "Chờ duyệt";
+        if (item.status === "Succeeded") statusText = "Hoàn thành";
+        else if (item.status === "Rejected") statusText = "Từ chối";
+        else if (item.status === "Pending" || item.status === "Processing") statusText = "Chờ duyệt";
+        
+        // Format date - Convert UTC to Vietnam timezone (UTC+7)
+        const requestDate = new Date(item.requestDate);
+        // Convert UTC to Vietnam timezone (UTC+7)
+        const vietnamDate = new Date(requestDate.getTime() + (7 * 60 * 60 * 1000));
+        const formattedDate = `${vietnamDate.getFullYear()}-${String(vietnamDate.getMonth() + 1).padStart(2, "0")}-${String(vietnamDate.getDate()).padStart(2, "0")} ${String(vietnamDate.getHours()).padStart(2, "0")}:${String(vietnamDate.getMinutes()).padStart(2, "0")}:${String(vietnamDate.getSeconds()).padStart(2, "0")}`;
+        
+        // Format amount
+        const amountFormatted = Math.floor(item.amountReceived).toLocaleString("vi-VN") + "đ";
+        
+        // Format bank info
+        const bankInfo = item.bankName && item.bankNumber 
+          ? `${item.bankName}\n${item.bankNumber}`
+          : item.bankName || item.bankNumber || "Chưa có";
+        
+        return {
+          id: `WD${String(item.paymentRequestId).padStart(3, "0")}`,
+          paymentRequestId: item.paymentRequestId,
+          user: item.userName || item.userEmail || "N/A",
+          userEmail: item.userEmail,
+          type: "Book Owner", // TODO: Có thể thêm logic để xác định loại user
+          amount: amountFormatted,
+          amountReceived: item.amountReceived,
+          bank: bankInfo,
+          bankName: item.bankName,
+          bankNumber: item.bankNumber,
+          status: statusText,
+          statusRaw: item.status,
+          date: formattedDate,
+          requestedCoin: item.requestedCoin,
+          userId: item.userId,
+        };
+      });
+      
+      setWithdraws(mappedData);
+    } catch (err) {
+      console.error("Error loading payment requests:", err);
+      setError(err.message || "Không thể tải danh sách yêu cầu rút tiền");
+      setWithdraws([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tính stats từ dữ liệu thực
   const stats = [
-    { label: "Tổng yêu cầu", value: 12, color: "text-blue-600" },
-    { label: "Chờ duyệt", value: 5, color: "text-yellow-600" },
-    { label: "Hoàn thành", value: 3, color: "text-green-600" },
-    { label: "Từ chối", value: 2, color: "text-red-600" },
+    { 
+      label: "Tổng yêu cầu", 
+      value: withdraws.length, 
+      color: "text-blue-600" 
+    },
+    { 
+      label: "Chờ duyệt", 
+      value: withdraws.filter(w => w.status === "Chờ duyệt").length, 
+      color: "text-yellow-600" 
+    },
+    { 
+      label: "Hoàn thành", 
+      value: withdraws.filter(w => w.status === "Hoàn thành").length, 
+      color: "text-green-600" 
+    },
+    { 
+      label: "Từ chối", 
+      value: withdraws.filter(w => w.status === "Từ chối").length, 
+      color: "text-red-600" 
+    },
   ];
 
-  const withdraws = [
-    { id: "WD001", user: "Nguyễn Văn A", type: "Book Owner", amount: "2.500.000đ", bank: "Vietcombank\n1234567890", status: "Chờ duyệt", date: "2024-01-22 14:30:25" },
-    { id: "WD002", user: "Trần Thị B", type: "Book Owner", amount: "1.800.000đ", bank: "Techcombank\n0987654321", status: "Đã duyệt", date: "2024-01-21 10:15:42" },
-    { id: "WD003", user: "Lê Văn C", type: "Book Owner", amount: "500.000đ", bank: "BIDV\n5555666677", status: "Từ chối", date: "2024-01-20 16:45:30" },
-    { id: "WD004", user: "Phạm Thị D", type: "Affiliate", amount: "350.000đ", bank: "ACB\n1111222233", status: "Chờ duyệt", date: "2024-01-22 11:28:00" },
-    { id: "WD005", user: "Hoàng Văn E", type: "Book Owner", amount: "4.200.000đ", bank: "VPBank\n9999888877", status: "Hoàn thành", date: "2024-01-19 15:30:00" },
-    { id: "WD006", user: "Nguyễn Văn F", type: "Affiliate", amount: "750.000đ", bank: "Agribank\n8888777766", status: "Chờ duyệt", date: "2024-01-18 09:45:00" },
-    { id: "WD007", user: "Trần Thị G", type: "Book Owner", amount: "3.100.000đ", bank: "MB Bank\n2222333344", status: "Đã duyệt", date: "2024-01-17 14:00:00" },
-    { id: "WD008", user: "Phạm Văn H", type: "Affiliate", amount: "1.250.000đ", bank: "TPBank\n5555444433", status: "Từ chối", date: "2024-01-16 18:10:00" },
-    { id: "WD009", user: "Hoàng Thị I", type: "Book Owner", amount: "2.700.000đ", bank: "Sacombank\n9999000011", status: "Hoàn thành", date: "2024-01-15 13:20:00" },
-    { id: "WD010", user: "Lê Văn J", type: "Affiliate", amount: "950.000đ", bank: "VIB\n4444333322", status: "Chờ duyệt", date: "2024-01-14 07:30:00" },
-  ];
+  // Tính tổng tiền chờ xử lý và đã chi trả
+  const pendingAmount = withdraws
+    .filter(w => w.status === "Chờ duyệt")
+    .reduce((sum, w) => sum + (w.amountReceived || 0), 0);
+  
+  const completedAmount = withdraws
+    .filter(w => w.status === "Hoàn thành")
+    .reduce((sum, w) => sum + (w.amountReceived || 0), 0);
 
   const filteredWithdraws = withdraws.filter(
     (w) =>
@@ -73,12 +151,32 @@ const WithdrawApprovalPage = () => {
       {/* Tổng tiền */}
       <div className="flex justify-center gap-12 mb-6">
         <p className="text-gray-700 font-semibold">
-          Chờ xử lý: <span className="text-red-600">2.850.000đ</span>
+          Chờ xử lý: <span className="text-red-600">{pendingAmount.toLocaleString("vi-VN")}đ</span>
         </p>
         <p className="text-gray-700 font-semibold">
-          Đã chi trả: <span className="text-green-600">4.200.000đ</span>
+          Đã chi trả: <span className="text-green-600">{completedAmount.toLocaleString("vi-VN")}đ</span>
         </p>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
+          <button
+            onClick={loadPaymentRequests}
+            className="ml-4 underline hover:no-underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {loading && (
+        <div className="text-center py-8 text-gray-600">
+          Đang tải dữ liệu...
+        </div>
+      )}
 
       {/* Filter */}
       <div className="flex flex-wrap gap-4 items-center mb-6">
@@ -119,7 +217,7 @@ const WithdrawApprovalPage = () => {
             </tr>
           </thead>
           <tbody>
-            {paginatedWithdraws.map((w) => (
+            {!loading && paginatedWithdraws.map((w) => (
               <tr
                 key={w.id}
                 className="border-b border-gray-200 hover:bg-gray-50"
@@ -219,14 +317,20 @@ const WithdrawApprovalPage = () => {
       {approveWithdraw && (
         <WithdrawApproveModal
           withdraw={approveWithdraw}
-          onClose={() => setApproveWithdraw(null)}
+          onClose={() => {
+            setApproveWithdraw(null);
+            loadPaymentRequests(); // Reload sau khi duyệt
+          }}
         />
       )}
 
       {rejectWithdraw && (
         <WithdrawRejectModal
           withdraw={rejectWithdraw}
-          onClose={() => setRejectWithdraw(null)}
+          onClose={() => {
+            setRejectWithdraw(null);
+            loadPaymentRequests(); // Reload sau khi từ chối
+          }}
         />
       )}
     </div>

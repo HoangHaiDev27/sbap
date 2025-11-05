@@ -87,5 +87,24 @@ namespace VieBook.BE.Controllers
             await _chapterService.DeleteChapterAsync(id);
             return Ok(new { message = "Chapter deleted successfully" });
         }
+
+        // POST api/chapter/{id}/increment-view
+        [HttpPost("{id:int}/increment-view")]
+        public async Task<ActionResult> IncrementChapterView(int id)
+        {
+            try
+            {
+                var chapter = await _chapterService.GetChapterByIdAsync(id);
+                if (chapter == null)
+                    return NotFound(new { message = "Chapter not found" });
+
+                await _chapterService.IncrementChapterViewAsync(id);
+                return Ok(new { message = "Chapter view incremented successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
     }
 }

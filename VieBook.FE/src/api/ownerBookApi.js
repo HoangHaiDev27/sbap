@@ -294,6 +294,23 @@ export async function deleteChapter(chapterId) {
 
   return res.json();
 }
+
+// Tăng số lượt xem chapter
+export async function incrementChapterView(chapterId) {
+  const res = await fetch(API_ENDPOINTS.CHAPTERS.INCREMENT_VIEW(chapterId), {
+    method: "POST",
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error("Chapter not found");
+    }
+    // Không throw error vì đây là action phụ, không ảnh hưởng đến flow chính
+    console.error("Failed to increment chapter view");
+  }
+
+  return res.json().catch(() => ({}));
+}
 // Upload chapter content to Cloudinary
 export async function uploadChapterFile(chapterData) {
   const res = await fetch(API_ENDPOINTS.CHAPTERS.UPLOAD_FILE, {
