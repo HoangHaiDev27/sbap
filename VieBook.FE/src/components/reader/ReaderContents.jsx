@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { RiCloseLine, RiBookOpenLine, RiLockLine, RiCoinLine } from "react-icons/ri";
 import { getUserId } from "../../api/authApi";
 import { checkChapterOwnership } from "../../api/chapterPurchaseApi";
+import { incrementChapterView } from "../../api/ownerBookApi";
 import toast from "react-hot-toast";
 
 export default function ReaderContents({ book, purchasedChapters = [], onClose, onRefreshPurchases }) {
@@ -136,7 +137,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                       ? "bg-gray-700 border-gray-600 opacity-60 cursor-not-allowed"
                       : "bg-gray-700 border-gray-600 hover:bg-gray-600 hover:border-orange-500 cursor-pointer"
                   }`}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!isLoggedIn) {
                       toast.error("Bạn phải đăng nhập để đọc chương");
                       return;
@@ -147,6 +148,13 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                     }
                     if (!hasSoftUrl) {
                       return;
+                    }
+                    // Tăng chapter view trước khi navigate
+                    try {
+                      await incrementChapterView(chapter.chapterId);
+                    } catch (err) {
+                      // Không block navigation nếu có lỗi
+                      console.error("Failed to increment chapter view:", err);
                     }
                     // Navigate to chapter reader
                     const bookId = book.id || book.bookId;

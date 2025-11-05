@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 
-const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
-  const [showQR, setShowQR] = useState(false);
+const WithdrawDetailModal = ({ withdraw, onClose }) => {
 
   if (!withdraw) return null;
 
@@ -61,9 +60,6 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
             <span className="font-semibold">Số tiền yêu cầu:</span>{" "}
             {withdraw.amount}
           </p>
-          <p>
-            <span className="font-semibold">Số dư khả dụng:</span> 3.200.000đ
-          </p>
 
           <p>
             <span className="font-semibold">Ngân hàng:</span>{" "}
@@ -78,46 +74,7 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
             <span className="font-semibold">Ngày yêu cầu:</span>{" "}
             {withdraw.date}
           </p>
-
-          <p className="col-span-2">
-            <span className="font-semibold">Ghi chú:</span> Rút tiền từ doanh thu
-            bán sách tháng 1/2024
-          </p>
         </div>
-
-        {/* Nút hiển thị QR + Action buttons */}
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={() => setShowQR(!showQR)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
-          >
-            <i className="ri-qr-code-line"></i> Mã QR
-          </button>
-          <button
-            onClick={() => onApprove(withdraw.id)}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-          >
-            <i className="ri-check-line"></i> Phê duyệt
-          </button>
-          <button
-            onClick={() => onReject(withdraw.id)}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
-          >
-            <i className="ri-close-line"></i> Từ chối
-          </button>
-        </div>
-
-        {/* Hiển thị mã QR bên dưới nếu được bật */}
-        {showQR && (
-          <div className="mt-6 flex justify-center">
-            {/* Thay đường dẫn src bằng hình QR thật */}
-            <img
-              src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=withdraw-id"
-              alt="QR code"
-              className="w-48 h-48"
-            />
-          </div>
-        )}
       </div>
     </div>
   );

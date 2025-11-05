@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { RiMoneyDollarCircleLine, RiHistoryLine, RiInformationLine } from "react-icons/ri";
+import { RiMoneyDollarCircleLine, RiHistoryLine, RiInformationLine, RiCoinLine } from "react-icons/ri";
 import { getMe } from "../../api/userApi";
+import { createPaymentRequest, getUserPaymentRequests } from "../../api/paymentRequestApi";
+import { useNotificationStore } from "../../hooks/stores/notificationStore";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function WithdrawPage() {
   // dữ liệu từ API
@@ -9,14 +12,17 @@ export default function WithdrawPage() {
   const [bank, setBank] = useState("");
   const [account, setAccount] = useState("");
   const [error, setError] = useState("");
-
-  const [history, setHistory] = useState([
-    { id: 1, amount: 500000, bank: "Vietcombank", account: "123456789", status: "Đã duyệt", date: "15/09/2025" },
-    { id: 2, amount: 200000, bank: "Techcombank", account: "987654321", status: "Đang xử lý", date: "17/09/2025" },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+  
+  // Notification store
+  const { fetchNotifications, fetchUnreadCount } = useNotificationStore();
+  const { userId } = useCurrentUser();
 
   useEffect(() => {
     let mounted = true;
+    
+    // Load user profile and wallet
     getMe()
       .then((res) => {
         if (!mounted) return;
@@ -31,46 +37,123 @@ export default function WithdrawPage() {
       .catch(() => {
         // giữ giá trị mặc định nếu lỗi
       });
+
+    // Load payment requests history
+    getUserPaymentRequests()
+      .then((data) => {
+        if (!mounted) return;
+        const paymentRequests = Array.isArray(data) ? data : [];
+        setHistory(paymentRequests);
+      })
+      .catch((err) => {
+        console.error("Error loading payment requests:", err);
+        if (!mounted) return;
+        setHistory([]);
+      });
+
     return () => {
       mounted = false;
     };
   }, []);
 
-  const coinsNeeded = amount ? Math.floor(amount / 1000) : 0;
+  // Tính số tiền sau khi trừ 10%: 1 xu = 1.000 VNĐ, nhưng khi rút chỉ nhận 90%
+  const vndAmount = amount ? Math.floor(parseInt(amount) * 1000 * 0.9) : 0;
+  const originalVndAmount = amount ? parseInt(amount) * 1000 : 0;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const value = parseInt(amount);
+    const coinsValue = parseInt(amount);
 
     // Validate
-    if (isNaN(value) || value <= 0) {
-      setError("Số tiền không hợp lệ");
+    if (isNaN(coinsValue) || coinsValue <= 0) {
+      setError("Số xu không hợp lệ");
       return;
     }
-    if (value < 50000) {
-      setError("Số tiền rút tối thiểu là 50.000 VNĐ");
+    if (coinsValue < 50) {
+      setError("Số xu rút tối thiểu là 50 xu (nhận được 45.000 VNĐ sau phí 10%)");
       return;
     }
-    // Kiểm tra theo coin (1 coin = 1.000đ)
-    const requiredCoins = Math.floor(value / 1000);
-    if (requiredCoins > walletCoins) {
-      setError("Số dư coin không đủ để thực hiện giao dịch");
+    // Kiểm tra số dư xu
+    if (coinsValue > walletCoins) {
+      setError("Số dư xu không đủ để thực hiện giao dịch");
       return;
     }
 
     setError("");
+    setLoading(true);
 
-    const newRecord = {
-      id: history.length + 1,
-      amount: value,
-      bank,
-      account,
-      status: "Đang xử lý",
-      date: new Date().toLocaleDateString("vi-VN"),
-    };
+    try {
+      // Gọi API để tạo payment request (backend sẽ tự trừ xu và tạo notification)
+      const result = await createPaymentRequest(coinsValue);
+      
+      // Reload history sau khi tạo thành công
+      const updatedHistory = await getUserPaymentRequests();
+      setHistory(Array.isArray(updatedHistory) ? updatedHistory : []);
+      
+      // Reload wallet từ API để có số dư chính xác
+      const userData = await getMe();
+      setWalletCoins(Number(userData?.wallet ?? 0));
+      
+      // Reload notifications để hiển thị thông báo mới
+      if (userId) {
+        await fetchNotifications(userId);
+        await fetchUnreadCount(userId);
+      }
+      
+      // Reset form
+      setAmount("");
+    } catch (err) {
+      console.error("Error creating payment request:", err);
+      setError(err.message || "Không thể tạo yêu cầu rút tiền. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setHistory([newRecord, ...history]);
-    setAmount("");
+  // Map status từ API sang tiếng Việt
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "Pending":
+        return "Đang xử lý";
+      case "Processing":
+        return "Đang xử lý";
+      case "Succeeded":
+        return "Đã duyệt";
+      case "Rejected":
+        return "Đã từ chối";
+      default:
+        return status;
+    }
+  };
+
+  // Map status để hiển thị badge màu
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Succeeded":
+        return "bg-green-900 text-green-300";
+      case "Pending":
+      case "Processing":
+        return "bg-yellow-900 text-yellow-300";
+      case "Rejected":
+        return "bg-red-900 text-red-300";
+      default:
+        return "bg-gray-900 text-gray-300";
+    }
+  };
+
+  // Format date - Convert UTC to Vietnam timezone (UTC+7)
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    // Convert UTC to Vietnam timezone (UTC+7)
+    const vietnamDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+    return vietnamDate.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -113,21 +196,29 @@ export default function WithdrawPage() {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Số tiền cần rút (VNĐ)
+              <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <RiCoinLine className="w-4 h-4 text-yellow-400" />
+                Số xu muốn rút
               </label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                placeholder="Nhập số tiền"
+                placeholder="Nhập số xu"
                 required
               />
               {amount && (
-                <p className="text-sm mt-2 text-gray-400">
-                  Tương ứng: <span className="text-yellow-400 font-semibold">{coinsNeeded} coin</span>
-                </p>
+                <div className="text-sm mt-2 space-y-1">
+                  <p className="text-gray-400">
+                    Số tiền nhận được: <span className="text-green-400 font-semibold">
+                      {vndAmount.toLocaleString("vi-VN")} VNĐ
+                    </span>
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    (Đã trừ 10% phí: {originalVndAmount.toLocaleString("vi-VN")} VNĐ → {vndAmount.toLocaleString("vi-VN")} VNĐ)
+                  </p>
+                </div>
               )}
               {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
             </div>
@@ -159,9 +250,12 @@ export default function WithdrawPage() {
               <div className="text-sm text-blue-200">
                 <p className="font-medium mb-1">Lưu ý quan trọng:</p>
                 <ul className="space-y-1 text-blue-300">
-                  <li>• Số tiền rút tối thiểu: 50.000 VNĐ</li>
+                  <li className="flex items-center gap-1">
+                    <RiCoinLine className="w-4 h-4 text-yellow-400" />
+                    <span>Số xu rút tối thiểu: 50 xu (nhận được 45.000 VNĐ sau phí)</span>
+                  </li>
+                  <li>• Phí rút tiền: 10% (ví dụ: 50 xu → 45.000 VNĐ)</li>
                   <li>• Yêu cầu sẽ được xử lý trong vòng 1-3 ngày làm việc</li>
-                  <li>• Phí giao dịch: 0 VNĐ (miễn phí)</li>
                   <li>• Cập nhật thông tin ngân hàng trong trang hồ sơ nếu thiếu</li>
                 </ul>
               </div>
@@ -170,9 +264,10 @@ export default function WithdrawPage() {
 
           <button
             type="submit"
-            className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+            disabled={loading}
+            className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800"
           >
-            Gửi yêu cầu rút tiền
+            {loading ? "Đang xử lý..." : "Gửi yêu cầu rút tiền"}
           </button>
         </form>
       </div>
@@ -216,37 +311,31 @@ export default function WithdrawPage() {
                   </td>
                 </tr>
               ) : (
-                history.map((h) => (
-                  <tr key={h.id} className="hover:bg-gray-700 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {h.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {h.bank}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-mono">
-                      {h.account}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-400">
-                      {h.amount.toLocaleString("vi-VN")} VNĐ
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      {h.status === "Đã duyệt" ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900 text-green-300">
-                          ✓ {h.status}
+                history.map((h) => {
+                  const statusLabel = getStatusLabel(h.status);
+                  const statusIcon = h.status === "Succeeded" ? "✓" : h.status === "Rejected" ? "✗" : "⏳";
+                  return (
+                    <tr key={h.paymentRequestId} className="hover:bg-gray-700 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {formatDate(h.requestDate)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {bank || "Chưa có"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-mono">
+                        {account || "Chưa có STK"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-green-400">
+                        {Math.floor(h.amountReceived).toLocaleString("vi-VN")} VNĐ
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(h.status)}`}>
+                          {statusIcon} {statusLabel}
                         </span>
-                      ) : h.status === "Đang xử lý" ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900 text-yellow-300">
-                          ⏳ {h.status}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900 text-red-300">
-                          ✗ {h.status}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

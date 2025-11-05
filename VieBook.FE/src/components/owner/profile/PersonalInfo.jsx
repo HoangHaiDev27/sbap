@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMe, upsertMyProfile } from "../../../api/userApi";
+import { getSupportedBanks } from "../../../api/vietQrApi";
 
 export default function PersonalInfo() {
   const [form, setForm] = useState({
@@ -16,9 +17,32 @@ export default function PersonalInfo() {
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [banks, setBanks] = useState([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+    
+    // Load banks
+    const loadBanks = async () => {
+      try {
+        setLoadingBanks(true);
+        const bankList = await getSupportedBanks();
+        if (mounted) {
+          setBanks(bankList);
+        }
+      } catch (err) {
+        console.error("Error loading banks:", err);
+      } finally {
+        if (mounted) {
+          setLoadingBanks(false);
+        }
+      }
+    };
+    
+    loadBanks();
+    
+    // Load user profile
     getMe()
       .then((res) => {
         if (!mounted) return;
@@ -140,13 +164,25 @@ export default function PersonalInfo() {
         </div>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Ngân hàng</label>
-          <input
-            type="text"
-            name="BankName"
-            value={form.BankName}
-            onChange={onChange}
-            className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
-          />
+          {loadingBanks ? (
+            <div className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-gray-400">
+              Đang tải danh sách ngân hàng...
+            </div>
+          ) : (
+            <select
+              name="BankName"
+              value={form.BankName}
+              onChange={onChange}
+              className="w-full px-3 py-2 rounded bg-slate-700 border border-gray-600 text-white"
+            >
+              <option value="">-- Chọn ngân hàng --</option>
+              {banks.map((bank) => (
+                <option key={bank.acqId} value={bank.name}>
+                  {bank.name} {bank.shortName ? `(${bank.shortName})` : ""}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Số tài khoản</label>
