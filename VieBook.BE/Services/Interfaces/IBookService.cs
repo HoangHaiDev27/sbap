@@ -36,5 +36,6 @@ namespace Services.Interfaces
         Task<bool> CheckAllChaptersActiveAsync(int bookId);
         Task<bool> CheckBookHasDraftChaptersAsync(int bookId);
         Task UpdateDraftChaptersToInActiveAsync(int bookId);
+        Task<BookStatsDTO> GetBookStatsAsync(int bookId);
     }
 }

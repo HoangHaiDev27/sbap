@@ -146,6 +146,9 @@ namespace Services.Implementations
             return await _bookRepo.CheckBookHasDraftChaptersAsync(bookId);
         }
 
+        public Task<BookStatsDTO> GetBookStatsAsync(int bookId)
+            => _bookRepo.GetBookStatsAsync(bookId);
+
         public async Task UpdateDraftChaptersToInActiveAsync(int bookId)
         {
             await _bookRepo.UpdateDraftChaptersToInActiveAsync(bookId);

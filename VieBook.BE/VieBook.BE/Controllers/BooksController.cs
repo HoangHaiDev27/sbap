@@ -47,6 +47,21 @@ namespace VieBook.BE.Controllers
             return Ok(book);
         }
 
+        // GET: api/books/{bookId}/stats
+        [HttpGet("{bookId:int}/stats")]
+        public async Task<IActionResult> GetBookStats(int bookId)
+        {
+            try
+            {
+                var stats = await _bookService.GetBookStatsAsync(bookId);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // get all
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooks()
