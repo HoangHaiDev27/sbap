@@ -67,6 +67,11 @@ namespace VieBook.BE.Controllers.Admin
                 return BadRequest(new { message = ex.Message });
             }
         }
-
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetStatistics([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            var result = await _service.GetStatisticsAsync(fromDate, toDate);
+            return Ok(result);
+        }
     }
 }

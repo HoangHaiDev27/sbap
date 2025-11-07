@@ -1,5 +1,4 @@
-// src/pages/admin/AdminPage.jsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -9,90 +8,184 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  RiBookLine,
+  RiHeadphoneLine,
+  RiUserStarLine,
+  RiUserLine,
+  RiAdminLine,
+  RiExchangeLine,
+  RiCoinLine,
+  RiThumbUpLine,
+} from "react-icons/ri";
+import { getStatistic } from "../../api/adminApi";
 
 export default function AdminPage() {
-  const [timeFilter, setTimeFilter] = useState("month");
+  const [statsData, setStatsData] = useState([]);
+  const [booksByDayData, setBooksByDayData] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [categoryDistribution, setCategoryDistribution] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
-  const statsData = [
-    { title: "Tổng số sách", value: "2,456", change: "+18%", icon: "ri-book-line", color: "bg-blue-500" },
-    { title: "Sách nói", value: "1,823", change: "+12%", icon: "ri-headphone-line", color: "bg-purple-500" },
-    { title: "Chủ sở hữu sách", value: "156", change: "+8%", icon: "ri-user-star-line", color: "bg-green-500" },
-    { title: "Khách hàng", value: "8,924", change: "+25%", icon: "ri-user-line", color: "bg-orange-500" },
-    { title: "Nhân viên", value: "12", change: "+2", icon: "ri-admin-line", color: "bg-red-500" },
-    { title: "Giao dịch trong tháng", value: "3,421", change: "+15%", icon: "ri-exchange-line", color: "bg-cyan-500" },
-    { title: "Doanh thu tháng", value: "$284K", change: "+22%", icon: "ri-money-dollar-circle-line", color: "bg-emerald-500" },
-    { title: "Phản hồi tích cực", value: "89%", change: "+3%", icon: "ri-thumb-up-line", color: "bg-pink-500" },
-  ];
+  // 🧠 Gọi API khi load hoặc đổi ngày
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await getStatistic(fromDate, toDate);
+        const data = res.data ?? res;
+        setStats(data);
 
-  const booksByDayData = [
-    { date: "01/01", books: 12 },
-    { date: "02/01", books: 18 },
-    { date: "03/01", books: 15 },
-    { date: "04/01", books: 22 },
-    { date: "05/01", books: 28 },
-    { date: "06/01", books: 25 },
-    { date: "07/01", books: 35 },
-  ];
+        // ✅ Nếu giá trị âm hoặc null -> 0
+        const safePercent = (val) =>
+          val == null || val < 0 || isNaN(val) ? 0 : val;
 
-  const revenueData = [
-    { month: "Th1", revenue: 120 },
-    { month: "Th2", revenue: 150 },
-    { month: "Th3", revenue: 180 },
-    { month: "Th4", revenue: 200 },
-    { month: "Th5", revenue: 240 },
-    { month: "Th6", revenue: 284 },
-  ];
+        setStatsData([
+          {
+            title: "Tổng số sách",
+            value: data.totalBooks ?? 0,
+            change: `${safePercent(data.booksChangePercent)}%`,
+            icon: <RiBookLine size={28} className="text-white" />,
+            color: "bg-blue-500",
+          },
+          {
+            title: "Sách nói",
+            value: data.audioBooks ?? 0,
+            change: `${safePercent(data.audioChangePercent)}%`,
+            icon: <RiHeadphoneLine size={28} className="text-white" />,
+            color: "bg-purple-500",
+          },
+          {
+            title: "Chủ sở hữu sách",
+            value: data.bookOwners ?? 0,
+            change: `${safePercent(data.bookOwnerChangePercent)}%`,
+            icon: <RiUserStarLine size={28} className="text-white" />,
+            color: "bg-green-500",
+          },
+          {
+            title: "Khách hàng",
+            value: data.customers ?? 0,
+            change: `${safePercent(data.customerChangePercent)}%`,
+            icon: <RiUserLine size={28} className="text-white" />,
+            color: "bg-orange-500",
+          },
+          {
+            title: "Nhân viên",
+            value: data.staffs ?? 0,
+            change: `${safePercent(data.staffChangePercent)}%`,
+            icon: <RiAdminLine size={28} className="text-white" />,
+            color: "bg-red-500",
+          },
+          {
+            title: "Giao dịch trong tháng",
+            value: data.monthlyTransactions ?? 0,
+            change: `${safePercent(data.transactionChangePercent)}%`,
+            icon: <RiExchangeLine size={28} className="text-white" />,
+            color: "bg-cyan-500",
+          },
+          {
+            title: "Doanh thu (xu)",
+            value: `${data.monthlyRevenue?.toLocaleString() ?? "0"} xu`,
+            change: `${safePercent(data.revenueChangePercent)}%`,
+            icon: <RiCoinLine size={28} className="text-white" />,
+            color: "bg-amber-500",
+          },
+          {
+            title: "Phản hồi tích cực",
+            value: `${safePercent(data.positiveFeedbackPercent)}%`,
+            change: `${safePercent(data.feedbackChangePercent)}%`,
+            icon: <RiThumbUpLine size={28} className="text-white" />,
+            color: "bg-pink-500",
+          },
+        ]);
 
-  const categoryDistribution = [
-    { name: "Khoa học", count: 456, percentage: 28 },
-    { name: "Kỹ năng sống", count: 389, percentage: 24 },
-    { name: "Kinh doanh", count: 312, percentage: 19 },
-    { name: "Tâm lý", count: 245, percentage: 15 },
-    { name: "Khác", count: 232, percentage: 14 },
-  ];
+        setBooksByDayData(data.booksByDayData ?? []);
+        setRevenueData(data.revenueData ?? []);
+        setCategoryDistribution(data.categoryDistribution ?? []);
+      } catch (err) {
+        console.error("❌ Lỗi khi tải thống kê:", err);
+        setError("Không thể tải dữ liệu thống kê.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!fromDate && !toDate) {
+      fetchData();
+      return;
+    }
+
+    const timer = setTimeout(fetchData, 500);
+    return () => clearTimeout(timer);
+  }, [fromDate, toDate]);
+
+  if (loading)
+    return (
+      <div className="p-10 text-center text-gray-600">Đang tải dữ liệu...</div>
+    );
+  if (error)
+    return <div className="p-10 text-center text-red-500">{error}</div>;
+
+  const displayedCategories = showAllCategories
+    ? categoryDistribution
+    : categoryDistribution.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="pt-20">
         <div className="p-6">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Tổng quan thống kê
               </h2>
-              <p className="text-gray-600">Bảng điều khiển quản trị hệ thống</p>
+              <p className="text-gray-600">
+                Bảng điều khiển quản trị hệ thống
+              </p>
             </div>
-            <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                    <label htmlFor="from" className="text-sm text-gray-600">
-                        Từ ngày:
-                    </label>
-                    <input
-                    id="from"
-                    type="date"
-                    className="px-3 py-2 border border-gray-300 rounded-lg 
-                                bg-white text-gray-900 
-                                focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
 
-                <div className="flex items-center space-x-2">
-                    <label htmlFor="to" className="text-sm text-gray-600">
-                        Đến ngày:
-                    </label>
-                    <input
-                    id="to"
-                    type="date"
-                    className="px-3 py-2 border border-gray-300 rounded-lg 
-                                bg-white text-gray-900 
-                                focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <label
+                  htmlFor="from"
+                  className="text-sm text-gray-600 whitespace-nowrap"
+                >
+                  Từ ngày:
+                </label>
+                <input
+                  id="from"
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <label
+                  htmlFor="to"
+                  className="text-sm text-gray-600 whitespace-nowrap"
+                >
+                  Đến ngày:
+                </label>
+                <input
+                  id="to"
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Stats cards */}
+          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {statsData.map((stat, index) => (
               <div
@@ -107,14 +200,21 @@ export default function AdminPage() {
                     <p className="text-2xl font-bold text-gray-900 mt-1">
                       {stat.value}
                     </p>
-                    <p className="text-sm text-green-600 mt-1">{stat.change}</p>
+                    <p
+                      className={`text-sm mt-1 ${
+                        parseFloat(stat.change) >= 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {parseFloat(stat.change) >= 0 ? "+" : ""}
+                      {stat.change}
+                    </p>
                   </div>
                   <div
                     className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}
                   >
-                    <i
-                      className={`${stat.icon} text-white text-xl w-6 h-6 flex items-center justify-center`}
-                    ></i>
+                    {stat.icon}
                   </div>
                 </div>
               </div>
@@ -123,106 +223,175 @@ export default function AdminPage() {
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Books by Day */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Sách mới theo ngày
               </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={booksByDayData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="books" fill="#3B82F6" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="h-64 flex items-center justify-center">
+                {booksByDayData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={booksByDayData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="books" name="Tổng số sách" fill="#3B82F6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-gray-500">Không có dữ liệu</p>
+                )}
               </div>
             </div>
 
+            {/* Revenue Chart */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Doanh thu theo tháng
               </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="revenue" fill="#10B981" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="h-64 flex items-center justify-center">
+                {revenueData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar
+                        dataKey="revenue"
+                        name="Tổng xu"
+                        fill="#10B981"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-gray-500">Không có dữ liệu</p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Category + Feedback */}
+          {/* Category & Feedback */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Category Distribution */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Phân loại sách
-              </h3>
-              <div className="space-y-4">
-                {categoryDistribution.map((category, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`w-4 h-4 rounded-full`}
-                        style={{
-                          backgroundColor: `hsl(${index * 72}, 70%, 50%)`,
-                        }}
-                      ></div>
-                      <span className="text-gray-900">{category.name}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-gray-900 font-medium">
-                        {category.count}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {category.percentage}%
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Phân loại sách
+                </h3>
+                <span className="text-sm text-gray-500">
+                  Tổng: {categoryDistribution.length} loại
+                </span>
               </div>
+
+              {categoryDistribution.length > 0 ? (
+                <>
+                  <div className="space-y-4">
+                    {displayedCategories.map((category, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className="w-4 h-4 rounded-full"
+                            style={{
+                              backgroundColor: `hsl(${index * 72}, 70%, 50%)`,
+                            }}
+                          ></div>
+                          <span className="text-gray-900">{category.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-gray-900 font-medium">
+                            {category.count}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {category.percentage}%
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {categoryDistribution.length > 5 && (
+                    <button
+                      onClick={() => setShowAllCategories(!showAllCategories)}
+                      className="mt-4 text-blue-600 text-sm font-medium hover:underline"
+                    >
+                      {showAllCategories ? "Thu gọn ▲" : "Xem thêm ▼"}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <p className="text-gray-500">Không có dữ liệu</p>
+              )}
             </div>
 
+            {/* Feedback */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Phản hồi người dùng
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Phản hồi tích cực</span>
-                  <span className="text-green-600 font-semibold">89%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-green-500 h-3 rounded-full"
-                    style={{ width: "89%" }}
-                  ></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Phản hồi tiêu cực</span>
-                  <span className="text-red-600 font-semibold">11%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-red-500 h-3 rounded-full"
-                    style={{ width: "11%" }}
-                  ></div>
-                </div>
-                <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-700">
-                    4.6/5.0
-                  </div>
-                  <div className="text-sm text-gray-600">Đánh giá trung bình</div>
-                </div>
+                {stats ? (
+                  (() => {
+                    const hasFeedback =
+                      stats?.averageRating > 0 &&
+                      stats?.positiveFeedbackPercent >= 0;
+                    const positive = hasFeedback
+                      ? stats.positiveFeedbackPercent
+                      : 0;
+                    const negative = hasFeedback ? 100 - positive : 0;
+
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">
+                            Phản hồi tích cực
+                          </span>
+                          <span className="text-green-600 font-semibold">
+                            {positive}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div
+                            className="bg-green-500 h-3 rounded-full"
+                            style={{ width: `${positive}%` }}
+                          ></div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">
+                            Phản hồi tiêu cực
+                          </span>
+                          <span className="text-red-600 font-semibold">
+                            {negative}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div
+                            className="bg-red-500 h-3 rounded-full"
+                            style={{ width: `${negative}%` }}
+                          ></div>
+                        </div>
+
+                        <div className="mt-4 p-4 bg-green-50 rounded-lg text-center">
+                          <div className="text-2xl font-bold text-green-700">
+                            {stats?.averageRating ?? 0}/5.0
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Đánh giá trung bình
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()
+                ) : (
+                  <p className="text-gray-500 text-center">
+                    Chưa có dữ liệu phản hồi
+                  </p>
+                )}
               </div>
             </div>
           </div>

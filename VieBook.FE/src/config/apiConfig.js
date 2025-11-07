@@ -221,6 +221,13 @@ export const API_ENDPOINTS = {
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
     UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`,
+    STATISTICS: (from, to) => {
+      let url = `${API_BASE_URL}/api/admin/statistics`;
+      if (from && to) {
+        url += `?fromDate=${from}&toDate=${to}`;
+      }
+      return url;
+    },    
   },
   BOOKAPPROVAL: {
     GET_ALL: `${API_BASE_URL}/api/BookApproval`,
