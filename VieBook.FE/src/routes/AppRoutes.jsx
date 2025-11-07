@@ -56,6 +56,9 @@ import RechargePage from "../pages/RechargePage";
 import VerifyEmail from "../pages/VerifyEmail";
 import AccessDenied from "../pages/AccessDenied";
 import ProtectedRoute from "../components/common/ProtectedRoute";
+import TermsPage from "../components/footer/TermsPage";
+import PrivacyPage from "../components/footer/PrivacyPage";
+import SecurityPage from "../components/footer/SecurityPage";
 
 function AppRoutes() {
   return (
@@ -99,6 +102,9 @@ function AppRoutes() {
 
       <Route path="/customer" element={<CustomerPage />} />
       <Route path="/recharge" element={<RechargePage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/security" element={<SecurityPage />} />
 
       <Route path="/owner/dashboard" element={<Dashboard />} />
       <Route path="/owner/books" element={<OwnerBooks />} />

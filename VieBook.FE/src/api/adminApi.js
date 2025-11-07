@@ -49,3 +49,17 @@ export async function updateAdmin(adminId, formData) {
   );
 }
 
+export async function getStatistic(fromDate, toDate) {
+  return handleFetch(
+    API_ENDPOINTS.ADMIN.STATISTICS(fromDate, toDate),
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    },
+    "Không thể tải dữ liệu thống kê"
+  );
+}
+

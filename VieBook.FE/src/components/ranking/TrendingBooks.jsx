@@ -18,7 +18,7 @@ export default function TrendingBooks() {
             id: b.bookId,
             title: b.title,
             author: b.author || b.ownerName || "Không rõ tác giả",
-            category: b.categoryNames?.[0] || "Chưa phân loại",
+            category: b.categoryNames?.join(", ") || "Chưa phân loại",
             trendScore: b.totalView || 0, // có thể dùng totalView làm điểm hot
             growth: "+120%", // nếu backend chưa có growth %, bạn có thể tạm set cứng
             listens: b.totalView || 0,
