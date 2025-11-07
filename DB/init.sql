@@ -130,6 +130,17 @@ CREATE TABLE dbo.Books (
 CREATE INDEX IX_Books_Owner  ON dbo.Books(OwnerId);
 CREATE INDEX IX_Books_Status ON dbo.Books(Status);
 
+-- Thêm cột ConfirmationSignaturePath: Đường dẫn tới file chữ ký
+ALTER TABLE dbo.Books
+ADD ConfirmationSignaturePath VARCHAR(1000) NULL;
+
+-- Thêm cột ConfirmationIpAddress: IP address tại thời điểm ký
+ALTER TABLE dbo.Books
+ADD ConfirmationIpAddress VARCHAR(50) NULL;
+
+-- Thêm cột ConfirmationTimestamp: Thời gian ký
+ALTER TABLE dbo.Books
+ADD ConfirmationTimestamp DATETIME2 NULL;
 CREATE TABLE dbo.BookCategories (
   BookId     INT NOT NULL REFERENCES dbo.Books(BookId),
   CategoryId INT NOT NULL REFERENCES dbo.Categories(CategoryId),

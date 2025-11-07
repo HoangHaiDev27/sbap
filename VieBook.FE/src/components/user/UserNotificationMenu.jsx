@@ -22,6 +22,7 @@ import { useCurrentUser } from "../../hooks/useCurrentUser";
 function UserNotificationMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
   const notifRef = useRef(null);
 
   const { userId, isAuthenticated } = useCurrentUser();
@@ -176,11 +177,15 @@ function UserNotificationMenu() {
     setShowAll(false);
   };
 
-  // Xử lý click vào thông báo để đánh dấu đã đọc
+  // Xử lý click vào thông báo để đánh dấu đã đọc và hiển thị chi tiết
   const handleNotificationClick = async (notification) => {
+    // Đánh dấu đã đọc nếu chưa đọc
     if (!notification.isRead) {
       await markAsRead(notification.notificationId);
     }
+    // Hiển thị modal chi tiết thông báo
+    setSelectedNotification(notification);
+    setIsOpen(false); // Đóng menu dropdown
   };
 
   // Xử lý đánh dấu tất cả đã đọc
@@ -310,6 +315,106 @@ function UserNotificationMenu() {
           </div>
         </div>
       )}
+
+      {/* Modal chi tiết thông báo */}
+      {selectedNotification && (
+        <NotificationDetailModal
+          notification={selectedNotification}
+          onClose={() => setSelectedNotification(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Component modal hiển thị chi tiết thông báo
+function NotificationDetailModal({ notification, onClose }) {
+  if (!notification) return null;
+
+  const formatFullDate = (dateString) => {
+    try {
+      let date;
+      if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('UTC')) {
+        date = new Date(dateString);
+      } else {
+        date = new Date(dateString + 'Z');
+      }
+      
+      if (isNaN(date.getTime())) {
+        return "Thời gian không xác định";
+      }
+      
+      // Convert UTC to Vietnam timezone (UTC+7)
+      const vietnamDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+      return vietnamDate.toLocaleString("vi-VN", {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return "Thời gian không xác định";
+    }
+  };
+
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-slate-600 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">Chi tiết thông báo</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <RiCloseLine className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          {/* Title */}
+          <div>
+            <label className="text-sm font-semibold text-gray-400">Tiêu đề</label>
+            <p className="text-white mt-1 text-lg">{notification.title}</p>
+          </div>
+
+          {/* Body */}
+          {notification.body && (
+            <div>
+              <label className="text-sm font-semibold text-gray-400">Nội dung</label>
+              <p className="text-white mt-1 whitespace-pre-wrap">{notification.body}</p>
+            </div>
+          )}
+
+          {/* Created At */}
+          <div>
+            <label className="text-sm font-semibold text-gray-400">Thời gian</label>
+            <p className="text-white mt-1">{formatFullDate(notification.createdAt)}</p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-600 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
