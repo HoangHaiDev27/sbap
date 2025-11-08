@@ -61,6 +61,7 @@ function getPaginationRange(currentPage, totalPages, delta = 1) {
 }
 
 export default function BookTable({ books, categories, onBookDeleted }) {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBook, setSelectedBook] = useState(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -193,6 +194,56 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     }
   };
 
+  const handleNavigateToChapters = (book) => {
+    if (book.status === "Approved") {
+      navigate(`/owner/books/${book.bookId}/chapters`, {
+        state: { bookTitle: book.title },
+      });
+    } else if (book.status === "Active") {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn chưa được duyệt",
+          },
+        })
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn không thể thêm chương",
+          },
+        })
+      );
+    }
+  };
+
+  const handleNavigateToAudio = (book) => {
+    if (book.status === "Approved") {
+      navigate(`/owner/books/${book.bookId}/audio`);
+    } else if (book.status === "Active") {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn chưa được duyệt",
+          },
+        })
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn không thể thêm chương",
+          },
+        })
+      );
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm border-collapse">
@@ -251,22 +302,21 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                     <RiEdit2Line className="text-white text-lg" />
                   </Link>
 
-                  <Link
-                    to={`/owner/books/${book.bookId}/chapters`}
-                    state={{ bookTitle: book.title }}
+                  <button
+                    onClick={() => handleNavigateToChapters(book)}
                     className="p-2 bg-indigo-500 rounded hover:bg-indigo-600 transition"
                     title="Quản lý chương"
                   >
                     <RiBookOpenLine className="text-white text-lg" />
-                  </Link>
+                  </button>
 
-                  <Link
-                    to={`/owner/books/${book.bookId}/audio`}
+                  <button
+                    onClick={() => handleNavigateToAudio(book)}
                     className="p-2 bg-purple-500 rounded hover:bg-purple-600 transition"
                     title="Audio"
                   >
                     <RiSoundModuleLine className="text-white text-lg" />
-                  </Link>
+                  </button>
 
                   <button
                     className="p-2 bg-red-500 rounded hover:bg-red-600 transition"

@@ -1,4 +1,5 @@
 import { API_ENDPOINTS, API_BASE_URL } from "../config/apiConfig";
+import { getToken } from "./authApi";
 
 // Lấy tất cả sách theo ownerId
 export async function getBooksByOwner(ownerId) {
@@ -31,6 +32,44 @@ export async function createBook(payload) {
       throw new Error(errorText || "ISBN đã tồn tại");
     }
     throw new Error(errorText || "Tạo mới sách thất bại");
+  }
+
+  const result = await res.json();
+  return result;
+}
+
+// Tạo mới sách với chữ ký xác nhận (Save with Proof)
+export async function createBookWithSignature(payload) {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
+  const res = await fetch(API_ENDPOINTS.BOOKS.CREATE_WITH_SIGNATURE, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    let errorMessage = "Tạo mới sách thất bại";
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorMessage;
+    } catch {
+      const errorText = await res.text();
+      if (res.status === 409) {
+        errorMessage = errorText || "ISBN đã tồn tại";
+      } else if (res.status === 401) {
+        errorMessage = "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại";
+      } else {
+        errorMessage = errorText || errorMessage;
+      }
+    }
+    throw new Error(errorMessage);
   }
 
   const result = await res.json();
@@ -254,6 +293,23 @@ export async function deleteChapter(chapterId) {
   }
 
   return res.json();
+}
+
+// Tăng số lượt xem chapter
+export async function incrementChapterView(chapterId) {
+  const res = await fetch(API_ENDPOINTS.CHAPTERS.INCREMENT_VIEW(chapterId), {
+    method: "POST",
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error("Chapter not found");
+    }
+    // Không throw error vì đây là action phụ, không ảnh hưởng đến flow chính
+    console.error("Failed to increment chapter view");
+  }
+
+  return res.json().catch(() => ({}));
 }
 // Upload chapter content to Cloudinary
 export async function uploadChapterFile(chapterData) {

@@ -1,4 +1,5 @@
-﻿using BusinessObject.Models;
+﻿using BusinessObject.Dtos;
+using BusinessObject.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,6 @@ namespace Repositories.Interfaces.Admin
     {
         Task<User?> GetAdminByIdAsync(int id);
         Task<User> UpdateAdminAsync(User user);
+        Task<AdminStatisticDTO> GetStatisticsAsync(DateTime? fromDate = null, DateTime? toDate = null);
     }
 }

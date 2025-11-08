@@ -14,6 +14,7 @@ public interface IChatService
     Task<long> GetOrCreateGroupConversationAsync(List<int> userIds, Dictionary<int, string> roleHints);
     Task<ChatConversation?> GetConversationBetweenUsersAsync(int userId1, int userId2);
     Task<List<ChatConversation>> GetConversationsWithOwnerAsync(int ownerId);
+    Task<bool> ConversationHasMessages(long conversationId);
     
     // Cho staff
     Task<List<OwnerChatItemDTO>> GetOwnerListForStaffAsync();

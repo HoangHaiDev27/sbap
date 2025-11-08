@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-import { uploadChapterFile, createChapter, getBookById, checkBookHasActiveChapter, updateBookStatus, checkAllChaptersActive } from "../../api/ownerBookApi";
+import { uploadChapterFile, createChapter, getBookById, checkBookHasActiveChapter, checkAllChaptersActive } from "../../api/ownerBookApi";
 import { checkSpelling as checkSpellingApi, checkMeaning as checkMeaningApi, moderation as moderationApi, checkPlagiarism as checkPlagiarismApi, generateEmbeddings as generateEmbeddingsApi } from "../../api/openAiApi";
 import { useLocation } from "react-router-dom";
 
@@ -576,12 +576,19 @@ export default function ChapterForm() {
           return;
         }
       } else if (currentStep === 2) {
-        // Bước 2: Không kiểm tra validation - luôn cho phép tiếp tục
-        // Chỉ cần có nội dung cơ bản
+        // Bước 2: Yêu cầu nội dung tối thiểu 50 ký tự
         if (!content.trim()) {
           window.dispatchEvent(
             new CustomEvent("app:toast", {
               detail: { type: "error", message: "Vui lòng nhập nội dung chương" },
+            })
+          );
+          return;
+        }
+        if (content.trim().length < 50) {
+          window.dispatchEvent(
+            new CustomEvent("app:toast", {
+              detail: { type: "error", message: "Nội dung chương phải có ít nhất 50 ký tự" },
             })
           );
           return;
@@ -964,9 +971,6 @@ export default function ChapterForm() {
         }
       }
 
-      // Kiểm tra và cập nhật book status theo các trường hợp
-      await handleBookStatusUpdate();
-
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: { type: "success", message: "Đã lưu chương thành công!" },
@@ -985,27 +989,6 @@ export default function ChapterForm() {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // Xử lý cập nhật book status theo các trường hợp
-  const handleBookStatusUpdate = async () => {
-    if (!bookInfo) return;
-
-    const { uploaderType, status: bookStatus, uploadStatus, completionStatus } = bookInfo;
-
-    // Trường hợp 1 & 3: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Incomplete, CompletionStatus = Ongoing
-    if (bookStatus === "PendingChapters" && uploadStatus === "Incomplete" && completionStatus === "Ongoing") {
-      // Chỉ cập nhật book status thành Active nếu chương vừa thêm có status = "Active"
-      if (status === "Active") {
-        try {
-          await updateBookStatus(bookId, "Active");
-          console.log("Book status updated to Active due to new active chapter");
-        } catch (error) {
-          console.error("Error updating book status:", error);
-        }
-      }
-    }
-    // Nếu Status hiện tại = "Approved" thì không cập nhật gì (không có logic xử lý)
   };
 
   // Step components - sử dụng useMemo để tránh re-render
@@ -1829,11 +1812,12 @@ export default function ChapterForm() {
                 <button
                   onClick={nextStep}
                   disabled={
-                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) // Step 1 validation
-                    // Step 2: Không disable nút "Tiếp tục" - luôn có thể bấm
+                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) ||
+                    (currentStep === 2 && (content.trim().length < 50))
                   }
                   className={`px-4 py-2 rounded-lg transition ${
-                    (currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree)))
+                    ((currentStep === 1 && (!title.trim() || validateTitle(title) || validatePrice(price, isFree))) ||
+                    (currentStep === 2 && (content.trim().length < 50)))
                       ? "bg-gray-600 cursor-not-allowed opacity-50"
                       : "bg-orange-500 hover:bg-orange-600"
                   }`}

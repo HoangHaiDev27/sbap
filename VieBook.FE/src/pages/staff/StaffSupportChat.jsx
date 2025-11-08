@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { RiSendPlane2Line, RiSearchLine } from "react-icons/ri";
 import { getUserName, getUserId } from "../../api/authApi";
-import { getOwnerListForStaff, getChatWithOwner, sendStaffMessage } from "../../api/chatApi";
+import { getOwnerListForStaff, getChatWithOwner, sendStaffMessage, searchOwnersForStaff, startConversationWithOwnerForStaff } from "../../api/chatApi";
 import { toast } from "react-toastify";
 import chatWebSocket from "../../services/chatWebSocket";
 
@@ -19,11 +19,15 @@ export default function StaffSupportChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingChatHistory, setLoadingChatHistory] = useState(false);
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [conversationId, setConversationId] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const searchTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const joinedConversationsRef = useRef(new Set());
+  const loadingChatHistoryRef = useRef(false);
   const staffName = getUserName() || "Staff";
   const currentUserId = parseInt(getUserId());
 
@@ -79,13 +83,68 @@ export default function StaffSupportChat() {
     const unsubscribeNewConversation = chatWebSocket.onNewConversation(async (data) => {
       console.log("🆕 Staff - New conversation notification:", data);
       
-      // Reload danh sách owners để hiển thị conversation mới
+      // Join conversation ngay để nhận tin nhắn real-time (kể cả tin nhắn đầu tiên)
+      if (data.conversationId && !joinedConversationsRef.current.has(data.conversationId)) {
+        try {
+          await chatWebSocket.joinConversation(data.conversationId, [currentUserId]);
+          joinedConversationsRef.current.add(data.conversationId);
+          console.log(`📥 Joined new conversation ${data.conversationId}`);
+        } catch (error) {
+          console.error("Error joining new conversation:", error);
+        }
+      }
+      
+      // Optimistic update: thêm conversation mới vào sidebar ngay lập tức
+      setOwners(prev => {
+        // Kiểm tra xem conversation đã có trong danh sách chưa
+        const exists = prev.some(o => o.conversationId === data.conversationId);
+        if (exists) {
+          console.log("🔄 Conversation already exists in sidebar, will reload");
+          return prev;
+        }
+        
+        // Thêm conversation mới vào đầu danh sách
+        const newOwner = {
+          ownerId: data.ownerId,
+          ownerName: data.ownerName,
+          ownerEmail: data.ownerEmail,
+          ownerAvatar: data.ownerAvatar,
+          conversationId: data.conversationId,
+          lastMessageText: null,
+          lastMessageTime: new Date().toISOString(),
+          lastRepliedByStaffName: null,
+          lastRepliedByStaffId: null
+        };
+        
+        console.log("➕ Adding new conversation optimistically to sidebar:", newOwner);
+        return [newOwner, ...prev];
+      });
+      
+      // Reload danh sách owners từ server để đảm bảo dữ liệu chính xác
       try {
         const updatedOwners = await getOwnerListForStaff();
+        console.log("🔄 Reloaded owners list after new conversation:", updatedOwners.length);
+        
+        // Cập nhật state với danh sách mới từ server
         setOwners(updatedOwners);
+        
+        // Đảm bảo conversation đã được join
+        const newOwner = updatedOwners.find(o => o.conversationId === data.conversationId);
+        if (newOwner && data.conversationId && !joinedConversationsRef.current.has(data.conversationId)) {
+          try {
+            await chatWebSocket.joinConversation(data.conversationId, [currentUserId]);
+            joinedConversationsRef.current.add(data.conversationId);
+            console.log(`📥 Re-joined conversation ${data.conversationId} after reload`);
+          } catch (error) {
+            console.error("Error re-joining conversation:", error);
+          }
+        }
+        
         toast.info(`Conversation mới từ ${data.ownerName || data.ownerEmail}`);
       } catch (error) {
         console.error("Error reloading owners after new conversation:", error);
+        // Không hiển thị error toast vì đã có optimistic update
+        console.warn("⚠️ Failed to reload owners list, but optimistic update was applied");
       }
     });
     
@@ -96,15 +155,81 @@ export default function StaffSupportChat() {
         chatWebSocket.leaveConversation(conversationId);
       }
     };
-  }, [conversationId]);
+  }, [conversationId, currentUserId]);
 
   // Cập nhật sidebar theo tin nhắn real-time (ReceiveMessage)
   useEffect(() => {
-    const unsubscribeSidebarUpdate = chatWebSocket.onMessage((message) => {
-      // Cập nhật last message và reorder list cho owner tương ứng
+    const unsubscribeSidebarUpdate = chatWebSocket.onMessage(async (message) => {
+      console.log("📨 Staff - Received message for sidebar update:", message);
+      
+      // Kiểm tra xem conversationId này có trong danh sách owners không
       setOwners((prev) => {
-        if (!Array.isArray(prev) || prev.length === 0) return prev;
+        if (!Array.isArray(prev) || prev.length === 0) {
+          // Nếu danh sách rỗng, reload lại và join conversation
+          console.log("🔄 Owners list is empty, reloading...");
+          getOwnerListForStaff().then((updatedOwners) => {
+            setOwners(updatedOwners);
+            // Join conversation để nhận tin nhắn
+            if (message.conversationId && !joinedConversationsRef.current.has(message.conversationId)) {
+              chatWebSocket.joinConversation(message.conversationId, [currentUserId]);
+              joinedConversationsRef.current.add(message.conversationId);
+              console.log(`📥 Joined conversation ${message.conversationId} after reload`);
+            }
+          });
+          return prev;
+        }
 
+        const ownerExists = prev.some(owner => owner.conversationId === message.conversationId);
+        
+        // Nếu conversation chưa có trong danh sách, join conversation ngay và reload danh sách owners
+        if (!ownerExists && message.conversationId) {
+          console.log(`🆕 New conversation ${message.conversationId} detected in message, joining and reloading owners list`);
+          
+          // Optimistic update: thêm conversation mới vào sidebar ngay lập tức
+          // Note: senderId có thể là owner hoặc staff, nên sẽ reload từ server để lấy đúng ownerId
+          const tempOwnerId = message.senderRole === "owner" ? message.senderId : null;
+          const newOwnerFromMessage = {
+            ownerId: tempOwnerId || 0, // Sẽ được update sau khi reload
+            ownerName: message.senderRole === "owner" ? message.senderName : "Unknown Owner",
+            ownerEmail: null,
+            ownerAvatar: message.senderAvatar,
+            conversationId: message.conversationId,
+            lastMessageText: message.messageText,
+            lastMessageTime: message.sentAt,
+            lastRepliedByStaffName: message.senderRole === "staff" ? message.senderName : null,
+            lastRepliedByStaffId: message.senderRole === "staff" ? message.senderId : null
+          };
+          
+          // Thêm vào đầu danh sách tạm thời
+          const tempUpdated = [newOwnerFromMessage, ...prev];
+          
+          // Join conversation ngay để đảm bảo nhận được tin nhắn tiếp theo
+          if (!joinedConversationsRef.current.has(message.conversationId)) {
+            chatWebSocket.joinConversation(message.conversationId, [currentUserId]);
+            joinedConversationsRef.current.add(message.conversationId);
+            console.log(`📥 Joined new conversation ${message.conversationId} immediately`);
+          }
+          
+          // Reload danh sách owners từ server để đảm bảo dữ liệu chính xác
+          getOwnerListForStaff().then((updatedOwners) => {
+            console.log(`🔄 Reloaded owners list after detecting new conversation in message: ${updatedOwners.length} owners`);
+            setOwners(updatedOwners);
+            // Đảm bảo conversation đã được join
+            if (updatedOwners.some(o => o.conversationId === message.conversationId)) {
+              if (!joinedConversationsRef.current.has(message.conversationId)) {
+                chatWebSocket.joinConversation(message.conversationId, [currentUserId]);
+                joinedConversationsRef.current.add(message.conversationId);
+              }
+            }
+          }).catch(error => {
+            console.error("Error reloading owners after new conversation detected:", error);
+          });
+          
+          // Trả về danh sách tạm thời với conversation mới
+          return tempUpdated;
+        }
+
+        // Cập nhật last message và reorder list cho owner tương ứng
         const updated = prev.map((owner) => {
           if (owner.conversationId === message.conversationId) {
             return {
@@ -126,14 +251,27 @@ export default function StaffSupportChat() {
     });
 
     return () => unsubscribeSidebarUpdate();
-  }, []);
+  }, [currentUserId]);
 
   // Load chat history khi chọn owner và thiết lập WebSocket
   useEffect(() => {
-    if (!selectedOwner) return;
+    if (!selectedOwner) {
+      setMessages([]);
+      setConversationId(null);
+      return;
+    }
 
     const loadChatHistory = async () => {
+      // Tránh load nhiều lần cùng lúc
+      if (loadingChatHistoryRef.current) {
+        console.log("⏳ Chat history is already loading, skipping...");
+        return;
+      }
+
       try {
+        loadingChatHistoryRef.current = true;
+        setLoadingChatHistory(true);
+        
         console.log(`🔄 Staff loading chat with owner ${selectedOwner.ownerId}`);
         
         // Nếu owner chưa có conversation, tạo mới
@@ -144,9 +282,24 @@ export default function StaffSupportChat() {
           return;
         }
         
-        const history = await getChatWithOwner(selectedOwner.ownerId);
-        console.log("📨 Staff - Chat History:", history);
+        // Lưu ownerId và conversationId hiện tại để kiểm tra race condition
+        const currentOwnerId = selectedOwner.ownerId;
+        const currentConversationId = selectedOwner.conversationId;
+        
+        const history = await getChatWithOwner(currentOwnerId);
+        console.log("📨 Staff - Chat History Response:", history);
         console.log("👤 Staff - Current User ID:", currentUserId);
+        console.log("💬 Expected ConversationId:", currentConversationId);
+        console.log("💬 Received ConversationId:", history.conversationId);
+        
+        // Kiểm tra xem selectedOwner có thay đổi trong lúc load không (race condition)
+        if (!selectedOwner || selectedOwner.ownerId !== currentOwnerId) {
+          console.log("⚠️ Selected owner changed during load, ignoring results");
+          return;
+        }
+        
+        // Sử dụng conversationId từ API hoặc từ selectedOwner
+        const finalConversationId = history.conversationId || currentConversationId;
         
         if (history.messages && history.messages.length > 0) {
           const formattedMessages = history.messages.map(msg => {
@@ -161,17 +314,26 @@ export default function StaffSupportChat() {
               messageId: msg.messageId
             };
           });
-          console.log(`📝 Setting ${formattedMessages.length} messages`);
+          console.log(`📝 Setting ${formattedMessages.length} messages with conversationId: ${finalConversationId}`);
           setMessages(formattedMessages);
-          setConversationId(history.conversationId);
+          setConversationId(finalConversationId);
         } else {
-          console.log("📝 No messages, clearing");
+          console.log("📝 No messages in history");
+          // Vẫn set conversationId để có thể gửi tin nhắn
+          if (finalConversationId) {
+            console.log("📝 Setting conversationId even with no messages:", finalConversationId);
+            setConversationId(finalConversationId);
+          }
           setMessages([]);
-          setConversationId(selectedOwner.conversationId);
         }
       } catch (error) {
         console.error("Error loading chat history:", error);
         toast.error(error.message || "Không thể tải lịch sử chat");
+        setMessages([]);
+        setConversationId(null);
+      } finally {
+        setLoadingChatHistory(false);
+        loadingChatHistoryRef.current = false;
       }
     };
 
@@ -279,10 +441,55 @@ export default function StaffSupportChat() {
     }
   };
 
-  const filteredOwners = owners.filter(owner => 
+  // Merge results: ưu tiên owners hiện có; append thêm kết quả tìm kiếm không trùng
+  const baseFiltered = owners.filter(owner => 
     owner.ownerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     owner.ownerEmail?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const extraFromSearch = searchResults.filter(r => !owners.some(o => o.ownerId === r.ownerId));
+  const filteredOwners = [...baseFiltered, ...extraFromSearch];
+
+  // Tìm owner theo query (debounce)
+  useEffect(() => {
+    if (!searchQuery) { setSearchResults([]); return; }
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const results = await searchOwnersForStaff(searchQuery);
+        setSearchResults(Array.isArray(results) ? results : []);
+      } catch (e) {
+        console.warn("Search owners failed:", e.message);
+      }
+    }, 300);
+    return () => searchTimeoutRef.current && clearTimeout(searchTimeoutRef.current);
+  }, [searchQuery]);
+
+  async function startConversationIfNeeded(owner) {
+    if (owner.conversationId) {
+      setSelectedOwner(owner);
+      return;
+    }
+    try {
+      const resp = await startConversationWithOwnerForStaff(owner.ownerId);
+      const newConversationId = resp.conversationId;
+      // Optimistic: thêm vào sidebar
+      setOwners(prev => {
+        const exists = prev.some(o => o.ownerId === owner.ownerId);
+        const item = {
+          ...owner,
+          conversationId: newConversationId,
+          lastMessageText: null,
+          lastMessageTime: new Date().toISOString(),
+        };
+        return exists ? prev.map(o => o.ownerId === owner.ownerId ? item : o) : [item, ...prev];
+      });
+      // Join và chọn
+      chatWebSocket.joinConversation(newConversationId, [currentUserId]);
+      setSelectedOwner({ ...owner, conversationId: newConversationId });
+    } catch (e) {
+      toast.error(e.message || "Không thể khởi tạo cuộc trò chuyện");
+    }
+  }
 
   if (loading) {
     return (
@@ -322,10 +529,10 @@ export default function StaffSupportChat() {
               {searchQuery ? "Không tìm thấy owner" : "Chưa có owner nào"}
             </div>
           ) : (
-            filteredOwners.filter(owner => owner.conversationId).map((owner) => (
+            filteredOwners.map((owner) => (
               <div
                 key={owner.ownerId}
-                onClick={() => setSelectedOwner(owner)}
+                onClick={() => startConversationIfNeeded(owner)}
                 className={`flex items-start p-4 cursor-pointer hover:bg-slate-800 border-b border-slate-800 transition-colors flex-shrink-0 ${
                   selectedOwner?.ownerId === owner.ownerId ? "bg-slate-800" : ""
                 }`}
@@ -371,8 +578,12 @@ export default function StaffSupportChat() {
                       )}
                     </>
                   ) : (
-                    <div className="text-sm text-gray-500 italic mt-1">
-                      Chưa có tin nhắn nào
+                    <div className="text-sm mt-1">
+                      {owner.conversationId ? (
+                        <span className="text-gray-500 italic">Chưa có tin nhắn nào</span>
+                      ) : (
+                        <span className="text-orange-400">Nhấp để bắt đầu trò chuyện</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -431,7 +642,14 @@ export default function StaffSupportChat() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950 scrollbar-hide scroll-smooth">
-          {messages.length === 0 ? (
+          {loadingChatHistory ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-gray-400">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p>Đang tải lịch sử chat...</p>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center text-gray-400">
                   <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

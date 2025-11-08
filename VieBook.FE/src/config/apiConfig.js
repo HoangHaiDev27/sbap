@@ -49,6 +49,21 @@ export const API_ENDPOINTS = {
     VERIFY: `${API_BASE_URL}/api/webhook/verify-payment`,
   },
 
+  // Payment Request endpoints
+  PAYMENT_REQUESTS: {
+    BASE: `${API_BASE_URL}/api/paymentrequest`,
+    CREATE: `${API_BASE_URL}/api/paymentrequest`,
+    USER: `${API_BASE_URL}/api/paymentrequest/user`,
+    ALL: `${API_BASE_URL}/api/paymentrequest/all`, // For staff
+  },
+
+  // VietQR endpoints
+  VIETQR: {
+    BASE: `${API_BASE_URL}/api/vietqr`,
+    BANKS: `${API_BASE_URL}/api/vietqr/banks`,
+    GENERATE: `${API_BASE_URL}/api/vietqr/generate`,
+  },
+
   // OpenAI endpoints
   OPENAI: {
     CHECK_SPELLING: `${API_BASE_URL}/api/openai/check-spelling`,
@@ -73,6 +88,8 @@ export const API_ENDPOINTS = {
     START_SUPPORT_CHAT: `${API_BASE_URL}/api/chat/start-support-chat`,
     STAFF: {
       GET_OWNERS: `${API_BASE_URL}/api/staff/staffchat/owners`,
+        SEARCH_OWNERS: `${API_BASE_URL}/api/staff/staffchat/owners/search`,
+        START_WITH_OWNER: (ownerId) => `${API_BASE_URL}/api/staff/staffchat/owners/${ownerId}/start`,
       GET_OWNER_MESSAGES: `${API_BASE_URL}/api/staff/staffchat/owners`,
       SEND_MESSAGE: `${API_BASE_URL}/api/staff/staffchat/messages`,
     },
@@ -156,6 +173,7 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/detail/${bookId}`,
     GET_ALL: `${API_BASE_URL}/api/books`,
     CREATE: `${API_BASE_URL}/api/books`,
+    CREATE_WITH_SIGNATURE: `${API_BASE_URL}/api/books/create-with-signature`,
     UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     UPDATE_COMPLETION_STATUS: (bookId) => `${API_BASE_URL}/api/books/${bookId}/completion-status`,
@@ -174,6 +192,7 @@ export const API_ENDPOINTS = {
     UPDATE: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}`,
     DELETE: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}`,
     UPLOAD_FILE: `${API_BASE_URL}/api/upload/uploadChapterFile`,
+    INCREMENT_VIEW: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}/increment-view`,
   },
 
   AUDIO_CONVERSION: {
@@ -243,6 +262,13 @@ export const API_ENDPOINTS = {
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
     UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`,
+    STATISTICS: (from, to) => {
+      let url = `${API_BASE_URL}/api/admin/statistics`;
+      if (from && to) {
+        url += `?fromDate=${from}&toDate=${to}`;
+      }
+      return url;
+    },    
   },
   BOOKAPPROVAL: {
     GET_ALL: `${API_BASE_URL}/api/BookApproval`,

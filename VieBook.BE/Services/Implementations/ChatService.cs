@@ -7,6 +7,7 @@ using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
 using Services.Interfaces;
+using System.Collections.Concurrent;
 
 namespace Services.Implementations;
 
@@ -14,6 +15,9 @@ public class ChatService : IChatService
 {
     private readonly IChatRepository _chatRepository;
     private readonly IUserRepository _userRepository;
+
+    // Lock theo owner để tránh tạo trùng group conversation (race condition)
+    private static readonly ConcurrentDictionary<int, object> _ownerGroupLocks = new();
 
     public ChatService(
         IChatRepository chatRepository, 
@@ -166,23 +170,32 @@ public class ChatService : IChatService
         // Tìm conversation đã có với owner
         var ownerId = userIds.FirstOrDefault(id => roleHints.GetValueOrDefault(id) == "owner");
         if (ownerId == 0) throw new ArgumentException("Must have at least one owner");
-        
-        var existingConversations = await _chatRepository.GetConversationsWithOwnerAsync(ownerId);
-        
-        // Tìm conversation có đúng số lượng participants (owner + tất cả staff)
-        var targetConversation = existingConversations.FirstOrDefault(c => 
-            c.ChatParticipants.Count == userIds.Count &&
-            userIds.All(id => c.ChatParticipants.Any(p => p.UserId == id)));
-        
-        if (targetConversation != null)
-        {
-            Console.WriteLine($"Found existing group conversation: {targetConversation.ConversationId}");
-            return targetConversation.ConversationId;
-        }
 
-        Console.WriteLine($"Creating new group conversation with {userIds.Count} participants");
-        var newConversation = await _chatRepository.CreateConversationAsync(userIds, roleHints);
-        return newConversation.ConversationId;
+        // Dùng lock theo owner để đảm bảo không tạo trùng do race giữa nhiều request
+        var lockObj = _ownerGroupLocks.GetOrAdd(ownerId, _ => new object());
+        lock (lockObj)
+        {
+            // Re-check tồn tại sau khi vào lock
+            var existingConversations = _chatRepository
+                .GetConversationsWithOwnerAsync(ownerId)
+                .GetAwaiter().GetResult();
+
+            var targetConversation = existingConversations.FirstOrDefault(c =>
+                c.ChatParticipants.Count == userIds.Count &&
+                userIds.All(id => c.ChatParticipants.Any(p => p.UserId == id)));
+
+            if (targetConversation != null)
+            {
+                Console.WriteLine($"Found existing group conversation (locked): {targetConversation.ConversationId}");
+                return targetConversation.ConversationId;
+            }
+
+            Console.WriteLine($"Creating new group conversation with {userIds.Count} participants (locked)");
+            var newConversation = _chatRepository
+                .CreateConversationAsync(userIds, roleHints)
+                .GetAwaiter().GetResult();
+            return newConversation.ConversationId;
+        }
     }
 
     public async Task<List<OwnerChatItemDTO>> GetOwnerListForStaffAsync()
@@ -230,6 +243,12 @@ public class ChatService : IChatService
         return await _chatRepository.GetConversationsWithOwnerAsync(ownerId);
     }
 
+    public async Task<bool> ConversationHasMessages(long conversationId)
+    {
+        var msgs = await _chatRepository.GetMessagesAsync(conversationId, 1, 1);
+        return msgs != null && msgs.Count > 0;
+    }
+
     public async Task<ChatHistoryResponse> GetChatHistoryForStaffAsync(int staffId, int ownerId, int page = 1, int pageSize = 50)
     {
         Console.WriteLine($"🔍 Staff {staffId} requesting chat with Owner {ownerId}");
@@ -239,11 +258,20 @@ public class ChatService : IChatService
             
         Console.WriteLine($"📋 Found {conversations.Count} conversations with owner {ownerId}");
         
-        // Tìm conversation có owner và staff này (group chat)
-        var conversation = conversations.FirstOrDefault(c => 
-            c.ChatParticipants.Any(p => p.UserId == ownerId) &&
-            c.ChatParticipants.Any(p => p.UserId == staffId) &&
-            c.ChatParticipants.Any(p => p.User.Roles.Any(r => r.RoleName.ToLower() == "staff")));
+        // Lọc các conversation có owner và staff này (group chat)
+        var candidateConversations = conversations
+            .Where(c =>
+                c.ChatParticipants.Any(p => p.UserId == ownerId) &&
+                c.ChatParticipants.Any(p => p.UserId == staffId) &&
+                c.ChatParticipants.Any(p => p.User.Roles.Any(r => r.RoleName.ToLower() == "staff")))
+            .ToList();
+
+        // Chọn conversation mới nhất theo thời điểm tin nhắn cuối hoặc ngày tạo
+        var conversation = candidateConversations
+            .OrderByDescending(c => c.ChatMessages.Any()
+                ? c.ChatMessages.Max(m => m.SentAt)
+                : c.CreatedAt)
+            .FirstOrDefault();
         
         Console.WriteLine($"📋 Found conversation: {conversation?.ConversationId ?? 0}");
         
