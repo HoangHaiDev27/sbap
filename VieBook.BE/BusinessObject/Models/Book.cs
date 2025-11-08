@@ -26,10 +26,15 @@ public partial class Book
 
     public DateTime? UpdatedAt { get; set; }
     public string? Author { get; set; }
-    public string? UploaderType { get; set; }  
-    public string? UploadStatus { get; set; }     
+    public string? UploaderType { get; set; }
+    public string? UploadStatus { get; set; }
     public string? CompletionStatus { get; set; }
     public string? CertificateUrl { get; set; }  // Link giấy chứng nhận (dành cho Seller)
+
+    // Confirmation signature fields (Save with Proof)
+    public string? ConfirmationSignaturePath { get; set; }  // Đường dẫn file chữ ký (ví dụ: /signatures/abc-123.png)
+    public string? ConfirmationIpAddress { get; set; }       // IP address tại thời điểm ký
+    public DateTime? ConfirmationTimestamp { get; set; }    // Thời gian ký
 
     public virtual ICollection<BookApproval> BookApprovals { get; set; } = new List<BookApproval>();
 

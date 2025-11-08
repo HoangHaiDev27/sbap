@@ -111,6 +111,7 @@ builder.Services.AddScoped<ChatbaseDAO>();
 builder.Services.AddScoped<TransactionDAO>();
 builder.Services.AddScoped<OwnerDashboardDAO>();
 builder.Services.AddScoped<StaffDashboardDAO>();
+builder.Services.AddScoped<PaymentRequestDAO>();
 
 
 
@@ -142,6 +143,7 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IOwnerDashboardRepository, OwnerDashboardRepository>();
 builder.Services.AddScoped<IStaffDashboardRepository, StaffDashboardRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<IPaymentRequestRepository, PaymentRequestRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -179,9 +181,12 @@ builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IOwnerDashboardService, OwnerDashboardService>();
 builder.Services.AddScoped<IStaffDashboardService, StaffDashboardService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IPaymentRequestService, PaymentRequestService>();
 builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
 builder.Services.AddHttpClient<IChatbaseService, ChatbaseService>();
 builder.Services.AddHttpClient<ChatbaseService>();
+builder.Services.AddHttpClient<IVietQrService, VietQrService>();
+builder.Services.AddScoped<IVietQrService, VietQrService>();
 
 
 //Add OpenAI service

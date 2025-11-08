@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Services.Implementations;
 using Services.Interfaces;
 using Services.Interfaces.Staff;
+using Microsoft.AspNetCore.Authorization;
+using VieBook.BE.Helpers;
+using System.Linq;
+using System.IO;
 
 namespace VieBook.BE.Controllers
 {
@@ -17,12 +21,18 @@ namespace VieBook.BE.Controllers
         private readonly IBookService _bookService;
         private readonly IMapper _mapper;
         private readonly IBookApprovalService _bookApprovalService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public BooksController(IBookService bookService, IMapper mapper, IBookApprovalService bookApprovalService)
+        public BooksController(
+            IBookService bookService,
+            IMapper mapper,
+            IBookApprovalService bookApprovalService,
+            IWebHostEnvironment webHostEnvironment)
         {
             _bookService = bookService;
             _mapper = mapper;
             _bookApprovalService = bookApprovalService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet("{id}")]
@@ -92,6 +102,96 @@ namespace VieBook.BE.Controllers
             // Không tự động tạo khi tạo sách
 
             return Ok(new { bookId = book.BookId });
+        }
+
+        // POST: api/books/create-with-signature
+        // Tạo sách mới cùng với chữ ký xác nhận (Save with Proof)
+        [Authorize]
+        [HttpPost("create-with-signature")]
+        public async Task<ActionResult> CreateBookWithSignature([FromBody] CreateBookWithSignatureDto dto)
+        {
+            try
+            {
+                // Lấy UserId từ JWT token
+                var userId = UserHelper.GetCurrentUserId(HttpContext);
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại." });
+                }
+
+                // Validate ISBN nếu có
+                if (!string.IsNullOrWhiteSpace(dto.Isbn))
+                {
+                    var exists = await _bookService.IsIsbnExistsAsync(dto.Isbn);
+                    if (exists)
+                    {
+                        return Conflict("ISBN đã tồn tại");
+                    }
+                }
+
+                // Validate signature
+                if (string.IsNullOrWhiteSpace(dto.SignatureImageBase64))
+                {
+                    return BadRequest(new { message = "Chữ ký là bắt buộc" });
+                }
+
+                // Lấy IP Address
+                string? ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                // Nếu có proxy/load balancer, thử lấy từ header
+                if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                {
+                    ipAddress = Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0]?.Trim();
+                }
+
+                // Lưu chữ ký vào file
+                string signaturePath;
+                try
+                {
+                    var webRootPath = _webHostEnvironment.WebRootPath
+                        ?? Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+                    signaturePath = SignatureHelper.SaveSignatureFromBase64(dto.SignatureImageBase64, webRootPath);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { message = $"Lỗi khi lưu chữ ký: {ex.Message}" });
+                }
+
+                // Tạo Book object
+                var book = new Book
+                {
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    CoverUrl = dto.CoverUrl,
+                    Isbn = dto.Isbn?.Trim() ?? null,
+                    Language = dto.Language,
+                    Author = dto.Author,
+                    OwnerId = dto.OwnerId,
+                    Status = dto.Status,
+                    UploaderType = dto.UploaderType,
+                    UploadStatus = dto.UploadStatus,
+                    CompletionStatus = dto.CompletionStatus,
+                    CertificateUrl = dto.CertificateUrl,
+                    CreatedAt = DateTime.UtcNow,
+                    // Lưu thông tin bằng chứng
+                    ConfirmationSignaturePath = signaturePath,
+                    ConfirmationIpAddress = ipAddress,
+                    ConfirmationTimestamp = DateTime.UtcNow
+                };
+
+                await _bookService.AddAsync(book);
+
+                // Thêm categories
+                if (dto.CategoryIds != null && dto.CategoryIds.Any())
+                {
+                    await _bookService.AddCategoriesToBookAsync(book.BookId, dto.CategoryIds);
+                }
+
+                return Ok(new { bookId = book.BookId });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Lỗi khi tạo sách: {ex.Message}" });
+            }
         }
 
 

@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { upsertMyProfile, becomeOwner } from "../../api/userApi";
 import { sendOtpToPhone } from "../../lib/phoneAuth";
+import { getSupportedBanks } from "../../api/vietQrApi";
 
 export default function OwnerApplicationStepper({ initialProfile, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
+  const [banks, setBanks] = useState([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
 
   const [form, setForm] = useState({
     fullName: initialProfile?.fullName || "",
@@ -21,6 +24,35 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
   });
 
   const recaptchaId = useMemo(() => `recaptcha-container-${Math.random().toString(36).slice(2)}`, []);
+
+  // Load banks when step 3 is reached
+  useEffect(() => {
+    if (step === 3 && banks.length === 0) {
+      const loadBanks = async () => {
+        try {
+          setLoadingBanks(true);
+          const bankList = await getSupportedBanks();
+          setBanks(bankList);
+          // Auto-select bank if form.bankName matches a bank in the list
+          if (form.bankName && bankList.length > 0) {
+            const matchedBank = bankList.find(
+              (bank) => bank.name?.toLowerCase() === form.bankName?.toLowerCase() ||
+                        bank.shortName?.toLowerCase() === form.bankName?.toLowerCase()
+            );
+            if (matchedBank) {
+              setForm(prev => ({ ...prev, bankName: matchedBank.name || matchedBank.shortName || prev.bankName }));
+            }
+          }
+        } catch (err) {
+          console.error("Error loading banks:", err);
+        } finally {
+          setLoadingBanks(false);
+        }
+      };
+      loadBanks();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const steps = [
     { id: 1, title: "Thông tin cơ bản" },
@@ -183,7 +215,24 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
               <input value={form.bankNumber} onChange={e=>setField('bankNumber', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
             </Field>
             <Field label="Tên ngân hàng">
-              <input value={form.bankName} onChange={e=>setField('bankName', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+              {loadingBanks ? (
+                <div className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-400 text-sm">
+                  Đang tải danh sách ngân hàng...
+                </div>
+              ) : (
+                <select
+                  value={form.bankName}
+                  onChange={(e) => setField('bankName', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white"
+                >
+                  <option value="">-- Chọn ngân hàng --</option>
+                  {banks.map((bank) => (
+                    <option key={bank.acqId} value={bank.name || bank.shortName}>
+                      {bank.name || bank.shortName}
+                    </option>
+                  ))}
+                </select>
+              )}
             </Field>
           </div>
         )}

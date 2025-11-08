@@ -1,4 +1,5 @@
-﻿using BusinessObject.Models;
+﻿using BusinessObject.Dtos;
+using BusinessObject.Models;
 using DataAccess.DAO.Admin;
 using Repositories.Interfaces.Admin;
 using System;
@@ -23,5 +24,7 @@ namespace Repositories.Implementations.Admin
 
         public async Task<User> UpdateAdminAsync(User user)
             => await _dao.UpdateAdminAsync(user);
+        public async Task<AdminStatisticDTO> GetStatisticsAsync(DateTime? fromDate = null, DateTime? toDate = null)
+            => await _dao.GetStatisticsAsync(fromDate, toDate);
     }
 }

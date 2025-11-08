@@ -20,7 +20,6 @@ import {
   checkAllChaptersActive,
   checkBookHasDraftChapters,
   updateDraftChaptersToInActive,
-  updateBookStatus,
 } from "../../api/ownerBookApi";
 
 export default function OwnerChapters() {
@@ -227,27 +226,23 @@ export default function OwnerChapters() {
           return;
         }
 
-        // Cập nhật CompletionStatus = Completed và Status = Active
+        // Cập nhật CompletionStatus = Completed
         await updateCompletionStatus(bookId, "Completed", "Full");
-        await updateBookStatus(bookId, "Active");
 
         setBookInfo((prev) => ({
           ...prev,
           completionStatus: "Completed",
           uploadStatus: "Full",
-          status: "Active",
         }));
       } else {
         // Trường hợp 1 & 3: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Incomplete, CompletionStatus = Ongoing
-        // Cập nhật UploadStatus = Full và CompletionStatus = Completed và Status = Active
+        // Cập nhật UploadStatus = Full và CompletionStatus = Completed
         await updateCompletionStatus(bookId, "Completed", "Full");
-        await updateBookStatus(bookId, "Active");
 
         setBookInfo((prev) => ({
           ...prev,
           completionStatus: "Completed",
           uploadStatus: "Full",
-          status: "Active",
         }));
       }
 
@@ -345,27 +340,23 @@ export default function OwnerChapters() {
           return;
         }
 
-        // Cập nhật CompletionStatus = Completed và Status = Active
+        // Cập nhật CompletionStatus = Completed
         await updateCompletionStatus(bookId, "Completed", "Full");
-        await updateBookStatus(bookId, "Active");
 
         setBookInfo((prev) => ({
           ...prev,
           completionStatus: "Completed",
           uploadStatus: "Full",
-          status: "Active",
         }));
       } else {
         // Trường hợp 1 & 3: UploaderType = Owner/Seller, Status = PendingChapters, UploadStatus = Incomplete, CompletionStatus = Ongoing
-        // Cập nhật UploadStatus = Full và CompletionStatus = Completed và Status = Active
+        // Cập nhật UploadStatus = Full và CompletionStatus = Completed
         await updateCompletionStatus(bookId, "Completed", "Full");
-        await updateBookStatus(bookId, "Active");
 
         setBookInfo((prev) => ({
           ...prev,
           completionStatus: "Completed",
           uploadStatus: "Full",
-          status: "Active",
         }));
       }
 
