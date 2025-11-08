@@ -1,130 +1,389 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  DashboardHeader,
+  LoadingSpinner,
+  StatsGrid,
+  PendingBooksSection,
+  RecentTransactionsSection,
+  PendingWithdrawalsSection,
+  RecentFeedbacksSection,
+  TopRankingsSection,
+} from '../../components/staff/dashboard';
+import STAFF_DASHBOARD_API from '../../api/staffDashboardApi';
+import { transactionApi } from '../../api/transactionApi';
 
 export default function StaffPage() {
-  const statsData = [
-    { title: 'Tổng số sách', value: '1,234', change: '+12%', icon: 'ri-book-line', color: 'bg-blue-500' },
-    { title: 'Book Owner', value: '89', change: '+5%', icon: 'ri-user-star-line', color: 'bg-green-500' },
-    { title: 'Customer', value: '2,456', change: '+18%', icon: 'ri-user-line', color: 'bg-purple-500' },
-    { title: 'Sách chờ duyệt', value: '23', change: '+3', icon: 'ri-file-check-line', color: 'bg-orange-500' },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [statsData, setStatsData] = useState([
+    { title: 'Tổng số sách', value: '0', change: '', icon: 'ri-book-line', color: 'bg-blue-500' },
+    { title: 'Chủ sách', value: '0', change: '', icon: 'ri-user-star-line', color: 'bg-green-500' },
+    { title: 'Khách hàng', value: '0', change: '', icon: 'ri-user-line', color: 'bg-purple-500' },
+    { title: 'Sách chờ duyệt', value: '0', change: '', icon: 'ri-file-check-line', color: 'bg-orange-500' },
+    { title: 'Yêu cầu rút tiền', value: '0', change: 'Chờ xử lý', icon: 'ri-bank-line', color: 'bg-yellow-500' },
+    { title: 'Giao dịch nạp xu', value: '0', change: 'Hôm nay', icon: 'ri-wallet-3-line', color: 'bg-indigo-500' },
+    { title: 'Đánh giá mới', value: '0', change: '7 ngày qua', icon: 'ri-star-line', color: 'bg-pink-500' },
+    { title: 'Gói đăng ký', value: '0', change: 'Đang active', icon: 'ri-vip-crown-line', color: 'bg-amber-500' },
+  ]);
 
-  const pendingBooks = [
-    { id: 1, title: 'Sapiens: Lược sử loài người', author: 'Yuval Noah Harari', owner: 'Nguyễn Văn A', date: '2024-01-15', category: 'Khoa học' },
-    { id: 2, title: 'Đắc nhân tâm', author: 'Dale Carnegie', owner: 'Trần Thị B', date: '2024-01-14', category: 'Kỹ năng sống' },
-    { id: 3, title: 'Atomic Habits', author: 'James Clear', owner: 'Lê Văn C', date: '2024-01-13', category: 'Phát triển bản thân' },
-  ];
+  const [pendingBooks, setPendingBooks] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
+  const [recentFeedbacks, setRecentFeedbacks] = useState([]);
+  const [topBooks, setTopBooks] = useState([]);
+  const [topOwners, setTopOwners] = useState([]);
 
-  const recentTransactions = [
-    { id: 1, user: 'Nguyễn Minh D', type: 'Mua sách', amount: '99,000đ', status: 'Thành công', time: '10:30' },
-    { id: 2, user: 'Phạm Thị E', type: 'Nâng cấp VIP', amount: '299,000đ', status: 'Thành công', time: '09:45' },
-    { id: 3, user: 'Hoàng Văn F', type: 'Mua gói', amount: '199,000đ', status: 'Đang xử lý', time: '09:15' },
-  ];
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load dashboard stats and rankings
+      const dashboardResponse = await STAFF_DASHBOARD_API.getDashboard();
+      const dashboard = dashboardResponse.data;
+
+      // Update stats
+      if (dashboard.stats) {
+        const stats = dashboard.stats;
+        setStatsData([
+          { title: 'Tổng số sách', value: stats.totalBooks?.toString() || '0', change: '', icon: 'ri-book-line', color: 'bg-blue-500' },
+          { title: 'Chủ sách', value: stats.bookOwners?.toString() || '0', change: '', icon: 'ri-user-star-line', color: 'bg-green-500' },
+          { title: 'Khách hàng', value: stats.customers?.toString() || '0', change: '', icon: 'ri-user-line', color: 'bg-purple-500' },
+          { title: 'Sách chờ duyệt', value: stats.pendingBooks?.toString() || '0', change: '', icon: 'ri-file-check-line', color: 'bg-orange-500' },
+          { title: 'Yêu cầu rút tiền', value: stats.pendingWithdrawals?.toString() || '0', change: 'Chờ xử lý', icon: 'ri-bank-line', color: 'bg-yellow-500' },
+          { title: 'Giao dịch nạp xu', value: stats.todayWalletTransactions?.toString() || '0', change: 'Hôm nay', icon: 'ri-wallet-3-line', color: 'bg-indigo-500' },
+          { title: 'Đánh giá mới', value: stats.newReviewsLast7Days?.toString() || '0', change: '7 ngày qua', icon: 'ri-star-line', color: 'bg-pink-500' },
+          { title: 'Gói đăng ký', value: stats.activeSubscriptions?.toString() || '0', change: 'Đang active', icon: 'ri-vip-crown-line', color: 'bg-amber-500' },
+        ]);
+      }
+
+      // Update top books
+      if (dashboard.topBooks) {
+        const formattedBooks = dashboard.topBooks.map(book => ({
+          id: book.bookId,
+          title: book.title,
+          author: book.author,
+          salesCount: book.salesCount,
+          revenue: book.revenue?.toLocaleString('vi-VN') || '0'
+        }));
+        setTopBooks(formattedBooks);
+      }
+
+      // Update top owners
+      if (dashboard.topOwners) {
+        const formattedOwners = dashboard.topOwners.map(owner => ({
+          id: owner.ownerId,
+          name: owner.name,
+          email: owner.email,
+          bookCount: owner.bookCount,
+          revenue: owner.revenue?.toLocaleString('vi-VN') || '0'
+        }));
+        setTopOwners(formattedOwners);
+      }
+
+      // Load pending books
+      try {
+        const pendingBooksResponse = await STAFF_DASHBOARD_API.getPendingBooks(5);
+        const pendingBooksList = pendingBooksResponse.data.map(book => ({
+          id: book.bookId,
+          title: book.title,
+          author: book.author || 'N/A',
+          owner: book.ownerName || 'N/A',
+          date: new Date(book.createdAt).toLocaleDateString('vi-VN'),
+          category: book.categoryName || 'Khác'
+        }));
+        setPendingBooks(pendingBooksList);
+      } catch (err) {
+        console.error('Error loading pending books:', err);
+      }
+
+      // Load recent transactions
+      try {
+        const transactionsResponse = await transactionApi.getTransactions({
+          typeFilter: 'all',
+          statusFilter: 'all',
+          dateFilter: 'all',
+          page: 1,
+          pageSize: 4
+        });
+        
+        // Handle both camelCase and PascalCase response formats
+        const transactions = transactionsResponse?.transactions || transactionsResponse?.Transactions || [];
+        
+        if (transactions.length > 0) {
+          // Chỉ lấy 4 giao dịch gần nhất
+          const formattedTransactions = transactions
+            .slice(0, 4)
+            .map(transaction => ({
+              id: transaction.id || transaction.Id || '',
+              user: transaction.userName || transaction.UserName || 'N/A',
+              type: formatTransactionType(transaction.type || transaction.Type || ''),
+              time: formatTransactionTime(transaction.date || transaction.Date, transaction.time || transaction.Time),
+              amount: formatTransactionAmount(transaction.amountCoin || transaction.AmountCoin, transaction.amountMoney || transaction.AmountMoney),
+              status: formatTransactionStatus(transaction.status || transaction.Status || '')
+            }));
+          setRecentTransactions(formattedTransactions);
+        }
+      } catch (err) {
+        console.error('Error loading recent transactions:', err);
+      }
+
+      // Load pending withdrawals
+      try {
+        const withdrawalsResponse = await transactionApi.getTransactions({
+          typeFilter: 'withdrawal_request',
+          statusFilter: 'Pending',
+          dateFilter: 'all',
+          page: 1,
+          pageSize: 4
+        });
+        
+        // Handle both camelCase and PascalCase response formats
+        const withdrawals = withdrawalsResponse?.transactions || withdrawalsResponse?.Transactions || [];
+        
+        if (withdrawals.length > 0) {
+          // Chỉ lấy 4 yêu cầu gần nhất
+          const formattedWithdrawals = withdrawals
+            .slice(0, 4)
+            .map(withdrawal => {
+              // Extract PaymentRequestId from transaction id (format: "PR{id}")
+              const paymentRequestId = withdrawal.id?.startsWith('PR') 
+                ? withdrawal.id.substring(2) 
+                : withdrawal.Id?.startsWith('PR')
+                ? withdrawal.Id.substring(2)
+                : withdrawal.id || withdrawal.Id || '';
+              
+              return {
+                id: paymentRequestId,
+                owner: withdrawal.userName || withdrawal.UserName || 'N/A',
+                amount: formatWithdrawalAmount(withdrawal.amountCoin || withdrawal.AmountCoin),
+                date: formatWithdrawalDate(withdrawal.date || withdrawal.Date, withdrawal.time || withdrawal.Time)
+              };
+            });
+          setPendingWithdrawals(formattedWithdrawals);
+        }
+      } catch (err) {
+        console.error('Error loading pending withdrawals:', err);
+      }
+
+      // Load recent feedbacks
+      try {
+        const feedbacksResponse = await STAFF_DASHBOARD_API.getRecentFeedbacks(5);
+        
+        if (feedbacksResponse && feedbacksResponse.data) {
+          const formattedFeedbacks = feedbacksResponse.data
+            .slice(0, 5)
+            .map(feedback => ({
+              id: feedback.feedbackId || feedback.FeedbackId || '',
+              user: feedback.userName || feedback.UserName || 'N/A',
+              type: formatFeedbackType(feedback.targetType || feedback.TargetType || ''),
+              date: formatFeedbackDate(feedback.createdAt || feedback.CreatedAt),
+              content: feedback.content || feedback.Content || ''
+            }));
+          setRecentFeedbacks(formattedFeedbacks);
+        }
+      } catch (err) {
+        console.error('Error loading recent feedbacks:', err);
+      }
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper functions for formatting transaction data
+  const formatTransactionType = (type) => {
+    const typeMap = {
+      'wallet_topup': 'Nạp xu',
+      'chapter_purchase': 'Mua chương',
+      'withdrawal_request': 'Yêu cầu rút tiền',
+      'subscription_purchase': 'Mua gói đăng ký'
+    };
+    return typeMap[type] || type;
+  };
+
+  const formatTransactionStatus = (status) => {
+    const statusMap = {
+      'Succeeded': 'Thành công',
+      'Pending': 'Chờ xử lý',
+      'Failed': 'Thất bại',
+      'Cancelled': 'Đã hủy',
+      'Approved': 'Đã duyệt',
+      'Rejected': 'Đã từ chối'
+    };
+    return statusMap[status] || status;
+  };
+
+  const formatTransactionAmount = (amountCoin, amountMoney) => {
+    if (amountCoin && amountCoin > 0) {
+      return `${amountCoin.toLocaleString('vi-VN')} xu`;
+    }
+    if (amountMoney && amountMoney > 0) {
+      return `${amountMoney.toLocaleString('vi-VN')} VNĐ`;
+    }
+    return '0';
+  };
+
+  const formatTransactionTime = (date, time) => {
+    try {
+      // Combine date and time if both are provided
+      if (date && time) {
+        // Parse date in format yyyy-MM-dd and time in format HH:mm:ss
+        const dateTimeStr = `${date} ${time}`;
+        const dateTime = new Date(dateTimeStr.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1/$2/$3'));
+        
+        // Check if date is valid
+        if (isNaN(dateTime.getTime())) {
+          return date || time || 'N/A';
+        }
+        
+        const now = new Date();
+        const diffMs = now - dateTime;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Vừa xong';
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        if (diffDays < 7) return `${diffDays} ngày trước`;
+        
+        return dateTime.toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+      // If only date is provided
+      if (date) {
+        const dateOnly = new Date(date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1/$2/$3'));
+        if (!isNaN(dateOnly.getTime())) {
+          return dateOnly.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        }
+      }
+      return date || time || 'N/A';
+    } catch (error) {
+      return date || time || 'N/A';
+    }
+  };
+
+  // Helper functions for formatting withdrawal data
+  const formatWithdrawalAmount = (amountCoin) => {
+    if (amountCoin && amountCoin > 0) {
+      return `${amountCoin.toLocaleString('vi-VN')} xu`;
+    }
+    return '0 xu';
+  };
+
+  const formatWithdrawalDate = (date, time) => {
+    try {
+      if (date && time) {
+        const dateTimeStr = `${date} ${time}`;
+        const dateTime = new Date(dateTimeStr.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1/$2/$3'));
+        
+        if (!isNaN(dateTime.getTime())) {
+          return dateTime.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+      }
+      if (date) {
+        const dateOnly = new Date(date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1/$2/$3'));
+        if (!isNaN(dateOnly.getTime())) {
+          return dateOnly.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        }
+      }
+      return date || time || 'N/A';
+    } catch (error) {
+      return date || time || 'N/A';
+    }
+  };
+
+  // Helper functions for formatting feedback data
+  const formatFeedbackType = (targetType) => {
+    const typeMap = {
+      'Book': 'Báo cáo sách',
+      'Chapter': 'Báo cáo chương',
+      'User': 'Báo cáo người dùng',
+      'System': 'Phản hồi hệ thống'
+    };
+    return typeMap[targetType] || targetType || 'Khác';
+  };
+
+  const formatFeedbackDate = (dateString) => {
+    try {
+      if (!dateString) return 'N/A';
+      
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Vừa xong';
+      if (diffMins < 60) return `${diffMins} phút trước`;
+      if (diffHours < 24) return `${diffHours} giờ trước`;
+      if (diffDays < 7) return `${diffDays} ngày trước`;
+      
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return 'N/A';
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
       <main className="pt-24">
         <div className="p-6">
-          {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Tổng quan hệ thống</h2>
-            <p className="text-gray-600">Quản lý và theo dõi hoạt động của nền tảng</p>
+          <DashboardHeader
+            title="Tổng quan hệ thống"
+            description="Quản lý và theo dõi hoạt động của nền tảng"
+          />
+
+          <StatsGrid statsData={statsData} />
+
+          {/* Main Content Grid - 3 cột */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <PendingBooksSection pendingBooks={pendingBooks} />
+
+            <RecentTransactionsSection transactions={recentTransactions} />
+
+            <PendingWithdrawalsSection
+              withdrawals={pendingWithdrawals}
+            />
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {statsData.map((stat, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                    <p className="text-sm text-green-600 mt-1">{stat.change}</p>
-                  </div>
-                  <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                    <i className={`${stat.icon} text-white text-xl w-6 h-6 flex items-center justify-center`}></i>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TopRankingsSection topBooks={topBooks} topOwners={topOwners} />
 
-          {/* Pending books & recent transactions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Pending books */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Sách chờ duyệt</h3>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium cursor-pointer">
-                    Xem tất cả
-                  </button>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {pendingBooks.map((book) => (
-                    <div key={book.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{book.title}</h4>
-                        <p className="text-sm text-gray-600">Tác giả: {book.author}</p>
-                        <p className="text-sm text-gray-500">Chủ sách: {book.owner}</p>
-                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full mt-1">
-                          {book.category}
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 cursor-pointer whitespace-nowrap">
-                          Duyệt
-                        </button>
-                        <button className="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200 cursor-pointer whitespace-nowrap">
-                          Từ chối
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Recent transactions */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Giao dịch gần đây</h3>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium cursor-pointer">
-                    Xem tất cả
-                  </button>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{transaction.user}</h4>
-                        <p className="text-sm text-gray-600">{transaction.type}</p>
-                        <p className="text-xs text-gray-500">{transaction.time}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900">{transaction.amount}</p>
-                        <span
-                          className={`inline-block px-2 py-1 text-xs rounded-full ${
-                            transaction.status === 'Thành công'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {transaction.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <RecentFeedbacksSection feedbacks={recentFeedbacks} />
         </div>
       </main>
     </div>

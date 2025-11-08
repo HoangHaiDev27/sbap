@@ -109,6 +109,8 @@ builder.Services.AddScoped<ReadingStatsDAO>();
 builder.Services.AddScoped<SubscriptionDAO>();
 builder.Services.AddScoped<ChatbaseDAO>();
 builder.Services.AddScoped<TransactionDAO>();
+builder.Services.AddScoped<OwnerDashboardDAO>();
+builder.Services.AddScoped<StaffDashboardDAO>();
 
 
 
@@ -138,6 +140,7 @@ builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<IChatbaseRepository, ChatbaseRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IOwnerDashboardRepository, OwnerDashboardRepository>();
+builder.Services.AddScoped<IStaffDashboardRepository, StaffDashboardRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 
 //Add Service
@@ -174,6 +177,7 @@ builder.Services.AddScoped<IReminderSettingsRepository, ReminderSettingsReposito
 builder.Services.AddScoped<IReminderSettingsService, ReminderSettingsService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IOwnerDashboardService, OwnerDashboardService>();
+builder.Services.AddScoped<IStaffDashboardService, StaffDashboardService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
 builder.Services.AddHttpClient<IChatbaseService, ChatbaseService>();

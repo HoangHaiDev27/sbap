@@ -261,6 +261,16 @@ export const API_ENDPOINTS = {
     RECENT_ORDERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/recent-orders?limit=${limit}`,
     BEST_SELLERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/best-sellers?limit=${limit}`,
     DASHBOARD: `${API_BASE_URL}/api/OwnerDashboard/dashboard`
+  },
+
+  // Staff Dashboard endpoints
+  STAFF_DASHBOARD: {
+    STATS: `${API_BASE_URL}/api/StaffDashboard/stats`,
+    TOP_BOOKS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/top-books?limit=${limit}`,
+    TOP_OWNERS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/top-owners?limit=${limit}`,
+    PENDING_BOOKS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/pending-books?limit=${limit}`,
+    RECENT_FEEDBACKS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/recent-feedbacks?limit=${limit}`,
+    DASHBOARD: `${API_BASE_URL}/api/StaffDashboard/dashboard`
   }
 
 };
