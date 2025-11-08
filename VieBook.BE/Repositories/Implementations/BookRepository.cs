@@ -125,5 +125,15 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetActivePromotionForBook(bookId);
         }
+
+        public async Task<(List<Book> Books, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, string? statusFilter = null, int? categoryId = null)
+        {
+            return await _bookDao.GetAllForStaffPagedAsync(page, pageSize, searchTerm, statusFilter, categoryId);
+        }
+
+        public async Task<Dictionary<string, int>> GetStatsForStaffAsync(string? searchTerm = null, string? statusFilter = null, int? categoryId = null)
+        {
+            return await _bookDao.GetStatsForStaffAsync(searchTerm, statusFilter, categoryId);
+        }
     }
 }

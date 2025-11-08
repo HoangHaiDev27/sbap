@@ -38,5 +38,7 @@ namespace Repositories.Interfaces
         Task<bool> CheckBookHasDraftChaptersAsync(int bookId);
         Task UpdateDraftChaptersToInActiveAsync(int bookId);
         Task<Promotion?> GetActivePromotionForBook(int bookId);
+        Task<(List<Book> Books, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, string? statusFilter = null, int? categoryId = null);
+        Task<Dictionary<string, int>> GetStatsForStaffAsync(string? searchTerm = null, string? statusFilter = null, int? categoryId = null);
     }
 }
