@@ -8,6 +8,7 @@ import { useCurrentUser } from "../../hooks/useCurrentUser";
 export default function ReadingHistory() {
   const { isAuthenticated, isLoading: authLoading } = useCurrentUser();
   const [sortBy, setSortBy] = useState("recent");
+  const [timeFilter, setTimeFilter] = useState("all"); // "all", "today", "week", "month"
   const [readingHistory, setReadingHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,18 +21,19 @@ export default function ReadingHistory() {
     } else {
       setLoading(false);
     }
-  }, [sortBy, isAuthenticated]);
+  }, [sortBy, timeFilter, isAuthenticated]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [sortBy]);
+  }, [sortBy, timeFilter]);
 
   const loadReadingHistory = async () => {
     if (!isAuthenticated) return;
     
     try {
       setLoading(true);
-      const data = await getReadingHistory({});
+      // Chỉ lấy lịch sử đọc (Reading type)
+      const data = await getReadingHistory({ readingType: 'Reading' });
       setReadingHistory(data || []);
     } catch (error) {
       console.error('Error loading reading history:', error);
@@ -43,6 +45,32 @@ export default function ReadingHistory() {
 
   const getFilteredBooks = () => {
     let filtered = [...readingHistory];
+    
+    // Filter by time
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    
+    if (timeFilter === "today") {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.lastReadAt);
+        return itemDate >= today;
+      });
+    } else if (timeFilter === "week") {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.lastReadAt);
+        return itemDate >= weekAgo;
+      });
+    } else if (timeFilter === "month") {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.lastReadAt);
+        return itemDate >= monthAgo;
+      });
+    }
+    // "all" = không filter theo thời gian
     
     // Sort by selected option
     switch (sortBy) {
@@ -128,7 +156,17 @@ export default function ReadingHistory() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Lịch sử đọc sách</h2>
-        <div className="w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="all">Tất cả thời gian</option>
+            <option value="today">Hôm nay</option>
+            <option value="week">7 ngày qua</option>
+            <option value="month">30 ngày qua</option>
+          </select>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -197,17 +235,17 @@ export default function ReadingHistory() {
 
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span>{item.chapterTitle || "Không có chương"}</span>
-                      {item.audioPosition && (
-                        <span>{Math.floor(item.audioPosition / 60)}:{(item.audioPosition % 60).toString().padStart(2, '0')}</span>
-                      )}
+                      <span className="flex items-center gap-2">
+                        <i className="ri-book-open-line text-blue-400"></i>
+                        <span>{item.chapterTitle || "Không có chương"}</span>
+                      </span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
                     <div className="flex items-center space-x-3">
-                      <span>
-                        <i className="ri-time-line mr-1"></i>
+                      <span className="flex items-center gap-1">
+                        <i className="ri-time-line"></i>
                         {formatDate(item.lastReadAt)}
                       </span>
                     </div>
@@ -218,8 +256,9 @@ export default function ReadingHistory() {
               <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-700">
                 <Link
                   to={`/reader/${item.bookId}/chapter/${item.chapterId}`}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 py-2 rounded-lg text-white text-sm font-medium text-center"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 py-2 rounded-lg text-white text-sm font-medium text-center flex items-center justify-center gap-2"
                 >
+                  <i className="ri-book-open-line"></i>
                   Tiếp tục đọc
                 </Link>
               </div>

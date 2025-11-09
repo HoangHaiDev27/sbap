@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import AudioPlayerHeader from "./AudioPlayerHeader";
 import AudioPlayerContent from "./AudioPlayerContent";
 import AudioChapterList from "./AudioChapterList";
-import { saveReadingProgress } from "../../api/readingHistoryApi";
+import { saveReadingProgress, getCurrentReadingProgress } from "../../api/readingHistoryApi";
 import { API_ENDPOINTS } from "../../config/apiConfig";
 import { getUserId } from "../../api/authApi";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
@@ -32,6 +32,8 @@ export default function AudioPlayer({ bookId, chapterId }) {
   const [error, setError] = useState(null);
   const [purchasedAudioChapters, setPurchasedAudioChapters] = useState([]); // Lưu danh sách chương đã mua audio
   const [isOwner, setIsOwner] = useState(false); // Kiểm tra xem có phải owner không
+  const [hasLoadedSavedPosition, setHasLoadedSavedPosition] = useState(false); // Đánh dấu đã load vị trí đã lưu
+  const saveProgressTimeoutRef = useRef(null); // Ref cho debounce save progress
   
   // Audio ref
   const audioRef = useRef(null);
@@ -331,6 +333,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
     const wasPlaying = isPlaying;
     setCurrentChapter(index);
     setCurrentTime(0);
+    setHasLoadedSavedPosition(false); // Reset để load lại vị trí đã lưu cho chapter mới
     
     // The voice will be loaded by the useEffect that fetches chapter audios
     // Just update the chapter index, the rest will be handled automatically
@@ -368,6 +371,35 @@ export default function AudioPlayer({ bookId, chapterId }) {
 
     const handleLoadedMetadata = () => {
       setDuration(audio.duration);
+      
+      // Load lại vị trí đã lưu sau khi audio metadata đã load
+      if (!hasLoadedSavedPosition && bookId && chapters.length > 0) {
+        const loadSavedPosition = async () => {
+          try {
+            const currentChapterId = chapters[currentChapter]?.chapterId;
+            if (!currentChapterId) return;
+
+            const savedProgress = await getCurrentReadingProgress(
+              parseInt(bookId),
+              currentChapterId,
+              'Listening'
+            );
+            
+            if (savedProgress && savedProgress.audioPosition && savedProgress.audioPosition > 0) {
+              audio.currentTime = savedProgress.audioPosition;
+              setCurrentTime(savedProgress.audioPosition);
+              console.log("AudioPlayer - Loaded saved position from metadata:", savedProgress.audioPosition);
+            }
+            
+            setHasLoadedSavedPosition(true);
+          } catch (error) {
+            console.error("Error loading saved position from metadata:", error);
+            setHasLoadedSavedPosition(true);
+          }
+        };
+        
+        loadSavedPosition();
+      }
     };
 
     const handlePlay = () => {
@@ -405,17 +437,30 @@ export default function AudioPlayer({ bookId, chapterId }) {
     }
   }, [volume]);
 
-  // Lưu lịch sử nghe khi vào trang
+  // Reset hasLoadedSavedPosition khi chuyển chapter
   useEffect(() => {
+    setHasLoadedSavedPosition(false);
+  }, [currentChapter]);
+
+  // Lưu lịch sử nghe khi vào trang (sau khi đã load xong vị trí đã lưu)
+  useEffect(() => {
+    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
+    
+    // Clear timeout cũ nếu có
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+    }
+
     const saveListeningHistory = async () => {
-      if (!bookId || chapters.length === 0) return;
-      
       try {
+        const currentChapterId = chapters[currentChapter]?.chapterId;
+        if (!currentChapterId) return;
+
         const listeningData = {
           bookId: parseInt(bookId),
-          chapterId: chapters[currentChapter]?.id,
+          chapterId: currentChapterId,
           readingType: 'Listening',
-          audioPosition: currentTime
+          audioPosition: Math.floor(currentTime) // Lưu số nguyên (giây)
         };
         
         await saveReadingProgress(listeningData);
@@ -425,20 +470,38 @@ export default function AudioPlayer({ bookId, chapterId }) {
       }
     };
 
-    saveListeningHistory();
-  }, [bookId, currentChapter, chapters]);
+    // Debounce 1 giây để đảm bảo vị trí đã được load xong
+    saveProgressTimeoutRef.current = setTimeout(saveListeningHistory, 1000);
 
-  // Lưu lịch sử nghe khi thay đổi thời gian
+    return () => {
+      if (saveProgressTimeoutRef.current) {
+        clearTimeout(saveProgressTimeoutRef.current);
+      }
+    };
+  }, [bookId, currentChapter, chapters, hasLoadedSavedPosition, currentTime]);
+
+  // Lưu lịch sử nghe khi thay đổi thời gian (với debounce tốt hơn)
   useEffect(() => {
+    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
+    
+    // Clear timeout cũ nếu có
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+    }
+
+    // Chỉ lưu nếu currentTime > 5 giây (tránh lưu khi vừa load)
+    if (currentTime < 5) return;
+
     const saveProgress = async () => {
-      if (!bookId || currentTime === 0 || chapters.length === 0) return;
-      
       try {
+        const currentChapterId = chapters[currentChapter]?.chapterId;
+        if (!currentChapterId) return;
+
         const progressData = {
           bookId: parseInt(bookId),
-          chapterId: chapters[currentChapter]?.id,
+          chapterId: currentChapterId,
           readingType: 'Listening',
-          audioPosition: currentTime
+          audioPosition: Math.floor(currentTime) // Lưu số nguyên (giây)
         };
         
         await saveReadingProgress(progressData);
@@ -448,10 +511,15 @@ export default function AudioPlayer({ bookId, chapterId }) {
       }
     };
 
-    // Debounce để tránh gọi API quá nhiều
-    const timeoutId = setTimeout(saveProgress, 2000);
-    return () => clearTimeout(timeoutId);
-  }, [currentTime, bookId, currentChapter, chapters]);
+    // Debounce 3 giây để tránh gọi API quá nhiều khi user đang nghe
+    saveProgressTimeoutRef.current = setTimeout(saveProgress, 3000);
+    
+    return () => {
+      if (saveProgressTimeoutRef.current) {
+        clearTimeout(saveProgressTimeoutRef.current);
+      }
+    };
+  }, [currentTime, bookId, currentChapter, chapters, hasLoadedSavedPosition]);
 
   // Loading state
   if (loading) {
