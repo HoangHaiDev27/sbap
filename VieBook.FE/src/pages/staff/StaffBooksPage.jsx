@@ -1,71 +1,284 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import BookDetailModal from "../../components/staff/books/BookDetailModal";
 import ConfirmModal from "../../components/staff/books/ConfirmModal";
 import toast from "react-hot-toast";
+import { getAllBooksPaged, getBooksStats } from "../../api/staffApi";
+import { getCategories } from "../../api/ownerBookApi";
+import { API_ENDPOINTS } from "../../config/apiConfig";
 
 const StaffBooksPage = () => {
     const [statusFilter, setStatusFilter] = useState("all");
     const [categoryFilter, setCategoryFilter] = useState("all");
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [selectedBook, setSelectedBook] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(5);
+    const [books, setBooks] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [stats, setStats] = useState({
+        total: 0,
+        approved: 0,
+        inactive: 0,
+        active: 0,
+        refused: 0,
+        pendingChapters: 0,
+        totalRatings: 0
+    });
 
-    // ✅ state popup confirm
     const [confirmBook, setConfirmBook] = useState(null);
 
-    const stats = [
-        { label: "Tổng số sách", value: 11, color: "text-blue-600" },
-        { label: "Đang hoạt động", value: 8, color: "text-green-600" },
-        { label: "Đã ẩn", value: 3, color: "text-orange-600" },
-        { label: "Tổng đánh giá", value: 304, color: "text-purple-600" },
-    ];
-
-    const books = [
-        { id: 1, title: "Sapiens: Lược sử loài người", author: "Yuval Noah Harari", owner: "Nguyễn Văn A", category: "Khoa học", views: "15.420/8.930", rating: 4.8, status: "Hiển thị" },
-        { id: 2, title: "Đắc nhân tâm", author: "Dale Carnegie", owner: "Trần Thị B", category: "Kỹ năng sống", views: "22.150/12.340", rating: 4.9, status: "Hiển thị" },
-        { id: 3, title: "Atomic Habits", author: "James Clear", owner: "Lê Văn C", category: "Phát triển bản thân", views: "8.750/5.420", rating: 4.6, status: "Đã ẩn" },
-        { id: 4, title: "Thinking, Fast and Slow", author: "Daniel Kahneman", owner: "Phạm Thị D", category: "Tâm lý học", views: "18.940/11.230", rating: 4.7, status: "Hiển thị" },
-        { id: 5, title: "Homo Deus", author: "Yuval Noah Harari", owner: "Nguyễn Văn A", category: "Khoa học", views: "12.300/7.100", rating: 4.5, status: "Hiển thị" },
-        { id: 6, title: "21 Lessons for the 21st Century", author: "Yuval Noah Harari", owner: "Nguyễn Văn A", category: "Khoa học", views: "9.500/6.300", rating: 4.4, status: "Đã ẩn" },
-        { id: 7, title: "Rich Dad Poor Dad", author: "Robert Kiyosaki", owner: "Trần Văn E", category: "Kỹ năng sống", views: "20.100/11.900", rating: 4.8, status: "Hiển thị" },
-        { id: 8, title: "The 7 Habits of Highly Effective People", author: "Stephen R. Covey", owner: "Lê Thị F", category: "Phát triển bản thân", views: "13.400/8.500", rating: 4.7, status: "Hiển thị" },
-        { id: 9, title: "Grit", author: "Angela Duckworth", owner: "Nguyễn Văn G", category: "Tâm lý học", views: "7.200/4.300", rating: 4.3, status: "Hiển thị" },
-        { id: 10, title: "Mindset", author: "Carol S. Dweck", owner: "Phạm Thị H", category: "Tâm lý học", views: "16.800/9.700", rating: 4.6, status: "Đã ẩn" },
-        { id: 11, title: "Outliers", author: "Malcolm Gladwell", owner: "Trần Văn I", category: "Khoa học", views: "14.500/8.900", rating: 4.5, status: "Hiển thị" },
-    ];
-
-    const filteredBooks = books.filter(
-        (b) =>
-            (statusFilter === "all" || b.status === statusFilter) &&
-            (categoryFilter === "all" || b.category === categoryFilter) &&
-            (b.title.toLowerCase().includes(search.toLowerCase()) ||
-                b.author.toLowerCase().includes(search.toLowerCase()) ||
-                b.owner.toLowerCase().includes(search.toLowerCase()))
-    );
-
-    // Pagination
-    const itemsPerPage = 5;
-    const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedBooks = filteredBooks.slice(startIndex, startIndex + itemsPerPage);
-
-    // ✅ Hàm xử lý confirm
-    const handleConfirm = () => {
-        toast.success(`Cập nhật trạng thái sách "${confirmBook.title}" thành công!`);
-        setConfirmBook(null);
+    const getStatusFilterValue = (filter) => {
+        const statusMap = {
+            "all": "all",
+            "Phát hành": "Approved",
+            "Tạm dừng": "InActive",
+            "Chờ duyệt": "Active",
+            "Chờ đăng chương": "PendingChapters",
+            "Bị từ chối": "Refused"
+        };
+        return statusMap[filter] || "all";
     };
+
+    // Fetch stats
+    const fetchStats = useCallback(async () => {
+        try {
+            const searchTerm = debouncedSearch.trim() || null;
+            const status = statusFilter !== "all" ? getStatusFilterValue(statusFilter) : null;
+            const categoryId = categoryFilter !== "all" ? parseInt(categoryFilter) : null;
+            
+            const statsData = await getBooksStats(searchTerm, status, categoryId);
+            
+            if (statsData && typeof statsData === 'object') {
+                setStats({
+                    total: parseInt(statsData.total) || 0,
+                    approved: parseInt(statsData.approved) || 0,
+                    inactive: parseInt(statsData.inactive) || 0,
+                    active: parseInt(statsData.active) || 0,
+                    refused: parseInt(statsData.refused) || 0,
+                    pendingChapters: parseInt(statsData.pendingChapters) || 0,
+                    totalRatings: parseInt(statsData.totalRatings) || 0
+                });
+            }
+        } catch (error) {
+            console.error("Lỗi khi load stats:", error);
+        }
+    }, [debouncedSearch, statusFilter, categoryFilter]);
+
+    // Fetch dữ liệu
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const searchTerm = debouncedSearch.trim() || null;
+            const status = statusFilter !== "all" ? getStatusFilterValue(statusFilter) : null;
+            const categoryId = categoryFilter !== "all" ? parseInt(categoryFilter) : null;
+            
+            const booksResponse = await getAllBooksPaged(currentPage, itemsPerPage, searchTerm, status, categoryId);
+            
+            if (booksResponse && booksResponse.data) {
+                setBooks(booksResponse.data);
+                setTotalCount(booksResponse.totalCount || 0);
+                setTotalPages(booksResponse.totalPages || 1);
+            } else {
+                setBooks([]);
+                setTotalCount(0);
+                setTotalPages(1);
+            }
+        } catch (error) {
+            console.error("Lỗi khi load dữ liệu:", error);
+            toast.error("Không thể tải dữ liệu sách");
+            setBooks([]);
+            setTotalCount(0);
+            setTotalPages(1);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPage, itemsPerPage, debouncedSearch, statusFilter, categoryFilter]);
+
+    // Fetch categories
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const categoriesData = await getCategories();
+                setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+            } catch (error) {
+                console.error("Lỗi khi load categories:", error);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 2000);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [search]);
+
+    useEffect(() => {
+        fetchStats();
+    }, [fetchStats]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // Reset page khi filter thay đổi
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, categoryFilter, debouncedSearch]);
+
+    const formatBookForDisplay = (book) => {
+        const statusMap = {
+            "Approved": "Phát hành",
+            "InActive": "Tạm dừng",
+            "Active": "Chờ duyệt",
+            "PendingChapters": "Chờ đăng chương",
+            "Refused": "Bị từ chối"
+        };
+
+        const mappedStatus = statusMap[book.status] || book.status;
+
+        return {
+            ...book,
+            id: book.bookId,
+            title: book.title || "Không có tiêu đề",
+            author: book.author || "Không rõ",
+            owner: book.ownerName || `Owner ID: ${book.ownerId}`,
+            category: book.categoryNames?.join(", ") || "Chưa phân loại",
+            categoryNames: book.categoryNames || [],
+            categoryIds: book.categoryIds || [],
+            views: `${book.totalView || 0}`,
+            rating: book.rating || 0,
+            status: mappedStatus,
+            statusRaw: book.status,
+            coverUrl: book.coverUrl,
+            totalPrice: book.totalPrice || 0,
+            sold: book.sold || 0,
+            totalRatings: book.totalRatings || 0,
+            description: book.description
+        };
+    };
+
+    const getStatusColor = (statusRaw) => {
+        switch (statusRaw) {
+            case "Approved":
+                return "bg-green-100 text-green-700";
+            case "InActive":
+                return "bg-slate-200 text-slate-700";
+            case "Active":
+                return "bg-amber-100 text-amber-700";
+            case "PendingChapters":
+                return "bg-indigo-100 text-indigo-700";
+            case "Refused":
+                return "bg-red-100 text-red-700";
+            default:
+                return "bg-purple-100 text-purple-700";
+        }
+    };
+
+    const getCategoryColor = (categoryName) => {
+        const colors = [
+            "bg-blue-100 text-blue-700 border-blue-300",
+            "bg-purple-100 text-purple-700 border-purple-300",
+            "bg-pink-100 text-pink-700 border-pink-300",
+            "bg-indigo-100 text-indigo-700 border-indigo-300",
+            "bg-teal-100 text-teal-700 border-teal-300",
+            "bg-cyan-100 text-cyan-700 border-cyan-300",
+            "bg-emerald-100 text-emerald-700 border-emerald-300",
+            "bg-violet-100 text-violet-700 border-violet-300",
+        ];
+        let hash = 0;
+        for (let i = 0; i < categoryName.length; i++) {
+            hash = ((hash << 5) - hash) + categoryName.charCodeAt(i);
+            hash = hash & hash;
+        }
+        return colors[Math.abs(hash) % colors.length];
+    };
+
+    const displayBooks = books.map(formatBookForDisplay);
+
+    // Handle confirm
+    const handleConfirm = async () => {
+        if (!confirmBook) return;
+        
+        try {
+            const newStatus = confirmBook.statusRaw === "Approved" ? "InActive" : "Approved";
+            const response = await fetch(API_ENDPOINTS.BOOKS.UPDATE_STATUS(confirmBook.id), {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Cập nhật trạng thái thất bại");
+            }
+
+            await fetchStats();
+            await fetchData();
+            
+            toast.success(`Cập nhật trạng thái sách "${confirmBook.title}" thành công!`);
+            setConfirmBook(null);
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || "Có lỗi xảy ra khi cập nhật trạng thái");
+        }
+    };
+
+    const statsDisplay = [
+        { 
+            label: "Tổng số sách", 
+            value: stats.total, 
+            color: "text-blue-600"
+        },
+        { 
+            label: "Phát hành", 
+            value: stats.approved, 
+            color: "text-green-600"
+        },
+        { 
+            label: "Tạm dừng", 
+            value: stats.inactive, 
+            color: "text-orange-600"
+        },
+        { 
+            label: "Tổng đánh giá", 
+            value: stats.totalRatings, 
+            color: "text-purple-600"
+        },
+    ];
+
+    if (loading) {
+        return (
+            <div className="pt-30 p-6 bg-gray-50 text-gray-900 min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="pt-30 p-6 bg-gray-50 text-gray-900 min-h-screen">
-            {/* Page Title */}
             <div className="mb-6">
                 <h2 className="text-3xl font-bold text-dark-700">Quản lý sách</h2>
                 <p className="text-sm text-gray-500">Trang dành cho nhân viên quản lý kho sách</p>
             </div>
 
-            {/* Header Stats */}
+            {/* Thống kê */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                {stats.map((s, i) => (
+                {statsDisplay.map((s, i) => (
                     <div key={i} className="rounded-2xl shadow-md p-4 text-center bg-white border border-gray-200">
                         <p className={`${s.color} text-2xl font-bold`}>{s.value}</p>
                         <p className="text-gray-600">{s.label}</p>
@@ -73,7 +286,7 @@ const StaffBooksPage = () => {
                 ))}
             </div>
 
-            {/* Filter */}
+            {/* Bộ lọc */}
             <div className="flex flex-wrap gap-4 items-center mb-6">
                 <input
                     type="text"
@@ -89,10 +302,11 @@ const StaffBooksPage = () => {
                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 shadow-sm"
                 >
                     <option value="all">Tất cả thể loại</option>
-                    <option value="Khoa học">Khoa học</option>
-                    <option value="Kỹ năng sống">Kỹ năng sống</option>
-                    <option value="Phát triển bản thân">Phát triển bản thân</option>
-                    <option value="Tâm lý học">Tâm lý học</option>
+                    {categories.map((cat) => (
+                        <option key={cat.categoryId} value={cat.categoryId}>
+                            {cat.name}
+                        </option>
+                    ))}
                 </select>
 
                 <select
@@ -101,12 +315,15 @@ const StaffBooksPage = () => {
                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 shadow-sm"
                 >
                     <option value="all">Tất cả trạng thái</option>
-                    <option value="Hiển thị">Hiển thị</option>
-                    <option value="Đã ẩn">Đã ẩn</option>
+                    <option value="Phát hành">Phát hành</option>
+                    <option value="Tạm dừng">Tạm dừng</option>
+                    <option value="Chờ duyệt">Chờ duyệt</option>
+                    <option value="Chờ đăng chương">Chờ đăng chương</option>
+                    <option value="Bị từ chối">Bị từ chối</option>
                 </select>
             </div>
 
-            {/* Table */}
+            {/* Bảng sách */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div className="overflow-x-auto">
                     <table className="min-w-full border border-gray-200 rounded-xl bg-white shadow-sm">
@@ -116,39 +333,58 @@ const StaffBooksPage = () => {
                                 <th className="p-3">Sách</th>
                                 <th className="p-3">Chủ sách</th>
                                 <th className="p-3">Thể loại</th>
-                                <th className="p-3">Lượt xem/nghe</th>
+                                <th className="p-3">Lượt xem</th>
                                 <th className="p-3">Đánh giá</th>
                                 <th className="p-3">Trạng thái</th>
                                 <th className="p-3">Hành động</th>
                             </tr>
                         </thead>
                         <tbody className="text-gray-900">
-                            {paginatedBooks.map((b, idx) => (
+                            {displayBooks.map((b, idx) => (
                                 <tr key={b.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                    <td className="p-3 w-16 text-center">{startIndex + idx + 1}</td>
-                                    <td className="p-3">
+                                    <td className="p-3 w-16 text-center">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                                    <td className="p-3 max-w-xs">
                                         <div className="flex items-center gap-3">
                                             <img
-                                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv"
+                                                src={b.coverUrl || "https://via.placeholder.com/48x64?text=No+Image"}
                                                 alt={b.title}
-                                                className="w-12 h-16 object-cover rounded"
+                                                className="w-12 h-16 object-cover rounded flex-shrink-0"
+                                                onError={(e) => {
+                                                    e.target.src = "https://via.placeholder.com/48x64?text=No+Image";
+                                                }}
                                             />
-                                            <div>
-                                                <p className="font-semibold text-gray-800">{b.title}</p>
-                                                <p className="text-sm text-gray-500">{b.author}</p>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-semibold text-gray-800 truncate" title={b.title}>{b.title}</p>
+                                                <p className="text-sm text-gray-500 truncate" title={b.author}>{b.author}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-3">{b.owner}</td>
-                                    <td className="p-3">{b.category}</td>
-                                    <td className="p-3">{b.views}</td>
-                                    <td className="p-3">⭐ {b.rating}</td>
-                                    <td className="p-3">
+                                    <td className="p-3 max-w-xs">
+                                        <p className="truncate" title={b.owner}>{b.owner}</p>
+                                    </td>
+                                    <td className="p-3 max-w-xs">
+                                        <div className="flex flex-col gap-1.5">
+                                            {b.categoryNames && b.categoryNames.length > 0 ? (
+                                                b.categoryNames.map((catName, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className={`px-2 py-1 text-xs rounded-md border whitespace-nowrap ${getCategoryColor(catName)}`}
+                                                    >
+                                                        {catName}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="px-2 py-1 text-xs rounded-md border bg-gray-100 text-gray-600 border-gray-300 whitespace-nowrap">
+                                                    Chưa phân loại
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="p-3 whitespace-nowrap">{b.views}</td>
+                                    <td className="p-3 whitespace-nowrap">⭐ {b.rating.toFixed(1)}</td>
+                                    <td className="p-3 whitespace-nowrap">
                                         <span
-                                            className={`px-2 py-1 text-sm rounded-full ${b.status === "Hiển thị"
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-gray-200 text-gray-700"
-                                                }`}
+                                            className={`px-2 py-1 text-sm rounded-full ${getStatusColor(b.statusRaw)}`}
                                         >
                                             {b.status}
                                         </span>
@@ -184,7 +420,7 @@ const StaffBooksPage = () => {
                                 </tr>
                             ))}
 
-                            {filteredBooks.length === 0 && (
+                            {displayBooks.length === 0 && !loading && (
                                 <tr>
                                     <td colSpan={8} className="p-6 text-center text-gray-500">
                                         Không có dữ liệu phù hợp.
@@ -193,7 +429,8 @@ const StaffBooksPage = () => {
                             )}
                         </tbody>
                     </table>
-                    {/* Pagination */}
+                    {/* Phân trang */}
+                    {totalPages > 0 && (
                     <div className="flex justify-between items-center px-6 py-4 border-t">
                         <p className="text-sm text-gray-600">
                             Trang {currentPage}/{totalPages}
@@ -215,19 +452,20 @@ const StaffBooksPage = () => {
                             </button>
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
 
-            {/* Popup chi tiết sách */}
+            {/* Popup chi tiết */}
             {selectedBook && (
                 <BookDetailModal book={selectedBook} onClose={() => setSelectedBook(null)} />
             )}
 
-            {/* Popup xác nhận ẩn/hiện */}
+            {/* Popup xác nhận */}
             <ConfirmModal
                 isOpen={!!confirmBook}
                 title="Xác nhận thay đổi trạng thái"
-                message={`Bạn có chắc muốn ẩn/hiện sách "${confirmBook?.title}" không?`}
+                message={`Bạn có chắc muốn ${confirmBook?.statusRaw === "Approved" ? "ẩn" : "hiển thị"} sách "${confirmBook?.title}" không?`}
                 onConfirm={handleConfirm}
                 onCancel={() => setConfirmBook(null)}
             />

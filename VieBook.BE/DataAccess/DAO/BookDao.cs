@@ -111,10 +111,44 @@ namespace DataAccess.DAO
         }
 
 
+        public async Task<BookStatsDTO> GetBookStatsAsync(int bookId)
+        {
+            // Purchases & Revenue: OrderItems joined with Chapters for this book
+            var orderQuery = from oi in _context.OrderItems
+                             join ch in _context.Chapters on oi.ChapterId equals ch.ChapterId
+                             where ch.BookId == bookId
+                             select oi;
+
+            var purchases = await orderQuery.CountAsync();
+            var revenue = await orderQuery.SumAsync(oi => (decimal?)oi.CashSpent) ?? 0m;
+
+            // Average rating from BookReviews
+            var ratings = await _context.BookReviews
+                .Where(r => r.BookId == bookId)
+                .Select(r => (int)r.Rating)
+                .ToListAsync();
+            double avgRating = ratings.Count > 0 ? ratings.Average() : 0.0;
+
+            // Total reads: sum ChapterView of all chapters
+            var totalReads = await _context.Chapters
+                .Where(c => c.BookId == bookId)
+                .SumAsync(c => (int?)c.ChapterView) ?? 0;
+
+            return new BookStatsDTO
+            {
+                BookId = bookId,
+                Purchases = purchases,
+                Revenue = revenue,
+                AverageRating = Math.Round(avgRating, 2),
+                TotalReads = totalReads
+            };
+        }
+
+
         public async Task<List<Book>> GetAllAsync()
         {
             return await _context.Books
-                .Where(b => b.Status == "Approved")
+                //.Where(b => b.Status == "Approved")
                 .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                 .Include(b => b.Categories)
                 .Include(b => b.Chapters)
@@ -388,6 +422,114 @@ namespace DataAccess.DAO
                 .FirstOrDefaultAsync();
             
             return promotion;
+        }
+
+        // Lấy tất cả sách với pagination, search, filter cho staff
+        public async Task<(List<Book> Books, int TotalCount)> GetAllForStaffPagedAsync(
+            int page = 1,
+            int pageSize = 10,
+            string? searchTerm = null,
+            string? statusFilter = null,
+            int? categoryId = null)
+        {
+            var query = _context.Books
+                .Include(b => b.Owner)
+                    .ThenInclude(o => o.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.BookReviews)
+                .Include(b => b.Chapters)
+                    .ThenInclude(c => c.OrderItems)
+                .AsQueryable();
+
+            // Filter by status
+            if (!string.IsNullOrWhiteSpace(statusFilter) && statusFilter != "all")
+            {
+                query = query.Where(b => b.Status == statusFilter);
+            }
+
+            // Filter by category
+            if (categoryId.HasValue)
+            {
+                query = query.Where(b => b.Categories.Any(c => c.CategoryId == categoryId.Value));
+            }
+
+            // Search filter
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var search = searchTerm.ToLower();
+                query = query.Where(b =>
+                    (b.Title != null && b.Title.ToLower().Contains(search)) ||
+                    (b.Author != null && b.Author.ToLower().Contains(search)) ||
+                    (b.Owner != null && b.Owner.UserProfile != null && b.Owner.UserProfile.FullName != null && b.Owner.UserProfile.FullName.ToLower().Contains(search)) ||
+                    (b.Owner != null && b.Owner.Email != null && b.Owner.Email.ToLower().Contains(search))
+                );
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var books = await query
+                .OrderByDescending(b => b.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (books, totalCount);
+        }
+
+        // Lấy tổng số sách và stats cho staff
+        public async Task<Dictionary<string, int>> GetStatsForStaffAsync(
+            string? searchTerm = null,
+            string? statusFilter = null,
+            int? categoryId = null)
+        {
+            var query = _context.Books.AsQueryable();
+
+            // Filter by status
+            if (!string.IsNullOrWhiteSpace(statusFilter) && statusFilter != "all")
+            {
+                query = query.Where(b => b.Status == statusFilter);
+            }
+
+            // Filter by category
+            if (categoryId.HasValue)
+            {
+                query = query.Where(b => b.Categories.Any(c => c.CategoryId == categoryId.Value));
+            }
+
+            // Search filter
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var search = searchTerm.ToLower();
+                query = query.Where(b =>
+                    (b.Title != null && b.Title.ToLower().Contains(search)) ||
+                    (b.Author != null && b.Author.ToLower().Contains(search)) ||
+                    (b.Owner != null && b.Owner.UserProfile != null && b.Owner.UserProfile.FullName != null && b.Owner.UserProfile.FullName.ToLower().Contains(search)) ||
+                    (b.Owner != null && b.Owner.Email != null && b.Owner.Email.ToLower().Contains(search))
+                );
+            }
+
+            // Get book IDs from filtered query
+            var bookIds = await query.Select(b => b.BookId).ToListAsync();
+
+            // Calculate stats efficiently
+            var totalRatings = await _context.BookReviews
+                .Where(r => bookIds.Contains(r.BookId))
+                .CountAsync();
+
+            var stats = new Dictionary<string, int>
+            {
+                ["total"] = bookIds.Count,
+                ["approved"] = await query.Where(b => b.Status == "Approved").CountAsync(),
+                ["inactive"] = await query.Where(b => b.Status == "InActive").CountAsync(),
+                ["active"] = await query.Where(b => b.Status == "Active").CountAsync(),
+                ["refused"] = await query.Where(b => b.Status == "Refused").CountAsync(),
+                ["pendingChapters"] = await query.Where(b => b.Status == "PendingChapters").CountAsync(),
+                ["totalRatings"] = totalRatings
+            };
+
+            return stats;
         }
 
     }

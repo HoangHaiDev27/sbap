@@ -91,6 +91,9 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetTopPurchasedReadBooksAsync();
         }
+
+        public Task<BookStatsDTO> GetBookStatsAsync(int bookId)
+            => _bookDao.GetBookStatsAsync(bookId);
         public async Task<List<Book>> GetRecommendedBooksAsync(int? userId = null)
         {
             return await _bookDao.GetRecommendedBooksAsync(userId);
@@ -124,6 +127,16 @@ namespace Repositories.Implementations
         public async Task<Promotion?> GetActivePromotionForBook(int bookId)
         {
             return await _bookDao.GetActivePromotionForBook(bookId);
+        }
+
+        public async Task<(List<Book> Books, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, string? statusFilter = null, int? categoryId = null)
+        {
+            return await _bookDao.GetAllForStaffPagedAsync(page, pageSize, searchTerm, statusFilter, categoryId);
+        }
+
+        public async Task<Dictionary<string, int>> GetStatsForStaffAsync(string? searchTerm = null, string? statusFilter = null, int? categoryId = null)
+        {
+            return await _bookDao.GetStatsForStaffAsync(searchTerm, statusFilter, categoryId);
         }
     }
 }

@@ -28,13 +28,13 @@ export default function NewReleases() {
           title: book.title || "Chưa có tiêu đề",
           author: book.authorName || book.author || "Tác giả không xác định",
           createdAt: book.createdAt || "2024-01-01",
-          categoryNames: book.categoryNames || "Không rõ thể loại",
+          categoryNames: book.categoryNames?.join(", ") || "Không rõ thể loại",
           duration: book.duration || "—",
           description: book.description || "Không có mô tả.",
           image: book.image || "https://picsum.photos/200/300?random=" + index,
           isNew: true,
           liked: false,
-        }));
+        }))
 
         setBooks(formatted);
       } catch (err) {

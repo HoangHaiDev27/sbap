@@ -27,6 +27,12 @@ namespace Repositories.Implementations
         public Task<BookReviewDTO?> GetDtoByIdAsync(int reviewId) => _dao.GetDtoByIdAsync(reviewId);
         public Task<bool> SetOwnerReplyAsync(int reviewId, int ownerUserId, string reply) => _dao.SetOwnerReplyAsync(reviewId, ownerUserId, reply);
         public Task<bool> HasPurchasedAnyChapterAsync(int userId, int bookId) => _dao.HasPurchasedAnyChapterAsync(userId, bookId);
+        public Task<List<BookReviewDTO>> GetAllForStaffAsync() => _dao.GetAllForStaffAsync();
+        public Task<(List<BookReviewDTO> Reviews, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, int? bookId = null) 
+            => _dao.GetAllForStaffPagedAsync(page, pageSize, searchTerm, bookId);
+        public Task<int> GetTotalCountForStaffAsync(string? searchTerm = null, int? bookId = null) 
+            => _dao.GetTotalCountForStaffAsync(searchTerm, bookId);
+        public Task<bool> DeleteAsync(int reviewId) => _dao.DeleteAsync(reviewId);
     }
 }
 

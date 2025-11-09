@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   RiStarFill,
@@ -16,20 +16,52 @@ const BOOK_API_URL = getCategories();
 const ITEMS_PER_PAGE = 5;
 
 function getPaginationRange(currentPage, totalPages, delta = 1) {
-  const range = [];
-  const left = Math.max(2, currentPage - delta);
-  const right = Math.min(totalPages - 1, currentPage + delta);
-
-  range.push(1);
-  if (left > 2) range.push("...");
-  for (let i = left; i <= right; i++) range.push(i);
-  if (right < totalPages - 1) range.push("...");
-  if (totalPages > 1) range.push(totalPages);
-
-  return range;
+  if (totalPages <= 1) return [1];
+  if (totalPages <= 7) {
+    // Nếu tổng số trang <= 7, hiển thị tất cả
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  
+  const pageSet = new Set();
+  const pages = [];
+  
+  // Luôn thêm trang 1
+  pageSet.add(1);
+  
+  // Tính toán các trang xung quanh currentPage
+  const start = Math.max(2, currentPage - delta);
+  const end = Math.min(totalPages - 1, currentPage + delta);
+  
+  // Thêm các trang trong khoảng [start, end]
+  for (let i = start; i <= end; i++) {
+    if (i >= 1 && i <= totalPages) {
+      pageSet.add(i);
+    }
+  }
+  
+  // Luôn thêm trang cuối
+  pageSet.add(totalPages);
+  
+  // Chuyển Set thành Array và sắp xếp
+  const sortedPages = Array.from(pageSet).sort((a, b) => a - b);
+  
+  // Xây dựng mảng kết quả với ellipsis
+  for (let i = 0; i < sortedPages.length; i++) {
+    const page = sortedPages[i];
+    
+    // Thêm ellipsis nếu có khoảng trống
+    if (i > 0 && sortedPages[i] - sortedPages[i - 1] > 1) {
+      pages.push("...");
+    }
+    
+    pages.push(page);
+  }
+  
+  return pages;
 }
 
 export default function BookTable({ books, categories, onBookDeleted }) {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBook, setSelectedBook] = useState(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -39,9 +71,28 @@ export default function BookTable({ books, categories, onBookDeleted }) {
 
   const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE);
 
+  // Reset currentPage về 1 khi danh sách books thay đổi (do filter/search)
+  // và đảm bảo currentPage không vượt quá totalPages
+  useEffect(() => {
+    if (totalPages > 0) {
+      if (currentPage > totalPages) {
+        setCurrentPage(1);
+      } else if (currentPage < 1) {
+        setCurrentPage(1);
+      }
+    } else if (totalPages === 0 && currentPage > 1) {
+      setCurrentPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [books.length, totalPages]);
+
+  // Đảm bảo currentPage hợp lệ trước khi render
+  const validCurrentPage = totalPages > 0 
+    ? Math.max(1, Math.min(currentPage, totalPages))
+    : 1;
   const paginatedBooks = books.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (validCurrentPage - 1) * ITEMS_PER_PAGE,
+    validCurrentPage * ITEMS_PER_PAGE
   );
 
   const getCategoryTags = (categoryIds) => {
@@ -143,6 +194,56 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     }
   };
 
+  const handleNavigateToChapters = (book) => {
+    if (book.status === "Approved") {
+      navigate(`/owner/books/${book.bookId}/chapters`, {
+        state: { bookTitle: book.title },
+      });
+    } else if (book.status === "Active") {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn chưa được duyệt",
+          },
+        })
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn không thể thêm chương",
+          },
+        })
+      );
+    }
+  };
+
+  const handleNavigateToAudio = (book) => {
+    if (book.status === "Approved") {
+      navigate(`/owner/books/${book.bookId}/audio`);
+    } else if (book.status === "Active") {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn chưa được duyệt",
+          },
+        })
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: "Sách của bạn không thể thêm chương",
+          },
+        })
+      );
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm border-collapse">
@@ -201,22 +302,21 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                     <RiEdit2Line className="text-white text-lg" />
                   </Link>
 
-                  <Link
-                    to={`/owner/books/${book.bookId}/chapters`}
-                    state={{ bookTitle: book.title }}
+                  <button
+                    onClick={() => handleNavigateToChapters(book)}
                     className="p-2 bg-indigo-500 rounded hover:bg-indigo-600 transition"
                     title="Quản lý chương"
                   >
                     <RiBookOpenLine className="text-white text-lg" />
-                  </Link>
+                  </button>
 
-                  <Link
-                    to={`/owner/books/${book.bookId}/audio`}
+                  <button
+                    onClick={() => handleNavigateToAudio(book)}
                     className="p-2 bg-purple-500 rounded hover:bg-purple-600 transition"
                     title="Audio"
                   >
                     <RiSoundModuleLine className="text-white text-lg" />
-                  </Link>
+                  </button>
 
                   <button
                     className="p-2 bg-red-500 rounded hover:bg-red-600 transition"
@@ -247,8 +347,8 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           {/* Nút Trước */}
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 rounded text-sm ${currentPage === 1
+            disabled={validCurrentPage === 1}
+            className={`px-3 py-1 rounded text-sm ${validCurrentPage === 1
                 ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
@@ -257,16 +357,19 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           </button>
 
           {/* Các số trang */}
-          {getPaginationRange(currentPage, totalPages).map((p, i) =>
+          {getPaginationRange(validCurrentPage, totalPages).map((p, i) =>
             p === "..." ? (
-              <span key={i} className="px-3 py-1 text-gray-400">
+              <span key={`ellipsis-${i}`} className="px-3 py-1 text-gray-400">
                 ...
               </span>
             ) : (
               <button
-                key={p}
-                onClick={() => setCurrentPage(p)}
-                className={`px-3 py-1 rounded text-sm ${currentPage === p
+                key={`page-${p}`}
+                onClick={() => {
+                  const page = Math.max(1, Math.min(totalPages, p));
+                  setCurrentPage(page);
+                }}
+                className={`px-3 py-1 rounded text-sm ${validCurrentPage === p
                     ? "bg-orange-500 text-white"
                     : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}
@@ -279,8 +382,8 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           {/* Nút Sau */}
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded text-sm ${currentPage === totalPages
+            disabled={validCurrentPage === totalPages}
+            className={`px-3 py-1 rounded text-sm ${validCurrentPage === totalPages
                 ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}

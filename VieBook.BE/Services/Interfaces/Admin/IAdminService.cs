@@ -15,5 +15,6 @@ namespace Services.Interfaces.Admin
         Task<User> UpdateProfileAsync(int id, AdminProfileDTO dto);
         Task UpdateAvatarUrlAsync(int adminId, string? newUrl);
         Task<string> UploadAvatarAsync(int adminId, IFormFile file);
+        Task<AdminStatisticDTO> GetStatisticsAsync(DateTime? fromDate = null, DateTime? toDate = null);
     }
 }

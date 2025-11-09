@@ -1,17 +1,33 @@
 import React, { useState } from "react";
+import { rejectPaymentRequest } from "../../../api/paymentRequestApi";
+import toast from "react-hot-toast";
 
 export default function WithdrawRejectModal({ withdraw, onClose }) {
   const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!withdraw) return null;
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!reason.trim()) {
-      alert("Vui lòng nhập lý do từ chối.");
+      setError("Vui lòng nhập lý do từ chối.");
       return;
     }
-    console.log("❌ Từ chối:", withdraw.id, "Lý do:", reason);
-    onClose();
+
+    try {
+      setLoading(true);
+      setError("");
+      await rejectPaymentRequest(withdraw.paymentRequestId, reason);
+      toast.success("Đã từ chối yêu cầu rút tiền. Xu đã được hoàn lại vào ví của người dùng.");
+      onClose();
+    } catch (err) {
+      console.error("Error rejecting payment request:", err);
+      const errorMsg = err.message || "Không thể từ chối yêu cầu. Vui lòng thử lại.";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,6 +50,12 @@ export default function WithdrawRejectModal({ withdraw, onClose }) {
           rows={4}
         ></textarea>
 
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="flex justify-end space-x-3">
           <button
             onClick={onClose}
@@ -43,9 +65,10 @@ export default function WithdrawRejectModal({ withdraw, onClose }) {
           </button>
           <button
             onClick={handleReject}
-            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Xác nhận từ chối
+            {loading ? "Đang xử lý..." : "Xác nhận từ chối"}
           </button>
         </div>
       </div>

@@ -109,11 +109,14 @@ builder.Services.AddScoped<ReadingStatsDAO>();
 builder.Services.AddScoped<SubscriptionDAO>();
 builder.Services.AddScoped<ChatbaseDAO>();
 builder.Services.AddScoped<TransactionDAO>();
-builder.Services.AddScoped<DataAccess.DAO.BookOfferDAO>();
-builder.Services.AddScoped<DataAccess.DAO.BookClaimDAO>();
-builder.Services.AddScoped<DataAccess.DAO.PostDAO>();
-builder.Services.AddScoped<DataAccess.DAO.PostReactionDAO>();
-builder.Services.AddScoped<DataAccess.DAO.PostCommentDAO>();
+builder.Services.AddScoped<BookOfferDAO>();
+builder.Services.AddScoped<BookClaimDAO>();
+builder.Services.AddScoped<PostDAO>();
+builder.Services.AddScoped<PostReactionDAO>();
+builder.Services.AddScoped<PostCommentDAO>();
+builder.Services.AddScoped<OwnerDashboardDAO>();
+builder.Services.AddScoped<StaffDashboardDAO>();
+builder.Services.AddScoped<PaymentRequestDAO>();
 
 
 
@@ -143,12 +146,14 @@ builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<IChatbaseRepository, ChatbaseRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IOwnerDashboardRepository, OwnerDashboardRepository>();
+builder.Services.AddScoped<IStaffDashboardRepository, StaffDashboardRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IBookOfferRepository, Repositories.Implementations.BookOfferRepository>();
 builder.Services.AddScoped<IBookClaimRepository, Repositories.Implementations.BookClaimRepository>();
 builder.Services.AddScoped<IPostRepository, Repositories.Implementations.PostRepository>();
 builder.Services.AddScoped<IPostReactionRepository, Repositories.Implementations.PostReactionRepository>();
 builder.Services.AddScoped<IPostCommentRepository, Repositories.Implementations.PostCommentRepository>();
+builder.Services.AddScoped<IPaymentRequestRepository, PaymentRequestRepository>();
 
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -184,15 +189,19 @@ builder.Services.AddScoped<IReminderSettingsRepository, ReminderSettingsReposito
 builder.Services.AddScoped<IReminderSettingsService, ReminderSettingsService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IOwnerDashboardService, OwnerDashboardService>();
+builder.Services.AddScoped<IStaffDashboardService, StaffDashboardService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IBookOfferService, Services.Implementations.BookOfferService>();
 builder.Services.AddScoped<IBookClaimService, Services.Implementations.BookClaimService>();
 builder.Services.AddScoped<IPostService, Services.Implementations.PostService>();
 builder.Services.AddScoped<IPostReactionService, Services.Implementations.PostReactionService>();
 builder.Services.AddScoped<IPostCommentService, Services.Implementations.PostCommentService>();
+builder.Services.AddScoped<IPaymentRequestService, PaymentRequestService>();
 builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
 builder.Services.AddHttpClient<IChatbaseService, ChatbaseService>();
 builder.Services.AddHttpClient<ChatbaseService>();
+builder.Services.AddHttpClient<IVietQrService, VietQrService>();
+builder.Services.AddScoped<IVietQrService, VietQrService>();
 
 
 //Add OpenAI service

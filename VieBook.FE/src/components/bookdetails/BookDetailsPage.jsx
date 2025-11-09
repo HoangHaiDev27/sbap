@@ -14,7 +14,7 @@ import OverviewTab from "./OverviewTab";
 import DetailsTab from "./DetailsTab";
 import ReviewsTab from "./ReviewsTab";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
-import { getBookChapterAudios } from "../../api/ownerBookApi";
+import { getBookChapterAudios, incrementChapterView } from "../../api/ownerBookApi";
 import toast from "react-hot-toast";
 import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
 import {
@@ -566,7 +566,7 @@ export default function BookDetailPage() {
                           ? "border-gray-600 bg-gray-700/50 cursor-not-allowed opacity-60"
                           : "border-gray-600 hover:border-orange-500 bg-gray-700/50 hover:bg-gray-600 cursor-pointer"
                       }`}
-                      onClick={() => {
+                      onClick={async () => {
                         if (!isLoggedIn) {
                           toast.error("Bạn phải đăng nhập để đọc chương");
                           return;
@@ -577,6 +577,13 @@ export default function BookDetailPage() {
                         }
                         if (!hasSoftUrl) {
                           return;
+                        }
+                        // Tăng chapter view trước khi navigate
+                        try {
+                          await incrementChapterView(chapter.chapterId);
+                        } catch (err) {
+                          // Không block navigation nếu có lỗi
+                          console.error("Failed to increment chapter view:", err);
                         }
                         // Navigate to chapter reader
                         window.location.href = `/reader/${id}/chapter/${chapter.chapterId}`;

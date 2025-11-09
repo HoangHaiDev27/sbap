@@ -20,7 +20,9 @@ export const API_ENDPOINTS = {
     OWNER_REPLY: (reviewId) => `${API_BASE_URL}/api/bookreviews/${reviewId}/reply`,
     CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`,
     OWNER: `${API_BASE_URL}/api/bookreviews/owner`,
-    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`
+    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`,
+    STAFF_ALL: `${API_BASE_URL}/api/staff/feedbackmanagement/bookreviews`,
+    STAFF_DELETE: (reviewId) => `${API_BASE_URL}/api/staff/feedbackmanagement/bookreviews/${reviewId}`
   },
 
 
@@ -45,6 +47,21 @@ export const API_ENDPOINTS = {
   PAYMENT: {
     CREATE_LINK: `${API_BASE_URL}/create-payment-link`,
     VERIFY: `${API_BASE_URL}/api/webhook/verify-payment`,
+  },
+
+  // Payment Request endpoints
+  PAYMENT_REQUESTS: {
+    BASE: `${API_BASE_URL}/api/paymentrequest`,
+    CREATE: `${API_BASE_URL}/api/paymentrequest`,
+    USER: `${API_BASE_URL}/api/paymentrequest/user`,
+    ALL: `${API_BASE_URL}/api/paymentrequest/all`, // For staff
+  },
+
+  // VietQR endpoints
+  VIETQR: {
+    BASE: `${API_BASE_URL}/api/vietqr`,
+    BANKS: `${API_BASE_URL}/api/vietqr/banks`,
+    GENERATE: `${API_BASE_URL}/api/vietqr/generate`,
   },
 
   // OpenAI endpoints
@@ -126,6 +143,9 @@ export const API_ENDPOINTS = {
   // Feedback endpoints
   FEEDBACK: {
     BOOK_REPORT: `${API_BASE_URL}/api/feedback/book-report`,
+    STAFF_ALL: `${API_BASE_URL}/api/staff/feedbackmanagement/userfeedback`,
+    STAFF_DELETE: (feedbackId) => `${API_BASE_URL}/api/staff/feedbackmanagement/userfeedback/${feedbackId}`,
+    STAFF_STATS: `${API_BASE_URL}/api/staff/feedbackmanagement/stats`,
   },
 
   // Reading History endpoints
@@ -151,7 +171,9 @@ export const API_ENDPOINTS = {
   BOOKS: {
     GET_ALL_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/books/owner/${ownerId}`,
     GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/detail/${bookId}`,
+    GET_ALL: `${API_BASE_URL}/api/books`,
     CREATE: `${API_BASE_URL}/api/books`,
+    CREATE_WITH_SIGNATURE: `${API_BASE_URL}/api/books/create-with-signature`,
     UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     DELETE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
     UPDATE_COMPLETION_STATUS: (bookId) => `${API_BASE_URL}/api/books/${bookId}/completion-status`,
@@ -170,6 +192,7 @@ export const API_ENDPOINTS = {
     UPDATE: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}`,
     DELETE: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}`,
     UPLOAD_FILE: `${API_BASE_URL}/api/upload/uploadChapterFile`,
+    INCREMENT_VIEW: (chapterId) => `${API_BASE_URL}/api/chapter/${chapterId}/increment-view`,
   },
 
   AUDIO_CONVERSION: {
@@ -258,10 +281,35 @@ export const API_ENDPOINTS = {
     LOCK: (staffId) => `${API_BASE_URL}/api/staff/lock/${staffId}`,
     UNLOCK: (staffId) => `${API_BASE_URL}/api/staff/unlock/${staffId}`,
     TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`,
+    BOOKS: {
+      GET_PAGED: (page, pageSize, searchTerm, statusFilter, categoryId) => {
+        const params = new URLSearchParams();
+        params.append("page", page);
+        params.append("pageSize", pageSize);
+        if (searchTerm) params.append("searchTerm", searchTerm);
+        if (statusFilter && statusFilter !== "all") params.append("statusFilter", statusFilter);
+        if (categoryId && categoryId !== "all") params.append("categoryId", categoryId);
+        return `${API_BASE_URL}/api/staff/staffbooks?${params.toString()}`;
+      },
+      GET_STATS: (searchTerm, statusFilter, categoryId) => {
+        const params = new URLSearchParams();
+        if (searchTerm) params.append("searchTerm", searchTerm);
+        if (statusFilter && statusFilter !== "all") params.append("statusFilter", statusFilter);
+        if (categoryId && categoryId !== "all") params.append("categoryId", categoryId);
+        return `${API_BASE_URL}/api/staff/staffbooks/stats?${params.toString()}`;
+      },
+    },
   },
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
     UPDATE: (adminId) => `${API_BASE_URL}/api/admin/update/${adminId}`,
+    STATISTICS: (from, to) => {
+      let url = `${API_BASE_URL}/api/admin/statistics`;
+      if (from && to) {
+        url += `?fromDate=${from}&toDate=${to}`;
+      }
+      return url;
+    },    
   },
   BOOKAPPROVAL: {
     GET_ALL: `${API_BASE_URL}/api/BookApproval`,
@@ -302,6 +350,16 @@ export const API_ENDPOINTS = {
     RECENT_ORDERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/recent-orders?limit=${limit}`,
     BEST_SELLERS: (limit = 5) => `${API_BASE_URL}/api/OwnerDashboard/best-sellers?limit=${limit}`,
     DASHBOARD: `${API_BASE_URL}/api/OwnerDashboard/dashboard`
+  },
+
+  // Staff Dashboard endpoints
+  STAFF_DASHBOARD: {
+    STATS: `${API_BASE_URL}/api/StaffDashboard/stats`,
+    TOP_BOOKS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/top-books?limit=${limit}`,
+    TOP_OWNERS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/top-owners?limit=${limit}`,
+    PENDING_BOOKS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/pending-books?limit=${limit}`,
+    RECENT_FEEDBACKS: (limit = 5) => `${API_BASE_URL}/api/StaffDashboard/recent-feedbacks?limit=${limit}`,
+    DASHBOARD: `${API_BASE_URL}/api/StaffDashboard/dashboard`
   }
 
 };

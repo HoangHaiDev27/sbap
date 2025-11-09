@@ -204,11 +204,121 @@ export async function getAllActiveBooks() {
     headers: { "Content-Type": "application/json" },
   }, "Lấy danh sách sách đang Active thất bại");
 }
+// Lấy tất cả sách (cho staff quản lý) - DEPRECATED: Sử dụng getAllBooksPaged thay thế
+export async function getAllBooks() {
+  return handleFetch(API_ENDPOINTS.BOOKS.GET_ALL, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Lấy danh sách sách thất bại");
+}
+
+// Lấy sách với pagination, search, filter (cho staff quản lý)
+export async function getAllBooksPaged(page = 1, pageSize = 10, searchTerm = null, statusFilter = null, categoryId = null) {
+  const url = API_ENDPOINTS.STAFF.BOOKS.GET_PAGED(page, pageSize, searchTerm, statusFilter, categoryId);
+  return handleFetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Lấy danh sách sách thất bại");
+}
+
+// Lấy stats sách (cho staff quản lý)
+export async function getBooksStats(searchTerm = null, statusFilter = null, categoryId = null) {
+  const url = API_ENDPOINTS.STAFF.BOOKS.GET_STATS(searchTerm, statusFilter, categoryId);
+  return handleFetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Lấy thống kê sách thất bại");
+}
+
 // Lấy toàn bộ User kèm Profile (UserNameDTO)
 export async function getAllUsersWithProfile() {
   return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_ALL_USERS_WITH_PROFILE, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   }, "Lấy danh sách User kèm Profile thất bại");
+}
+
+// Lấy BookReviews (đánh giá sách) cho staff với pagination, search, filter
+export async function getAllBookReviews(page = 1, pageSize = 10, searchTerm = null, bookId = null) {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("pageSize", pageSize.toString());
+  if (searchTerm) params.append("searchTerm", searchTerm);
+  if (bookId) params.append("bookId", bookId.toString());
+
+  return handleFetch(`${API_ENDPOINTS.REVIEWS.STAFF_ALL}?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Lấy danh sách đánh giá sách thất bại");
+}
+
+// Lấy UserFeedback (báo lỗi) cho staff với pagination, search, filter
+export async function getAllUserFeedbacks(page = 1, pageSize = 10, searchTerm = null, bookId = null) {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("pageSize", pageSize.toString());
+  if (searchTerm) params.append("searchTerm", searchTerm);
+  if (bookId) params.append("bookId", bookId.toString());
+
+  return handleFetch(`${API_ENDPOINTS.FEEDBACK.STAFF_ALL}?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Lấy danh sách feedback thất bại");
+}
+
+// Xóa BookReview (đánh giá sách)
+export async function deleteBookReview(reviewId) {
+  return handleFetch(API_ENDPOINTS.REVIEWS.STAFF_DELETE(reviewId), {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Xóa đánh giá sách thất bại");
+}
+
+// Xóa UserFeedback (báo lỗi)
+export async function deleteUserFeedback(feedbackId) {
+  return handleFetch(API_ENDPOINTS.FEEDBACK.STAFF_DELETE(feedbackId), {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Xóa feedback thất bại");
+}
+
+// Lấy thống kê feedback (tổng số đánh giá sách và báo lỗi)
+export async function getFeedbackStats(searchTerm = null, bookId = null) {
+  const params = new URLSearchParams();
+  if (searchTerm) params.append("searchTerm", searchTerm);
+  if (bookId) params.append("bookId", bookId.toString());
+
+  const url = params.toString() 
+    ? `${API_ENDPOINTS.FEEDBACK.STAFF_STATS}?${params.toString()}` 
+    : API_ENDPOINTS.FEEDBACK.STAFF_STATS;
+
+  return handleFetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Lấy thống kê feedback thất bại");
 }
 /////////////////////////////////////////////////////////////////

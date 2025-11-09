@@ -89,6 +89,8 @@ namespace Services.Implementations.Admin
 
             return newUrl;
         }
+        public async Task<AdminStatisticDTO> GetStatisticsAsync(DateTime? fromDate = null, DateTime? toDate = null)
+            => await _repo.GetStatisticsAsync(fromDate, toDate);
 
     }
 }

@@ -8,9 +8,9 @@ namespace Repositories.Implementations
     {
         private readonly OwnerDashboardDAO _dao;
 
-        public OwnerDashboardRepository(VieBookContext context)
+        public OwnerDashboardRepository(OwnerDashboardDAO dao)
         {
-            _dao = new OwnerDashboardDAO(context);
+            _dao = dao;
         }
 
         public async Task<OwnerDashboardStatsDTO> GetOwnerStatsAsync(int ownerId)
