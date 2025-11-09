@@ -42,6 +42,14 @@
   scrollbar-width: none; /* Firefox */
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE & Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
 /* Custom scrollbar cho danh sách chương */
 .chapters-scrollable::-webkit-scrollbar {
   width: 6px;

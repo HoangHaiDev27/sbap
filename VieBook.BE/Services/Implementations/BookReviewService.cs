@@ -72,6 +72,18 @@ namespace Services.Implementations
 
         public Task<bool> CanReviewAsync(int userId, int bookId)
             => _reviewRepository.HasPurchasedAnyChapterAsync(userId, bookId);
+
+        public Task<List<BookReviewDTO>> GetAllForStaffAsync()
+            => _reviewRepository.GetAllForStaffAsync();
+
+        public Task<(List<BookReviewDTO> Reviews, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, int? bookId = null)
+            => _reviewRepository.GetAllForStaffPagedAsync(page, pageSize, searchTerm, bookId);
+
+        public Task<int> GetTotalCountForStaffAsync(string? searchTerm = null, int? bookId = null)
+            => _reviewRepository.GetTotalCountForStaffAsync(searchTerm, bookId);
+
+        public Task<bool> DeleteAsync(int reviewId)
+            => _reviewRepository.DeleteAsync(reviewId);
     }
 }
 

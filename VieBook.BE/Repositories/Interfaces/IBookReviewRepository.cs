@@ -15,6 +15,10 @@ namespace Repositories.Interfaces
         Task<BookReviewDTO?> GetDtoByIdAsync(int reviewId);
         Task<bool> SetOwnerReplyAsync(int reviewId, int ownerUserId, string reply);
         Task<bool> HasPurchasedAnyChapterAsync(int userId, int bookId);
+        Task<List<BookReviewDTO>> GetAllForStaffAsync();
+        Task<(List<BookReviewDTO> Reviews, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, int? bookId = null);
+        Task<int> GetTotalCountForStaffAsync(string? searchTerm = null, int? bookId = null);
+        Task<bool> DeleteAsync(int reviewId);
     }
 }
 

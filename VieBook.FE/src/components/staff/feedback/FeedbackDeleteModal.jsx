@@ -6,11 +6,9 @@ export default function FeedbackDeleteModal({ feedback, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Xóa feedback</h3>
         <p className="text-gray-700 mb-6">
-          Bạn có chắc chắn muốn xóa feedback của{" "}
-          <span className="font-medium">{feedback.user}</span> với tiêu đề{" "}
-          <span className="font-medium">"{feedback.title}"</span> không?
+          Bạn có chắc chắn muốn xóa đánh giá của{" "}
+          <span className="font-medium">{feedback.user}</span> không?
         </p>
         <div className="flex justify-end gap-3">
           <button

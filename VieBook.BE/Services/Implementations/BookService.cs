@@ -202,5 +202,51 @@ namespace Services.Implementations
                 bookResponse.DiscountedPrice = bookResponse.Price;
             }
         }
+
+        public async Task<(List<BookDTO> Books, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, string? statusFilter = null, int? categoryId = null)
+        {
+            var (books, totalCount) = await _bookRepo.GetAllForStaffPagedAsync(page, pageSize, searchTerm, statusFilter, categoryId);
+            
+            // Map Book to BookDTO
+            var bookDtos = books.Select(book =>
+            {
+                var dto = _mapper.Map<BookDTO>(book);
+                // Map OwnerName
+                dto.OwnerName = book.Owner?.UserProfile?.FullName ?? book.Owner?.Email ?? $"Owner ID: {book.OwnerId}";
+                // Map Categories
+                dto.CategoryIds = book.Categories?.Select(c => c.CategoryId).ToList() ?? new List<int>();
+                dto.CategoryNames = book.Categories?.Select(c => c.Name).ToList() ?? new List<string>();
+                // Calculate Rating
+                if (book.BookReviews != null && book.BookReviews.Any())
+                {
+                    dto.Rating = book.BookReviews.Average(r => r.Rating);
+                    dto.TotalRatings = book.BookReviews.Count;
+                }
+                else
+                {
+                    dto.Rating = 0;
+                    dto.TotalRatings = 0;
+                }
+                // Calculate TotalPrice and Sold
+                if (book.Chapters != null && book.Chapters.Any())
+                {
+                    dto.TotalPrice = book.Chapters.Where(c => c.PriceSoft.HasValue).Sum(c => c.PriceSoft.Value);
+                    dto.Sold = book.Chapters.SelectMany(c => c.OrderItems ?? new List<BusinessObject.Models.OrderItem>()).Count();
+                }
+                else
+                {
+                    dto.TotalPrice = 0;
+                    dto.Sold = 0;
+                }
+                return dto;
+            }).ToList();
+
+            return (bookDtos, totalCount);
+        }
+
+        public async Task<Dictionary<string, int>> GetStatsForStaffAsync(string? searchTerm = null, string? statusFilter = null, int? categoryId = null)
+        {
+            return await _bookRepo.GetStatsForStaffAsync(searchTerm, statusFilter, categoryId);
+        }
     }
 }

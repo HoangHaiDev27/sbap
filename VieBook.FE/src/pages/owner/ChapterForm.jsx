@@ -5,6 +5,21 @@ import { uploadChapterFile, createChapter, getBookById, checkBookHasActiveChapte
 import { checkSpelling as checkSpellingApi, checkMeaning as checkMeaningApi, moderation as moderationApi, checkPlagiarism as checkPlagiarismApi, generateEmbeddings as generateEmbeddingsApi } from "../../api/openAiApi";
 import { useLocation } from "react-router-dom";
 
+// Cấu hình PDF.js worker - sử dụng từ public folder
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+}
+
+// Lazy load Tesseract.js - chỉ load khi cần OCR
+let tesseractWorker = null;
+async function loadTesseract() {
+  if (!tesseractWorker) {
+    const { createWorker } = await import('tesseract.js');
+    tesseractWorker = await createWorker('vie+eng'); // Tiếng Việt + Tiếng Anh
+  }
+  return tesseractWorker;
+}
+
 // Real API for content policy check
 async function checkPolicy(content) {
   try {
@@ -86,6 +101,11 @@ export default function ChapterForm() {
   const [pdfPages, setPdfPages] = useState(null);
   const [status, setStatus] = useState("Draft");
   const fileInputRef = useRef(null);
+  
+  // OCR states
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrStatus, setOcrStatus] = useState("");
   
   // Step 1 - Spelling check
   const [spellingErrors, setSpellingErrors] = useState([]);
@@ -314,13 +334,76 @@ export default function ChapterForm() {
     }
   }, [price]);
 
-  // Xử lý chọn file TXT/PDF - sử dụng useCallback
+  // Kiểm tra PDF có text layer không
+  const detectPDFHasText = useCallback(async (pdf) => {
+    try {
+      let totalTextLength = 0;
+      const samplePages = Math.min(3, pdf.numPages); // Kiểm tra 3 trang đầu
+      
+      for (let i = 1; i <= samplePages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const text = textContent.items.map((item) => item.str).join(" ");
+        totalTextLength += text.trim().length;
+      }
+      
+      // Nếu có ít nhất 50 ký tự text → có text layer
+      return totalTextLength >= 50;
+    } catch (error) {
+      console.error("Error detecting PDF text:", error);
+      return false;
+    }
+  }, []);
+
+  // Convert PDF page thành image
+  const pdfPageToImage = useCallback(async (page, scale = 2) => {
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const context = canvas.getContext('2d');
+    
+    await page.render({
+      canvasContext: context,
+      viewport: viewport
+    }).promise;
+    
+    return canvas.toDataURL('image/png');
+  }, []);
+
+  // Thực hiện OCR trên image
+  const performOCR = useCallback(async (imageDataUrl, pageNum, totalPages, pageProgressCallback) => {
+    try {
+      setOcrStatus(`Đang OCR trang ${pageNum}/${totalPages}...`);
+      const worker = await loadTesseract();
+      
+      const { data } = await worker.recognize(imageDataUrl, 'vie+eng', {
+        logger: (m) => {
+          if (m.status === 'recognizing text' && pageProgressCallback) {
+            const pageProgress = Math.round(m.progress * 100);
+            pageProgressCallback(pageProgress);
+          }
+        }
+      });
+      
+      return data.text;
+    } catch (error) {
+      console.error(`OCR error for page ${pageNum}:`, error);
+      throw error;
+    }
+  }, []);
+
+  // Xử lý chọn file TXT/PDF với hybrid approach
   const handleFileChange = useCallback(async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
     setFile(selectedFile);
     setPdfPages(null);
+    setContent("");
+    setIsProcessingOCR(false);
+    setOcrProgress(0);
+    setOcrStatus("");
 
     if (selectedFile.type === "text/plain") {
       const reader = new FileReader();
@@ -329,17 +412,74 @@ export default function ChapterForm() {
     } else if (selectedFile.type === "application/pdf") {
       const fileReader = new FileReader();
       fileReader.onload = async function () {
-        const typedarray = new Uint8Array(this.result);
-        const pdf = await pdfjsLib.getDocument(typedarray).promise;
-        setPdfPages(pdf.numPages);
+        try {
+          const typedarray = new Uint8Array(this.result);
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          setPdfPages(pdf.numPages);
 
-        let text = "";
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          text += content.items.map((item) => item.str).join(" ") + "\n";
+          // Bước 1: Thử đọc text layer trước
+          const hasTextLayer = await detectPDFHasText(pdf);
+          
+          if (hasTextLayer) {
+            // PDF có text layer → đọc text trực tiếp
+            setOcrStatus("Đang đọc nội dung từ PDF...");
+            let text = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              text += content.items.map((item) => item.str).join(" ") + "\n";
+            }
+            setContent(text);
+            setOcrStatus("");
+          } else {
+            // PDF không có text layer → dùng OCR
+            setIsProcessingOCR(true);
+            setOcrStatus("Đang khởi tạo OCR...");
+            setOcrProgress(0);
+            
+            let allText = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const imageDataUrl = await pdfPageToImage(page);
+              
+              // Callback để cập nhật progress tổng thể
+              const pageProgressCallback = (pageProgress) => {
+                const baseProgress = ((i - 1) / pdf.numPages) * 100;
+                const currentPageProgress = (pageProgress / pdf.numPages);
+                setOcrProgress(Math.round(baseProgress + currentPageProgress));
+              };
+              
+              const ocrText = await performOCR(imageDataUrl, i, pdf.numPages, pageProgressCallback);
+              allText += ocrText + "\n\n";
+              
+              // Cập nhật progress sau khi hoàn thành trang
+              setOcrProgress(Math.round((i / pdf.numPages) * 100));
+            }
+            
+            setContent(allText);
+            setIsProcessingOCR(false);
+            setOcrProgress(100);
+            setOcrStatus("Hoàn thành OCR!");
+            
+            // Cleanup worker sau khi xong
+            setTimeout(() => {
+              setOcrStatus("");
+              setOcrProgress(0);
+            }, 2000);
+          }
+        } catch (error) {
+          console.error("Error processing PDF:", error);
+          setIsProcessingOCR(false);
+          setOcrStatus("");
+          window.dispatchEvent(
+            new CustomEvent("app:toast", {
+              detail: { 
+                type: "error", 
+                message: error.message || "Lỗi khi xử lý file PDF. Vui lòng thử lại." 
+              },
+            })
+          );
         }
-        setContent(text);
       };
       fileReader.readAsArrayBuffer(selectedFile);
     } else {
@@ -350,7 +490,7 @@ export default function ChapterForm() {
       );
       setFile(null);
     }
-  }, []);
+  }, [detectPDFHasText, pdfPageToImage, performOCR]);
 
   const formatFileSize = useCallback((bytes) => {
     if (bytes < 1024) return bytes + " B";
@@ -1006,9 +1146,9 @@ export default function ChapterForm() {
         {/* Upload file */}
         <div
           className="bg-slate-700 p-6 rounded-lg mb-6 border-2 border-dashed border-gray-500 cursor-pointer hover:border-gray-400 flex flex-col items-center justify-center transition"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isProcessingOCR && fileInputRef.current?.click()}
         >
-          <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.pdf" onChange={handleFileChange} />
+          <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.pdf" onChange={handleFileChange} disabled={isProcessingOCR} />
           <p className="text-center">
             {file ? file.name : "Chọn file chương (TXT hoặc PDF)"} {getFileTag()}
           </p>
@@ -1017,6 +1157,31 @@ export default function ChapterForm() {
               {formatFileSize(file.size)}
               {pdfPages && ` • Số trang: ${pdfPages}`}
             </p>
+          )}
+          
+          {/* OCR Progress Indicator */}
+          {isProcessingOCR && (
+            <div className="w-full mt-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-orange-400">{ocrStatus || "Đang xử lý..."}</span>
+                <span className="text-gray-400">{ocrProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-600 rounded-full h-2">
+                <div 
+                  className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${ocrProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-1">
+                Đang sử dụng OCR để nhận diện văn bản từ PDF scan...
+              </p>
+            </div>
+          )}
+          
+          {ocrStatus && !isProcessingOCR && (
+            <div className="mt-2 text-xs text-green-400 text-center">
+              {ocrStatus}
+            </div>
           )}
         </div>
 

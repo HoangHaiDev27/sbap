@@ -20,7 +20,9 @@ export const API_ENDPOINTS = {
     OWNER_REPLY: (reviewId) => `${API_BASE_URL}/api/bookreviews/${reviewId}/reply`,
     CAN_REVIEW: (bookId) => `${API_BASE_URL}/api/bookreviews/can-review/${bookId}`,
     OWNER: `${API_BASE_URL}/api/bookreviews/owner`,
-    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`
+    OWNER_STATS: `${API_BASE_URL}/api/bookreviews/owner/stats`,
+    STAFF_ALL: `${API_BASE_URL}/api/staff/feedbackmanagement/bookreviews`,
+    STAFF_DELETE: (reviewId) => `${API_BASE_URL}/api/staff/feedbackmanagement/bookreviews/${reviewId}`
   },
 
 
@@ -141,6 +143,9 @@ export const API_ENDPOINTS = {
   // Feedback endpoints
   FEEDBACK: {
     BOOK_REPORT: `${API_BASE_URL}/api/feedback/book-report`,
+    STAFF_ALL: `${API_BASE_URL}/api/staff/feedbackmanagement/userfeedback`,
+    STAFF_DELETE: (feedbackId) => `${API_BASE_URL}/api/staff/feedbackmanagement/userfeedback/${feedbackId}`,
+    STAFF_STATS: `${API_BASE_URL}/api/staff/feedbackmanagement/stats`,
   },
 
   // Reading History endpoints
@@ -166,6 +171,7 @@ export const API_ENDPOINTS = {
   BOOKS: {
     GET_ALL_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/books/owner/${ownerId}`,
     GET_BY_ID: (bookId) => `${API_BASE_URL}/api/books/detail/${bookId}`,
+    GET_ALL: `${API_BASE_URL}/api/books`,
     CREATE: `${API_BASE_URL}/api/books`,
     CREATE_WITH_SIGNATURE: `${API_BASE_URL}/api/books/create-with-signature`,
     UPDATE: (bookId) => `${API_BASE_URL}/api/books/${bookId}`,
@@ -234,6 +240,24 @@ export const API_ENDPOINTS = {
     LOCK: (staffId) => `${API_BASE_URL}/api/staff/lock/${staffId}`,
     UNLOCK: (staffId) => `${API_BASE_URL}/api/staff/unlock/${staffId}`,
     TOGGLE_STATUS: (staffId) => `${API_BASE_URL}/api/staff/toggle-status/${staffId}`,
+    BOOKS: {
+      GET_PAGED: (page, pageSize, searchTerm, statusFilter, categoryId) => {
+        const params = new URLSearchParams();
+        params.append("page", page);
+        params.append("pageSize", pageSize);
+        if (searchTerm) params.append("searchTerm", searchTerm);
+        if (statusFilter && statusFilter !== "all") params.append("statusFilter", statusFilter);
+        if (categoryId && categoryId !== "all") params.append("categoryId", categoryId);
+        return `${API_BASE_URL}/api/staff/staffbooks?${params.toString()}`;
+      },
+      GET_STATS: (searchTerm, statusFilter, categoryId) => {
+        const params = new URLSearchParams();
+        if (searchTerm) params.append("searchTerm", searchTerm);
+        if (statusFilter && statusFilter !== "all") params.append("statusFilter", statusFilter);
+        if (categoryId && categoryId !== "all") params.append("categoryId", categoryId);
+        return `${API_BASE_URL}/api/staff/staffbooks/stats?${params.toString()}`;
+      },
+    },
   },
   ADMIN: {
     GETADMINBYID: (adminId) => `${API_BASE_URL}/api/admin/${adminId}`,
