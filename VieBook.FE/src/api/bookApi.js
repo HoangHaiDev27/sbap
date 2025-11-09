@@ -16,6 +16,65 @@ export async function getBookDetail(id) {
   return res.json();
 }
 
+// Owner book detail with full status via /api/books/detail/{id}
+export async function getOwnerBookDetail(id) {
+  const url = API_ENDPOINTS.BOOKS?.GET_BY_ID ? API_ENDPOINTS.BOOKS.GET_BY_ID(id) : API_ENDPOINTS.BOOK_DETAIL(id);
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    const msg = res.status === 404
+      ? "Không tìm thấy sách"
+      : res.status === 401 || res.status === 403
+        ? "Bạn không có quyền truy cập sách này"
+        : `Lỗi tải dữ liệu (HTTP ${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+// Book stats via /api/books/{id}/stats
+export async function getBookStats(id) {
+  const url = `${API_ENDPOINTS.API_BASE_URL}/api/books/${id}/stats`;
+  const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" } });
+  if (!res.ok) {
+    throw new Error(`Không lấy được thống kê (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+// Chapters of a book
+export async function getChaptersByBookId(bookId) {
+  const url = API_ENDPOINTS.CHAPTERS?.GET_BY_BOOK_ID ? API_ENDPOINTS.CHAPTERS.GET_BY_BOOK_ID(bookId) : `${API_ENDPOINTS.API_BASE_URL}/api/chapter/book/${bookId}`;
+  const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" } });
+  if (!res.ok) throw new Error("Không lấy được danh sách chương");
+  return res.json();
+}
+
+// Reviews by book with server-side pagination (hasReply filtered client-side)
+export async function getReviewsByBook(bookId, { page = 1, pageSize = 5, rating = null } = {}) {
+  const params = new URLSearchParams();
+  params.set("page", page);
+  params.set("pageSize", pageSize);
+  if (rating) params.set("rating", rating);
+  const url = `${API_ENDPOINTS.REVIEWS.BY_BOOK(bookId)}?${params.toString()}`;
+  const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" } });
+  if (!res.ok) throw new Error("Không lấy được đánh giá");
+  return res.json();
+}
+
+// Owner reply a review
+export async function ownerReplyReview(reviewId, reply) {
+  const res = await authFetch(API_ENDPOINTS.REVIEWS.OWNER_REPLY(reviewId), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reply })
+  });
+  if (!res.ok) throw new Error("Gửi phản hồi thất bại");
+  return res.json();
+}
+
 //  danh sách sách đọc
 export async function getReadBooks() {
   const now = Date.now();

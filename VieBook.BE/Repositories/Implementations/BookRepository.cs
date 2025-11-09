@@ -91,6 +91,9 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetTopPurchasedReadBooksAsync();
         }
+
+        public Task<BookStatsDTO> GetBookStatsAsync(int bookId)
+            => _bookDao.GetBookStatsAsync(bookId);
         public async Task<List<Book>> GetRecommendedBooksAsync(int? userId = null)
         {
             return await _bookDao.GetRecommendedBooksAsync(userId);
