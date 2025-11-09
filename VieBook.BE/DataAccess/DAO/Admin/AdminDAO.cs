@@ -38,11 +38,22 @@ namespace DataAccess.DAO.Admin
             var now = DateTime.UtcNow;
             var startDate = fromDate ?? now.AddDays(-30);
             var endDate = toDate ?? now;
-
-            // ===== Helper tính phần trăm thay đổi =====
-            double CalcChange(double current, double previous)
+            if (startDate > endDate)
             {
-                if (previous <= 0) return current > 0 ? 100 : 0;
+                return new AdminStatisticDTO
+                {
+                    Message = "Ngày bắt đầu không được lớn hơn ngày kết thúc."
+                };
+            }
+            // ===== Helper tính phần trăm thay đổi =====
+           double CalcChange(double current, double previous)
+            {
+                if (previous <= 0)
+                {
+                    if (current <= 0) return 0;        // Không tăng, không giảm
+                    return 100;                        // Hoặc chọn giá trị đại diện "tăng từ 0"
+                }
+
                 return Math.Round((current - previous) / previous * 100, 1);
             }
 

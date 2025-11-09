@@ -34,6 +34,7 @@ namespace BusinessObject.Dtos
         public double FeedbackChangePercent { get; set; }
 
         public double AverageRating { get; set; }
+        public string Message { get; set; } = string.Empty;
 
         public List<BookByDayDTO>? BooksByDayData { get; set; }
         public List<RevenueByMonthDTO>? RevenueData { get; set; }
