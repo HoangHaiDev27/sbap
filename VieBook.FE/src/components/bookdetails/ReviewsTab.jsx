@@ -20,6 +20,7 @@ export default function ReviewsTab({ bookId, reviews }) {
   const [ratingFilter, setRatingFilter] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
+  const [hasMore, setHasMore] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
   const [canReview, setCanReview] = useState(false);
@@ -27,7 +28,7 @@ export default function ReviewsTab({ bookId, reviews }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
 
-  // Kiểm tra hasReviewed khi component mount
+  // Kiểm tra hasReviewed khi component mount từ props
   useEffect(() => {
     const uid = getUserId();
     if (uid && Array.isArray(reviews)) {
@@ -44,31 +45,33 @@ export default function ReviewsTab({ bookId, reviews }) {
       try {
         const uid = getUserId();
         
-        // Nếu không có filter, sử dụng dữ liệu từ props
-        if (ratingFilter === null) {
-          setReviewsData(reviews || []);
-          return;
-        }
-
+        // Luôn gọi API để có pagination, kể cả khi không có filter
         const list = await getReviewsByBook(bookId, {
           rating: ratingFilter,
           page,
           pageSize,
         });
-        setReviewsData(list || []);
+        
+        const reviewsList = Array.isArray(list) ? list : [];
+        setReviewsData(reviewsList);
+        
+        // Kiểm tra xem còn trang tiếp theo không
+        // Nếu số lượng reviews trả về = pageSize, có thể còn trang tiếp theo
+        setHasMore(reviewsList.length === pageSize);
 
-        if (uid && Array.isArray(list)) {
-          const userHasReview = list.some(
+        if (uid && Array.isArray(reviewsList)) {
+          const userHasReview = reviewsList.some(
             (r) => String(r?.userId || r?.UserId || "") === String(uid)
           );
           // không reset về false nếu trước đó đã true
           setHasReviewed((prev) => prev || userHasReview);
         }
       } catch {
-        // ignore
+        setReviewsData([]);
+        setHasMore(false);
       }
     })();
-  }, [bookId, ratingFilter, page, pageSize, reviews]);
+  }, [bookId, ratingFilter, page, pageSize]);
 
   // kiểm tra quyền đánh giá
   useEffect(() => {
@@ -175,7 +178,7 @@ export default function ReviewsTab({ bookId, reviews }) {
             <button
               className="flex items-center gap-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setPage(page + 1)}
-              disabled={reviewsData.length < pageSize}
+              disabled={!hasMore}
             >
               Sau
               <RiArrowRightSLine className="w-4 h-4" />
@@ -277,17 +280,19 @@ export default function ReviewsTab({ bookId, reviews }) {
 
                 setIsSubmitting(true);
                 try {
-                  const created = await createReview(
+                  await createReview(
                     parseInt(bookId, 10),
                     newRating,
                     newComment.trim()
                   );
                   toast.success("Đã gửi đánh giá thành công!");
-                  setReviewsData([created, ...reviewsData]);
                   setNewComment("");
                   setNewRating(5);
                   setHasReviewed(true);
                   setCommentError("");
+                  // Reset về trang 1 và reload reviews
+                  setPage(1);
+                  setRatingFilter(null);
                 } catch (e) {
                   console.error("Error creating review:", e);
                   toast.error(e.message || "Có lỗi xảy ra khi gửi đánh giá");

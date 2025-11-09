@@ -20,7 +20,7 @@ export default function DetailsTab({ bookDetail }) {
     {
       icon: RiGlobalLine,
       label: "Ngôn ngữ",
-      value: language || "Chưa xác định",
+      value: language || "Tiếng việt",
       color: "text-green-400"
     },
     {
