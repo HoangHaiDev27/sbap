@@ -6,8 +6,8 @@ namespace VieBook.BE.Configuration
     public static class ApiConfiguration
     {
         // Base URLs
-        public const string FRONTEND_URL = "http://localhost:5173";
-        public const string BACKEND_URL = "http://localhost:5757";
+        public const string FRONTEND_URL = "http://102.37.147.127:3008";
+        public const string BACKEND_URL = "http://102.37.147.127:5757";
 
         // API Endpoints
         public static class Endpoints
