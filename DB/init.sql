@@ -164,6 +164,33 @@ CREATE TABLE dbo.Chapters (
 );
 CREATE INDEX IX_Chapters_Book ON dbo.Chapters(BookId);
 
+-- Thêm bảng nhiều audio (phải tạo trước BookOffers và BookClaims vì được tham chiếu)
+CREATE TABLE dbo.ChapterAudios (
+  AudioId       INT IDENTITY(1,1) PRIMARY KEY,         
+  ChapterId     INT NOT NULL,  
+  UserId        INT NOT NULL,        
+  AudioLink     VARCHAR(1000) NOT NULL,                 
+  DurationSec   INT NULL,                               
+  PriceAudio    DECIMAL(18,2) NULL,                     
+  VoiceName     VARCHAR(50) NULL,                       
+  CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+-- Liên kết ChapterAudios → Chapters
+ALTER TABLE dbo.ChapterAudios
+ADD CONSTRAINT FK_ChapterAudios_Chapters
+FOREIGN KEY (ChapterId) REFERENCES dbo.Chapters(ChapterId)
+ON DELETE CASCADE;
+
+-- Liên kết ChapterAudios → Users
+ALTER TABLE dbo.ChapterAudios
+ADD CONSTRAINT FK_ChapterAudios_Users
+FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
+ON DELETE NO ACTION;
+
+CREATE INDEX IX_ChapterAudios_Chapter ON dbo.ChapterAudios(ChapterId);
+CREATE INDEX IX_ChapterAudios_User ON dbo.ChapterAudios(UserId);
+
 CREATE TABLE dbo.BookApprovals (
   ApprovalId INT IDENTITY(1,1) PRIMARY KEY,
   BookId     INT NOT NULL REFERENCES dbo.Books(BookId),
@@ -1714,29 +1741,6 @@ ALTER TABLE dbo.Books
 ADD UploaderType VARCHAR(20) NOT NULL DEFAULT('Owner'),
     UploadStatus VARCHAR(20) NOT NULL DEFAULT('Incomplete'),
     CompletionStatus VARCHAR(20) NOT NULL DEFAULT('Ongoing');
--- Thêm bảng nhiều audio
-CREATE TABLE dbo.ChapterAudios (
-AudioId       INT IDENTITY(1,1) PRIMARY KEY,         
-ChapterId     INT NOT NULL REFERENCES dbo.Chapters(ChapterId),  
-UserId        INT NOT NULL REFERENCES dbo.Users(UserId),        
-AudioLink     VARCHAR(1000) NOT NULL,                 
-DurationSec   INT NULL,                               
-PriceAudio    DECIMAL(18,2) NULL,                     
-VoiceName     VARCHAR(50) NULL,                       
-CreatedAt     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
-);
-
--- Liên kết ChapterAudios → Chapters
-ALTER TABLE dbo.ChapterAudios
-ADD CONSTRAINT FK_ChapterAudios_Chapters
-FOREIGN KEY (ChapterId) REFERENCES dbo.Chapters(ChapterId)
-ON DELETE CASCADE;
-
--- Liên kết ChapterAudios → Users
-ALTER TABLE dbo.ChapterAudios
-ADD CONSTRAINT FK_ChapterAudios_Users
-FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
-ON DELETE NO ACTION;
 
 -- Thêm cột CertificateUrl vào bảng Books
 ALTER TABLE Books
