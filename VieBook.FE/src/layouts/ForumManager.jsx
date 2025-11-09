@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     RiSearchLine,
     RiAddLine,
@@ -7,44 +7,113 @@ import {
     RiStarLine,
     RiCloseLine,
     RiBrainLine,
+    RiUserLine,
 } from "react-icons/ri";
 
 import PostList from "../components/forum/PostList";
 import PopularTopics from "../components/forum/PopularTopics";
 import ActiveUsers from "../components/forum/ActiveUsers";
 import CreatePostModal from "../components/forum/CreatePostModal";
+import { getPosts } from "../api/postApi";
+import { isBookOwner } from "../api/authApi";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 import bg from "../assets/forum-bg.png"; // ảnh nền
 
+const COLORS = ["bg-purple-500", "bg-blue-500", "bg-green-500", "bg-orange-500", "bg-red-500", "bg-pink-500", "bg-indigo-500", "bg-yellow-500", "bg-cyan-500", "bg-teal-500"];
+
 export default function ForumManager() {
+    const { userId } = useCurrentUser();
     const [activeTab, setActiveTab] = useState("all");
+    const [myPostsSubTab, setMyPostsSubTab] = useState("all"); // "all" or "hidden"
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedTag, setSelectedTag] = useState(null);
+    const [selectedAuthorId, setSelectedAuthorId] = useState(null);
+    const [allPosts, setAllPosts] = useState([]);
 
-    // ✅ thêm tab Đã ẩn
     const tabs = [
         { id: "all", label: "Tất cả", icon: <RiBookLine /> },
         { id: "discuss", label: "Thảo luận", icon: <RiBrainLine /> },
         { id: "gift", label: "Tặng sách", icon: <RiGiftLine /> },
         { id: "registered", label: "Đã đăng ký", icon: <RiStarLine /> },
-        { id: "hidden", label: "Đã ẩn", icon: <RiCloseLine /> },
+        { id: "my-posts", label: "Bài đăng của tôi", icon: <RiUserLine /> },
     ];
 
-    const popularTopics = [
-        { name: "Sách tâm lý học", count: "2.3K người theo dõi", color: "bg-purple-500" },
-        { name: "Kỹ năng mềm", count: "1.8K người theo dõi", color: "bg-blue-500" },
-        { name: "Kinh doanh khởi nghiệp", count: "1.5K người theo dõi", color: "bg-green-500" },
-        { name: "Phát triển bản thân", count: "2.1K người theo dõi", color: "bg-orange-500" },
-        { name: "Lịch sử Việt Nam", count: "980 người theo dõi", color: "bg-red-500" },
-        { name: "Tiểu thuyết hay", count: "1.2K người theo dõi", color: "bg-pink-500" },
-        { name: "Sách nuôi dạy con", count: "850 người theo dõi", color: "bg-indigo-500" },
-        { name: "Đầu tư tài chính", count: "1.7K người theo dõi", color: "bg-yellow-500" },
-    ];
+    // Load all posts to calculate popular topics and active users
+    useEffect(() => {
+        loadAllPosts();
+    }, []);
 
-    const activeUsers = [
-        { name: "Minh Phương", posts: 12, followers: 2300, avatar: null, isFollowing: true },
-        { name: "Tuấn Anh", posts: 8, followers: 1800, avatar: null, isFollowing: true },
-        { name: "Thu Hà", posts: 15, followers: 3100, avatar: null, isFollowing: false },
-    ];
+    const loadAllPosts = async () => {
+        try {
+            const data = await getPosts({});
+            const postsArray = Array.isArray(data) ? data : (data?.data || []);
+            setAllPosts(postsArray);
+        } catch (error) {
+            console.error("Failed to load posts for sidebar:", error);
+        }
+    };
+
+    // Calculate popular topics from posts tags - limit to 10
+    const popularTopics = useMemo(() => {
+        const tagCounts = {};
+        allPosts.forEach(post => {
+            if (post.tags && Array.isArray(post.tags)) {
+                post.tags.forEach(tag => {
+                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                });
+            }
+        });
+
+        const sortedTags = Object.entries(tagCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10) // Limit to 10 tags
+            .map(([tag, count], index) => ({
+                name: tag,
+                count: `${count} bài viết`,
+                color: COLORS[index % COLORS.length]
+            }));
+
+        return sortedTags;
+    }, [allPosts]);
+
+    // Calculate active owners (book owners) based on total reactions - limit to 10
+    const activeUsers = useMemo(() => {
+        const ownerReactions = {};
+        const ownerPosts = {}; // Track if user has giveaway posts (owners only)
+        
+        // First pass: identify owners (users who created giveaway posts)
+        allPosts.forEach(post => {
+            if (post.author && post.postType === "giveaway") {
+                const userId = post.author.userId;
+                ownerPosts[userId] = true;
+            }
+        });
+        
+        // Second pass: calculate total reactions for owners only
+        allPosts.forEach(post => {
+            if (post.author && ownerPosts[post.author.userId]) {
+                const userId = post.author.userId;
+                if (!ownerReactions[userId]) {
+                    ownerReactions[userId] = {
+                        userId: userId,
+                        name: post.author.fullName || post.author.email || "Người dùng",
+                        totalReactions: 0,
+                        followers: 0, // TODO: Get from API
+                        avatar: post.author.userProfile?.avatarUrl || null,
+                        isFollowing: false // TODO: Get from API
+                    };
+                }
+                // Add reaction count from this post
+                ownerReactions[userId].totalReactions += post.reactionCount || 0;
+            }
+        });
+
+        // Sort by total reactions and limit to 10
+        return Object.values(ownerReactions)
+            .sort((a, b) => b.totalReactions - a.totalReactions)
+            .slice(0, 10);
+    }, [allPosts]);
 
     return (
         <div className="bg-slate-900 min-h-screen text-white">
@@ -74,19 +143,25 @@ export default function ForumManager() {
                                 />
                                 <input
                                     type="text"
-                                    placeholder="Tìm kiếm bài viết theo tiêu đề..."
+                                    placeholder="Tìm kiếm bài viết theo tiêu đề, nội dung hoặc hashtag (ví dụ: #tâm lí)..."
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setSelectedTag(null);
+                                        setSelectedAuthorId(null);
+                                    }}
                                     className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                                 />
                             </div>
-                            <button
-                                onClick={() => setShowCreateModal(true)}
-                                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors"
-                            >
-                                <RiAddLine size={20} />
-                                Đăng bài
-                            </button>
+                            {isBookOwner() && (
+                                <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                                >
+                                    <RiAddLine size={20} />
+                                    Đăng bài
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -95,21 +170,56 @@ export default function ForumManager() {
             {/* Navigation Tabs */}
             <div className="sticky top-0 bg-slate-800 border-b border-slate-700 z-10">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex space-x-8">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
-                                    activeTab === tab.id
-                                        ? "border-orange-500 text-orange-500"
-                                        : "border-transparent text-slate-400 hover:text-white"
-                                }`}
-                            >
-                                <span>{tab.icon}</span>
-                                <span>{tab.label}</span>
-                            </button>
-                        ))}
+                    <div className="flex flex-col">
+                        <div className="flex space-x-8">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                        setActiveTab(tab.id);
+                                        setSelectedTag(null);
+                                        setSelectedAuthorId(null);
+                                        setSearchQuery("");
+                                        if (tab.id === "my-posts") {
+                                            setMyPostsSubTab("all"); // Reset to "all" when switching to my-posts
+                                        }
+                                    }}
+                                    className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                                        activeTab === tab.id
+                                            ? "border-orange-500 text-orange-500"
+                                            : "border-transparent text-slate-400 hover:text-white"
+                                    }`}
+                                >
+                                    <span>{tab.icon}</span>
+                                    <span>{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {/* Sub-tabs for "my-posts" */}
+                        {activeTab === "my-posts" && userId && (
+                            <div className="flex space-x-4 pl-4 pb-2 border-b border-slate-700">
+                                <button
+                                    onClick={() => setMyPostsSubTab("all")}
+                                    className={`px-3 py-2 text-sm font-medium transition-colors ${
+                                        myPostsSubTab === "all"
+                                            ? "text-orange-400 border-b-2 border-orange-400"
+                                            : "text-slate-400 hover:text-white"
+                                    }`}
+                                >
+                                    Tất cả bài đăng
+                                </button>
+                                <button
+                                    onClick={() => setMyPostsSubTab("hidden")}
+                                    className={`px-3 py-2 text-sm font-medium transition-colors ${
+                                        myPostsSubTab === "hidden"
+                                            ? "text-orange-400 border-b-2 border-orange-400"
+                                            : "text-slate-400 hover:text-white"
+                                    }`}
+                                >
+                                    Đã ẩn
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -119,23 +229,75 @@ export default function ForumManager() {
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* Main Posts Area */}
                     <div className="lg:col-span-3">
-                        <PostList activeTab={activeTab} searchQuery={searchQuery} />
+                        {/* Show active filters */}
+                        {(selectedTag || selectedAuthorId) && (
+                            <div className="mb-4 flex items-center gap-2 flex-wrap">
+                                {selectedTag && (
+                                    <div className="bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                                        <span>#{selectedTag}</span>
+                                        <button
+                                            onClick={() => setSelectedTag(null)}
+                                            className="hover:text-orange-300 text-lg leading-none"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                )}
+                                {selectedAuthorId && (
+                                    <div className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                                        <span>Tác giả: {activeUsers.find(u => u.userId === selectedAuthorId)?.name || "Unknown"}</span>
+                                        <button
+                                            onClick={() => setSelectedAuthorId(null)}
+                                            className="hover:text-blue-300 text-lg leading-none"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        <PostList 
+                            activeTab={activeTab} 
+                            searchQuery={searchQuery}
+                            tag={selectedTag}
+                            authorId={selectedAuthorId}
+                            subTab={activeTab === "my-posts" ? myPostsSubTab : null}
+                        />
                     </div>
 
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Popular Topics */}
-                        <PopularTopics topics={popularTopics} />
+                        <PopularTopics 
+                            topics={popularTopics}
+                            onTagClick={(tagName) => {
+                                setSelectedTag(tagName);
+                                setSelectedAuthorId(null);
+                                setSearchQuery("");
+                                setActiveTab("all");
+                            }}
+                        />
 
                         {/* Active Users */}
-                        <ActiveUsers users={activeUsers} />
+                        <ActiveUsers 
+                            users={activeUsers}
+                            onUserClick={(userId) => {
+                                setSelectedAuthorId(userId);
+                                setSelectedTag(null);
+                                setSearchQuery("");
+                                setActiveTab("all");
+                            }}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Create Post Modal */}
             {showCreateModal && (
-                <CreatePostModal onClose={() => setShowCreateModal(false)} />
+                <CreatePostModal onClose={() => {
+                    setShowCreateModal(false);
+                    loadAllPosts(); // Reload all posts after creating a new one
+                }} />
             )}
         </div>
     );

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
 using AutoMapper;
 using BusinessObject.Models;
 
@@ -292,6 +293,118 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
                 .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            // BookOffer mappings
+            CreateMap<BookOffer, BookOfferDTO>()
+                .ForMember(dest => dest.Book, opt => opt.MapFrom(src => src.Book))
+                .ForMember(dest => dest.Chapter, opt => opt.MapFrom(src => src.Chapter))
+                .ForMember(dest => dest.ChapterAudio, opt => opt.MapFrom(src => src.ChapterAudio))
+                .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.Owner));
+            
+            CreateMap<CreateBookOfferDTO, BookOffer>()
+                .ForMember(dest => dest.BookOfferId, opt => opt.Ignore())
+                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
+                .ForMember(dest => dest.StartAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.Chapter, opt => opt.Ignore())
+                .ForMember(dest => dest.ChapterAudio, opt => opt.Ignore())
+                .ForMember(dest => dest.Owner, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.BookClaims, opt => opt.Ignore());
+
+            // BookClaim mappings
+            CreateMap<BookClaim, BookClaimDTO>()
+                .ForMember(dest => dest.BookOffer, opt => opt.MapFrom(src => src.BookOffer))
+                .ForMember(dest => dest.Chapter, opt => opt.MapFrom(src => src.Chapter))
+                .ForMember(dest => dest.ChapterAudio, opt => opt.MapFrom(src => src.ChapterAudio))
+                .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.Customer));
+
+            CreateMap<CreateBookClaimDTO, BookClaim>()
+                .ForMember(dest => dest.ClaimId, opt => opt.Ignore())
+                .ForMember(dest => dest.CustomerId, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessedBy, opt => opt.Ignore())
+                .ForMember(dest => dest.BookOffer, opt => opt.Ignore())
+                .ForMember(dest => dest.Chapter, opt => opt.Ignore())
+                .ForMember(dest => dest.ChapterAudio, opt => opt.Ignore())
+                .ForMember(dest => dest.Customer, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessedByNavigation, opt => opt.Ignore());
+
+            // ChapterAudio mapping
+            CreateMap<ChapterAudio, ChapterAudioDTO>();
+
+            // Post mappings
+            CreateMap<Post, PostDTO>()
+                .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author))
+                .ForMember(dest => dest.BookOffer, opt => opt.MapFrom(src => src.BookOffer))
+                .ForMember(dest => dest.Attachments, opt => opt.MapFrom(src => src.PostAttachments))
+                .ForMember(dest => dest.Tags, opt => opt.Ignore())
+                .AfterMap((src, dest) => {
+                    if (!string.IsNullOrEmpty(src.Tags))
+                    {
+                        try
+                        {
+                            dest.Tags = JsonSerializer.Deserialize<List<string>>(src.Tags);
+                        }
+                        catch
+                        {
+                            dest.Tags = null;
+                        }
+                    }
+                    else
+                    {
+                        dest.Tags = null;
+                    }
+                });
+
+            CreateMap<PostAttachment, PostAttachmentDTO>();
+
+            CreateMap<CreatePostDTO, Post>()
+                .ForMember(dest => dest.PostId, opt => opt.Ignore())
+                .ForMember(dest => dest.AuthorId, opt => opt.Ignore())
+                .ForMember(dest => dest.CommentCount, opt => opt.Ignore())
+                .ForMember(dest => dest.ReactionCount, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedBy, opt => opt.Ignore())
+                .ForMember(dest => dest.Author, opt => opt.Ignore())
+                .ForMember(dest => dest.BookOffer, opt => opt.Ignore())
+                .ForMember(dest => dest.PostAttachments, opt => opt.Ignore())
+                .ForMember(dest => dest.PostComments, opt => opt.Ignore())
+                .ForMember(dest => dest.PostReactions, opt => opt.Ignore())
+                .ForMember(dest => dest.Books, opt => opt.Ignore());
+
+            // PostReaction mappings
+            CreateMap<PostReaction, PostReactionDTO>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
+
+            CreateMap<CreatePostReactionDTO, PostReaction>()
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            // PostComment mappings
+            CreateMap<PostComment, PostCommentDTO>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User))
+                .ForMember(dest => dest.Replies, opt => opt.Ignore()); // Handled manually in service
+
+            CreateMap<CreatePostCommentDTO, PostComment>()
+                .ForMember(dest => dest.CommentId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedBy, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.ParentComment, opt => opt.Ignore())
+                .ForMember(dest => dest.InverseParentComment, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedByNavigation, opt => opt.Ignore());
         }
     }
 

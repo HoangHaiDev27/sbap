@@ -1,24 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   RiCloseLine,
   RiMessage3Line,
   RiGiftLine,
   RiBookLine,
   RiImageLine,
+  RiBookOpenLine,
+  RiPlayCircleLine,
+  RiCheckLine,
+  RiSearchLine,
 } from "react-icons/ri";
+import { getBooksByOwner, getChapterAudios } from "../../api/ownerBookApi";
+import { getBookDetail } from "../../api/bookApi";
+import { getChapterAudioPrices } from "../../api/ownerBookApi";
+import { createPost } from "../../api/postApi";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
+import toast from "react-hot-toast";
 
 export default function CreatePostModal({ onClose }) {
+  const { userId } = useCurrentUser();
   const [postType, setPostType] = useState("discuss");
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     imageFile: null,
+    imagePreview: null,
     tags: "",
+    bookId: null,
     bookTitle: "",
     bookCover: null,
+    chapterId: null,
+    audioId: null,
+    accessType: "Both", // Soft/Audio/Both
     quantity: "",
     deadline: ""
   });
+  const [books, setBooks] = useState([]);
+  const [bookSearchQuery, setBookSearchQuery] = useState("");
+  const [showBookDropdown, setShowBookDropdown] = useState(false);
+  const [chapters, setChapters] = useState([]);
+  const [chapterAudios, setChapterAudios] = useState([]);
+  const [audioPrices, setAudioPrices] = useState({});
+  const [loadingBooks, setLoadingBooks] = useState(false);
+  const [loadingChapters, setLoadingChapters] = useState(false);
+  const [loadingAudios, setLoadingAudios] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -28,16 +54,241 @@ export default function CreatePostModal({ onClose }) {
   };
 
   const handleFileChange = (field, file) => {
-    setFormData((prev) => ({
+    if (field === "imageFile" && file) {
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          imageFile: file,
+          imagePreview: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: file
+      }));
+    }
+  };
+
+  // Load owner's books
+  useEffect(() => {
+    if (postType === "giveaway" && userId) {
+      loadBooks();
+    } else {
+      setBookSearchQuery("");
+      setShowBookDropdown(false);
+    }
+  }, [postType, userId]);
+
+  // Update search query when book is selected externally
+  useEffect(() => {
+    if (formData.bookId) {
+      const book = books.find(b => b.bookId === formData.bookId);
+      if (book) {
+        setBookSearchQuery(book.title || "");
+      }
+    } else {
+      setBookSearchQuery("");
+    }
+  }, [formData.bookId, books]);
+
+  // Load chapters when book is selected
+  useEffect(() => {
+    if (postType === "giveaway" && formData.bookId) {
+      loadChapters(formData.bookId);
+    } else {
+      setChapters([]);
+      setFormData(prev => ({ ...prev, chapterId: null, audioId: null }));
+    }
+  }, [formData.bookId, postType]);
+
+  // Load audios when chapter is selected and accessType is Audio or Both
+  useEffect(() => {
+    if (postType === "giveaway" && formData.chapterId && (formData.accessType === "Audio" || formData.accessType === "Both")) {
+      loadChapterAudios(formData.chapterId);
+    } else {
+      setChapterAudios([]);
+      setFormData(prev => ({ ...prev, audioId: null }));
+    }
+  }, [formData.chapterId, formData.accessType, postType]);
+
+  const loadBooks = async () => {
+    if (!userId) return;
+    
+    try {
+      setLoadingBooks(true);
+      const response = await getBooksByOwner(userId);
+      // Handle different response formats
+      if (Array.isArray(response)) {
+        setBooks(response);
+      } else if (response?.data && Array.isArray(response.data)) {
+        setBooks(response.data);
+      } else {
+        console.warn("Unexpected response format:", response);
+        setBooks([]);
+      }
+    } catch (error) {
+      console.error("Failed to load books:", error);
+      toast.error("Không thể tải danh sách sách");
+      setBooks([]);
+    } finally {
+      setLoadingBooks(false);
+    }
+  };
+
+  const loadChapters = async (bookId) => {
+    try {
+      setLoadingChapters(true);
+      const [bookDetail, audioPricesData] = await Promise.all([
+        getBookDetail(bookId),
+        getChapterAudioPrices(bookId)
+      ]);
+
+      if (bookDetail?.chapters) {
+        // Filter active chapters
+        const activeChapters = bookDetail.chapters.filter(c => c.status === "Active");
+        setChapters(activeChapters);
+      }
+
+      if (audioPricesData && typeof audioPricesData === 'object') {
+        setAudioPrices(audioPricesData);
+      }
+    } catch (error) {
+      console.error("Failed to load chapters:", error);
+      toast.error("Không thể tải danh sách chương");
+    } finally {
+      setLoadingChapters(false);
+    }
+  };
+
+  const handleBookSelect = (bookId) => {
+    const selectedBook = books.find(b => b.bookId === bookId);
+    setFormData(prev => ({
       ...prev,
-      [field]: file
+      bookId: bookId,
+      bookTitle: selectedBook?.title || "",
+      chapterId: null
+    }));
+    setBookSearchQuery(selectedBook?.title || "");
+    setShowBookDropdown(false);
+  };
+
+  const filteredBooks = books.filter((book) => {
+    if (!bookSearchQuery.trim()) return true;
+    const query = bookSearchQuery.toLowerCase().trim();
+    return (
+      book.title?.toLowerCase().includes(query) ||
+      book.author?.toLowerCase().includes(query)
+    );
+  });
+
+  const selectedBook = books.find(b => b.bookId === formData.bookId);
+
+  const handleChapterSelect = (chapterId) => {
+    setFormData(prev => ({
+      ...prev,
+      chapterId: chapterId,
+      audioId: null // Reset audio when chapter changes
     }));
   };
 
-  const handleSubmit = (e) => {
+  const loadChapterAudios = async (chapterId) => {
+    try {
+      setLoadingAudios(true);
+      const response = await getChapterAudios(chapterId);
+      // Handle different response formats
+      if (Array.isArray(response)) {
+        setChapterAudios(response);
+      } else if (response?.data && Array.isArray(response.data)) {
+        setChapterAudios(response.data);
+      } else {
+        console.warn("Unexpected response format for audios:", response);
+        setChapterAudios([]);
+      }
+    } catch (error) {
+      console.error("Failed to load chapter audios:", error);
+      toast.error("Không thể tải danh sách audio");
+      setChapterAudios([]);
+    } finally {
+      setLoadingAudios(false);
+    }
+  };
+
+  const handleAccessTypeChange = (type) => {
+    setFormData(prev => ({
+      ...prev,
+      accessType: type
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting post:", { postType, ...formData });
-    onClose();
+    
+    if (!formData.title.trim()) {
+      toast.error("Vui lòng nhập tiêu đề");
+      return;
+    }
+    
+    if (!formData.content.trim()) {
+      toast.error("Vui lòng nhập nội dung");
+      return;
+    }
+    
+    if (postType === "giveaway") {
+      if (!formData.bookId) {
+        toast.error("Vui lòng chọn sách");
+        return;
+      }
+      if (!formData.chapterId) {
+        toast.error("Vui lòng chọn chương");
+        return;
+      }
+      if (!formData.quantity || parseInt(formData.quantity) < 1) {
+        toast.error("Vui lòng nhập số suất tặng hợp lệ");
+        return;
+      }
+      if (!formData.deadline) {
+        toast.error("Vui lòng chọn hạn đăng ký");
+        return;
+      }
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const postPayload = {
+        content: formData.content,
+        postType: postType === "giveaway" ? "giveaway" : "discuss",
+        visibility: "Public",
+        title: formData.title,
+        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : []
+      };
+      
+      // If it's a giveaway, include book offer data
+      if (postType === "giveaway") {
+        postPayload.bookOffer = {
+          bookId: formData.bookId,
+          chapterId: formData.chapterId,
+          audioId: formData.audioId || null,
+          accessType: formData.accessType,
+          quantity: parseInt(formData.quantity),
+          endAt: new Date(formData.deadline).toISOString(),
+          criteria: null
+        };
+      }
+      
+      const response = await createPost(postPayload);
+      toast.success("Đăng bài thành công!");
+      onClose();
+    } catch (error) {
+      console.error("Failed to create post:", error);
+      toast.error(error.message || "Không thể đăng bài. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -132,7 +383,23 @@ export default function CreatePostModal({ onClose }) {
                 }
               />
             </label>
-            {formData.imageFile && (
+            {formData.imagePreview && (
+              <div className="mt-4">
+                <img 
+                  src={formData.imagePreview} 
+                  alt="Preview" 
+                  className="max-w-full h-auto max-h-64 rounded-lg border border-slate-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, imageFile: null, imagePreview: null }))}
+                  className="mt-2 text-sm text-red-400 hover:text-red-300"
+                >
+                  Xóa ảnh
+                </button>
+              </div>
+            )}
+            {formData.imageFile && !formData.imagePreview && (
               <p className="text-xs text-slate-400 mt-2">
                 Đã chọn: {formData.imageFile.name}
               </p>
@@ -162,44 +429,180 @@ export default function CreatePostModal({ onClose }) {
               </h4>
 
               <div className="space-y-4">
+                {/* Book Selection - Combined Search and Select */}
                 <div>
                   <label className="block text-sm font-medium text-white mb-2">
-                    Tên sách *
+                    Chọn sách *
                   </label>
-                  <input
-                    type="text"
-                    value={formData.bookTitle}
-                    onChange={(e) =>
-                      handleInputChange("bookTitle", e.target.value)
-                    }
-                    placeholder="Nhập tên sách..."
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Ảnh bìa sách
-                  </label>
-                  <label className="flex items-center gap-2 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:border-orange-500 hover:text-white cursor-pointer">
-                    <RiImageLine size={18} />
-                    <span>Tải ảnh lên</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleFileChange("bookCover", e.target.files[0])
-                      }
-                    />
-                  </label>
-                  {formData.bookCover && (
-                    <p className="text-xs text-slate-400 mt-2">
-                      Đã chọn: {formData.bookCover.name}
-                    </p>
+                  {loadingBooks ? (
+                    <div className="text-slate-400 text-sm">Đang tải...</div>
+                  ) : (
+                    <div className="relative">
+                      {/* Search Input */}
+                      <div className="relative">
+                        <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                        <input
+                          type="text"
+                          value={bookSearchQuery}
+                          onChange={(e) => {
+                            setBookSearchQuery(e.target.value);
+                            setShowBookDropdown(true);
+                            if (!e.target.value.trim()) {
+                              setFormData(prev => ({ ...prev, bookId: null, bookTitle: "", chapterId: null }));
+                            }
+                          }}
+                          onFocus={() => setShowBookDropdown(true)}
+                          onBlur={() => {
+                            // Delay to allow click on dropdown item
+                            setTimeout(() => setShowBookDropdown(false), 200);
+                          }}
+                          placeholder={selectedBook ? selectedBook.title : "Tìm kiếm và chọn sách..."}
+                          className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                          required={!formData.bookId}
+                        />
+                      </div>
+                      {/* Dropdown List */}
+                      {showBookDropdown && filteredBooks.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {filteredBooks.map((book) => (
+                            <div
+                              key={book.bookId}
+                              onClick={() => handleBookSelect(book.bookId)}
+                              className={`px-4 py-3 cursor-pointer hover:bg-slate-600 transition-colors ${
+                                formData.bookId === book.bookId ? "bg-slate-600" : ""
+                              }`}
+                            >
+                              <div className="text-white font-medium">{book.title}</div>
+                              {book.author && (
+                                <div className="text-slate-400 text-sm">{book.author}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* No results message */}
+                      {showBookDropdown && bookSearchQuery.trim() && filteredBooks.length === 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg p-4">
+                          <div className="text-slate-400 text-sm text-center">
+                            Không tìm thấy sách nào
+                          </div>
+                        </div>
+                      )}
+                      {/* Selected book display (when not focused) */}
+                      {formData.bookId && selectedBook && !showBookDropdown && (
+                        <div className="mt-2 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg">
+                          <div className="text-white text-sm font-medium">{selectedBook.title}</div>
+                          {selectedBook.author && (
+                            <div className="text-slate-400 text-xs">{selectedBook.author}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
+
+                {/* Chapter Selection */}
+                {formData.bookId && (
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">
+                      Chọn chương *
+                    </label>
+                    {loadingChapters ? (
+                      <div className="text-slate-400 text-sm">Đang tải...</div>
+                    ) : chapters.length === 0 ? (
+                      <div className="text-slate-400 text-sm">Không có chương nào</div>
+                    ) : (
+                      <select
+                        value={formData.chapterId || ""}
+                        onChange={(e) => handleChapterSelect(parseInt(e.target.value))}
+                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                        required
+                      >
+                        <option value="">-- Chọn chương --</option>
+                        {chapters.map((chapter, index) => (
+                          <option key={chapter.chapterId} value={chapter.chapterId}>
+                            Chương {index + 1}: {chapter.chapterTitle || "Chưa có tiêu đề"}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+
+                {/* Access Type Selection */}
+                {formData.chapterId && (
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">
+                      Loại bản tặng *
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleAccessTypeChange("Soft")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                          formData.accessType === "Soft"
+                            ? "bg-orange-500 text-white border-orange-500"
+                            : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
+                        }`}
+                      >
+                        <RiBookOpenLine size={18} />
+                        Bản đọc
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAccessTypeChange("Audio")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                          formData.accessType === "Audio"
+                            ? "bg-orange-500 text-white border-orange-500"
+                            : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
+                        }`}
+                      >
+                        <RiPlayCircleLine size={18} />
+                        Bản nghe
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAccessTypeChange("Both")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                          formData.accessType === "Both"
+                            ? "bg-orange-500 text-white border-orange-500"
+                            : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
+                        }`}
+                      >
+                        <RiCheckLine size={18} />
+                        Cả hai
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Audio Selection (only for Audio or Both) */}
+                {formData.chapterId && (formData.accessType === "Audio" || formData.accessType === "Both") && (
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">
+                      Chọn bản audio *
+                    </label>
+                    {loadingAudios ? (
+                      <div className="text-slate-400 text-sm">Đang tải...</div>
+                    ) : chapterAudios.length === 0 ? (
+                      <div className="text-slate-400 text-sm">Không có audio nào</div>
+                    ) : (
+                      <select
+                        value={formData.audioId || ""}
+                        onChange={(e) => handleInputChange("audioId", e.target.value ? parseInt(e.target.value) : null)}
+                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                        required={formData.accessType === "Audio" || formData.accessType === "Both"}
+                      >
+                        <option value="">-- Chọn audio --</option>
+                        {chapterAudios.map((audio) => (
+                          <option key={audio.audioId} value={audio.audioId}>
+                            {audio.voiceName || `Audio ${audio.audioId}`} {audio.durationSec ? `(${Math.floor(audio.durationSec / 60)}:${String(audio.durationSec % 60).padStart(2, '0')})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -248,9 +651,10 @@ export default function CreatePostModal({ onClose }) {
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
+              disabled={isSubmitting}
+              className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Đăng bài
+              {isSubmitting ? "Đang đăng..." : "Đăng bài"}
             </button>
           </div>
         </form>

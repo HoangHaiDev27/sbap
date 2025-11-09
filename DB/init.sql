@@ -425,7 +425,9 @@ CREATE INDEX IX_UserFollows_Followed ON dbo.UserFollows(FollowedId);
 CREATE TABLE dbo.Posts (
   PostId         BIGINT IDENTITY(1,1) PRIMARY KEY,
   AuthorId       INT NOT NULL REFERENCES dbo.Users(UserId),
+  Title          NVARCHAR(500) NULL,
   Content        NVARCHAR(MAX) NULL,
+  Tags           NVARCHAR(MAX) NULL,     -- JSON array of tags
   PostType       VARCHAR(20) NULL,      -- KHÔNG CHECK để bạn tự do thay đổi
   Visibility     VARCHAR(20) NOT NULL,  -- Public/Followers/Private (không CHECK)
   CommentCount   INT NOT NULL DEFAULT(0),
@@ -484,6 +486,8 @@ CREATE TABLE dbo.BookOffers (
   PostId      BIGINT NOT NULL UNIQUE REFERENCES dbo.Posts(PostId), -- 1-1
   OwnerId     INT    NOT NULL REFERENCES dbo.Users(UserId),
   BookId      INT    NOT NULL REFERENCES dbo.Books(BookId),
+  ChapterId   INT    NULL REFERENCES dbo.Chapters(ChapterId),
+  AudioId     INT    NULL REFERENCES dbo.ChapterAudios(AudioId),
   AccessType  VARCHAR(10) NOT NULL,   -- Soft/Audio/Both
   Quantity    INT NOT NULL DEFAULT(1),
   Criteria    NVARCHAR(1000) NULL,
@@ -497,6 +501,8 @@ CREATE TABLE dbo.BookClaims (
   ClaimId      BIGINT IDENTITY(1,1) PRIMARY KEY,
   BookOfferId  BIGINT NOT NULL REFERENCES dbo.BookOffers(BookOfferId),
   CustomerId   INT    NOT NULL REFERENCES dbo.Users(UserId),
+  ChapterId    INT    NULL REFERENCES dbo.Chapters(ChapterId),
+  AudioId      INT    NULL REFERENCES dbo.ChapterAudios(AudioId),
   Note         NVARCHAR(500) NULL,
   Status       VARCHAR(20) NOT NULL,  -- Pending/Approved/Rejected/Granted (không CHECK)
   CreatedAt    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),

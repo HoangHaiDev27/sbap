@@ -212,6 +212,14 @@ public partial class VieBookContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BookClaim__BookO__40F9A68C");
 
+            entity.HasOne(d => d.Chapter).WithMany()
+                .HasForeignKey(d => d.ChapterId)
+                .HasConstraintName("FK__BookClaim__ChapterId");
+
+            entity.HasOne(d => d.ChapterAudio).WithMany()
+                .HasForeignKey(d => d.AudioId)
+                .HasConstraintName("FK__BookClaim__AudioId");
+
             entity.HasOne(d => d.Customer).WithMany(p => p.BookClaimCustomers)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -244,6 +252,14 @@ public partial class VieBookContext : DbContext
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BookOffer__BookI__3C34F16F");
+
+            entity.HasOne(d => d.Chapter).WithMany()
+                .HasForeignKey(d => d.ChapterId)
+                .HasConstraintName("FK__BookOffer__ChapterId");
+
+            entity.HasOne(d => d.ChapterAudio).WithMany()
+                .HasForeignKey(d => d.AudioId)
+                .HasConstraintName("FK__BookOffer__AudioId");
 
             entity.HasOne(d => d.Owner).WithMany(p => p.BookOffers)
                 .HasForeignKey(d => d.OwnerId)
@@ -574,6 +590,8 @@ public partial class VieBookContext : DbContext
             entity.HasIndex(e => new { e.Visibility, e.CreatedAt }, "IX_Posts_Visibility").IsDescending(false, true);
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Title).HasMaxLength(500);
+            entity.Property(e => e.Tags).HasMaxLength(int.MaxValue);
             entity.Property(e => e.PostType)
                 .HasMaxLength(20)
                 .IsUnicode(false);
