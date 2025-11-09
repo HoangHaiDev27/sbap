@@ -11,6 +11,10 @@ public partial class BookClaim
 
     public int CustomerId { get; set; }
 
+    public int? ChapterId { get; set; }
+
+    public int? AudioId { get; set; }
+
     public string? Note { get; set; }
 
     public string Status { get; set; } = null!;
@@ -22,6 +26,10 @@ public partial class BookClaim
     public int? ProcessedBy { get; set; }
 
     public virtual BookOffer BookOffer { get; set; } = null!;
+
+    public virtual Chapter? Chapter { get; set; }
+
+    public virtual ChapterAudio? ChapterAudio { get; set; }
 
     public virtual User Customer { get; set; } = null!;
 

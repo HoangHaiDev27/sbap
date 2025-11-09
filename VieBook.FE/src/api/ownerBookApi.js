@@ -4,8 +4,14 @@ import { getToken } from "./authApi";
 // Lấy tất cả sách theo ownerId
 export async function getBooksByOwner(ownerId) {
   const res = await fetch(API_ENDPOINTS.BOOKS.GET_ALL_BY_OWNER(ownerId));
+  if (res.status === 404) {
+    // Không có sách, trả về mảng rỗng
+    return [];
+  }
   if (!res.ok) throw new Error("Failed to fetch books");
-  return res.json();
+  const data = await res.json();
+  // Backend có thể trả về array trực tiếp hoặc wrapped
+  return Array.isArray(data) ? data : (data?.data || []);
 }
 
 // Lấy chi tiết 1 sách

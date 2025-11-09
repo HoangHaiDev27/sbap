@@ -1,7 +1,13 @@
 import React from "react";
 import { RiFireLine, RiArrowRightSLine } from "react-icons/ri";
 
-export default function PopularTopics({ topics }) {
+export default function PopularTopics({ topics, onTagClick }) {
+  const handleTagClick = (tagName) => {
+    if (onTagClick) {
+      onTagClick(tagName);
+    }
+  };
+
   return (
     <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
       <div className="flex items-center gap-2 mb-4">
@@ -13,6 +19,7 @@ export default function PopularTopics({ topics }) {
         {topics.map((topic, index) => (
           <div
             key={index}
+            onClick={() => handleTagClick(topic.name)}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-750 cursor-pointer transition-colors group"
           >
             <div className={`w-3 h-3 rounded-full ${topic.color}`}></div>

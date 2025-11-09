@@ -13,6 +13,10 @@ public partial class BookOffer
 
     public int BookId { get; set; }
 
+    public int? ChapterId { get; set; }
+
+    public int? AudioId { get; set; }
+
     public string AccessType { get; set; } = null!;
 
     public int Quantity { get; set; }
@@ -26,6 +30,10 @@ public partial class BookOffer
     public string Status { get; set; } = null!;
 
     public virtual Book Book { get; set; } = null!;
+
+    public virtual Chapter? Chapter { get; set; }
+
+    public virtual ChapterAudio? ChapterAudio { get; set; }
 
     public virtual ICollection<BookClaim> BookClaims { get; set; } = new List<BookClaim>();
 

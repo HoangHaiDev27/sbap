@@ -303,9 +303,9 @@ namespace VieBook.BE.Controllers
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooksByOwner(int ownerId)
         {
             var books = await _bookService.GetBooksByOwnerId(ownerId);
-            if (books == null || books.Count == 0)
+            if (books == null)
             {
-                return NotFound("Không tìm thấy sách nào cho Owner này.");
+                return Ok(new List<BookDTO>());
             }
 
             return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
