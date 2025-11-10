@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Service.Interfaces;
 using System.Security.Claims;
+using VieBook.BE.Configuration;
 
 namespace VieBook.BE.Controllers
 {
@@ -37,9 +38,9 @@ namespace VieBook.BE.Controllers
                 if (claim != null && int.TryParse(claim.Value, out var id))
                     userId = id;
             }
-
+            var frontendUrl = ApiConfiguration.FRONTEND_URL;
             // Gọi Chatbase service
-            var response = await _chatbaseService.GetChatResponseAsync(request.Question, userId);
+            var response = await _chatbaseService.GetChatResponseAsync(request.Question, frontendUrl, userId);
 
             return Ok(new
             {
