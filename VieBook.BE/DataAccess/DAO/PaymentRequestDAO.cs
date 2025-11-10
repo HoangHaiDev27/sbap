@@ -66,7 +66,7 @@ namespace DataAccess.DAO
 
             paymentRequest.Status = "Succeeded";
             paymentRequest.AcceptDate = DateTime.UtcNow;
-            
+
             await _context.SaveChangesAsync();
             return true;
         }
@@ -81,7 +81,8 @@ namespace DataAccess.DAO
 
             paymentRequest.Status = "Rejected";
             paymentRequest.AcceptDate = DateTime.UtcNow;
-            
+            paymentRequest.Reason = reason;
+
             await _context.SaveChangesAsync();
             return true;
         }

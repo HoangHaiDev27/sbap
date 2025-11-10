@@ -120,7 +120,7 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
                   </div>
                 </div>
 
-                <Link
+                {/* <Link
                   to="/owner/profile/overview"
                   className="block px-4 py-2 text-sm hover:bg-slate-600"
                 >
@@ -131,7 +131,7 @@ export default function BookOwnerHeader({ onToggleSidebar }) {
                   className="block px-4 py-2 text-sm hover:bg-slate-600"
                 >
                   Cài đặt
-                </Link>
+                </Link> */}
                 <Link
                   to="/owner/withdraw"
                   className="block px-4 py-2 text-sm text-green-400 hover:bg-slate-600"

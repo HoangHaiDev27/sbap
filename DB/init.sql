@@ -336,7 +336,8 @@ CREATE TABLE dbo.PaymentRequests (
     Status        VARCHAR(20) NOT NULL 
                    DEFAULT 'Pending',           -- Pending/Accepted/Rejected
     RequestDate   DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    AcceptDate    DATETIME2 NULL
+    AcceptDate    DATETIME2 NULL,
+    Reason        NVARCHAR(1000) NULL
 );
 ALTER TABLE dbo.PaymentRequests
 ADD CONSTRAINT CK_PaymentRequests_Status
