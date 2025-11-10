@@ -365,6 +365,18 @@ namespace VieBook.BE.Controllers
                     return Unauthorized(new { message = "Token không hợp lệ" });
                 }
 
+                var userRoles = User.Claims
+                    .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+                    .Select(c => c.Value)
+                    .ToList();
+                var isOwner = userRoles.Any(r => r.Equals("Owner", StringComparison.OrdinalIgnoreCase));
+
+                string? phoneNumberToUpdate = null;
+                if (!isOwner)
+                {
+                    phoneNumberToUpdate = dto.PhoneNumber;
+                }
+
                 DateOnly? dob = null;
                 if (dto.DateOfBirth.HasValue)
                 {
@@ -374,7 +386,7 @@ namespace VieBook.BE.Controllers
                 var profile = await _userService.UpsertUserProfileAsync(
                     userId,
                     dto.FullName,
-                    dto.PhoneNumber,
+                    phoneNumberToUpdate,
                     dob,
                     dto.AvatarUrl,
                     dto.BankNumber,
