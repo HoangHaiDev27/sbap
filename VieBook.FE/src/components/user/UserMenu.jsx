@@ -148,20 +148,20 @@ export default function UserMenu() {
               >
                 Cửa hàng của tôi
               </Link>
-              <Link
+              {/* <Link
                 to="/owner/profile/overview"
                 className="block px-4 py-2 hover:bg-slate-700 transition-colors"
                 onClick={() => setOpen(false)}
               >
                 Hồ sơ của tôi
-              </Link>
-              <Link
+              </Link> */}
+              {/* <Link
                 to="/owner/profile/settings/personal"
                 className="block px-4 py-2 hover:bg-slate-700 transition-colors"
                 onClick={() => setOpen(false)}
               >
                 Cài đặt
-              </Link>
+              </Link> */}
               <Link
                 to="/owner/withdraw"
                 className="block px-4 py-2 text-green-400 hover:bg-slate-700 transition-colors"
