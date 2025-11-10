@@ -18,7 +18,6 @@ public class ChatbaseService : IChatbaseService
     private readonly HttpClient _httpClient;
     private readonly OpenAIConfig _settings;
     private readonly IChatbaseRepository _chatbaseRepository;
-    private const string BookDetailLinkPrefix = "http://localhost:5173/";
 
     public ChatbaseService(IBookRepository bookRepository,IUserRepository userRepository,ISubscriptionRepository subscriptionRepository, HttpClient httpClient,IOptions<OpenAIConfig> settings,IChatbaseRepository chatbaseRepository)
     {
@@ -32,7 +31,7 @@ public class ChatbaseService : IChatbaseService
         _chatbaseRepository = chatbaseRepository;
     }
 
-    public async Task<string> GetChatResponseAsync(string question, int? userId = null)
+    public async Task<string> GetChatResponseAsync(string question, string frontendUrl, int? userId = null)
     {
         // --- 1️⃣ Lưu tin nhắn người dùng ---
         await _chatbaseRepository.AddMessageAsync(userId, question, "user");
@@ -132,7 +131,7 @@ public class ChatbaseService : IChatbaseService
                 $"Khuyến mãi hiện tại: {discountText}\n" +
                 $"Đánh giá trung bình: {avgRating}/5\n" +
                 $"Loại: {type}\n" +
-                $"Chi tiết: {BookDetailLinkPrefix}bookdetails/{b.BookId}\n";
+                $"Chi tiết: {frontendUrl}/bookdetails/{b.BookId}\n";
         }));
 
         // --- 6️⃣ Thêm context gói chuyển đổi ---
@@ -184,7 +183,7 @@ public class ChatbaseService : IChatbaseService
             $"Giá: {matchedPlan.Price:N0} Xu\n" +
             $"Giới hạn chuyển đổi: {matchedPlan.ConversionLimit} lượt\n" +
             $"Dùng thử: {(matchedPlan.TrialDays.HasValue ? matchedPlan.TrialDays + " ngày" : "Không có")}\n" +
-            $"Mua hoặc xem chi tiết gói tại: {BookDetailLinkPrefix}vip\n";
+            $"Mua hoặc xem chi tiết gói tại: {frontendUrl}/vip\n";
     }
     else
     {
@@ -194,7 +193,7 @@ public class ChatbaseService : IChatbaseService
                 $"Tên gói: {p.Name} - Chu kỳ: {p.Period}, Giá: {p.Price:N0} Xu, \n" +
                 $"Giới hạn chuyển đổi: {p.ConversionLimit} lượt\n" +
                 $"Dùng thử: {(p.TrialDays.HasValue ? p.TrialDays + " ngày" : "Không có")}\n")) +
-                $"Mua hoặc xem chi tiết gói tại: {BookDetailLinkPrefix}vip\n"
+                $"Mua hoặc xem chi tiết gói tại: {frontendUrl}/vip\n"
             : "Hiện chưa có gói chuyển đổi nào hoạt động.";
             
     }
