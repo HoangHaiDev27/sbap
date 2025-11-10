@@ -47,3 +47,20 @@ export async function deleteImage(imageUrl) {
   }
   return data;
 }
+
+export async function uploadPostImage(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const res = await authFetch(API_ENDPOINTS.UPLOADPOSTIMAGE, {
+    method: "POST",
+    body: formData,
+  });
+  
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = data?.message || "Upload ảnh bài viết thất bại";
+    throw new Error(message);
+  }
+  return data;
+}

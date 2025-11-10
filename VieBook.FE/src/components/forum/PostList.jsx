@@ -16,6 +16,7 @@ import { getPosts, deletePost, updatePostVisibility } from "../../api/postApi";
 import { toggleReaction, getUserReaction } from "../../api/postReactionApi";
 import { getComments, createComment } from "../../api/postCommentApi";
 import { createBookClaim, hasUserClaimed } from "../../api/bookClaimApi";
+import { checkChapterOwnership } from "../../api/chapterPurchaseApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import toast from "react-hot-toast";
 
@@ -47,6 +48,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
   const [claimingOfferId, setClaimingOfferId] = useState(null); // Track which offer is being claimed
   const [deleteConfirmPost, setDeleteConfirmPost] = useState(null); // Post to be deleted (for confirmation modal)
   const [isDeleting, setIsDeleting] = useState(false); // Track if deletion is in progress
+  const [userOwnedChapters, setUserOwnedChapters] = useState({}); // { offerId: boolean } - track if user already owns the chapter
 
   // Load posts from API
   useEffect(() => {
@@ -96,6 +98,13 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
       const data = await getPosts(params);
       const postsArray = Array.isArray(data) ? data : (data?.data || []);
       
+      // Debug: vérifier si les attachments sont présents
+      postsArray.forEach(post => {
+        if (post.attachments && post.attachments.length > 0) {
+          console.log(`Post ${post.postId} has ${post.attachments.length} attachments:`, post.attachments);
+        }
+      });
+      
       // Posts are already filtered by visibility in the backend
       // my-posts/all returns Public posts, my-posts/hidden returns Hidden posts
       // Other tabs only return Public posts
@@ -106,6 +115,8 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
         loadUserReactions(postsArray.map(p => p.postId));
         // Load user claims for all offers
         await loadUserClaims(postsArray);
+        // Load user owned chapters for giveaway posts
+        await loadUserOwnedChapters(postsArray);
       }
     } catch (error) {
       console.error("Failed to load posts:", error);
@@ -138,6 +149,40 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
     setUserClaims(claimsMap);
   };
 
+  // Load user owned chapters for all giveaway posts
+  const loadUserOwnedChapters = async (postsArray) => {
+    if (!userId) return;
+    
+    const ownedMap = {};
+    const giveawayPosts = postsArray.filter(p => p.postType === "giveaway" && p.bookOffer?.chapterId);
+    
+    for (const post of giveawayPosts) {
+      const offerId = post.bookOffer.bookOfferId;
+      const chapterId = post.bookOffer.chapterId;
+      const accessType = post.bookOffer.accessType;
+      
+      if (!chapterId) continue;
+      
+      try {
+        // Kiểm tra xem user đã có chapter này chưa
+        const response = await checkChapterOwnership(chapterId);
+        // Xử lý cả hai format: { data: { isOwned } } hoặc { isOwned }
+        const isOwned = response?.data?.isOwned ?? response?.isOwned ?? false;
+        
+        // Nếu đã có chapter, đánh dấu là đã có sách
+        if (isOwned) {
+          ownedMap[offerId] = true;
+        }
+      } catch (error) {
+        console.error(`Failed to check ownership for chapter ${chapterId}:`, error);
+        // Nếu lỗi, không đánh dấu là đã có (để user vẫn có thể thử đăng ký)
+        ownedMap[offerId] = false;
+      }
+    }
+    
+    setUserOwnedChapters(ownedMap);
+  };
+
   // Handle claim book offer
   const handleClaimOffer = async (offerId, postId) => {
     if (!userId) {
@@ -150,6 +195,12 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
       return;
     }
 
+    // Kiểm tra xem user đã có sách/chapter này chưa
+    if (userOwnedChapters[offerId]) {
+      toast.error("Bạn đã có sách này rồi, không thể đăng ký nhận tặng");
+      return;
+    }
+
     try {
       setClaimingOfferId(offerId);
       
@@ -158,6 +209,26 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
       if (!post?.bookOffer) {
         toast.error("Không tìm thấy thông tin sách");
         return;
+      }
+
+      // Kiểm tra lại ownership trước khi đăng ký (double check)
+      const chapterId = post.bookOffer.chapterId;
+      if (chapterId) {
+        try {
+          const response = await checkChapterOwnership(chapterId);
+          // Xử lý cả hai format: { data: { isOwned } } hoặc { isOwned }
+          const isOwned = response?.data?.isOwned ?? response?.isOwned ?? false;
+          
+          if (isOwned) {
+            toast.error("Bạn đã có sách này rồi, không thể đăng ký nhận tặng");
+            // Update state
+            setUserOwnedChapters(prev => ({ ...prev, [offerId]: true }));
+            return;
+          }
+        } catch (error) {
+          console.error("Failed to check ownership:", error);
+          // Nếu lỗi, vẫn cho phép đăng ký (có thể do network issue)
+        }
       }
 
       const claimData = {
@@ -563,6 +634,27 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
               {post.title || "Không có tiêu đề"}
             </h2>
             <p className="text-slate-300 leading-relaxed">{post.content || ""}</p>
+            
+            {/* Post Attachments (Images) */}
+            {post.attachments && post.attachments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {post.attachments
+                  .filter(att => att.fileType === "Image" || att.fileType === "image" || !att.fileType)
+                  .map((attachment, index) => (
+                    <div key={attachment.attachmentId || index} className="rounded-lg overflow-hidden border border-slate-600">
+                      <img 
+                        src={attachment.fileUrl} 
+                        alt={`Attachment ${index + 1}`}
+                        className="w-full h-auto max-h-96 object-contain bg-slate-700"
+                        onError={(e) => {
+                          console.error("Failed to load image:", attachment.fileUrl);
+                          e.target.style.display = "none";
+                        }}
+                      />
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
 
           {/* Book Info */}
@@ -591,26 +683,53 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                     </span>
                   )}
                 </div>
-                {post.postType === "giveaway" && post.bookOffer && (
-                  <div className="flex flex-col gap-2">
-                    {userClaims[post.bookOffer.bookOfferId] ? (
-                      <button
-                        className="px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 hover:bg-green-700 text-white cursor-not-allowed"
-                        disabled
-                      >
-                        Đã đăng ký
-                      </button>
-                    ) : (
-                      <button
-                        className="px-4 py-2 rounded-lg font-medium transition-colors bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => handleClaimOffer(post.bookOffer.bookOfferId, post.postId)}
-                        disabled={claimingOfferId === post.bookOffer.bookOfferId || !userId}
-                      >
-                        {claimingOfferId === post.bookOffer.bookOfferId ? "Đang xử lý..." : "Đăng ký"}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {post.postType === "giveaway" && post.bookOffer && (() => {
+                  // Kiểm tra xem user hiện tại có phải là chủ sách không
+                  // So sánh cả string và number để đảm bảo
+                  const currentUserId = userId ? (typeof userId === 'string' ? parseInt(userId) : userId) : null;
+                  const isBookOwner = currentUserId && (
+                    post.bookOffer.ownerId === currentUserId || 
+                    (post.bookOffer.book && post.bookOffer.book.ownerId === currentUserId) ||
+                    post.authorId === currentUserId
+                  );
+                  
+                  // Kiểm tra xem user đã có sách này chưa
+                  const hasOwned = userOwnedChapters[post.bookOffer.bookOfferId] || false;
+                  
+                  // Không hiển thị nút đăng ký nếu user là chủ sách
+                  if (isBookOwner) {
+                    return null;
+                  }
+                  
+                  return (
+                    <div className="flex flex-col gap-2">
+                      {userClaims[post.bookOffer.bookOfferId] ? (
+                        <button
+                          className="px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 hover:bg-green-700 text-white cursor-not-allowed"
+                          disabled
+                        >
+                          Đã đăng ký
+                        </button>
+                      ) : hasOwned ? (
+                        <button
+                          className="px-4 py-2 rounded-lg font-medium transition-colors bg-slate-600 hover:bg-slate-700 text-white cursor-not-allowed"
+                          disabled
+                          title="Bạn đã có sách này rồi"
+                        >
+                          Đã có sách
+                        </button>
+                      ) : (
+                        <button
+                          className="px-4 py-2 rounded-lg font-medium transition-colors bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => handleClaimOffer(post.bookOffer.bookOfferId, post.postId)}
+                          disabled={claimingOfferId === post.bookOffer.bookOfferId || !userId}
+                        >
+                          {claimingOfferId === post.bookOffer.bookOfferId ? "Đang xử lý..." : "Đăng ký"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -705,6 +824,27 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
               {selectedPost.title || "Không có tiêu đề"}
             </h2>
             <p className="text-slate-300 mb-6">{selectedPost.content || ""}</p>
+            
+            {/* Post Attachments (Images) in modal */}
+            {selectedPost.attachments && selectedPost.attachments.length > 0 && (
+              <div className="mb-6 space-y-2">
+                {selectedPost.attachments
+                  .filter(att => att.fileType === "Image" || att.fileType === "image" || !att.fileType)
+                  .map((attachment, index) => (
+                    <div key={attachment.attachmentId || index} className="rounded-lg overflow-hidden border border-slate-600">
+                      <img 
+                        src={attachment.fileUrl} 
+                        alt={`Attachment ${index + 1}`}
+                        className="w-full h-auto max-h-96 object-contain bg-slate-700"
+                        onError={(e) => {
+                          console.error("Failed to load image:", attachment.fileUrl);
+                          e.target.style.display = "none";
+                        }}
+                      />
+                    </div>
+                  ))}
+              </div>
+            )}
 
             <h3 className="text-lg font-semibold text-white mb-4">Bình luận</h3>
             <div className="space-y-4 max-h-64 overflow-y-auto">

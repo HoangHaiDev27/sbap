@@ -217,6 +217,7 @@ export const API_ENDPOINTS = {
   UPLOADBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
   REMOVEOLDBOOKIMAGE: `${API_BASE_URL}/api/upload/bookImage`,
   UPLOADCERTIFICATE: `${API_BASE_URL}/api/upload/certificate`,
+  UPLOADPOSTIMAGE: `${API_BASE_URL}/api/upload/postImage`,
   POSTS: {
     GET_ALL: `${API_BASE_URL}/api/posts`,
     GET_BY_ID: (postId) => `${API_BASE_URL}/api/posts/${postId}`,
