@@ -239,6 +239,18 @@ export async function getBooksStats(searchTerm = null, statusFilter = null, cate
   }, "Lấy thống kê sách thất bại");
 }
 
+// Lấy chi tiết sách (cho staff) - lấy được tất cả status
+export async function getBookDetailForStaff(bookId) {
+  const url = API_ENDPOINTS.STAFF.BOOKS.GET_BY_ID(bookId);
+  return handleFetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+  }, "Lấy chi tiết sách thất bại");
+}
+
 // Lấy toàn bộ User kèm Profile (UserNameDTO)
 export async function getAllUsersWithProfile() {
   return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_ALL_USERS_WITH_PROFILE, {

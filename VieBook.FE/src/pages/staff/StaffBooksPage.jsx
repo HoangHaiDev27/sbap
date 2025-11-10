@@ -152,6 +152,8 @@ const StaffBooksPage = () => {
             title: book.title || "Không có tiêu đề",
             author: book.author || "Không rõ",
             owner: book.ownerName || `Owner ID: ${book.ownerId}`,
+            ownerName: book.ownerName || `Owner ID: ${book.ownerId}`,
+            ownerId: book.ownerId,
             category: book.categoryNames?.join(", ") || "Chưa phân loại",
             categoryNames: book.categoryNames || [],
             categoryIds: book.categoryIds || [],
@@ -403,7 +405,7 @@ const StaffBooksPage = () => {
                                                     (window.location.href = `/staff/feedback?bookId=${b.id}`)
                                                 }
                                                 className="p-2 hover:bg-purple-50 rounded-lg text-purple-600"
-                                                title="Nhận xét"
+                                                title="Xem đánh giá"
                                             >
                                                 <i className="ri-message-2-line text-lg"></i>
                                             </button>

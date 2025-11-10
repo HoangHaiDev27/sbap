@@ -298,6 +298,7 @@ export const API_ENDPOINTS = {
         if (categoryId && categoryId !== "all") params.append("categoryId", categoryId);
         return `${API_BASE_URL}/api/staff/staffbooks/stats?${params.toString()}`;
       },
+      GET_BY_ID: (bookId) => `${API_BASE_URL}/api/staff/staffbooks/${bookId}`,
     },
   },
   ADMIN: {

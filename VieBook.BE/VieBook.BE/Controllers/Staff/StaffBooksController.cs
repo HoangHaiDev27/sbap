@@ -63,6 +63,26 @@ namespace VieBook.BE.Controllers.Staff
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // GET: api/staff/staffbooks/{id} - Lấy chi tiết sách với tất cả status (cho staff)
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<BookDetailDTO>> GetBookDetail(int id)
+        {
+            try
+            {
+                var book = await _bookService.GetBookDetail(id);
+                if (book == null)
+                {
+                    return NotFound(new { message = $"Không tìm thấy sách với ID {id}" });
+                }
+
+                return Ok(book);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
 

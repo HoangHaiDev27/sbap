@@ -50,7 +50,7 @@ const BookDetailModal = ({ book, onClose }) => {
           <div className="flex-1">
             <h3 className="text-xl font-bold text-gray-900">{book.title}</h3>
             <p className="text-gray-600">Tác giả: {book.author}</p>
-            <p className="text-gray-600">Chủ sách: {book.owner}</p>
+            <p className="text-gray-600">Chủ sách: {book.ownerName || book.owner || `Owner ID: ${book.ownerId || book.id}`}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {book.categoryNames && book.categoryNames.length > 0 ? (
                 book.categoryNames.map((catName, idx) => (
@@ -82,7 +82,7 @@ const BookDetailModal = ({ book, onClose }) => {
                 <p className="font-semibold">⭐ {book.rating?.toFixed(1) || 0}</p>
               </div>
               <div>
-                <p className="text-gray-500">Số feedback</p>
+                <p className="text-gray-500">Số bình luận</p>
                 <p className="font-semibold">{book.totalRatings || 0}</p>
               </div>
             </div>
@@ -101,7 +101,7 @@ const BookDetailModal = ({ book, onClose }) => {
                 }}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
-                <i className="ri-message-2-line mr-1"></i> Xem feedback ({book.totalRatings || 0})
+                <i className="ri-message-2-line mr-1"></i> Xem đánh giá ({book.totalRatings || 0})
               </button>
             </div>
           </div>

@@ -12,7 +12,7 @@ import {
   uploadCertificate,
 } from "../../api/ownerBookApi";
 import BookTermsModal from "../../components/owner/book/BookTermsModal";
-import { RiArrowLeftLine, RiArrowRightLine, RiCheckLine } from "react-icons/ri";
+import { RiArrowLeftLine, RiCheckLine } from "react-icons/ri";
 
 export default function BookForm() {
   const navigate = useNavigate();
@@ -801,7 +801,7 @@ export default function BookForm() {
             {/* Buttons */}
             <div className="space-y-3">
               {/* Thêm chương ngay */}
-              <button
+              {/* <button
                 onClick={() => {
                   setShowSuccessModal(false);
                   navigate(`/owner/books/${createdBookId}/chapters`, {
@@ -812,7 +812,7 @@ export default function BookForm() {
               >
                 <RiArrowRightLine className="text-xl" />
                 Thêm chương ngay
-              </button>
+              </button> */}
 
               {/* Thêm chương sau */}
               <button
