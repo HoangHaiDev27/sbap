@@ -165,62 +165,6 @@ export default function AdminHeader({ onToggleSidebar }) {
 
       {/* Khu vực bên phải */}
       <div className="flex items-center space-x-4">
-        {/* Thông báo */}
-        <div className="relative" ref={notificationRef}>
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 bg-gray-900 text-white rounded-lg cursor-pointer relative"
-          >
-            <RiNotificationLine className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1 text-xs font-semibold leading-none text-white bg-red-500 rounded-full">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Dropdown danh sách thông báo */}
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 max-h-96 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <p className="text-sm text-gray-500 px-4 py-2">
-                  Không có thông báo
-                </p>
-              ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.notificationId || n.id}
-                    className="px-4 py-2 text-sm border-b last:border-0 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        {getNotificationIcon(n.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium text-gray-900 truncate">
-                            {n.title || "Thông báo"}
-                          </h4>
-                          <span className="text-xs text-gray-400">
-                            {n.createdAt
-                              ? formatTimeAgo(n.createdAt)
-                              : "Không xác định"}
-                          </span>
-                        </div>
-                        {n.body && (
-                          <p className="mt-1 text-xs text-gray-500 line-clamp-2">
-                            {n.body}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Menu User */}
         <div className="relative" ref={userMenuRef}>
           <button
@@ -266,14 +210,14 @@ export default function AdminHeader({ onToggleSidebar }) {
                 <i className="ri-user-line mr-2" />
                 Thông tin cá nhân
               </Link>
-              <Link
+              {/* <Link
                 to="/admin/settings"
                 onClick={() => setShowUserMenu(false)} // 👈 tự đóng popup
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <i className="ri-settings-3-line mr-2" />
                 Cài đặt
-              </Link>
+              </Link> */}
               <hr className="my-1" />
               <button
                 onClick={() => {

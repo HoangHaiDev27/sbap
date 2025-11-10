@@ -7,7 +7,7 @@ import {
   PendingBooksSection,
   RecentTransactionsSection,
   PendingWithdrawalsSection,
-  RecentFeedbacksSection,
+  // RecentFeedbacksSection,
   TopRankingsSection,
 } from '../../components/staff/dashboard';
 import STAFF_DASHBOARD_API from '../../api/staffDashboardApi';
@@ -23,13 +23,13 @@ export default function StaffPage() {
     { title: 'Yêu cầu rút tiền', value: '0', change: 'Chờ xử lý', icon: 'ri-bank-line', color: 'bg-yellow-500' },
     { title: 'Giao dịch nạp xu', value: '0', change: 'Hôm nay', icon: 'ri-wallet-3-line', color: 'bg-indigo-500' },
     { title: 'Đánh giá mới', value: '0', change: '7 ngày qua', icon: 'ri-star-line', color: 'bg-pink-500' },
-    { title: 'Gói đăng ký', value: '0', change: 'Đang active', icon: 'ri-vip-crown-line', color: 'bg-amber-500' },
+    { title: 'Gói đăng ký', value: '0', change: 'Đang hoạt động', icon: 'ri-vip-crown-line', color: 'bg-amber-500' },
   ]);
 
   const [pendingBooks, setPendingBooks] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
-  const [recentFeedbacks, setRecentFeedbacks] = useState([]);
+  // const [recentFeedbacks, setRecentFeedbacks] = useState([]);
   const [topBooks, setTopBooks] = useState([]);
   const [topOwners, setTopOwners] = useState([]);
 
@@ -56,7 +56,7 @@ export default function StaffPage() {
           { title: 'Yêu cầu rút tiền', value: stats.pendingWithdrawals?.toString() || '0', change: 'Chờ xử lý', icon: 'ri-bank-line', color: 'bg-yellow-500' },
           { title: 'Giao dịch nạp xu', value: stats.todayWalletTransactions?.toString() || '0', change: 'Hôm nay', icon: 'ri-wallet-3-line', color: 'bg-indigo-500' },
           { title: 'Đánh giá mới', value: stats.newReviewsLast7Days?.toString() || '0', change: '7 ngày qua', icon: 'ri-star-line', color: 'bg-pink-500' },
-          { title: 'Gói đăng ký', value: stats.activeSubscriptions?.toString() || '0', change: 'Đang active', icon: 'ri-vip-crown-line', color: 'bg-amber-500' },
+          { title: 'Gói đăng ký', value: stats.activeSubscriptions?.toString() || '0', change: 'Đang hoạt động', icon: 'ri-vip-crown-line', color: 'bg-amber-500' },
         ]);
       }
 
@@ -170,24 +170,24 @@ export default function StaffPage() {
       }
 
       // Load recent feedbacks
-      try {
-        const feedbacksResponse = await STAFF_DASHBOARD_API.getRecentFeedbacks(5);
-        
-        if (feedbacksResponse && feedbacksResponse.data) {
-          const formattedFeedbacks = feedbacksResponse.data
-            .slice(0, 5)
-            .map(feedback => ({
-              id: feedback.feedbackId || feedback.FeedbackId || '',
-              user: feedback.userName || feedback.UserName || 'N/A',
-              type: formatFeedbackType(feedback.targetType || feedback.TargetType || ''),
-              date: formatFeedbackDate(feedback.createdAt || feedback.CreatedAt),
-              content: feedback.content || feedback.Content || ''
-            }));
-          setRecentFeedbacks(formattedFeedbacks);
-        }
-      } catch (err) {
-        console.error('Error loading recent feedbacks:', err);
-      }
+      // try {
+      //   const feedbacksResponse = await STAFF_DASHBOARD_API.getRecentFeedbacks(5);
+      //   
+      //   if (feedbacksResponse && feedbacksResponse.data) {
+      //     const formattedFeedbacks = feedbacksResponse.data
+      //       .slice(0, 5)
+      //       .map(feedback => ({
+      //         id: feedback.feedbackId || feedback.FeedbackId || '',
+      //         user: feedback.userName || feedback.UserName || 'N/A',
+      //         type: formatFeedbackType(feedback.targetType || feedback.TargetType || ''),
+      //         date: formatFeedbackDate(feedback.createdAt || feedback.CreatedAt),
+      //         content: feedback.content || feedback.Content || ''
+      //       }));
+      //     setRecentFeedbacks(formattedFeedbacks);
+      //   }
+      // } catch (err) {
+      //   console.error('Error loading recent feedbacks:', err);
+      // }
       
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -317,43 +317,43 @@ export default function StaffPage() {
   };
 
   // Helper functions for formatting feedback data
-  const formatFeedbackType = (targetType) => {
-    const typeMap = {
-      'Book': 'Báo cáo sách',
-      'Chapter': 'Báo cáo chương',
-      'User': 'Báo cáo người dùng',
-      'System': 'Phản hồi hệ thống'
-    };
-    return typeMap[targetType] || targetType || 'Khác';
-  };
+  // const formatFeedbackType = (targetType) => {
+  //   const typeMap = {
+  //     'Book': 'Báo cáo sách',
+  //     'Chapter': 'Báo cáo chương',
+  //     'User': 'Báo cáo người dùng',
+  //     'System': 'Phản hồi hệ thống'
+  //   };
+  //   return typeMap[targetType] || targetType || 'Khác';
+  // };
 
-  const formatFeedbackDate = (dateString) => {
-    try {
-      if (!dateString) return 'N/A';
-      
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'N/A';
-      
-      const now = new Date();
-      const diffMs = now - date;
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
+  // const formatFeedbackDate = (dateString) => {
+  //   try {
+  //     if (!dateString) return 'N/A';
+  //     
+  //     const date = new Date(dateString);
+  //     if (isNaN(date.getTime())) return 'N/A';
+  //     
+  //     const now = new Date();
+  //     const diffMs = now - date;
+  //     const diffMins = Math.floor(diffMs / 60000);
+  //     const diffHours = Math.floor(diffMs / 3600000);
+  //     const diffDays = Math.floor(diffMs / 86400000);
 
-      if (diffMins < 1) return 'Vừa xong';
-      if (diffMins < 60) return `${diffMins} phút trước`;
-      if (diffHours < 24) return `${diffHours} giờ trước`;
-      if (diffDays < 7) return `${diffDays} ngày trước`;
-      
-      return date.toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return 'N/A';
-    }
-  };
+  //     if (diffMins < 1) return 'Vừa xong';
+  //     if (diffMins < 60) return `${diffMins} phút trước`;
+  //     if (diffHours < 24) return `${diffHours} giờ trước`;
+  //     if (diffDays < 7) return `${diffDays} ngày trước`;
+  //     
+  //     return date.toLocaleDateString('vi-VN', {
+  //       day: '2-digit',
+  //       month: '2-digit',
+  //       year: 'numeric'
+  //     });
+  //   } catch (error) {
+  //     return 'N/A';
+  //   }
+  // };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -383,7 +383,7 @@ export default function StaffPage() {
 
           <TopRankingsSection topBooks={topBooks} topOwners={topOwners} />
 
-          <RecentFeedbacksSection feedbacks={recentFeedbacks} />
+          {/* <RecentFeedbacksSection feedbacks={recentFeedbacks} /> */}
         </div>
       </main>
     </div>
