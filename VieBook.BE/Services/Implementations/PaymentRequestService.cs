@@ -52,7 +52,7 @@ namespace Services.Implementations
             };
 
             var created = await _paymentRequestRepository.CreatePaymentRequestAsync(paymentRequest);
-            
+
             // Tính số tiền nhận được sau khi trừ 10%
             var amountReceived = created.RequestedCoin * 1000m * 0.9m;
 
@@ -73,14 +73,15 @@ namespace Services.Implementations
                 AmountReceived = amountReceived,
                 Status = created.Status,
                 RequestDate = created.RequestDate,
-                AcceptDate = created.AcceptDate
+                AcceptDate = created.AcceptDate,
+                Reason = created.Reason
             };
         }
 
         public async Task<List<PaymentRequestResponseDTO>> GetPaymentRequestsByUserIdAsync(int userId)
         {
             var paymentRequests = await _paymentRequestRepository.GetPaymentRequestsByUserIdAsync(userId);
-            
+
             return paymentRequests.Select(pr => new PaymentRequestResponseDTO
             {
                 PaymentRequestId = pr.PaymentRequestId,
@@ -89,14 +90,15 @@ namespace Services.Implementations
                 AmountReceived = pr.RequestedCoin * 1000m * 0.9m, // Tính số tiền nhận được
                 Status = pr.Status,
                 RequestDate = pr.RequestDate,
-                AcceptDate = pr.AcceptDate
+                AcceptDate = pr.AcceptDate,
+                Reason = pr.Reason
             }).ToList();
         }
 
         public async Task<PaymentRequestResponseDTO?> GetPaymentRequestByIdAsync(long paymentRequestId)
         {
             var paymentRequest = await _paymentRequestRepository.GetPaymentRequestByIdAsync(paymentRequestId);
-            
+
             if (paymentRequest == null)
                 return null;
 
@@ -108,14 +110,15 @@ namespace Services.Implementations
                 AmountReceived = paymentRequest.RequestedCoin * 1000m * 0.9m,
                 Status = paymentRequest.Status,
                 RequestDate = paymentRequest.RequestDate,
-                AcceptDate = paymentRequest.AcceptDate
+                AcceptDate = paymentRequest.AcceptDate,
+                Reason = paymentRequest.Reason
             };
         }
 
         public async Task<List<StaffPaymentRequestResponseDTO>> GetAllPaymentRequestsAsync()
         {
             var paymentRequests = await _paymentRequestRepository.GetAllPaymentRequestsAsync();
-            
+
             return paymentRequests.Select(pr => new StaffPaymentRequestResponseDTO
             {
                 PaymentRequestId = pr.PaymentRequestId,
@@ -128,7 +131,8 @@ namespace Services.Implementations
                 AmountReceived = pr.RequestedCoin * 1000m * 0.9m,
                 Status = pr.Status,
                 RequestDate = pr.RequestDate,
-                AcceptDate = pr.AcceptDate
+                AcceptDate = pr.AcceptDate,
+                Reason = pr.Reason
             }).ToList();
         }
 
@@ -165,7 +169,7 @@ namespace Services.Implementations
             try
             {
                 var supportedBanks = await _vietQrService.GetSupportedBanksAsync();
-                var isValidBank = supportedBanks.Any(bank => 
+                var isValidBank = supportedBanks.Any(bank =>
                     (bank.Name != null && bank.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase)) ||
                     (bank.ShortName != null && bank.ShortName.Equals(bankName, StringComparison.OrdinalIgnoreCase)) ||
                     (bank.Name != null && bankName.Contains(bank.Name, StringComparison.OrdinalIgnoreCase)) ||
@@ -183,11 +187,11 @@ namespace Services.Implementations
             }
 
             var result = await _paymentRequestRepository.ApprovePaymentRequestAsync(paymentRequestId, staffId);
-            
+
             if (result)
             {
                 var amountReceived = paymentRequest.RequestedCoin * 1000m * 0.9m;
-                
+
                 // Tạo notification cho user
                 await _notificationService.CreateAsync(new CreateNotificationDTO
                 {
@@ -214,7 +218,7 @@ namespace Services.Implementations
             await _userRepository.UpdateWalletBalanceAsync(paymentRequest.UserId, paymentRequest.RequestedCoin);
 
             var result = await _paymentRequestRepository.RejectPaymentRequestAsync(paymentRequestId, staffId, reason);
-            
+
             if (result)
             {
                 // Tạo notification cho user

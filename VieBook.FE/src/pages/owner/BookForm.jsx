@@ -8,13 +8,11 @@ import {
 import {
   getCategories,
   createBook,
-  createBookWithSignature,
   uploadBookImage,
   uploadCertificate,
 } from "../../api/ownerBookApi";
 import BookTermsModal from "../../components/owner/book/BookTermsModal";
 import { RiArrowLeftLine, RiArrowRightLine, RiCheckLine } from "react-icons/ri";
-import SignatureCanvas from "react-signature-canvas";
 
 export default function BookForm() {
   const navigate = useNavigate();
@@ -48,11 +46,6 @@ export default function BookForm() {
   const [uploading, setUploading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdBookId, setCreatedBookId] = useState(null);
-
-  // Signature modal states
-  const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [signatureCanvasRef, setSignatureCanvasRef] = useState(null);
-  const [signatureBase64, setSignatureBase64] = useState(null);
 
   const dropdownRef = useRef(null);
 
@@ -167,42 +160,17 @@ export default function BookForm() {
     return errs;
   };
 
-  // Hiển thị modal chữ ký khi user nhấn "Lưu và Xác nhận"
-  const handleSubmit = () => {
+  // Lưu sách khi người dùng nhấn "Lưu"
+  const handleSubmit = async () => {
+    if (uploading) return;
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
-
-    // Hiển thị modal chữ ký
-    setShowSignatureModal(true);
+    await submitBook();
   };
 
-  // Xác nhận chữ ký và gửi dữ liệu lên server
-  const handleConfirmSignature = async () => {
-    if (!signatureCanvasRef || signatureCanvasRef.isEmpty()) {
-      window.dispatchEvent(
-        new CustomEvent("app:toast", {
-          detail: { type: "error", message: "Vui lòng vẽ chữ ký của bạn!" },
-        })
-      );
-      return;
-    }
-
-    // Lấy chữ ký dưới dạng Base64 (không có prefix)
-    const signatureDataUrl = signatureCanvasRef.toDataURL("image/png");
-    // Loại bỏ prefix "data:image/png;base64,"
-    const base64String = signatureDataUrl.split(",")[1];
-    setSignatureBase64(base64String);
-
-    // Đóng modal
-    setShowSignatureModal(false);
-
-    // Gửi dữ liệu lên server
-    await submitBookWithSignature(base64String);
-  };
-
-  // Gửi dữ liệu sách cùng với chữ ký lên server
-  const submitBookWithSignature = async (signatureBase64Data) => {
+  // Gửi dữ liệu sách lên server
+  const submitBook = async () => {
     try {
       const ownerId = getUserId();
       if (!ownerId) {
@@ -250,10 +218,9 @@ export default function BookForm() {
         uploadStatus: form.uploadStatus,
         completionStatus: "Ongoing",
         certificateUrl,
-        signatureImageBase64: signatureBase64Data, // Thêm chữ ký vào payload
       };
 
-      const result = await createBookWithSignature(payload);
+      const result = await createBook(payload);
 
       // Lấy bookId từ response
       const bookId = result?.bookId || result?.data?.bookId || result;
@@ -262,7 +229,7 @@ export default function BookForm() {
       setCreatedBookId(bookId);
       setShowSuccessModal(true);
     } catch (err) {
-      console.error("Error creating book with signature:", err);
+      console.error("Error creating book:", err);
       setUploading(false);
       if (err.message.includes("ISBN")) {
         setIsbnError("Mã ISBN đã tồn tại, vui lòng nhập mã khác.");
@@ -275,13 +242,6 @@ export default function BookForm() {
           },
         })
       );
-    }
-  };
-
-  // Xóa chữ ký
-  const handleClearSignature = () => {
-    if (signatureCanvasRef) {
-      signatureCanvasRef.clear();
     }
   };
 
@@ -791,7 +751,7 @@ export default function BookForm() {
             ) : (
               <>
                 <RiCheckLine />
-                Lưu và Xác nhận
+                Lưu sách
               </>
             )}
           </button>
@@ -819,57 +779,6 @@ export default function BookForm() {
       {currentStep === 1 && renderStep1()}
       {currentStep === 2 && renderStep2()}
       {currentStep === 3 && renderStep3()}
-
-      {/* Signature Modal */}
-      {showSignatureModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-xl p-8 max-w-2xl w-full mx-4 shadow-2xl border-2 border-green-500">
-            <h3 className="text-2xl font-bold text-white mb-4 text-center">
-              Xác nhận bằng chữ ký
-            </h3>
-            <p className="text-gray-400 text-sm mb-6 text-center">
-              Vui lòng vẽ chữ ký của bạn vào vùng bên dưới để xác nhận thông tin
-              sách đã nhập
-            </p>
-
-            {/* Signature Canvas */}
-            <div className="mb-6 border-2 border-gray-600 rounded-lg bg-white">
-              <SignatureCanvas
-                ref={(ref) => setSignatureCanvasRef(ref)}
-                canvasProps={{
-                  className: "w-full h-64",
-                  style: { touchAction: "none" },
-                }}
-                penColor="#000000"
-                backgroundColor="#ffffff"
-              />
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-4">
-              <button
-                onClick={handleClearSignature}
-                className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
-              >
-                Xóa chữ ký
-              </button>
-              <button
-                onClick={() => setShowSignatureModal(false)}
-                className="flex-1 px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleConfirmSignature}
-                className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
-              >
-                <RiCheckLine />
-                Xác nhận
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Success Modal */}
       {showSuccessModal && (

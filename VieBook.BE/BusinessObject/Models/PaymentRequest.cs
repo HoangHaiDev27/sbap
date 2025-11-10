@@ -17,5 +17,7 @@ public partial class PaymentRequest
 
     public DateTime? AcceptDate { get; set; }
 
+    public string? Reason { get; set; }
+
     public virtual User User { get; set; } = null!;
 }

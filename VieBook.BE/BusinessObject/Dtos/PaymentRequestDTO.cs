@@ -19,6 +19,7 @@ namespace BusinessObject.Dtos
         public string Status { get; set; } = null!;
         public DateTime RequestDate { get; set; }
         public DateTime? AcceptDate { get; set; }
+        public string? Reason { get; set; }
     }
 
     public class StaffPaymentRequestResponseDTO
@@ -34,5 +35,6 @@ namespace BusinessObject.Dtos
         public string Status { get; set; } = null!;
         public DateTime RequestDate { get; set; }
         public DateTime? AcceptDate { get; set; }
+        public string? Reason { get; set; }
     }
 }

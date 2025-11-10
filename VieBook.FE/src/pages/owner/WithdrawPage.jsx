@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { RiMoneyDollarCircleLine, RiHistoryLine, RiInformationLine, RiCoinLine } from "react-icons/ri";
+import { RiMoneyDollarCircleLine, RiHistoryLine, RiInformationLine, RiCoinLine, RiEyeLine } from "react-icons/ri";
 import { getMe } from "../../api/userApi";
-import { createPaymentRequest, getUserPaymentRequests } from "../../api/paymentRequestApi";
+import { createPaymentRequest, getUserPaymentRequests, getPaymentRequestById } from "../../api/paymentRequestApi";
 import { useNotificationStore } from "../../hooks/stores/notificationStore";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { useCoinsStore } from "../../hooks/stores/coinStore";
 
 export default function WithdrawPage() {
   // dữ liệu từ API
@@ -14,10 +15,15 @@ export default function WithdrawPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
+  const [viewReasonOpen, setViewReasonOpen] = useState(false);
+  const [viewReasonLoading, setViewReasonLoading] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
   
   // Notification store
   const { fetchNotifications, fetchUnreadCount } = useNotificationStore();
   const { userId } = useCurrentUser();
+  const { setCoins } = useCoinsStore();
 
   useEffect(() => {
     let mounted = true;
@@ -31,6 +37,7 @@ export default function WithdrawPage() {
         const bankName = profile.BankName || profile.bankName || "";
         const bankNumber = profile.BankNumber || profile.bankNumber || "";
         setWalletCoins(Number(coins) || 0);
+        setCoins(Number(coins) || 0);
         setBank(bankName);
         setAccount(bankNumber);
       })
@@ -93,6 +100,7 @@ export default function WithdrawPage() {
       // Reload wallet từ API để có số dư chính xác
       const userData = await getMe();
       setWalletCoins(Number(userData?.wallet ?? 0));
+      setCoins(Number(userData?.wallet ?? 0));
       
       // Reload notifications để hiển thị thông báo mới
       if (userId) {
@@ -141,6 +149,24 @@ export default function WithdrawPage() {
     }
   };
 
+  // Open modal to view reject reason
+  const openViewReason = async (paymentRequestId) => {
+    setSelectedRequest(paymentRequestId);
+    setViewReasonOpen(true);
+    setViewReasonLoading(true);
+    setRejectReason("");
+    try {
+      const detail = await getPaymentRequestById(paymentRequestId);
+      // Backend hiện chưa trả về trường reason; nếu có thì đọc detail.reason
+      const reasonText = detail?.reason || "Không có lý do được cung cấp từ hệ thống.";
+      setRejectReason(reasonText);
+    } catch (e) {
+      setRejectReason(e?.message || "Không thể tải lý do từ chối.");
+    } finally {
+      setViewReasonLoading(false);
+    }
+  };
+
   // Format date - Convert UTC to Vietnam timezone (UTC+7)
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -177,7 +203,7 @@ export default function WithdrawPage() {
           <div>
             <p className="text-green-100 text-sm">Số dư hiện tại</p>
             <p className="text-3xl font-bold">
-              {walletCoins.toLocaleString("vi-VN")} coin
+              {walletCoins.toLocaleString("vi-VN")} xu
             </p>
           </div>
           <RiMoneyDollarCircleLine className="w-12 h-12 text-green-200" />
@@ -300,12 +326,15 @@ export default function WithdrawPage() {
                 <th className="px-6 py-4 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                   Trạng thái
                 </th>
+                <th className="px-6 py-4 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Hành động
+                </th>
               </tr>
             </thead>
             <tbody className="bg-gray-800 divide-y divide-gray-600">
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan="6" className="px-6 py-8 text-center text-gray-400">
                     <RiHistoryLine className="w-12 h-12 mx-auto mb-4 text-gray-500" />
                     <p>Chưa có giao dịch rút tiền nào</p>
                   </td>
@@ -333,6 +362,20 @@ export default function WithdrawPage() {
                           {statusIcon} {statusLabel}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {h.status === "Rejected" ? (
+                          <button
+                            onClick={() => openViewReason(h.paymentRequestId)}
+                            className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-200 hover:underline"
+                            title="Xem lý do từ chối"
+                          >
+                            <RiEyeLine className="w-5 h-5" />
+                            Xem
+                          </button>
+                        ) : (
+                          <span className="text-gray-500 text-xs">-</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -341,6 +384,29 @@ export default function WithdrawPage() {
           </table>
         </div>
       </div>
+
+      {viewReasonOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-white mb-3">Lý do từ chối</h3>
+            <div className="bg-gray-900 text-gray-200 rounded p-4 min-h-[80px] whitespace-pre-line">
+              {viewReasonLoading ? (
+                <span className="text-gray-400">Đang tải...</span>
+              ) : (
+                rejectReason || "Không có lý do được cung cấp từ hệ thống."
+              )}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setViewReasonOpen(false)}
+                className="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
