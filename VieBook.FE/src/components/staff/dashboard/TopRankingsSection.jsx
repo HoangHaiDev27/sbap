@@ -6,9 +6,9 @@ export default function TopRankingsSection({ topBooks, topOwners }) {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Top 5 Sách bán chạy</h3>
-            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
+            {/* <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
               Bestseller
-            </span>
+            </span> */}
           </div>
         </div>
         <div className="p-6">
@@ -57,9 +57,9 @@ export default function TopRankingsSection({ topBooks, topOwners }) {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Top 5 Chủ sách</h3>
-            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+            {/* <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
               Top thực hiện
-            </span>
+            </span> */}
           </div>
         </div>
         <div className="p-6">

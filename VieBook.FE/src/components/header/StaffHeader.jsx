@@ -78,10 +78,10 @@ export default function StaffHeader({ onToggleSidebar }) {
       {/* Right section */}
       <div className="flex items-center space-x-4">
         {/* Notifications */}
-        <button className="p-2 text-gray-200 hover:bg-slate-800 rounded-lg cursor-pointer relative">
+        {/* <button className="p-2 text-gray-200 hover:bg-slate-800 rounded-lg cursor-pointer relative">
           <i className="ri-notification-3-line w-5 h-5 flex items-center justify-center"></i>
           <span className="absolute top-1 right-1 inline-flex h-2 w-2 bg-red-500 rounded-full"></span>
-        </button>
+        </button> */}
 
         {/* Profile */}
         <div className="relative" ref={profileRef}>
@@ -120,14 +120,14 @@ export default function StaffHeader({ onToggleSidebar }) {
 
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-              <div className="px-4 py-2 text-sm text-gray-500 border-b">
+              {/* <div className="px-4 py-2 text-sm text-gray-500 border-b">
                 {currentStaff?.email || 'staff@viebook.com'}
-              </div>
-              <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer">
+              </div> */}
+              {/* <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer">
                 <i className="ri-settings-3-line mr-2 text-gray-600"></i>
                 <span className="text-gray-800">Cài đặt</span>
-              </button>
-              <hr className="my-1" />
+              </button> */}
+              {/* <hr className="my-1" /> */}
               <button onClick={async ()=>{ await logout(); navigate('/auth'); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 cursor-pointer">
                 <i className="ri-logout-box-line mr-2"></i>
                 Đăng xuất

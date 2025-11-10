@@ -55,7 +55,11 @@ namespace BusinessObject.Dtos
                         .Sum(ch => (ch.PriceSoft ?? 0) + 
                                    (ch.ChapterAudios != null && ch.ChapterAudios.Any() 
                                        ? ch.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
-                                       : 0)))); // Tính cả giá Soft + Audio
+                                       : 0)))) // Tính cả giá Soft + Audio
+                .ForMember(dest => dest.TotalView,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(ch => ch.Status == "Active")
+                        .Sum(ch => (int?)ch.ChapterView) ?? 0)); // Tổng lượt xem từ ChapterView của các chapters
             // Book → BookDTO
             CreateMap<Book, BookDTO>()
                 .ForMember(dest => dest.OwnerName,
