@@ -30,6 +30,7 @@ export default function ForumManager() {
     const [selectedTag, setSelectedTag] = useState(null);
     const [selectedAuthorId, setSelectedAuthorId] = useState(null);
     const [allPosts, setAllPosts] = useState([]);
+    const [reloadKey, setReloadKey] = useState(0); // Key để trigger reload PostList
 
     const tabs = [
         { id: "all", label: "Tất cả", icon: <RiBookLine /> },
@@ -257,6 +258,7 @@ export default function ForumManager() {
                             </div>
                         )}
                         <PostList 
+                            key={reloadKey}
                             activeTab={activeTab} 
                             searchQuery={searchQuery}
                             tag={selectedTag}
@@ -294,10 +296,16 @@ export default function ForumManager() {
 
             {/* Create Post Modal */}
             {showCreateModal && (
-                <CreatePostModal onClose={() => {
-                    setShowCreateModal(false);
-                    loadAllPosts(); // Reload all posts after creating a new one
-                }} />
+                <CreatePostModal 
+                    onClose={() => {
+                        setShowCreateModal(false);
+                    }}
+                    onPostCreated={() => {
+                        // Reload danh sách bài viết sau khi đăng bài
+                        setReloadKey(prev => prev + 1);
+                        loadAllPosts(); // Reload all posts for sidebar
+                    }}
+                />
             )}
         </div>
     );

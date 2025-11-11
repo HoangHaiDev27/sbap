@@ -126,21 +126,51 @@ namespace Services.Implementations
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var createdPost = await _postRepository.CreateAsync(post);
+                // Ajouter le post directement au contexte
+                _context.Posts.Add(post);
+                // Sauvegarder pour obtenir le PostId
+                await _context.SaveChangesAsync();
 
                 // If it's a giveaway post, create the BookOffer
                 if (createDto.PostType == "giveaway" && createDto.BookOffer != null)
                 {
                     var createOfferDto = createDto.BookOffer;
-                    createOfferDto.PostId = createdPost.PostId;
+                    createOfferDto.PostId = post.PostId;
                     await _bookOfferService.CreateAsync(createOfferDto, authorId);
+                }
+
+                // Create PostAttachment if imageUrl is provided (après avoir obtenu PostId)
+                if (!string.IsNullOrWhiteSpace(createDto.ImageUrl))
+                {
+                    var attachment = new PostAttachment
+                    {
+                        PostId = post.PostId,
+                        FileType = "Image",
+                        FileUrl = createDto.ImageUrl,
+                        SortOrder = 0,
+                        UploadedAt = DateTime.UtcNow
+                    };
+                    _context.PostAttachments.Add(attachment);
+                    await _context.SaveChangesAsync(); // Sauvegarder l'attachment
                 }
 
                 await transaction.CommitAsync();
 
-                // Reload post with includes
-                var postWithIncludes = await _postRepository.GetByIdAsync(createdPost.PostId);
-                return _mapper.Map<PostDTO>(postWithIncludes!);
+                // Reload post with includes pour s'assurer que les attachments sont chargés
+                var postWithIncludes = await _postRepository.GetByIdAsync(post.PostId);
+                if (postWithIncludes == null)
+                    throw new Exception("Failed to reload post after creation");
+                
+                var postDto = _mapper.Map<PostDTO>(postWithIncludes);
+                
+                // Calculate ClaimCount and ApprovedClaimCount for BookOffer if exists
+                if (postDto.BookOffer != null)
+                {
+                    postDto.BookOffer.ClaimCount = await _bookOfferService.GetClaimCountForOfferAsync(postDto.BookOffer.BookOfferId);
+                    postDto.BookOffer.ApprovedClaimCount = await _bookOfferService.GetApprovedClaimCountForOfferAsync(postDto.BookOffer.BookOfferId);
+                }
+                
+                return postDto;
             }
             catch
             {

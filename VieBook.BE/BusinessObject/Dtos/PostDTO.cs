@@ -28,6 +28,7 @@ namespace BusinessObject.Dtos
         public string? Title { get; set; }
         public List<string>? Tags { get; set; }
         public CreateBookOfferDTO? BookOffer { get; set; }
+        public string? ImageUrl { get; set; } // URL của ảnh đã upload
     }
 
     public class PostAttachmentDTO

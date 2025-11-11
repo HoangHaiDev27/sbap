@@ -233,6 +233,34 @@ namespace Services.Implementations
 
             return null;
         }
+
+        // Upload post image
+        public async Task<string> UploadPostImageAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return null;
+
+            // Validate file type (only images)
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                throw new ArgumentException("Chỉ chấp nhận file ảnh (JPG, PNG, WEBP, GIF)");
+
+            // Validate file size (max 10MB)
+            if (file.Length > 10 * 1024 * 1024)
+                throw new ArgumentException("File không được vượt quá 10MB");
+
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = "Post" // Thư mục lưu ảnh post
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                return uploadResult.SecureUrl.ToString();
+
+            return null;
+        }
         
     }
 

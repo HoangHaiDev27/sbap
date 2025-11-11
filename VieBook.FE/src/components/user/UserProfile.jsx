@@ -4,6 +4,7 @@ import { becomeOwner, upsertMyProfile, getCurrentUser } from "../../api/userApi"
 import { uploadAvatar } from "../../api/uploadApi";
 import { useUserStore } from "../../hooks/stores/userStore";
 import OwnerApplicationStepper from "./OwnerApplicationStepper";
+import { getSupportedBanks } from "../../api/vietQrApi";
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -52,6 +53,8 @@ export default function UserProfile() {
   const [saving, setSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [banks, setBanks] = useState([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
   
   // Get user store
   const { user, fetchUser, updateUserData } = useUserStore();
@@ -59,6 +62,7 @@ export default function UserProfile() {
   // Load user data on component mount
   useEffect(() => {
     loadUserData();
+    loadBanks();
   }, []);
 
   useEffect(() => {
@@ -66,6 +70,18 @@ export default function UserProfile() {
     window.addEventListener("auth:changed", onAuthChanged);
     return () => window.removeEventListener("auth:changed", onAuthChanged);
   }, []);
+
+  const loadBanks = async () => {
+    try {
+      setLoadingBanks(true);
+      const bankList = await getSupportedBanks();
+      setBanks(bankList);
+    } catch (err) {
+      console.error("Error loading banks:", err);
+    } finally {
+      setLoadingBanks(false);
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -167,13 +183,16 @@ export default function UserProfile() {
         errors.fullName = "Vui lòng nhập họ và tên";
       }
       
-      if (!tempData.phoneNumber.trim()) {
-        errors.phoneNumber = "Vui lòng nhập số điện thoại";
-      } else {
-        // Validate phone number format
-        const phoneRegex = /^[0-9]{10,11}$/;
-        if (!phoneRegex.test(tempData.phoneNumber.replace(/\s/g, ''))) {
-          errors.phoneNumber = "Số điện thoại phải có 10-11 chữ số";
+      // Ne pas valider phoneNumber si l'utilisateur est bookOwner (ne peut pas le modifier)
+      if (!isOwner) {
+        if (!tempData.phoneNumber.trim()) {
+          errors.phoneNumber = "Vui lòng nhập số điện thoại";
+        } else {
+          // Validate phone number format
+          const phoneRegex = /^[0-9]{10,11}$/;
+          if (!phoneRegex.test(tempData.phoneNumber.replace(/\s/g, ''))) {
+            errors.phoneNumber = "Số điện thoại phải có 10-11 chữ số";
+          }
         }
       }
 
@@ -195,7 +214,8 @@ export default function UserProfile() {
       
       const updateData = {
         fullName: tempData.fullName,
-        phoneNumber: tempData.phoneNumber,
+        // Ne pas mettre à jour phoneNumber si l'utilisateur est bookOwner
+        phoneNumber: isOwner ? undefined : tempData.phoneNumber,
         dateOfBirth: tempData.dateOfBirth ? new Date(tempData.dateOfBirth) : null,
         avatarUrl: tempData.avatarUrl,
         bankNumber: tempData.bankNumber,
@@ -481,10 +501,10 @@ export default function UserProfile() {
         {[
           { label: "Họ và tên", key: "fullName", required: true },
           { label: "Email", key: "email", readOnly: true },
-          { label: "Số điện thoại", key: "phoneNumber", required: true },
+          { label: "Số điện thoại", key: "phoneNumber", required: true, readOnlyIfOwner: true },
           { label: "Ngày sinh", key: "dateOfBirth", type: "date" },
           { label: "Số tài khoản ngân hàng", key: "bankNumber" },
-          { label: "Tên ngân hàng", key: "bankName" },
+          { label: "Tên ngân hàng", key: "bankName", isSelect: true },
           { label: "Địa chỉ", key: "address", type: "textarea", colSpan: true },
         ].map((field) => (
           <div key={field.key} className={field.colSpan ? "md:col-span-2" : ""}>
@@ -506,17 +526,41 @@ export default function UserProfile() {
                     }`}
                     placeholder={`Nhập ${field.label.toLowerCase()}`}
                   />
+                ) : field.isSelect && field.key === "bankName" ? (
+                  <div>
+                    {loadingBanks ? (
+                      <div className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-400 text-sm">
+                        Đang tải danh sách ngân hàng...
+                      </div>
+                    ) : (
+                      <select
+                        name={field.key}
+                        value={tempData[field.key] || ""}
+                        onChange={handleChange}
+                        className={`mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 ${
+                          validationErrors[field.key] ? 'ring-red-500 border-red-500' : 'focus:ring-orange-500'
+                        }`}
+                      >
+                        <option value="">-- Chọn ngân hàng --</option>
+                        {banks.map((bank) => (
+                          <option key={bank.acqId} value={bank.name || bank.shortName}>
+                            {bank.name || bank.shortName}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                 ) : (
                   <input
                     type={field.type || "text"}
                     name={field.key}
                     value={tempData[field.key]}
                     onChange={handleChange}
-                    readOnly={field.readOnly}
+                    readOnly={field.readOnly || (field.readOnlyIfOwner && isOwner)}
                     max={field.type === "date" ? new Date().toISOString().split('T')[0] : undefined}
-                    className={`mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 disabled:opacity-50 ${
+                    className={`mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 ${
                       validationErrors[field.key] ? 'ring-red-500 border-red-500' : 'focus:ring-orange-500'
-                    }`}
+                    } ${(field.readOnly || (field.readOnlyIfOwner && isOwner)) ? 'opacity-70 cursor-not-allowed' : ''}`}
                     placeholder={field.key === "phoneNumber" ? "Nhập số điện thoại (10-11 chữ số)" : `Nhập ${field.label.toLowerCase()}`}
                     pattern={field.key === "phoneNumber" ? "[0-9]{10,11}" : undefined}
                   />

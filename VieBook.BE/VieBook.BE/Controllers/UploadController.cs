@@ -80,5 +80,28 @@ namespace VieBook.BE.Controllers
 
             return Ok(new { fileUrl = url, imageUrl = url }); // Return both for compatibility
         }
+
+        [HttpPost("postImage")]
+        public async Task<IActionResult> UploadPostImage([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "File không hợp lệ" });
+
+            try
+            {
+                var url = await _cloudinaryService.UploadPostImageAsync(file);
+                if (url == null) return StatusCode(500, new { message = "Upload ảnh bài viết thất bại" });
+
+                return Ok(new { imageUrl = url });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Lỗi khi upload ảnh: {ex.Message}" });
+            }
+        }
     }
 }

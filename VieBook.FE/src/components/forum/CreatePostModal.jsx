@@ -14,10 +14,11 @@ import { getBooksByOwner, getChapterAudios } from "../../api/ownerBookApi";
 import { getBookDetail } from "../../api/bookApi";
 import { getChapterAudioPrices } from "../../api/ownerBookApi";
 import { createPost } from "../../api/postApi";
+import { uploadPostImage } from "../../api/uploadApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import toast from "react-hot-toast";
 
-export default function CreatePostModal({ onClose }) {
+export default function CreatePostModal({ onClose, onPostCreated }) {
   const { userId } = useCurrentUser();
   const [postType, setPostType] = useState("discuss");
   const [formData, setFormData] = useState({
@@ -101,19 +102,31 @@ export default function CreatePostModal({ onClose }) {
       loadChapters(formData.bookId);
     } else {
       setChapters([]);
-      setFormData(prev => ({ ...prev, chapterId: null, audioId: null }));
+      setFormData(prev => ({ ...prev, chapterId: null, audioId: null, accessType: "Both" }));
     }
   }, [formData.bookId, postType]);
 
-  // Load audios when chapter is selected and accessType is Audio or Both
+  // Load audios when chapter is selected (luôn load để kiểm tra có audio không)
   useEffect(() => {
-    if (postType === "giveaway" && formData.chapterId && (formData.accessType === "Audio" || formData.accessType === "Both")) {
+    if (postType === "giveaway" && formData.chapterId) {
       loadChapterAudios(formData.chapterId);
     } else {
       setChapterAudios([]);
       setFormData(prev => ({ ...prev, audioId: null }));
     }
-  }, [formData.chapterId, formData.accessType, postType]);
+  }, [formData.chapterId, postType]);
+
+  // Tự động set accessType mặc định dựa trên dữ liệu có sẵn
+  useEffect(() => {
+    if (postType === "giveaway" && formData.chapterId && !loadingAudios) {
+      const hasAudios = chapterAudios.length > 0;
+      
+      // Nếu accessType là Audio hoặc Both nhưng không có audio, chuyển về Soft
+      if ((formData.accessType === "Audio" || formData.accessType === "Both") && !hasAudios) {
+        setFormData(prev => ({ ...prev, accessType: "Soft", audioId: null }));
+      }
+    }
+  }, [chapterAudios.length, formData.chapterId, postType, formData.accessType, loadingAudios]);
 
   const loadBooks = async () => {
     if (!userId) return;
@@ -220,7 +233,9 @@ export default function CreatePostModal({ onClose }) {
   const handleAccessTypeChange = (type) => {
     setFormData(prev => ({
       ...prev,
-      accessType: type
+      accessType: type,
+      // Reset audioId nếu chọn Soft (chỉ bản đọc)
+      audioId: type === "Soft" ? null : prev.audioId
     }));
   };
 
@@ -246,6 +261,11 @@ export default function CreatePostModal({ onClose }) {
         toast.error("Vui lòng chọn chương");
         return;
       }
+      // Chỉ yêu cầu audioId nếu accessType là Audio hoặc Both
+      if ((formData.accessType === "Audio" || formData.accessType === "Both") && !formData.audioId) {
+        toast.error("Vui lòng chọn bản audio");
+        return;
+      }
       if (!formData.quantity || parseInt(formData.quantity) < 1) {
         toast.error("Vui lòng nhập số suất tặng hợp lệ");
         return;
@@ -259,6 +279,21 @@ export default function CreatePostModal({ onClose }) {
     try {
       setIsSubmitting(true);
       
+      // Upload ảnh trước nếu có
+      let imageUrl = null;
+      if (formData.imageFile) {
+        try {
+          toast.loading("Đang tải ảnh lên...", { id: "upload-image" });
+          const uploadResult = await uploadPostImage(formData.imageFile);
+          imageUrl = uploadResult.imageUrl || uploadResult.url;
+          toast.success("Tải ảnh thành công!", { id: "upload-image" });
+        } catch (error) {
+          console.error("Failed to upload image:", error);
+          toast.error(error.message || "Không thể tải ảnh lên. Vui lòng thử lại.", { id: "upload-image" });
+          return; // Dừng lại nếu upload ảnh thất bại
+        }
+      }
+      
       const postPayload = {
         content: formData.content,
         postType: postType === "giveaway" ? "giveaway" : "discuss",
@@ -266,6 +301,11 @@ export default function CreatePostModal({ onClose }) {
         title: formData.title,
         tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : []
       };
+      
+      // Thêm imageUrl vào payload (backend có thể dùng để tạo attachment)
+      if (imageUrl) {
+        postPayload.imageUrl = imageUrl;
+      }
       
       // If it's a giveaway, include book offer data
       if (postType === "giveaway") {
@@ -283,6 +323,13 @@ export default function CreatePostModal({ onClose }) {
       const response = await createPost(postPayload);
       toast.success("Đăng bài thành công!");
       onClose();
+      // Reload danh sách bài viết sau khi đăng bài
+      if (onPostCreated) {
+        onPostCreated();
+      } else {
+        // Fallback: reload trang nếu không có callback
+        window.location.reload();
+      }
     } catch (error) {
       console.error("Failed to create post:", error);
       toast.error(error.message || "Không thể đăng bài. Vui lòng thử lại.");
@@ -529,13 +576,14 @@ export default function CreatePostModal({ onClose }) {
                   </div>
                 )}
 
-                {/* Access Type Selection */}
+                {/* Access Type Selection - chỉ hiển thị nút nếu có dữ liệu tương ứng */}
                 {formData.chapterId && (
                   <div>
                     <label className="block text-sm font-medium text-white mb-2">
                       Loại bản tặng *
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                      {/* Luôn hiển thị nút Bản đọc vì đã chọn chapter (chương luôn có bản đọc) */}
                       <button
                         type="button"
                         onClick={() => handleAccessTypeChange("Soft")}
@@ -548,44 +596,54 @@ export default function CreatePostModal({ onClose }) {
                         <RiBookOpenLine size={18} />
                         Bản đọc
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAccessTypeChange("Audio")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                          formData.accessType === "Audio"
-                            ? "bg-orange-500 text-white border-orange-500"
-                            : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
-                        }`}
-                      >
-                        <RiPlayCircleLine size={18} />
-                        Bản nghe
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAccessTypeChange("Both")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                          formData.accessType === "Both"
-                            ? "bg-orange-500 text-white border-orange-500"
-                            : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
-                        }`}
-                      >
-                        <RiCheckLine size={18} />
-                        Cả hai
-                      </button>
+                      {/* Chỉ hiển thị nút Bản nghe nếu có audio cho chapter này */}
+                      {chapterAudios.length > 0 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleAccessTypeChange("Audio")}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                              formData.accessType === "Audio"
+                                ? "bg-orange-500 text-white border-orange-500"
+                                : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
+                            }`}
+                          >
+                            <RiPlayCircleLine size={18} />
+                            Bản nghe
+                          </button>
+                          {/* Chỉ hiển thị nút Cả hai nếu có audio */}
+                          <button
+                            type="button"
+                            onClick={() => handleAccessTypeChange("Both")}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                              formData.accessType === "Both"
+                                ? "bg-orange-500 text-white border-orange-500"
+                                : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
+                            }`}
+                          >
+                            <RiCheckLine size={18} />
+                            Cả hai
+                          </button>
+                        </>
+                      )}
                     </div>
+                    {/* Thông báo nếu đang tải audio */}
+                    {loadingAudios && (
+                      <p className="text-sm text-slate-400 mt-2">
+                        Đang kiểm tra bản nghe...
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {/* Audio Selection (only for Audio or Both) */}
-                {formData.chapterId && (formData.accessType === "Audio" || formData.accessType === "Both") && (
+                {/* Audio Selection (only for Audio or Both, và chỉ hiển thị nếu có audio) */}
+                {formData.chapterId && (formData.accessType === "Audio" || formData.accessType === "Both") && chapterAudios.length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-white mb-2">
                       Chọn bản audio *
                     </label>
                     {loadingAudios ? (
                       <div className="text-slate-400 text-sm">Đang tải...</div>
-                    ) : chapterAudios.length === 0 ? (
-                      <div className="text-slate-400 text-sm">Không có audio nào</div>
                     ) : (
                       <select
                         value={formData.audioId || ""}
@@ -601,6 +659,12 @@ export default function CreatePostModal({ onClose }) {
                         ))}
                       </select>
                     )}
+                  </div>
+                )}
+                {/* Thông báo nếu chọn Audio/Both nhưng không có audio */}
+                {formData.chapterId && (formData.accessType === "Audio" || formData.accessType === "Both") && !loadingAudios && chapterAudios.length === 0 && (
+                  <div className="text-red-400 text-sm bg-red-900/20 border border-red-500/50 rounded-lg p-3">
+                    Chương này không có bản audio. Vui lòng chọn "Bản đọc" hoặc chọn chương khác.
                   </div>
                 )}
 
