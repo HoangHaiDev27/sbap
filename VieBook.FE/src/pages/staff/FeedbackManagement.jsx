@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import FeedbackDetailModal from "../../components/staff/feedback/FeedbackDetailModal";
 import FeedbackDeleteModal from "../../components/staff/feedback/FeedbackDeleteModal";
-import { getAllBookReviews, getAllUserFeedbacks, deleteBookReview, deleteUserFeedback, getFeedbackStats } from "../../api/staffApi";
+import { getAllBookReviews, getAllUserFeedbacks, deleteBookReview, deleteUserFeedback, getFeedbackStats, getBookDetailForStaff } from "../../api/staffApi";
 import toast from "react-hot-toast";
 
 export default function FeedbackManagement() {
@@ -24,6 +24,8 @@ export default function FeedbackManagement() {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({ total: 0, compliments: 0, bugs: 0 });
+  const [bookTitle, setBookTitle] = useState("");
+  const [loadingBookTitle, setLoadingBookTitle] = useState(false);
 
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -225,6 +227,34 @@ export default function FeedbackManagement() {
     setBookFilter(bookIdParam);
   }, [bookIdParam]);
 
+  // Load book title from API when bookFilter changes
+  useEffect(() => {
+    const loadBookTitle = async () => {
+      if (bookFilter) {
+        setLoadingBookTitle(true);
+        setBookTitle("");
+        try {
+          const bookDetail = await getBookDetailForStaff(parseInt(bookFilter));
+          if (bookDetail && bookDetail.title) {
+            setBookTitle(bookDetail.title);
+            setLoadingBookTitle(false);
+          } else {
+            // Không có title, không set loading = false để hiển thị "Đang tải tên sách..."
+            // Giữ bookTitle = "" và loadingBookTitle = true
+          }
+        } catch (error) {
+          // Lỗi khi load, không set loading = false để hiển thị "Đang tải tên sách..."
+          // Giữ bookTitle = "" và loadingBookTitle = true
+        }
+      } else {
+        setBookTitle("");
+        setLoadingBookTitle(false);
+      }
+    };
+
+    loadBookTitle();
+  }, [bookFilter]);
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -275,6 +305,7 @@ export default function FeedbackManagement() {
 
   const handleClearBookFilter = () => {
     setBookFilter(null);
+    setBookTitle("");
     navigate("/staff/feedback");
   };
 
@@ -435,7 +466,7 @@ export default function FeedbackManagement() {
             {bookFilter && (
               <div className="flex items-center gap-2">
                 <span className="px-3 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm">
-                  Đang lọc theo sách ID: <b>{bookFilter}</b>
+                  Sách đang lọc: <b>{loadingBookTitle || !bookTitle ? "Đang tải tên sách..." : bookTitle}</b>
                 </span>
                 <button
                   onClick={handleClearBookFilter}
