@@ -178,6 +178,8 @@ export default function BookDetailPage() {
     discountType,
     discountValue,
     discountedPrice,
+    completionStatus,
+    uploadStatus,
   } = bookDetail;
 
   // Tổng giá theo từng loại (bản mềm và audio)
@@ -307,8 +309,23 @@ export default function BookDetailPage() {
 
         {/* Cột phải */}
         <div className="lg:col-span-2">
-          <h1 className="text-3xl font-bold mb-2">{title}</h1>
-          <p className="text-gray-300 mb-4">Tác giả: {ownerName}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">{title}</h1>
+          <p className="text-gray-300 mb-3">Tác giả: {ownerName}</p>
+          
+          {/* Badge trạng thái sách */}
+          {completionStatus && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {completionStatus === "Ongoing" ? (
+                <span className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                  Đang phát hành
+                </span>
+              ) : (
+                <span className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-green-500/20 text-green-400 border border-green-500/30">
+                  Đã ra trọn bộ
+                </span>
+              )}
+            </div>
+          )}
           
           {/* Hiển thị giá với/không có promotion */}
           <div className="mb-4">
