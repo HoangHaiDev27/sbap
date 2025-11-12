@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { getCurrentRole } from '../../api/authApi';
+import { getCurrentRole, getAllRoles } from '../../api/authApi';
 
 const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => {
   // Nếu không yêu cầu auth, cho phép truy cập
@@ -18,9 +18,17 @@ const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => 
 
   // Nếu có danh sách roles được phép
   if (allowedRoles.length > 0) {
-    const hasPermission = allowedRoles.some(role => 
-      userRole.toLowerCase() === role.toLowerCase()
-    );
+    // Lấy tất cả roles của user (không chỉ current role)
+    const allUserRoles = getAllRoles();
+    
+    // Kiểm tra xem user có ít nhất một role được phép không
+    const hasPermission = allowedRoles.some(allowedRole => {
+      const normalizedAllowedRole = allowedRole.toLowerCase();
+      // Kiểm tra trong tất cả roles của user
+      return allUserRoles.some(userRole => 
+        userRole.toLowerCase() === normalizedAllowedRole
+      );
+    });
     
     if (!hasPermission) {
       // Không có quyền, redirect về trang access denied

@@ -322,7 +322,7 @@ export default function StoryGrid({
         <div className="text-center py-12">
           <RiBookOpenLine className="text-6xl text-gray-600 mb-4 mx-auto" />
           <h3 className="text-xl font-semibold text-gray-400 mb-2">
-            Không tìm thấy truyện nói
+            Không tìm thấy sách audio
           </h3>
           <p className="text-gray-500">Hãy thử thay đổi bộ lọc của bạn</p>
         </div>

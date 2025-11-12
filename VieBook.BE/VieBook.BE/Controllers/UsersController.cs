@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
-using VieBook.BE.Attributes;
-using VieBook.BE.Constants;
 using BusinessObject.Dtos;
 using BusinessObject.PayOs;
 
@@ -365,18 +363,6 @@ namespace VieBook.BE.Controllers
                     return Unauthorized(new { message = "Token không hợp lệ" });
                 }
 
-                var userRoles = User.Claims
-                    .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
-                    .Select(c => c.Value)
-                    .ToList();
-                var isOwner = userRoles.Any(r => r.Equals("Owner", StringComparison.OrdinalIgnoreCase));
-
-                string? phoneNumberToUpdate = null;
-                if (!isOwner)
-                {
-                    phoneNumberToUpdate = dto.PhoneNumber;
-                }
-
                 DateOnly? dob = null;
                 if (dto.DateOfBirth.HasValue)
                 {
@@ -386,7 +372,7 @@ namespace VieBook.BE.Controllers
                 var profile = await _userService.UpsertUserProfileAsync(
                     userId,
                     dto.FullName,
-                    phoneNumberToUpdate,
+                    dto.PhoneNumber,
                     dob,
                     dto.AvatarUrl,
                     dto.BankNumber,

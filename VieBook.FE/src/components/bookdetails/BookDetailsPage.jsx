@@ -225,14 +225,29 @@ export default function BookDetailPage() {
           <div className="space-y-4">
             <div className="flex space-x-2">
               <button
-                onClick={() => setShowChapterModal(true)}
+                onClick={() => {
+                  const uid = getUserId();
+                  if (!uid) {
+                    navigate("/auth");
+                    return;
+                  }
+                  setShowChapterModal(true);
+                }}
                 className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <RiBookOpenLine /> Đọc ngay
               </button>
               {hasAudio ? (
                 <button
-                  onClick={() => setShowAudioChapterModal(true)}
+                  onClick={() => 
+                    {
+                      const uid = getUserId();
+                      if (!uid) {
+                        navigate("/auth");
+                        return;
+                      }
+                      setShowAudioChapterModal(true);
+                    }}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <RiPlayCircleLine /> Nghe
@@ -255,7 +270,14 @@ export default function BookDetailPage() {
               </div>
             ) : (
               <button
-                onClick={() => setShowPurchaseModal(true)}
+                onClick={() => {
+                  const uid = getUserId();
+                  if (!uid) {
+                    navigate("/auth");
+                    return;
+                  }
+                  setShowPurchaseModal(true);
+                }}
                 className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <RiShoppingCartLine /> Mua ngay

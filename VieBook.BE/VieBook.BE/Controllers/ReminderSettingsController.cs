@@ -25,6 +25,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy cài đặt nhắc nhở của user hiện tại
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpGet("my-settings")]
         public async Task<IActionResult> GetMyReminderSettings()
         {
@@ -53,6 +54,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Tạo hoặc cập nhật cài đặt nhắc nhở
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpPost("my-settings")]
         public async Task<IActionResult> CreateOrUpdateMyReminderSettings([FromBody] CreateReminderSettingsDTO createDto)
         {
@@ -81,6 +83,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Cập nhật cài đặt nhắc nhở
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpPut("my-settings")]
         public async Task<IActionResult> UpdateMyReminderSettings([FromBody] UpdateReminderSettingsDTO updateDto)
         {
@@ -109,6 +112,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Xóa cài đặt nhắc nhở
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpDelete("my-settings")]
         public async Task<IActionResult> DeleteMyReminderSettings()
         {
@@ -137,8 +141,8 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy tất cả cài đặt nhắc nhở đang hoạt động (cho admin)
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpGet("all-active")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllActiveReminderSettings()
         {
             try

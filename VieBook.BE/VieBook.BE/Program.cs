@@ -70,7 +70,9 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"])),
+        // Map role claims để [Authorize(Roles = "...")] hoạt động đúng
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role
     };
 });
 // CORS policy registration (single source of truth)
@@ -277,7 +279,7 @@ var app = builder.Build();
 // Add debug logging
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("🚀 Application starting up...");
-logger.LogInformation("🔧 Background services registered: {count}", 
+logger.LogInformation("🔧 Background services registered: {count}",
     app.Services.GetServices<IHostedService>().Count());
 
 // Configure the HTTP request pipeline.
