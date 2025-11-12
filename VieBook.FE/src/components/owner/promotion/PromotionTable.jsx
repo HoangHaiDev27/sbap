@@ -61,7 +61,7 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
   };
 
 
-  if (!promotions.length) return <p className="text-white">Chưa có promotion nào</p>;
+  if (!promotions.length) return <p className="text-white">Chưa có khuyến mãi nào</p>;
 
   return (
     <div>
@@ -187,7 +187,7 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
           <div className="bg-slate-800 p-6 rounded-xl shadow-lg text-white w-full max-w-md">
             <h2 className="text-lg font-bold mb-4">Xác nhận xoá</h2>
             <p>
-              Bạn có chắc chắn muốn xoá promotion{" "}
+              Bạn có chắc chắn muốn xoá khuyến mãi {" "}
               <span className="text-orange-400">{confirmDelete.promotionName}</span> không?
             </p>
             <div className="flex justify-end gap-3 mt-6">

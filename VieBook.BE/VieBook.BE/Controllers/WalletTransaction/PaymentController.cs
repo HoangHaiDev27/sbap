@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BusinessObject.PayOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Net.payOS;
 using Net.payOS.Types;
@@ -19,7 +20,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
         {
             _payOS = payOS;
         }
-
+        [Authorize(Roles = "Customer")]
         [HttpPost("payos_transfer_handler")]
         public IActionResult payOSTransferHandler(WebhookType body)
         {

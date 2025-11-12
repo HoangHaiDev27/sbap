@@ -145,7 +145,7 @@ export default function VipPackagesPage() {
             Gói chuyển sách sang audio
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Thanh toán bằng coin trong ví. Mỗi gói có giới hạn số lượt chuyển
+            Thanh toán bằng xu trong ví. Mỗi gói có giới hạn số lượt chuyển
             đổi.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 bg-gray-800 border border-gray-700 px-4 py-2 rounded-full text-sm">
@@ -456,7 +456,7 @@ export default function VipPackagesPage() {
                       setLoading(true);
                       await purchaseOwnerPlan(confirmPlan.planId);
 
-                      // 🔥 Reload coin ngay sau khi mua
+                      // 🔥 Reload xu ngay sau khi mua
                       await fetchCoins();
 
                       // 🔄 Refresh subscription status sau khi mua

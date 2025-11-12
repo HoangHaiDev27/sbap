@@ -1,4 +1,5 @@
 using BusinessObject.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using System.Security.Claims;
@@ -15,7 +16,7 @@ namespace VieBook.BE.Controllers
         {
             _bookmarkService = bookmarkService;
         }
-
+        [Authorize(Roles = "Customer,Owner")]
         [HttpGet("user")]
         public async Task<IActionResult> GetUserBookmarks()
         {
@@ -55,7 +56,7 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
-
+        [Authorize(Roles = "Customer,Owner")]
         [HttpPost]
         public async Task<IActionResult> CreateOrUpdateBookmark([FromBody] CreateBookmarkDTO bookmarkDto)
         {
@@ -75,7 +76,7 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
-
+        [Authorize(Roles = "Customer,Owner")]
         [HttpDelete("{bookmarkId}")]
         public async Task<IActionResult> DeleteBookmark(int bookmarkId)
         {
@@ -102,7 +103,7 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
-
+        [Authorize(Roles = "Customer,Owner")]
         [HttpDelete("chapter/{chapterId}")]
         public async Task<IActionResult> DeleteBookmarkByChapter(int chapterId)
         {

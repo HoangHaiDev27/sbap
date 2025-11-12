@@ -27,7 +27,7 @@ export async function getAdminById(adminId) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
       },
     },
     "Failed to fetch admin detail"
@@ -41,7 +41,7 @@ export async function updateAdmin(adminId, formData) {
     {
       method: "PUT",
       headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
       },
       body: formData, // dùng FormData để upload file
     },
@@ -56,7 +56,7 @@ export async function getStatistic(fromDate, toDate) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
       },
     },
     "Không thể tải dữ liệu thống kê"

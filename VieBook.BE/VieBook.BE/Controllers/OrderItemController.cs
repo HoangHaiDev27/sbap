@@ -26,6 +26,7 @@ namespace VieBook.BE.Controllers
         /// <param name="timeFilter">Bộ lọc theo thời gian (all, today, week, month, year)</param>
         /// <param name="sortBy">Sắp xếp theo (recent, oldest, name, price_high, price_low)</param>
         /// <returns>Danh sách sách đã mua</returns>
+        [Authorize(Roles = "Customer")]
         [HttpGet("purchased-books/{userId}")]
         public async Task<IActionResult> GetPurchasedBooks(
             int userId,
@@ -36,7 +37,7 @@ namespace VieBook.BE.Controllers
             {
                 // Get all books without pagination
                 var result = await _orderItemService.GetAllPurchasedBooksAsync(userId, timeFilter, sortBy);
-                
+
                 return Ok(new
                 {
                     success = true,
@@ -59,6 +60,7 @@ namespace VieBook.BE.Controllers
         /// </summary>
         /// <param name="orderItemId">ID của order item</param>
         /// <returns>Chi tiết order item</returns>
+        [Authorize(Roles = "Customer")]
         [HttpGet("{orderItemId}")]
         public async Task<IActionResult> GetOrderItem(long orderItemId)
         {
@@ -97,6 +99,7 @@ namespace VieBook.BE.Controllers
         /// <param name="userId">ID của user</param>
         /// <param name="bookId">ID của sách</param>
         /// <returns>Danh sách chapter đã mua</returns>
+        [Authorize(Roles = "Customer")]
         [HttpGet("purchased-chapters/{userId}/{bookId}")]
         public async Task<IActionResult> GetPurchasedChapters(int userId, int bookId)
         {
@@ -126,6 +129,7 @@ namespace VieBook.BE.Controllers
         /// </summary>
         /// <param name="orderItemId">ID của order item</param>
         /// <returns>Chi tiết đơn hàng đầy đủ</returns>
+        [Authorize]
         [HttpGet("detail/{orderItemId}")]
         public async Task<IActionResult> GetOrderDetail(long orderItemId)
         {
@@ -162,7 +166,7 @@ namespace VieBook.BE.Controllers
         /// Lấy danh sách orders của owner hiện tại (tự động lấy từ JWT token)
         /// </summary>
         /// <returns>Danh sách orders của owner hiện tại</returns>
-        [Authorize]
+        [Authorize(Roles = "Owner")]
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetMyOrders()
         {
@@ -199,7 +203,7 @@ namespace VieBook.BE.Controllers
         /// Lấy thống kê orders của owner hiện tại (tự động lấy từ JWT token)
         /// </summary>
         /// <returns>Thống kê orders của owner hiện tại</returns>
-        [Authorize]
+        [Authorize(Roles = "Owner")]
         [HttpGet("my-orders/stats")]
         public async Task<IActionResult> GetMyOrderStats()
         {

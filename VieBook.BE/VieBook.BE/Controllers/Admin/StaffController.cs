@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BusinessObject.Dtos;
 using BusinessObject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
@@ -24,6 +25,7 @@ namespace VieBook.BE.Controllers.Admin
         }
 
         // Lấy toàn bộ staff
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -32,6 +34,7 @@ namespace VieBook.BE.Controllers.Admin
         }
 
         // Lấy staff theo ID
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -43,6 +46,7 @@ namespace VieBook.BE.Controllers.Admin
         }
 
         // Thêm mới staff (có thể kèm avatar)
+        [Authorize(Roles = "Admin")]
         [HttpPost("add")]
         public async Task<IActionResult> Add([FromForm] CreateStaffRequestDTO request, IFormFile? avatarFile)
         {
@@ -71,39 +75,41 @@ namespace VieBook.BE.Controllers.Admin
         }
 
         // Cập nhật thông tin Staff + avatar
-      [HttpPut("update/{id}")]
-    public async Task<IActionResult> UpdateStaff(int id, [FromForm] UpdateStaffRequestDTO dto, IFormFile? avatarFile)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var staff = await _staffService.GetByIdAsync(id);
-        if (staff == null)
-            return NotFound(new { message = "Staff không tồn tại." });
-
-        try
+        [Authorize(Roles = "Admin")]
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> UpdateStaff(int id, [FromForm] UpdateStaffRequestDTO dto, IFormFile? avatarFile)
         {
-            if (avatarFile != null)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var staff = await _staffService.GetByIdAsync(id);
+            if (staff == null)
+                return NotFound(new { message = "Staff không tồn tại." });
+
+            try
             {
-                var newUrl = await _cloudService.UploadAvatarImageAsync(avatarFile, staff.UserProfile?.AvatarUrl);
-                dto.AvatarUrl = newUrl;
+                if (avatarFile != null)
+                {
+                    var newUrl = await _cloudService.UploadAvatarImageAsync(avatarFile, staff.UserProfile?.AvatarUrl);
+                    dto.AvatarUrl = newUrl;
+                }
+
+                // Gọi service update
+                var userToUpdate = _mapper.Map<User>(dto);
+                userToUpdate.UserId = id;
+
+                var updatedStaff = await _staffService.UpdateAsync(userToUpdate, dto.NewPassword);
+
+                var result = _mapper.Map<StaffDTO>(updatedStaff);
+                return Ok(new { message = "Cập nhật staff thành công.", data = result });
             }
-
-            // Gọi service update
-        var userToUpdate = _mapper.Map<User>(dto);
-            userToUpdate.UserId = id;
-
-            var updatedStaff = await _staffService.UpdateAsync(userToUpdate, dto.NewPassword);
-
-            var result = _mapper.Map<StaffDTO>(updatedStaff);
-            return Ok(new { message = "Cập nhật staff thành công.", data = result });
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
         // Cập nhật avatar riêng (khi chỉ đổi ảnh)
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}/avatar")]
         public async Task<IActionResult> UpdateAvatar(int id, [FromForm] IFormFile avatarFile)
         {
@@ -131,6 +137,7 @@ namespace VieBook.BE.Controllers.Admin
             }
         }
         // PATCH: api/staff/lock/{id}
+        [Authorize(Roles = "Admin")]
         [HttpPatch("lock/{id}")]
         public async Task<IActionResult> Lock(int id)
         {
@@ -147,6 +154,7 @@ namespace VieBook.BE.Controllers.Admin
         }
 
         // PATCH: api/staff/unlock/{id}
+        [Authorize(Roles = "Admin")]
         [HttpPatch("unlock/{id}")]
         public async Task<IActionResult> Unlock(int id)
         {
@@ -163,6 +171,7 @@ namespace VieBook.BE.Controllers.Admin
         }
 
         // PATCH: api/staff/toggle-status/{id}
+        [Authorize(Roles = "Admin")]
         [HttpPatch("toggle-status/{id}")]
         public async Task<IActionResult> ToggleStatus(int id)
         {

@@ -26,6 +26,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             _payOS = payOS;
             _httpContextAccessor = httpContextAccessor;
         }
+        [Authorize(Roles = "Customer")]
         [HttpPost("/create-payment-link")]
         public async Task<IActionResult> CreatePaymentLink([FromBody] PaymentRequestDTO request)
         {

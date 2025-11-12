@@ -13,7 +13,6 @@ namespace VieBook.BE.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class PaymentRequestController : ControllerBase
     {
         private readonly IPaymentRequestService _paymentRequestService;
@@ -24,6 +23,7 @@ namespace VieBook.BE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> CreatePaymentRequest([FromBody] CreatePaymentRequestDTO createDto)
         {
             try
@@ -42,7 +42,7 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
-
+        [Authorize(Roles = "Owner")]
         [HttpGet("user")]
         public async Task<IActionResult> GetUserPaymentRequests()
         {
@@ -62,7 +62,7 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
-
+        [Authorize(Roles = "Owner")]
         [HttpGet("{paymentRequestId}")]
         public async Task<IActionResult> GetPaymentRequestById(long paymentRequestId)
         {
@@ -122,7 +122,7 @@ namespace VieBook.BE.Controllers
                 }
 
                 var result = await _paymentRequestService.ApprovePaymentRequestAsync(paymentRequestId, staffId.Value);
-                
+
                 if (!result)
                 {
                     return BadRequest(new { message = "Không thể duyệt yêu cầu. Yêu cầu có thể không tồn tại hoặc đã được xử lý." });
@@ -137,7 +137,7 @@ namespace VieBook.BE.Controllers
                 {
                     return BadRequest(new { message = ex.Message });
                 }
-                
+
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
@@ -156,7 +156,7 @@ namespace VieBook.BE.Controllers
 
                 var reason = dto?.Reason;
                 var result = await _paymentRequestService.RejectPaymentRequestAsync(paymentRequestId, staffId.Value, reason);
-                
+
                 if (!result)
                 {
                     return BadRequest(new { message = "Không thể từ chối yêu cầu. Yêu cầu có thể không tồn tại hoặc đã được xử lý." });

@@ -37,7 +37,7 @@ export async function getAllStaff() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Failed to fetch staff list");
 }
@@ -47,7 +47,7 @@ export async function getStaffById(staffId) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Failed to fetch staff detail");
 }
@@ -56,7 +56,7 @@ export async function addStaff(formData) {
   return handleFetch(API_ENDPOINTS.STAFF.ADD, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
     body: formData,
   }, "Failed to add staff");
@@ -66,7 +66,7 @@ export async function updateStaff(staffId, formData) {
   return handleFetch(API_ENDPOINTS.STAFF.UPDATE(staffId), {
     method: "PUT",
     headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
     body: formData,
   }, "Failed to update staff");
@@ -77,7 +77,7 @@ export async function deleteStaff(staffId) {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Failed to delete staff");
 }
@@ -87,7 +87,7 @@ export async function lockStaff(staffId) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Failed to lock staff");
 }
@@ -97,7 +97,7 @@ export async function unlockStaff(staffId) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Failed to unlock staff");
 }
@@ -107,7 +107,7 @@ export async function toggleStaffStatus(staffId) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Failed to toggle staff status");
 }
@@ -116,7 +116,7 @@ export async function toggleStaffStatus(staffId) {
       const res = await fetch(API_ENDPOINTS.STAFF.UPDATE_AVATAR(staffId), {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
         },
         body: formData,
       });

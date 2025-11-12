@@ -1,5 +1,6 @@
 ﻿using BusinessObject.Dtos;
 using BusinessObject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 
@@ -7,6 +8,7 @@ namespace VieBookAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Owner")]
     public class PromotionsController : ControllerBase
     {
         private readonly IPromotionService _promotionService;

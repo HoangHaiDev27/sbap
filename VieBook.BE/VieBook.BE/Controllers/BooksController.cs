@@ -282,7 +282,7 @@ namespace VieBook.BE.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
+        [Authorize(Roles = "Customer")]
         // GET: api/books/{bookId}/chapters/audio-prices
         [HttpGet("{bookId:int}/chapters/audio-prices")]
         public async Task<IActionResult> GetChapterAudioPrices(int bookId)

@@ -25,6 +25,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy danh sách giao dịch với bộ lọc và phân trang
         /// </summary>
+        [Authorize(Roles = "Staff")]
         [HttpGet]
         public async Task<IActionResult> GetTransactions(
             [FromQuery] string? searchTerm = null,
@@ -51,6 +52,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy thống kê giao dịch
         /// </summary>
+        [Authorize(Roles = "Staff,Admin")]
         [HttpGet("stats")]
         public async Task<IActionResult> GetTransactionStats(
             [FromQuery] string? typeFilter = "all",
@@ -74,6 +76,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy chi tiết giao dịch theo ID
         /// </summary>
+        [Authorize(Roles = "Staff,Admin")]
         [HttpGet("{transactionId}")]
         public async Task<IActionResult> GetTransactionDetail(string transactionId)
         {

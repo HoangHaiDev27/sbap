@@ -37,7 +37,7 @@ namespace VieBook.BE.Controllers
             return Ok(result.Review);
         }
 
-        [Authorize]
+        [Authorize(Roles = "Owner")]
         [HttpPost("{reviewId:int}/reply")]
         public async Task<IActionResult> OwnerReply(int reviewId, [FromBody] OwnerReplyRequest request)
         {
@@ -60,7 +60,7 @@ namespace VieBook.BE.Controllers
             return Ok(new { canReview = can });
         }
 
-        [Authorize]
+        [Authorize(Roles = "Owner")]
         [HttpGet("owner")]
         public async Task<ActionResult<object>> GetOwnerReviews([FromQuery] byte? rating = null, [FromQuery] bool? hasReply = null, [FromQuery] string? search = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -71,7 +71,7 @@ namespace VieBook.BE.Controllers
             return Ok(new { reviews, totalCount, page, pageSize, totalPages = (int)Math.Ceiling((double)totalCount / pageSize) });
         }
 
-        [Authorize]
+        [Authorize(Roles = "Owner")]
         [HttpGet("owner/stats")]
         public async Task<ActionResult<object>> GetOwnerReviewStats()
         {
