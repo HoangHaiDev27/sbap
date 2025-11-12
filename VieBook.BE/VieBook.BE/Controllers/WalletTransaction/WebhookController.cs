@@ -23,7 +23,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             _payOS = payOS;
             _walletTransactionService = walletTransactionService;
         }
-
+        [Authorize(Roles = "Customer")]
         [HttpPost("payos-webhook")]
         public async Task<IActionResult> PayOSWebhook([FromBody] WebhookType webhookData)
         {
@@ -61,6 +61,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             }
         }
 
+        [Authorize(Roles = "Customer")]
         [HttpGet("transactions/{userId}")]
         public async Task<IActionResult> GetUserTransactions(int userId)
         {
@@ -85,6 +86,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             }));
         }
 
+        [Authorize(Roles = "Customer")]
         [HttpGet("payment-success")]
         public IActionResult PaymentSuccess([FromQuery] int? orderCode, [FromQuery] int? amount)
         {
@@ -92,7 +94,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             var frontendUrl = ApiConfiguration.FrontendUrls.RechargePage("success", amount, orderCode);
             return Redirect(frontendUrl);
         }
-
+        [Authorize(Roles = "Customer")]
         [HttpGet("payment-cancel")]
         public IActionResult PaymentCancel([FromQuery] int? orderCode, [FromQuery] int? amount)
         {
@@ -100,7 +102,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             var frontendUrl = ApiConfiguration.FrontendUrls.RechargePage("cancel", amount, orderCode);
             return Redirect(frontendUrl);
         }
-
+        [Authorize(Roles = "Customer")]
         [HttpGet("handle-payos-redirect")]
         public IActionResult HandlePayOSRedirect([FromQuery] string? status, [FromQuery] int? amount, [FromQuery] int? orderCode)
         {
@@ -108,7 +110,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             var frontendUrl = ApiConfiguration.FrontendUrls.RechargePage(status ?? "", amount, orderCode);
             return Redirect(frontendUrl);
         }
-
+        [Authorize(Roles = "Customer")]
         [HttpGet("verify-payment/{orderCode}")]
         public async Task<IActionResult> VerifyPayment(int orderCode)
         {

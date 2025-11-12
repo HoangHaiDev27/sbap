@@ -1,5 +1,6 @@
 using BusinessObject.Dtos;
 using BusinessObject.PayOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using VieBook.BE.Helpers;
@@ -16,7 +17,7 @@ namespace VieBook.BE.Controllers
         {
             _chapterPurchaseService = chapterPurchaseService;
         }
-
+        [Authorize(Roles = "Customer,Owner")]
         [HttpPost("purchase")]
         public async Task<IActionResult> PurchaseChapters([FromBody] ChapterPurchaseRequestDTO request)
         {
@@ -82,7 +83,7 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new Response(-1, $"Internal server error: {ex.Message}", null));
             }
         }
-
+        [Authorize(Roles = "Customer,Owner")]
         [HttpGet("my-purchases")]
         public async Task<IActionResult> GetMyPurchases()
         {
@@ -104,7 +105,7 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new Response(-1, $"Internal server error: {ex.Message}", null));
             }
         }
-
+        [Authorize(Roles = "Customer,Owner")]
         [HttpGet("my-books")]
         public async Task<IActionResult> GetMyPurchasedBooks()
         {
