@@ -46,7 +46,7 @@ public class AuthController : ControllerBase
             return NotFound(new { message = result });
 
 		// Các trường hợp không được phép tiếp tục Step 2
-		if (result == "Tài khoản Staff không được phép sử dụng chức năng quên mật khẩu"
+		if (result == "Tài khoản không được phép sử dụng chức năng quên mật khẩu"
 			|| result == "Tài khoản chưa được kích hoạt")
 		{
 			return BadRequest(new { message = result });
