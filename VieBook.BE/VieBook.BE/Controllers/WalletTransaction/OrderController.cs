@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BusinessObject.PayOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Net.payOS;
 using Net.payOS.Types;
@@ -18,6 +19,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
         {
             _payOS = payOS;
         }
+        [Authorize(Roles = "Customer")]
         [HttpPost("create")]
         public async Task<IActionResult> CreatePaymentLink(CreatePaymentLinkRequest body)
         {
@@ -40,6 +42,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             }
         }
 
+        [Authorize(Roles = "Customer")]
         [HttpGet("{orderId}")]
         public async Task<IActionResult> GetOrder([FromRoute] int orderId)
         {
@@ -56,6 +59,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             }
 
         }
+        [Authorize(Roles = "Customer")]
         [HttpPut("{orderId}")]
         public async Task<IActionResult> CancelOrder([FromRoute] int orderId)
         {
@@ -72,6 +76,7 @@ namespace VieBook.BE.Controllers.WalletTransaction
             }
 
         }
+        [Authorize(Roles = "Customer")]
         [HttpPost("confirm-webhook")]
         public async Task<IActionResult> ConfirmWebhook(ConfirmWebhook body)
         {
