@@ -162,7 +162,7 @@ namespace VieBook.BE.Controllers
         /// Lấy danh sách orders của owner hiện tại (tự động lấy từ JWT token)
         /// </summary>
         /// <returns>Danh sách orders của owner hiện tại</returns>
-        [Authorize]
+        [Authorize(Roles = "Owner")]
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetMyOrders()
         {
@@ -199,7 +199,7 @@ namespace VieBook.BE.Controllers
         /// Lấy thống kê orders của owner hiện tại (tự động lấy từ JWT token)
         /// </summary>
         /// <returns>Thống kê orders của owner hiện tại</returns>
-        [Authorize]
+        [Authorize(Roles = "Owner")]
         [HttpGet("my-orders/stats")]
         public async Task<IActionResult> GetMyOrderStats()
         {
