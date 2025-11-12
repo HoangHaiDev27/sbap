@@ -1,5 +1,6 @@
 using AutoMapper;
 using BusinessObject.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 
@@ -7,6 +8,7 @@ namespace VieBook.BE.Controllers.Staff
 {
     [Route("api/staff/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin, Staff")]
     public class StaffBooksController : ControllerBase
     {
         private readonly IBookService _bookService;

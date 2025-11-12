@@ -201,8 +201,11 @@ export async function getLatestBookApprovalByBookId(bookId) {
 export async function getAllActiveBooks() {
   return handleFetch(API_ENDPOINTS.BOOKAPPROVAL.GET_ALL_ACTIVE_BOOKS, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
-  }, "Lấy danh sách sách đang Active thất bại");
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
+    },
+  }, "Lấy danh sách sách đang phát hành thất bại");
 }
 // Lấy tất cả sách (cho staff quản lý) - DEPRECATED: Sử dụng getAllBooksPaged thay thế
 export async function getAllBooks() {
@@ -222,7 +225,7 @@ export async function getAllBooksPaged(page = 1, pageSize = 10, searchTerm = nul
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Lấy danh sách sách thất bại");
 }
@@ -234,7 +237,7 @@ export async function getBooksStats(searchTerm = null, statusFilter = null, cate
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Lấy thống kê sách thất bại");
 }
@@ -246,7 +249,7 @@ export async function getBookDetailForStaff(bookId) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Lấy chi tiết sách thất bại");
 }
@@ -271,7 +274,7 @@ export async function getAllBookReviews(page = 1, pageSize = 10, searchTerm = nu
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Lấy danh sách đánh giá sách thất bại");
 }
@@ -288,7 +291,7 @@ export async function getAllUserFeedbacks(page = 1, pageSize = 10, searchTerm = 
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Lấy danh sách feedback thất bại");
 }
@@ -299,7 +302,7 @@ export async function deleteBookReview(reviewId) {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Xóa đánh giá sách thất bại");
 }
@@ -310,7 +313,7 @@ export async function deleteUserFeedback(feedbackId) {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Xóa feedback thất bại");
 }
@@ -329,7 +332,7 @@ export async function getFeedbackStats(searchTerm = null, bookId = null) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
     },
   }, "Lấy thống kê feedback thất bại");
 }

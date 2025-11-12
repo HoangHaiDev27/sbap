@@ -27,7 +27,7 @@ export default function SubscriptionStatus() {
         setHasSubscription(false);
       }
     } catch (error) {
-      console.error("Lỗi khi lấy subscription status:", error);
+      console.error("Lỗi khi lấy trạng thái gói đăng kí:", error);
       setHasSubscription(false);
     } finally {
       setLoading(false);
@@ -37,7 +37,7 @@ export default function SubscriptionStatus() {
   if (loading) {
     return (
       <div className="bg-slate-800 rounded-lg p-4">
-        <div className="text-gray-400 text-sm">Đang tải thông tin subscription...</div>
+        <div className="text-gray-400 text-sm">Đang tải thông tin gói đăng kí...</div>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function SubscriptionStatus() {
           <div>
             <h3 className="text-red-400 font-semibold mb-2">Chưa có gói đăng ký</h3>
             <p className="text-gray-300 text-sm">
-              Bạn cần đăng ký gói subscription để sử dụng tính năng chuyển đổi văn bản thành audio.
+              Bạn cần đăng ký gói để sử dụng tính năng chuyển đổi văn bản thành audio.
             </p>
           </div>
         </div>

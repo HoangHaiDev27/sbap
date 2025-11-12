@@ -3,6 +3,7 @@ using BusinessObject.Dtos;
 using BusinessObject.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Services.Interfaces;
 
 namespace VieBook.BE.Controllers
@@ -22,6 +23,7 @@ namespace VieBook.BE.Controllers
 
         // GET api/chapter/{id}
         [HttpGet("{id:int}")]
+        [Authorize]
         public async Task<ActionResult<ChapterViewDTO>> GetChapterById(int id)
         {
             var chapter = await _chapterService.GetChapterByIdAsync(id);
@@ -62,6 +64,7 @@ namespace VieBook.BE.Controllers
 
         // PUT api/chapter/{id}
         [HttpPut("{id:int}")]
+        [Authorize]
         public async Task<ActionResult> UpdateChapter(int id, [FromBody] ChapterViewDTO chapterDto)
         {
             if (id != chapterDto.ChapterId)
@@ -79,6 +82,7 @@ namespace VieBook.BE.Controllers
 
         // DELETE api/chapter/{id}
         [HttpDelete("{id:int}")]
+        [Authorize]
         public async Task<ActionResult> DeleteChapter(int id)
         {
             var existing = await _chapterService.GetChapterByIdAsync(id);

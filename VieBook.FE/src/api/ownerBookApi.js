@@ -3,12 +3,21 @@ import { getToken } from "./authApi";
 
 // Lấy tất cả sách theo ownerId
 export async function getBooksByOwner(ownerId) {
-  const res = await fetch(API_ENDPOINTS.BOOKS.GET_ALL_BY_OWNER(ownerId));
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
+  const res = await fetch(API_ENDPOINTS.BOOKS.GET_ALL_BY_OWNER(ownerId), {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
   if (res.status === 404) {
     // Không có sách, trả về mảng rỗng
     return [];
   }
-  if (!res.ok) throw new Error("Failed to fetch books");
+  if (!res.ok) throw new Error("Tải sách thất bại");
   const data = await res.json();
   // Backend có thể trả về array trực tiếp hoặc wrapped
   return Array.isArray(data) ? data : (data?.data || []);
@@ -17,25 +26,36 @@ export async function getBooksByOwner(ownerId) {
 // Lấy chi tiết 1 sách
 export async function getBookById(bookId) {
   const res = await fetch(API_ENDPOINTS.BOOKS.GET_BY_ID(bookId));
-  if (!res.ok) throw new Error("Failed to fetch book detail");
+  if (!res.ok) throw new Error("Tải thông tin sách thất bai");
   return res.json();
 }
 
 // Tạo mới sách
 export async function createBook(payload) {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
   const res = await fetch(API_ENDPOINTS.BOOKS.CREATE, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const errorText = await res.text();
-    console.error("❌ Create book failed:", res.status, errorText);
+    console.error(" Tạo sách thất bại:", res.status, errorText);
     
     if (res.status === 409) {
       // BE trả về Conflict ISBN
       throw new Error(errorText || "ISBN đã tồn tại");
+    }
+    if (res.status === 401) {
+      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
     }
     throw new Error(errorText || "Tạo mới sách thất bại");
   }
@@ -85,9 +105,17 @@ export async function createBookWithSignature(payload) {
 
 // Cập nhật sách
 export async function updateBook(bookId, payload) {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
   const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE(bookId), {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify(payload),
   });
 
@@ -100,6 +128,9 @@ export async function updateBook(bookId, payload) {
       errorData = data;
     } catch {
       errorMessage = "Cập nhật sách thất bại";
+    }
+    if (res.status === 401) {
+      errorMessage = "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại";
     }
     const error = new Error(errorMessage);
     error.status = res.status;
@@ -236,8 +267,22 @@ export async function removeOldBookImage(imageUrl) {
 //////Chaper///////////////////
 // Lấy chi tiết 1 chapter
 export async function getChapterById(chapterId) {
-  const res = await fetch(API_ENDPOINTS.CHAPTERS.GET_BY_ID(chapterId));
-  if (!res.ok) throw new Error("Failed to fetch chapter detail");
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
+  const res = await fetch(API_ENDPOINTS.CHAPTERS.GET_BY_ID(chapterId), {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+    }
+    throw new Error("Failed to fetch chapter detail");
+  }
   return res.json();
 }
 
@@ -269,15 +314,26 @@ export async function createChapter(payload) {
 
 // Cập nhật chapter
 export async function updateChapter(chapterId, payload) {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
   const res = await fetch(API_ENDPOINTS.CHAPTERS.UPDATE(chapterId), {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     if (res.status === 404) {
       throw new Error("Chapter not found");
+    }
+    if (res.status === 401) {
+      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
     }
     throw new Error("Cập nhật chương thất bại");
   }
@@ -287,13 +343,24 @@ export async function updateChapter(chapterId, payload) {
 
 // Xóa chapter
 export async function deleteChapter(chapterId) {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
   const res = await fetch(API_ENDPOINTS.CHAPTERS.DELETE(chapterId), {
     method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
   });
 
   if (!res.ok) {
     if (res.status === 404) {
       throw new Error("Chapter not found");
+    }
+    if (res.status === 401) {
+      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
     }
     throw new Error("Failed to delete chapter");
   }
@@ -446,14 +513,25 @@ export async function checkBookHasActiveChapter(bookId) {
 
 // Cập nhật book status
 export async function updateBookStatus(bookId, status) {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
   const res = await fetch(API_ENDPOINTS.BOOKS.UPDATE_STATUS(bookId), {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify({ status }),
   });
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+    }
     throw new Error(errorData.message || "Failed to update book status");
   }
 
