@@ -1,4 +1,5 @@
 using BusinessObject.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using System;
@@ -9,6 +10,7 @@ namespace VieBook.BE.Controllers.Staff
 {
     [ApiController]
     [Route("api/staff/[controller]")]
+    [Authorize(Roles = "Staff")]
     public class FeedbackManagementController : ControllerBase
     {
         private readonly IUserFeedbackService _userFeedbackService;

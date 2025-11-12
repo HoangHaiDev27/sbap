@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BusinessObject.Dtos;
 using BusinessObject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces.Staff;
 
@@ -79,6 +80,7 @@ namespace VieBook.BE.Controllers.Staff
 
         // Lấy tất cả sách có Status = "Active"
         [HttpGet("active-books")]
+        [Authorize(Roles = "Staff")]
         public async Task<ActionResult<List<BookDTO>>> GetAllActiveBooks()
         {
             var activeBooks = await _service.GetAllActiveAsync();

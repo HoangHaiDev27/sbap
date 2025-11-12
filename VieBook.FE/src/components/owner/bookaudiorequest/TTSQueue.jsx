@@ -6,7 +6,7 @@ export default function TTSQueue({ queue, loading = false }) {
   return (
     <div className="bg-slate-800 rounded-xl p-5 shadow-lg">
       <h2 className="font-semibold mb-4 text-lg text-white flex items-center gap-2">
-        🎧 Hàng đợi TTS
+        🎧 Hàng đợi chuyển đổi
         {loading && (
           <RiLoader4Line className="animate-spin text-orange-400 text-lg ml-1" />
         )}
@@ -21,7 +21,7 @@ export default function TTSQueue({ queue, loading = false }) {
 
       {!loading && isEmpty && (
         <div className="text-gray-400 italic text-sm py-4 text-center">
-          Chưa có yêu cầu TTS nào.
+          Chưa có yêu cầu chuyển đổi nào.
         </div>
       )}
 

@@ -81,6 +81,7 @@ namespace VieBook.BE.Controllers
         }
         // add
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult> PostBook(BookDTO dto)
         {
             if (!string.IsNullOrWhiteSpace(dto.Isbn))
@@ -197,6 +198,7 @@ namespace VieBook.BE.Controllers
 
         // update
         [HttpPut("{id:int}")]
+        [Authorize]
         public async Task<IActionResult> PutBook(int id, UpdateBookDTO dto)
         {
             try
@@ -300,6 +302,7 @@ namespace VieBook.BE.Controllers
 
         // GET: api/books/owner/{ownerId}
         [HttpGet("owner/{ownerId:int}")]
+        [Authorize(Roles = "Owner")]
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooksByOwner(int ownerId)
         {
             var books = await _bookService.GetBooksByOwnerId(ownerId);
@@ -348,6 +351,7 @@ namespace VieBook.BE.Controllers
 
         // PATCH: api/books/{bookId}/status
         [HttpPatch("{bookId:int}/status")]
+        [Authorize]
         public async Task<IActionResult> UpdateBookStatus(int bookId, [FromBody] UpdateBookStatusDTO dto)
         {
             try

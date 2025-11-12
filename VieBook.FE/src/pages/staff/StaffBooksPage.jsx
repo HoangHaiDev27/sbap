@@ -217,7 +217,7 @@ const StaffBooksPage = () => {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
                 },
                 body: JSON.stringify({ status: newStatus }),
             });
@@ -274,7 +274,7 @@ const StaffBooksPage = () => {
     return (
         <div className="pt-30 p-6 bg-gray-50 text-gray-900 min-h-screen">
             <div className="mb-6">
-                <h2 className="text-3xl font-bold text-dark-700">Quản lý sách</h2>
+                <h2 className="text-2xl font-bold text-dark-700">Quản lý sách</h2>
                 <p className="text-sm text-gray-500">Trang dành cho nhân viên quản lý kho sách</p>
             </div>
 
