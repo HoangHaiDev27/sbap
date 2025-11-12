@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BusinessObject.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
@@ -38,8 +39,9 @@ namespace VieBook.BE.Controllers.Admin
         }
 
         // Cập nhật hồ sơ + avatar
-       [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateProfile(int id,[FromForm] AdminProfileDTO dto, IFormFile? avatarFile)
+        [Authorize(Roles = "Admin")]
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> UpdateProfile(int id, [FromForm] AdminProfileDTO dto, IFormFile? avatarFile)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -59,7 +61,7 @@ namespace VieBook.BE.Controllers.Admin
 
                 var updatedUser = await _service.UpdateProfileAsync(id, dto);
                 var result = _mapper.Map<AdminProfileDTO>(updatedUser);
-                
+
                 return Ok(new { message = "Cập nhật thành công.", data = result });
             }
             catch (Exception ex)
@@ -67,6 +69,7 @@ namespace VieBook.BE.Controllers.Admin
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [Authorize(Roles = "Admin")]
         [HttpGet("statistics")]
         public async Task<IActionResult> GetStatistics([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
         {
