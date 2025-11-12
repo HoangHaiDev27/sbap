@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
-using VieBook.BE.Attributes;
-using VieBook.BE.Constants;
 using BusinessObject.Dtos;
 using BusinessObject.PayOs;
 
@@ -58,7 +56,7 @@ namespace VieBook.BE.Controllers
                 {
                     userId = user.UserId,
                     email = user.Email,
-                    roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>(),
+                    roles = user.Roles?.Select(r => CapitalizeRole(r.RoleName)).ToList() ?? new List<string>(),
                     wallet = user.Wallet,
                     createdAt = user.CreatedAt,
                     profile = profile == null ? null : new
@@ -158,7 +156,7 @@ namespace VieBook.BE.Controllers
                         agreeTos = user.UserProfile.AgreeTos,
                         address = user.UserProfile.Address
                     } : null,
-                    roles = user.Roles.Select(r => r.RoleName).ToList()
+                    roles = user.Roles.Select(r => CapitalizeRole(r.RoleName)).ToList()
                 });
             }
             catch (Exception ex)
@@ -336,7 +334,7 @@ namespace VieBook.BE.Controllers
 
                 // Reload user to get updated roles
                 var refreshed = await _userService.GetByIdWithProfileAndRolesAsync(userId);
-                var roleNames = refreshed?.Roles.Select(r => r.RoleName).ToList() ?? new List<string>();
+                var roleNames = refreshed?.Roles.Select(r => CapitalizeRole(r.RoleName)).ToList() ?? new List<string>();
 
                 return Ok(new { message = "Bạn đã trở thành Book Owner", roles = roleNames });
             }
@@ -365,18 +363,6 @@ namespace VieBook.BE.Controllers
                     return Unauthorized(new { message = "Token không hợp lệ" });
                 }
 
-                var userRoles = User.Claims
-                    .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
-                    .Select(c => c.Value)
-                    .ToList();
-                var isOwner = userRoles.Any(r => r.Equals("Owner", StringComparison.OrdinalIgnoreCase));
-
-                string? phoneNumberToUpdate = null;
-                if (!isOwner)
-                {
-                    phoneNumberToUpdate = dto.PhoneNumber;
-                }
-
                 DateOnly? dob = null;
                 if (dto.DateOfBirth.HasValue)
                 {
@@ -386,7 +372,7 @@ namespace VieBook.BE.Controllers
                 var profile = await _userService.UpsertUserProfileAsync(
                     userId,
                     dto.FullName,
-                    phoneNumberToUpdate,
+                    dto.PhoneNumber,
                     dob,
                     dto.AvatarUrl,
                     dto.BankNumber,

@@ -21,7 +21,7 @@ namespace VieBook.BE.Controllers
             _mapper = mapper;
         }
 
-        // GET: api/readingschedule/user/{userId}
+        [Authorize(Roles = "Customer")]
         [HttpGet("user/{userId:int}")]
         public async Task<ActionResult<IEnumerable<ReadingScheduleDTO>>> GetReadingSchedulesByUserId(int userId)
         {
@@ -36,7 +36,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        // GET: api/readingschedule/user/{userId}/date/{date}
+        [Authorize(Roles = "Customer")]
         [HttpGet("user/{userId:int}/date/{date:datetime}")]
         public async Task<ActionResult<IEnumerable<ReadingScheduleDTO>>> GetReadingSchedulesByDate(int userId, DateTime date)
         {
@@ -51,7 +51,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        // GET: api/readingschedule/{id}
+        [Authorize(Roles = "Customer")]
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ReadingScheduleDTO>> GetReadingSchedule(int id)
         {
@@ -69,7 +69,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        // POST: api/readingschedule
+        [Authorize(Roles = "Customer")]
         [HttpPost]
         public async Task<ActionResult<ReadingScheduleDTO>> CreateReadingSchedule([FromBody] CreateReadingScheduleDTO createDto)
         {
@@ -99,7 +99,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        // PUT: api/readingschedule/{id}
+        [Authorize(Roles = "Customer")]
         [HttpPut("{id:int}")]
         public async Task<ActionResult<ReadingScheduleDTO>> UpdateReadingSchedule(int id, [FromBody] UpdateReadingScheduleDTO updateDto)
         {
@@ -117,7 +117,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        // DELETE: api/readingschedule/{id}
+        [Authorize(Roles = "Customer")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteReadingSchedule(int id)
         {
@@ -150,7 +150,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        // POST: api/readingschedule/{id}/complete
+        [Authorize(Roles = "Customer")]
         [HttpPost("{id:int}/complete")]
         public async Task<IActionResult> MarkScheduleCompleted(int id)
         {
@@ -168,7 +168,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        // GET: api/readingschedule/user/{userId}/stats
+        [Authorize(Roles = "Customer")]
         [HttpGet("user/{userId:int}/stats")]
         public async Task<ActionResult<ReadingScheduleStatsDTO>> GetReadingScheduleStats(int userId)
         {

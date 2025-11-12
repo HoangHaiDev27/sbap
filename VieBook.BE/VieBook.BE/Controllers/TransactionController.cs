@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using System.Security.Claims;
-using VieBook.BE.Attributes;
-using VieBook.BE.Constants;
 
 namespace VieBook.BE.Controllers
 {
@@ -28,7 +26,6 @@ namespace VieBook.BE.Controllers
         /// Lấy danh sách giao dịch với bộ lọc và phân trang
         /// </summary>
         [HttpGet]
-        [RequirePermission(Permissions.ViewTransactions)]
         public async Task<IActionResult> GetTransactions(
             [FromQuery] string? searchTerm = null,
             [FromQuery] string? typeFilter = "all",
@@ -55,7 +52,6 @@ namespace VieBook.BE.Controllers
         /// Lấy thống kê giao dịch
         /// </summary>
         [HttpGet("stats")]
-        [RequirePermission(Permissions.ViewTransactions)]
         public async Task<IActionResult> GetTransactionStats(
             [FromQuery] string? typeFilter = "all",
             [FromQuery] string? statusFilter = "all",
@@ -79,7 +75,6 @@ namespace VieBook.BE.Controllers
         /// Lấy chi tiết giao dịch theo ID
         /// </summary>
         [HttpGet("{transactionId}")]
-        [RequirePermission(Permissions.ViewTransactions)]
         public async Task<IActionResult> GetTransactionDetail(string transactionId)
         {
             try
@@ -102,7 +97,6 @@ namespace VieBook.BE.Controllers
         /// Cập nhật trạng thái giao dịch (chỉ dành cho staff/admin)
         /// </summary>
         [HttpPut("{transactionId}/status")]
-        [RequirePermission(Permissions.ManageTransactions)]
         public async Task<IActionResult> UpdateTransactionStatus(
             string transactionId, 
             [FromBody] UpdateTransactionStatusRequest request)
@@ -144,9 +138,7 @@ namespace VieBook.BE.Controllers
                     userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
                     email = User.FindFirst(ClaimTypes.Email)?.Value,
                     roles = userRoles,
-                    permissions = userPermissions,
-                    hasViewTransactions = userPermissions.Contains(Permissions.ViewTransactions),
-                    hasManageTransactions = userPermissions.Contains(Permissions.ManageTransactions)
+                    permissions = userPermissions
                 });
             }
             catch (Exception ex)
