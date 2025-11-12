@@ -1,4 +1,5 @@
 using BusinessObject.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using System;
@@ -22,6 +23,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy số sách đã đọc của user
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpGet("user/{userId}/books-read")]
         public async Task<ActionResult<int>> GetBooksReadCount(int userId)
         {
@@ -40,6 +42,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy số sách đã mua của user
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpGet("user/{userId}/books-purchased")]
         public async Task<ActionResult<int>> GetBooksPurchasedCount(int userId)
         {
@@ -58,6 +61,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy số sách yêu thích của user
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpGet("user/{userId}/favorites")]
         public async Task<ActionResult<int>> GetFavoritesCount(int userId)
         {
@@ -76,6 +80,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy số sách đã nghe của user
         /// </summary>
+        [Authorize(Roles = "Customer")]
         [HttpGet("user/{userId}/books-listened")]
         public async Task<ActionResult<int>> GetBooksListenedCount(int userId)
         {

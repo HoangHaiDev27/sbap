@@ -1,4 +1,5 @@
 using BusinessObject.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using System.Security.Claims;
@@ -19,6 +20,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy thống kê tổng quan của owner
         /// </summary>
+        [Authorize(Roles = "Owner")]
         [HttpGet("stats")]
         public async Task<IActionResult> GetOwnerStats()
         {
@@ -42,6 +44,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy doanh thu theo thể loại
         /// </summary>
+        [Authorize(Roles = "Owner")]
         [HttpGet("revenue-by-category")]
         public async Task<IActionResult> GetRevenueByCategory()
         {
@@ -65,6 +68,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy dữ liệu bán hàng theo tháng
         /// </summary>
+        [Authorize(Roles = "Owner")]
         [HttpGet("monthly-sales")]
         public async Task<IActionResult> GetMonthlySales([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
@@ -88,6 +92,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy đơn hàng gần nhất
         /// </summary>
+        [Authorize(Roles = "Owner")]
         [HttpGet("recent-orders")]
         public async Task<IActionResult> GetRecentOrders([FromQuery] int limit = 10)
         {
@@ -111,6 +116,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy top sách bán chạy
         /// </summary>
+        [Authorize(Roles = "Owner")]
         [HttpGet("best-sellers")]
         public async Task<IActionResult> GetBestSellers([FromQuery] int limit = 5)
         {
@@ -134,6 +140,7 @@ namespace VieBook.BE.Controllers
         /// <summary>
         /// Lấy toàn bộ dữ liệu dashboard
         /// </summary>
+        [Authorize(Roles = "Owner")]
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetOwnerDashboard()
         {
