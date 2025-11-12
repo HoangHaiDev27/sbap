@@ -20,7 +20,7 @@ namespace VieBook.BE.Controllers
         private readonly IWalletTransactionService _walletTransactionService;
         private readonly INotificationService _notificationService;
         private readonly ISubscriptionService _subscriptionService;
-
+        
         public UsersController(IUserService userService, IMapper mapper, IWalletTransactionService walletTransactionService, INotificationService notificationService, ISubscriptionService subscriptionService)
         {
             _userService = userService;
@@ -30,9 +30,9 @@ namespace VieBook.BE.Controllers
             _subscriptionService = subscriptionService;
         }
 
-        [Authorize(Roles = "Owner")]
+        [Authorize]
         [HttpGet("me1")]
-        public async Task<IActionResult> GetMe1()
+        public async Task<IActionResult> GetMe()
         {
             try
             {
@@ -56,7 +56,7 @@ namespace VieBook.BE.Controllers
                 {
                     userId = user.UserId,
                     email = user.Email,
-                    roles = user.Roles?.Select(r => CapitalizeRole(r.RoleName)).ToList() ?? new List<string>(),
+                    roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>(),
                     wallet = user.Wallet,
                     createdAt = user.CreatedAt,
                     profile = profile == null ? null : new
@@ -156,7 +156,7 @@ namespace VieBook.BE.Controllers
                         agreeTos = user.UserProfile.AgreeTos,
                         address = user.UserProfile.Address
                     } : null,
-                    roles = user.Roles.Select(r => CapitalizeRole(r.RoleName)).ToList()
+                    roles = user.Roles.Select(r => r.RoleName).ToList()
                 });
             }
             catch (Exception ex)
@@ -187,9 +187,8 @@ namespace VieBook.BE.Controllers
                 var subscription = await _userService.GetUserActiveSubscriptionAsync(userId);
                 if (subscription == null)
                 {
-                    return Ok(new
-                    {
-                        message = "User không có subscription active",
+                    return Ok(new { 
+                        message = "User không có subscription active", 
                         subscription = (object?)null,
                         memberType = "Thành viên bình thường"
                     });
@@ -335,7 +334,7 @@ namespace VieBook.BE.Controllers
 
                 // Reload user to get updated roles
                 var refreshed = await _userService.GetByIdWithProfileAndRolesAsync(userId);
-                var roleNames = refreshed?.Roles.Select(r => CapitalizeRole(r.RoleName)).ToList() ?? new List<string>();
+                var roleNames = refreshed?.Roles.Select(r => r.RoleName).ToList() ?? new List<string>();
 
                 return Ok(new { message = "Bạn đã trở thành Book Owner", roles = roleNames });
             }
@@ -466,16 +465,16 @@ namespace VieBook.BE.Controllers
                     // 1. Gói hiện tại đã hết hạn (EndAt <= now), HOẶC
                     // 2. Gói hiện tại đã hết lượt chuyển đổi (RemainingConversions <= 0)
                     bool canPurchase = now >= activeSubscription.EndAt || activeSubscription.RemainingConversions <= 0;
-
+                    
                     if (!canPurchase)
                     {
                         var daysRemaining = (activeSubscription.EndAt - now).Days;
                         var remainingConversions = activeSubscription.RemainingConversions;
-                        return BadRequest(new
-                        {
+                        return BadRequest(new 
+                        { 
                             message = $"Bạn đang có gói '{activeSubscription.Plan?.Name}' còn hiệu lực. " +
                                       $"Gói còn {daysRemaining} ngày và {remainingConversions} lượt chuyển đổi. " +
-                                      $"Chỉ có thể mua gói mới khi gói hiện tại hết hạn hoặc hết lượt chuyển đổi."
+                                      $"Chỉ có thể mua gói mới khi gói hiện tại hết hạn hoặc hết lượt chuyển đổi." 
                         });
                     }
                 }
@@ -484,9 +483,9 @@ namespace VieBook.BE.Controllers
                 DateTime startAt = DateTime.UtcNow;
                 DateTime endAt = plan.Period.ToLower() switch
                 {
-                    "weekly" => startAt.AddDays(7),
+                    "weekly"  => startAt.AddDays(7),
                     "monthly" => startAt.AddMonths(1),
-                    "yearly" => startAt.AddYears(1),
+                    "yearly"  => startAt.AddYears(1),
                     _ => startAt.AddMonths(1)
                 };
 
