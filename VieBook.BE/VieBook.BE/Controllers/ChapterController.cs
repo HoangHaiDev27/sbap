@@ -23,7 +23,6 @@ namespace VieBook.BE.Controllers
 
         // GET api/chapter/{id}
         [HttpGet("{id:int}")]
-        [Authorize]
         public async Task<ActionResult<ChapterViewDTO>> GetChapterById(int id)
         {
             var chapter = await _chapterService.GetChapterByIdAsync(id);
