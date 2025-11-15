@@ -26,7 +26,7 @@ namespace VieBook.BE.Controllers
         /// <param name="timeFilter">Bộ lọc theo thời gian (all, today, week, month, year)</param>
         /// <param name="sortBy">Sắp xếp theo (recent, oldest, name, price_high, price_low)</param>
         /// <returns>Danh sách sách đã mua</returns>
-        [Authorize(Roles = "Customer")]
+        [Authorize]
         [HttpGet("purchased-books/{userId}")]
         public async Task<IActionResult> GetPurchasedBooks(
             int userId,
@@ -60,7 +60,7 @@ namespace VieBook.BE.Controllers
         /// </summary>
         /// <param name="orderItemId">ID của order item</param>
         /// <returns>Chi tiết order item</returns>
-        [Authorize(Roles = "Customer")]
+        [Authorize]
         [HttpGet("{orderItemId}")]
         public async Task<IActionResult> GetOrderItem(long orderItemId)
         {
@@ -99,7 +99,7 @@ namespace VieBook.BE.Controllers
         /// <param name="userId">ID của user</param>
         /// <param name="bookId">ID của sách</param>
         /// <returns>Danh sách chapter đã mua</returns>
-        [Authorize(Roles = "Customer")]
+        [Authorize]
         [HttpGet("purchased-chapters/{userId}/{bookId}")]
         public async Task<IActionResult> GetPurchasedChapters(int userId, int bookId)
         {
