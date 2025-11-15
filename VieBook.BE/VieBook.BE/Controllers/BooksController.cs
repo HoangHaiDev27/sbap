@@ -301,7 +301,6 @@ namespace VieBook.BE.Controllers
 
         // GET: api/books/owner/{ownerId}
         [HttpGet("owner/{ownerId:int}")]
-        [Authorize(Roles = "Owner")]
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooksByOwner(int ownerId)
         {
             var books = await _bookService.GetBooksByOwnerId(ownerId);

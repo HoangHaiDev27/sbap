@@ -21,7 +21,6 @@ namespace VieBook.BE.Controllers
             _bookClaimService = bookClaimService;
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet]
         public async Task<IActionResult> GetPosts([FromQuery] string? postType, [FromQuery] string? searchQuery, [FromQuery] string? filter, [FromQuery] string? tag, [FromQuery] int? authorId, [FromQuery] string? subFilter)
         {
@@ -60,7 +59,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(long id)
         {
@@ -70,7 +68,6 @@ namespace VieBook.BE.Controllers
             return Ok(post);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreatePostDTO createDto)
         {
@@ -94,7 +91,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(long id, [FromBody] CreatePostDTO updateDto)
         {
@@ -117,7 +113,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpPut("{id}/visibility")]
         public async Task<IActionResult> UpdateVisibility(long id, [FromBody] UpdateVisibilityDTO updateDto)
         {
@@ -147,7 +142,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
@@ -168,7 +162,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("offers/active")]
         public async Task<IActionResult> GetActiveOffers()
         {
@@ -176,7 +169,6 @@ namespace VieBook.BE.Controllers
             return Ok(offers);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("offers/owner/{ownerId}")]
         public async Task<IActionResult> GetOffersByOwnerId(int ownerId)
         {
@@ -188,7 +180,6 @@ namespace VieBook.BE.Controllers
             return Ok(offers);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("offers/{offerId}")]
         public async Task<IActionResult> GetOfferById(long offerId)
         {
@@ -198,7 +189,6 @@ namespace VieBook.BE.Controllers
             return Ok(offer);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("{postId}/offer")]
         public async Task<IActionResult> GetOfferByPostId(long postId)
         {
@@ -208,7 +198,6 @@ namespace VieBook.BE.Controllers
             return Ok(offer);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpPut("offers/{id}")]
         public async Task<IActionResult> UpdateOffer(long id, [FromBody] UpdateBookOfferDTO updateDto)
         {
@@ -231,7 +220,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpDelete("offers/{id}")]
         public async Task<IActionResult> DeleteOffer(long id)
         {
@@ -256,7 +244,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("offers/{offerId}/claims")]
         public async Task<IActionResult> GetClaimsByOfferId(long offerId)
         {
@@ -264,7 +251,6 @@ namespace VieBook.BE.Controllers
             return Ok(claims);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("offers/{offerId}/has-claimed")]
         public async Task<IActionResult> HasUserClaimed(long offerId)
         {
@@ -283,7 +269,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("claims/{claimId}")]
         public async Task<IActionResult> GetClaimById(long claimId)
         {
@@ -293,7 +278,6 @@ namespace VieBook.BE.Controllers
             return Ok(claim);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("claims/my")]
         public async Task<IActionResult> GetMyClaims()
         {
@@ -305,7 +289,6 @@ namespace VieBook.BE.Controllers
             return Ok(claims);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpGet("claims/status/{status}")]
         public async Task<IActionResult> GetClaimsByStatus(string status)
         {
@@ -313,7 +296,6 @@ namespace VieBook.BE.Controllers
             return Ok(claims);
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpPost("claim")]
         public async Task<IActionResult> CreateClaim([FromBody] CreateBookClaimDTO createDto)
         {
@@ -332,7 +314,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpPut("claim/{id}")]
         public async Task<IActionResult> UpdateClaim(long id, [FromBody] UpdateBookClaimDTO updateDto)
         {
@@ -355,7 +336,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpPost("claim/{id}/approve")]
         public async Task<IActionResult> ApproveClaim(long id)
         {
@@ -376,7 +356,6 @@ namespace VieBook.BE.Controllers
             }
         }
 
-        [Authorize(Roles = "Customer")]
         [HttpDelete("claim/{id}")]
         public async Task<IActionResult> DeleteClaim(long id)
         {
