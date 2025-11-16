@@ -17,7 +17,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
   const menuItems = [
     { id: "dashboard", label: "Thống kê", icon: "ri-dashboard-line", href: "/admin" },
-    { id: "staff", label: "Quản lý Staff", icon: "ri-admin-line", href: "/admin/staff" },
+    { id: "staff", label: "Quản lý Nhân viên", icon: "ri-admin-line", href: "/admin/staff" },
   ];
 
   return (
@@ -77,7 +77,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
                 className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
               >
                 <RiUserLine className="w-4 h-4" />
-                <span>Chuyển sang Staff</span>
+                <span>Chuyển sang Nhân viên</span>
               </button>
             </div>
           </div>
