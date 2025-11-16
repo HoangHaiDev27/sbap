@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from "../config/apiConfig";
-import { authFetch } from "./authApi";
+import { getToken, authFetch } from "./authApi";
 
 export async function checkSpelling(content) {
   const res = await authFetch(API_ENDPOINTS.OPENAI.CHECK_SPELLING, {

@@ -24,7 +24,16 @@ export async function getBookmarkByChapter(chapterId) {
     throw new Error(`Get bookmark failed: ${res.status}`);
   }
 
-  return res.json();
+  // Some backends may return 204 No Content or empty body when no bookmark exists
+  if (res.status === 204) return null;
+  const text = await res.text();
+  if (!text || !text.trim()) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    // If body isn't valid JSON, treat as no bookmark
+    return null;
+  }
 }
 
 export async function createOrUpdateBookmark(bookmarkData) {

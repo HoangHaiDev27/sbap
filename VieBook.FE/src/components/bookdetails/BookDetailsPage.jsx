@@ -14,7 +14,7 @@ import OverviewTab from "./OverviewTab";
 import DetailsTab from "./DetailsTab";
 import ReviewsTab from "./ReviewsTab";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
-import { getBookChapterAudios, incrementChapterView } from "../../api/ownerBookApi";
+import { getBookChapterAudios, incrementChapterView, getChapterAudioPrices } from "../../api/ownerBookApi";
 import toast from "react-hot-toast";
 import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
 import {
@@ -49,6 +49,7 @@ export default function BookDetailPage() {
   const [purchasedAudioChapters, setPurchasedAudioChapters] = useState([]); // Lưu danh sách chương đã mua (audio)
   const [chapterOwnership, setChapterOwnership] = useState({}); // Lưu trạng thái sở hữu chương
   const [chaptersWithAudio, setChaptersWithAudio] = useState([]); // Lưu danh sách chapter có audio từ ChapterAudio table
+  const [audioPrices, setAudioPrices] = useState({}); // Map chapterId -> audio price
 
   // fetch dữ liệu sách và wishlist
   useEffect(() => {
@@ -66,6 +67,18 @@ export default function BookDetailPage() {
           setChaptersWithAudio(audioChapters);
         } catch (error) {
           setChaptersWithAudio([]);
+        }
+
+        // Load audio prices for chapters to display in Read Now modal
+        try {
+          const prices = await getChapterAudioPrices(id);
+          if (prices && typeof prices === 'object') {
+            setAudioPrices(prices);
+          } else {
+            setAudioPrices({});
+          }
+        } catch (error) {
+          setAudioPrices({});
         }
 
         // Load wishlist state if logged in
@@ -196,6 +209,7 @@ export default function BookDetailPage() {
   const hasAudio = chaptersWithAudio.length > 0;
   const currentUserId = getUserId();
   const isOwner = currentUserId && ownerId && currentUserId === ownerId;
+  const audioChapterIdSet = new Set((chaptersWithAudio || []).map(a => Number(a.chapterId)));
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -659,7 +673,7 @@ export default function BookDetailPage() {
                                 />
                               </svg>
                             )}
-                            {isLoggedIn && !isOwned && !isFree && (
+                            {isLoggedIn && !isOwner && !isOwned && !isFree && (
                               <svg
                                 className="w-5 h-5 text-orange-500 flex-shrink-0"
                                 fill="currentColor"
@@ -744,14 +758,7 @@ export default function BookDetailPage() {
                                 <RiCoinLine className="w-4 h-4 text-yellow-400" />
                               </div>
                               
-                              {/* Giá audio (nếu có) */}
-                              {chapter.priceAudio != null && chapter.priceAudio > 0 && (
-                                <div className="text-green-500 font-bold text-sm sm:text-base flex items-center gap-1">
-                                  <RiPlayCircleLine className="w-4 h-4" />
-                                  {chapter.priceAudio?.toLocaleString()}
-                                  <RiCoinLine className="w-3 h-3 text-yellow-400" />
-                                </div>
-                              )}
+                              {/* Ẩn thông tin audio theo yêu cầu */}
                             </>
                           )}
                         </div>

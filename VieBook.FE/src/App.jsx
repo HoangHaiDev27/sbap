@@ -93,6 +93,25 @@ function App() {
       <>
         <AppRoutes />
         <Toast />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: "#1f2937",
+              color: "#fff",
+              border: "1px solid #374151",
+            },
+            success: {
+              style: { background: "#059669", color: "#fff" },
+              iconTheme: { primary: "#fff", secondary: "#059669" },
+            },
+            error: {
+              style: { background: "#dc2626", color: "#fff" },
+              iconTheme: { primary: "#fff", secondary: "#dc2626" },
+            },
+          }}
+        />
       </>
     );
   }
