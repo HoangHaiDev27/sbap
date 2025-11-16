@@ -150,7 +150,7 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
         <div className="p-6">
           {/* Header */}
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Quản lý Staff</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Quản lý Nhân viên</h2>
             <p className="text-gray-700">Quản lý tài khoản nhân viên và phân quyền</p>
           </div>
 
@@ -171,7 +171,7 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
                   <option value="inactive">Bị khóa</option>
                 </select>
               </div>
-              <button onClick={handleOpenAdd} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">+ Thêm Staff</button>
+              <button onClick={handleOpenAdd} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">+ Thêm Nhân Viên</button>
             </div>
 
             {loading ? (
@@ -213,14 +213,23 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.address || '-'}</td>
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.createdAt?.split('T')[0]}</td>
                         <td className="px-6 py-3 text-sm text-gray-500">{staff.lastLoginAt ? staff.lastLoginAt.split('T')[0] : '-'}</td>
-                        <td className="px-6 py-3 flex space-x-2">
-                          <button onClick={() => handleOpenEdit(staff)} className="p-2 text-blue-600 hover:bg-blue-50 rounded" title="Sửa">
-                            <i className="ri-edit-line" />
-                          </button>
-                          <button onClick={() => setToggleStaff(staff)} className="p-2 text-green-600 hover:bg-green-50 rounded">
-                            <i className={staff.status === 'Active' ? 'ri-lock-line' : 'ri-lock-unlock-line'} />
-                          </button>
-                        </td>
+                       <td className="px-6 py-3 flex space-x-2">
+                      <button
+                        onClick={() => handleOpenEdit(staff)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        title="Sửa nhân viên"
+                      >
+                        <i className="ri-edit-line" />
+                      </button>
+
+                      <button
+                        onClick={() => setToggleStaff(staff)}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded"
+                        title={staff.status === "Active" ? "Khoá tài khoản" : "Mở khoá tài khoản"}
+                      >
+                        <i className={staff.status === 'Active' ? 'ri-lock-line' : 'ri-lock-unlock-line'} />
+                      </button>
+                    </td>
                       </tr>
                     )) : (
                       <tr>
