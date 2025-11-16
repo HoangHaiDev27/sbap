@@ -104,7 +104,7 @@ export default function StaffFormModal({ staff, onSave, onCancel }) {
         {/* Header cố định */}
         <div className="p-6 border-b sticky top-0 bg-white rounded-t-2xl z-10">
           <h3 className="text-xl font-semibold text-gray-900">
-            {isEdit ? 'Cập nhật Staff' : 'Thêm Staff mới'}
+            {isEdit ? 'Cập nhật nhân viên' : 'Thêm nhân viên mới'}
           </h3>
         </div>
 
