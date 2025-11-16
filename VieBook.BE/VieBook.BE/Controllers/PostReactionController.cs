@@ -17,6 +17,7 @@ namespace VieBook.BE.Controllers
             _postReactionService = postReactionService;
         }
 
+        [Authorize(Roles = "Customer")]
         [HttpGet]
         public async Task<IActionResult> GetReactions(long postId)
         {
@@ -31,6 +32,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
+        [Authorize(Roles = "Customer")]
         [HttpGet("count")]
         public async Task<IActionResult> GetReactionCount(long postId)
         {
@@ -45,6 +47,7 @@ namespace VieBook.BE.Controllers
             }
         }
     
+        [Authorize(Roles = "Customer")]
         [HttpGet("user")]
         public async Task<IActionResult> GetUserReaction(long postId)
         {
@@ -63,6 +66,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
+        [Authorize(Roles = "Customer")]
         [HttpPost]
         public async Task<IActionResult> ToggleReaction(long postId, [FromBody] CreatePostReactionDTO createDto)
         {
@@ -86,6 +90,7 @@ namespace VieBook.BE.Controllers
             }
         }
 
+        [Authorize(Roles = "Customer")]
         [HttpDelete]
         public async Task<IActionResult> DeleteReaction(long postId)
         {
