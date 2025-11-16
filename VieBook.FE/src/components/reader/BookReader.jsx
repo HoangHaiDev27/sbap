@@ -31,6 +31,23 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   const [hasSavedReadingHistory, setHasSavedReadingHistory] = useState(false);
   const saveHistoryTimeoutRef = useRef(null);
   const [purchasedChapters, setPurchasedChapters] = useState([]); // Lưu danh sách chương đã mua
+  const [pendingCharOffset, setPendingCharOffset] = useState(null);
+  const contentRef = useRef(null);
+  const textRef = useRef(null);
+  const autoSaveTimerRef = useRef(null);
+  const lastSavedPosRef = useRef(null);
+  const isSavingRef = useRef(false);
+  const offsetHintTimerRef = useRef(null);
+  const [offsetHint, setOffsetHint] = useState(null);
+
+  const dedupeBookmarks = (items) => {
+    const map = new Map();
+    for (const b of items) {
+      const key = `${b.bookId}-${b.chapterReadId || b.chapterListenId || 'x'}`;
+      map.set(key, b); // keep last one
+    }
+    return Array.from(map.values());
+  };
 
   // Tìm chương hiện tại
   const currentChapter = book?.chapters?.find(ch => ch.chapterId === parseInt(chapterId));
@@ -96,9 +113,18 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
             try {
               const savedBookmark = await getBookmarkByChapter(parseInt(chapterId));
               if (savedBookmark && savedBookmark.pagePosition > 0) {
-                // window-level scroll
-                window.scrollTo({ top: savedBookmark.pagePosition, behavior: 'auto' });
-                console.log("BookReader - Scrolled to saved position:", savedBookmark.pagePosition);
+                let restored = false;
+                if (textRef.current) {
+                  const r = createRangeAtAbsoluteOffset(textRef.current, savedBookmark.pagePosition);
+                  if (r) {
+                    const rect = r.getBoundingClientRect();
+                    window.scrollTo({ top: window.scrollY + rect.top - 120, behavior: 'auto' });
+                    restored = true;
+                  }
+                }
+                if (!restored) {
+                  window.scrollTo({ top: savedBookmark.pagePosition, behavior: 'auto' });
+                }
                   
                   // Update local bookmarks state with the loaded bookmark (chỉ của cuốn sách hiện tại)
                   const existingBookmark = bookmarks.find(b => 
@@ -131,53 +157,127 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
     }
 
     fetchChapterContent();
-  }, [currentChapter?.chapterSoftUrl, chapterId, bookmarks]);
+  }, [currentChapter?.chapterSoftUrl, chapterId]);
 
   // Auto-update bookmark when user scrolls (page scroll)
   useEffect(() => {
-    const handleScroll = async () => {
+    const handleScroll = () => {
       const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-      const scrollDifference = Math.abs(scrollPosition - lastScrollPosition);
-      
-      // Only update if scroll difference is significant (more than 100px)
-      if (scrollDifference > 100) {
-        setLastScrollPosition(scrollPosition);
-        
-        // Update existing bookmark for this chapter (only if bookmark exists và thuộc cuốn sách hiện tại)
+      const targetPos = pendingCharOffset != null ? pendingCharOffset : scrollPosition;
+
+      // Debounce: 1s sau khi dừng scroll mới lưu
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = setTimeout(async () => {
+        // Guard: tránh gọi khi đang lưu hoặc không có thay đổi đáng kể
+        const prev = lastSavedPosRef.current;
+        const MIN_DELTA = 50; // px/char
+        if (prev != null && Math.abs(targetPos - prev) < MIN_DELTA) return;
+
+        // Chỉ lưu nếu đã có bookmark cho chương này (tránh tạo spam liên tục)
         const existingBookmark = bookmarks.find(b => 
           (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) &&
           b.bookId === book.bookId
         );
-        
-        if (existingBookmark) {
-          try {
-            const bookmarkData = {
-              bookId: book.bookId,
-              chapterReadId: parseInt(chapterId),
-              pagePosition: scrollPosition
-            };
-            
-            await createOrUpdateBookmark(bookmarkData);
-            
-            // Update local state - chỉ cập nhật bookmark của cuốn sách hiện tại
-            const updatedBookmarks = bookmarks.map(b => 
-              (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) && b.bookId === book.bookId
-                ? { ...b, pagePosition: scrollPosition, createdAt: new Date().toISOString() }
-                : b
-            );
-            setBookmarks(updatedBookmarks);
-            
-            console.log("BookReader - Auto-updated bookmark position for book:", book.bookId, "position:", scrollPosition);
-          } catch (error) {
-            console.error("Error auto-updating bookmark:", error);
-          }
+        if (!existingBookmark) return;
+
+        if (isSavingRef.current) return;
+        isSavingRef.current = true;
+        try {
+          const bookmarkData = {
+            bookId: book.bookId,
+            chapterReadId: parseInt(chapterId),
+            pagePosition: targetPos
+          };
+
+          await createOrUpdateBookmark(bookmarkData);
+          lastSavedPosRef.current = targetPos;
+
+          const updatedBookmarks = dedupeBookmarks(bookmarks.map(b => 
+            (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) && b.bookId === book.bookId
+              ? { ...b, pagePosition: targetPos, createdAt: new Date().toISOString() }
+              : b
+          ));
+          setBookmarks(updatedBookmarks);
+        } catch (error) {
+          console.error("Error auto-updating bookmark:", error);
+        } finally {
+          isSavingRef.current = false;
         }
-      }
+      }, 1000);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [chapterId, bookmarks, lastScrollPosition]);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [chapterId, bookmarks, pendingCharOffset, book?.bookId]);
+
+  const getChapterTextNodes = (rootEl) => {
+    // Accept ALL text nodes, including whitespace/newline-only nodes
+    const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    return nodes;
+  };
+
+  const getAbsoluteOffsetFromClick = (rootEl, clientX, clientY) => {
+    const sel = window.getSelection();
+    if (!sel) return null;
+    let startNode = null;
+    let startOffset = 0;
+    // Try caret by point
+    let pointRange = null;
+    if (document.caretRangeFromPoint) {
+      pointRange = document.caretRangeFromPoint(clientX, clientY);
+    } else if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(clientX, clientY);
+      if (pos) {
+        const r = document.createRange();
+        r.setStart(pos.offsetNode, pos.offset);
+        r.collapse(true);
+        pointRange = r;
+      }
+    }
+    if (pointRange && pointRange.startContainer) {
+      startNode = pointRange.startContainer;
+      startOffset = pointRange.startOffset;
+    } else {
+      // Fallback: use current selection anchor
+      if (sel.anchorNode) {
+        startNode = sel.anchorNode;
+        startOffset = sel.anchorOffset || 0;
+      } else {
+        return null;
+      }
+    }
+    const textNodes = getChapterTextNodes(rootEl);
+    let total = 0;
+    for (const node of textNodes) {
+      if (node === startNode) {
+        return total + startOffset;
+      }
+      total += node.nodeValue.length;
+    }
+    return null;
+  };
+
+  const createRangeAtAbsoluteOffset = (rootEl, absOffset) => {
+    const textNodes = getChapterTextNodes(rootEl);
+    let remaining = absOffset;
+    for (const node of textNodes) {
+      const len = node.nodeValue.length;
+      if (remaining <= len) {
+        const r = document.createRange();
+        r.setStart(node, Math.max(0, remaining));
+        r.collapse(true);
+        return r;
+      }
+      remaining -= len;
+    }
+    return null;
+  };
 
   // Theme setup
   const themes = {
@@ -222,13 +322,9 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       try {
         setLoadingBookmarks(true);
         const userBookmarks = await getUserBookmarks();
-        
-        // Filter chỉ bookmark của cuốn sách hiện tại
-        const bookBookmarks = userBookmarks.filter(bookmark => 
-          bookmark.bookId === book.bookId
-        );
-        
-        setBookmarks(bookBookmarks);
+        // Filter chỉ bookmark của cuốn sách hiện tại + dedupe theo (bookId, chapterId)
+        const bookBookmarks = userBookmarks.filter(b => b.bookId === book.bookId);
+        setBookmarks(dedupeBookmarks(bookBookmarks));
         console.log("BookReader - Loaded bookmarks for book:", book.bookId, bookBookmarks);
         console.log("BookReader - Total user bookmarks:", userBookmarks.length);
         console.log("BookReader - Filtered book bookmarks:", bookBookmarks.length);
@@ -287,13 +383,13 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         return;
       }
       
-      // Get current window scroll position
+      // Get current window scroll position (fallback)
       const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
       
       const bookmarkData = {
         bookId: book.bookId,
         chapterReadId: parseInt(chapterId),
-        pagePosition: scrollPosition
+        pagePosition: pendingCharOffset != null ? pendingCharOffset : scrollPosition
       };
       
       const result = await createOrUpdateBookmark(bookmarkData);
@@ -308,13 +404,13 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         bookmarkId: result.bookmarkId,
         chapterReadId: parseInt(chapterId),
         bookId: book.bookId,
-        pagePosition: scrollPosition,
+        pagePosition: (pendingCharOffset != null ? pendingCharOffset : scrollPosition),
         createdAt: result.createdAt
       });
-      setBookmarks(updatedBookmarks);
+      setBookmarks(dedupeBookmarks(updatedBookmarks));
       console.log("BookReader - Added bookmark for book:", book.bookId, "chapter:", chapterId);
       
-      toast.success("Đã thêm bookmark thành công");
+      toast.success(pendingCharOffset != null ? "Đã thêm bookmark tại vị trí chữ đã chọn" : "Đã thêm bookmark theo vị trí cuộn");
       
     } catch (error) {
       console.error("Error saving bookmark:", error);
@@ -396,10 +492,44 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
               <div
                 className={`${currentTheme.contentBg} rounded-lg p-6`}
                 style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
+                ref={contentRef}
               >
-                <pre className="whitespace-pre-wrap break-words prose prose-lg max-w-none">
+                <pre
+                  ref={textRef}
+                  className="whitespace-pre-wrap break-words prose prose-lg max-w-none"
+                  style={{ cursor: 'text' }}
+                  onClickCapture={(e) => {
+                    if (!textRef.current) return;
+                    const x = e.clientX;
+                    const y = e.clientY;
+                    const abs = getAbsoluteOffsetFromClick(textRef.current, x, y);
+                    if (abs != null) {
+                      setPendingCharOffset(abs);
+                      if (offsetHintTimerRef.current) clearTimeout(offsetHintTimerRef.current);
+                      setOffsetHint(`Vị trí chữ: ${abs}`);
+                      offsetHintTimerRef.current = setTimeout(() => setOffsetHint(null), 1500);
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (!textRef.current) return;
+                    const x = e.clientX;
+                    const y = e.clientY;
+                    const abs = getAbsoluteOffsetFromClick(textRef.current, x, y);
+                    if (abs != null) {
+                      setPendingCharOffset(abs);
+                      if (offsetHintTimerRef.current) clearTimeout(offsetHintTimerRef.current);
+                      setOffsetHint(`Vị trí chữ: ${abs}`);
+                      offsetHintTimerRef.current = setTimeout(() => setOffsetHint(null), 1500);
+                    }
+                  }}
+                >
                   {chapterContent}
                 </pre>
+                {offsetHint && (
+                  <div className="absolute top-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded shadow">
+                    {offsetHint}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -427,10 +557,19 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
             removeBookmark={removeBookmark}
             close={() => setShowBookmarks(false)}
             onBookmarkClick={(bookmark) => {
-              // Scroll to the bookmark position
-              const y = bookmark.pagePosition || 0;
-              window.scrollTo({ top: y, behavior: 'auto' });
-              console.log("BookReader - Scrolled to bookmark position:", y);
+              const v = bookmark.pagePosition || 0;
+              let handled = false;
+              if (contentRef.current && v > 0) {
+                const r = createRangeAtAbsoluteOffset(contentRef.current, v);
+                if (r) {
+                  const rect = r.getBoundingClientRect();
+                  window.scrollTo({ top: window.scrollY + rect.top - 120, behavior: 'auto' });
+                  handled = true;
+                }
+              }
+              if (!handled) {
+                window.scrollTo({ top: v, behavior: 'auto' });
+              }
             }}
             book={book}
           />

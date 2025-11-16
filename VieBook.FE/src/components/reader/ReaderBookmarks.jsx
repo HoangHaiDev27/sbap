@@ -105,7 +105,7 @@ export default function ReaderBookmarks({
             <div className="space-y-3">
               {bookmarks.map((bookmark) => (
                 <div
-                  key={bookmark.id}
+                  key={bookmark.bookmarkId || `${bookmark.bookId}-${bookmark.chapterReadId || bookmark.chapterListenId}`}
                   className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors cursor-pointer"
                   onClick={() => handleBookmarkClick(bookmark)}
                 >
