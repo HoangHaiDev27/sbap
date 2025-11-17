@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { RiEdit2Line, RiDeleteBin6Line, RiCoinLine } from "react-icons/ri";
+import { RiEdit2Line, RiDeleteBin6Line, RiCoinLine, RiEyeLine } from "react-icons/ri";
 import { deletePromotion } from "../../../api/promotionApi";
 import { getUserId } from "../../../api/authApi";
 
@@ -40,23 +40,54 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
     page * ITEMS_PER_PAGE
   );
 
+  // Tự động điều chỉnh page khi promotions thay đổi (sau khi xóa)
+  useEffect(() => {
+    const newTotalPages = Math.ceil(promotions.length / ITEMS_PER_PAGE);
+    setPage((currentPage) => {
+      if (newTotalPages > 0 && currentPage > newTotalPages) {
+        // Nếu trang hiện tại vượt quá tổng số trang, chuyển về trang cuối cùng
+        return newTotalPages;
+      } else if (newTotalPages === 0 && currentPage > 1) {
+        // Nếu không còn trang nào, reset về trang 1
+        return 1;
+      }
+      return currentPage; // Giữ nguyên trang hiện tại nếu không cần thay đổi
+    });
+  }, [promotions.length]);
+
   const handleDelete = async () => {
     try {
       if (!confirmDelete) return;
       const ownerId = getUserId();
-      await deletePromotion(confirmDelete.promotionId, ownerId);
+      
+      // Optimistic update: đóng modal ngay
+      const deletedPromotionId = confirmDelete.promotionId;
+      setConfirmDelete(null);
+      
+      // Gọi API xóa
+      await deletePromotion(deletedPromotionId, ownerId);
 
       window.dispatchEvent(new CustomEvent("app:toast", {
         detail: { type: "success", message: "Đã vô hiệu hoá promotion" }
       }));
 
-      if (onDeleted) onDeleted();
-      setConfirmDelete(null);
+      // Đảm bảo reload sau khi xóa thành công
+      if (onDeleted) {
+        await onDeleted();
+      }
     } catch (err) {
       console.error("Lỗi xoá:", err);
       window.dispatchEvent(new CustomEvent("app:toast", {
         detail: { type: "error", message: err.message || "Xoá thất bại" }
       }));
+      // Nếu có lỗi, reload lại để đảm bảo state đồng bộ
+      if (onDeleted) {
+        try {
+          await onDeleted();
+        } catch (reloadErr) {
+          console.error("Lỗi reload sau khi xóa:", reloadErr);
+        }
+      }
     }
   };
 
@@ -79,13 +110,23 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
           <tbody>
             {currentData.map((promo, i) => {
               const status = getPromotionStatus(promo);
+              const isInactive = !promo.isActive;
               return (
                 <tr
                   key={promo.promotionId}
-                  className={`border-b border-slate-600 ${i % 2 === 0 ? "bg-slate-800" : "bg-slate-700"} hover:bg-slate-600 transition`}
+                  className={`border-b border-slate-600 ${i % 2 === 0 ? "bg-slate-800" : "bg-slate-700"} hover:bg-slate-600 transition ${
+                    isInactive ? "opacity-75" : ""
+                  }`}
                 >
                   <td className="p-3 cursor-pointer align-top" onClick={() => navigate(`/owner/promotions/${promo.promotionId}`)}>
-                    <p className="font-semibold truncate pr-4">{promo.promotionName}</p>
+                    <div className="flex items-center gap-2">
+                      <p className={`font-semibold truncate pr-4 ${isInactive ? "line-through text-slate-400" : ""}`}>
+                        {promo.promotionName}
+                      </p>
+                      {isInactive && (
+                        <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded">Đã vô hiệu hóa</span>
+                      )}
+                    </div>
                     <div className="text-xs opacity-80">
                       {Array.isArray(promo.books) && promo.books.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
@@ -126,19 +167,46 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
                       {status.label}
                     </span>
                   </td>
-                  <td className="p-3 align-top flex gap-2 justify-center">
-                    <button
-                      className="p-2 bg-green-500 rounded hover:bg-green-600"
-                      onClick={() => onEdit && onEdit(promo)}
-                    >
-                      <RiEdit2Line />
-                    </button>
-                    <button
-                      className="p-2 bg-red-500 rounded hover:bg-red-600"
-                      onClick={() => setConfirmDelete(promo)}
-                    >
-                      <RiDeleteBin6Line />
-                    </button>
+                  <td className="p-3 align-top">
+                    <div className="flex gap-2 justify-center">
+                      {isInactive ? (
+                        // Nếu đã vô hiệu hóa, chỉ hiển thị nút xem detail
+                        <button
+                          className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/owner/promotions/${promo.promotionId}`);
+                          }}
+                          title="Xem chi tiết"
+                        >
+                          <RiEyeLine />
+                        </button>
+                      ) : (
+                        // Nếu còn active, hiển thị nút edit và delete
+                        <>
+                          <button
+                            className="p-2 bg-green-500 rounded hover:bg-green-600 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit && onEdit(promo);
+                            }}
+                            title="Chỉnh sửa"
+                          >
+                            <RiEdit2Line />
+                          </button>
+                          <button
+                            className="p-2 bg-red-500 rounded hover:bg-red-600 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDelete(promo);
+                            }}
+                            title="Xóa"
+                          >
+                            <RiDeleteBin6Line />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

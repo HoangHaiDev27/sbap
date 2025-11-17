@@ -10,6 +10,7 @@ namespace Services.Interfaces
     public interface IPromotionService
     {
         Task<List<Promotion>> GetPromotionsByOwnerAsync(int ownerId);
+        Task<List<Promotion>> GetInactivePromotionsByOwnerAsync(int ownerId);
         Task<Promotion> CreatePromotionAsync(Promotion promotion, List<int> bookIds);
         Task<Promotion?> GetPromotionByIdAsync(int promotionId);
         Task<Promotion> UpdatePromotionAsync(Promotion promotion, List<int> bookIds);

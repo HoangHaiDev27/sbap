@@ -261,6 +261,7 @@ export const API_ENDPOINTS = {
     },
   PROMOTIONS: {
     GET_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}`,
+    GET_INACTIVE_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}/inactive`,
     CREATE: `${API_BASE_URL}/api/promotions`,
     STATS_BY_OWNER: (ownerId) => `${API_BASE_URL}/api/promotions/owner/${ownerId}/stats`
   },
