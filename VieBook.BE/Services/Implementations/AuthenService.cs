@@ -216,9 +216,9 @@ namespace Services.Implementations
 
             await _authRepo.CreateAsync(user);
 
-            // Sinh token xác thực email
+            // Sinh token xác thực email (không có thời hạn)
             var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
-            var token = _jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
+            var token = _jwtService.GenerateVerificationToken(user.UserId.ToString(), user.Email, roles);
             var verifyUrl = $"{frontendUrl}/auth/verify-email?token={token}";
 
             await _emailService.SendEmailAsync(
@@ -285,6 +285,20 @@ namespace Services.Implementations
             var user = await _authRepo.GetByIdAsync(int.Parse(userId));
             if (user == null) return "Người dùng không tồn tại";
 
+            // Chỉ cho phép verify nếu account đang ở trạng thái "Pending"
+            if (user.Status != "Pending")
+            {
+                if (user.Status == "Active")
+                {
+                    return "Email đã được xác thực trước đó. Bạn có thể đăng nhập ngay.";
+                }
+                else
+                {
+                    return $"Tài khoản đang ở trạng thái '{user.Status}'. Vui lòng liên hệ quản trị viên để được hỗ trợ.";
+                }
+            }
+
+            // Chỉ đổi status sang "Active" nếu đang là "Pending"
             user.Status = "Active";
             await _authRepo.UpdateAsync(user);
 
