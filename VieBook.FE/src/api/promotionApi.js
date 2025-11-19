@@ -11,6 +11,16 @@ export async function getPromotionsByOwner(ownerId) {
   return res.json();
 }
 
+// Lấy promotions đã vô hiệu hóa theo owner
+export async function getInactivePromotionsByOwner(ownerId) {
+  const res = await authFetch(API_ENDPOINTS.PROMOTIONS.GET_INACTIVE_BY_OWNER(ownerId));
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || "Lấy promotions đã vô hiệu hóa thất bại");
+  }
+  return res.json();
+}
+
 // Tạo promotion mới
 export async function createPromotion(payload) {
   const res = await authFetch(API_ENDPOINTS.PROMOTIONS.CREATE, {

@@ -22,6 +22,10 @@ namespace Repositories.Implementations
         {
             return await _promotionDAO.GetPromotionsByOwnerAsync(ownerId);
         }
+        public async Task<List<Promotion>> GetInactivePromotionsByOwnerAsync(int ownerId)
+        {
+            return await _promotionDAO.GetInactivePromotionsByOwnerAsync(ownerId);
+        }
         public async Task<Promotion> CreatePromotionAsync(Promotion promotion, List<int> bookIds)
         {
             return await _promotionDAO.CreatePromotionAsync(promotion, bookIds);

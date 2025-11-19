@@ -67,6 +67,22 @@ namespace DataAccess.DAO
                 .ToListAsync();
         }
 
+        public async Task<List<Promotion>> GetInactivePromotionsByOwnerAsync(int ownerId)
+        {
+            return await _context.Promotions
+                .Include(p => p.Books)
+                    .ThenInclude(b => b.Categories)
+                .Include(p => p.Books)
+                    .ThenInclude(b => b.Owner)
+                        .ThenInclude(o => o.UserProfile)
+                .Include(p => p.Books)
+                    .ThenInclude(b => b.Chapters)
+                        .ThenInclude(c => c.ChapterAudios)
+                .Where(p => p.OwnerId == ownerId && !p.IsActive)
+                .OrderByDescending(p => p.EndAt)
+                .ToListAsync();
+        }
+
         public async Task<Promotion> CreatePromotionAsync(Promotion promotion, List<int> bookIds)
         {
             // Validate: a book cannot have more than one active/overlapping promotion in the same time range
@@ -105,13 +121,14 @@ namespace DataAccess.DAO
 
         public async Task<Promotion?> GetPromotionByIdAsync(int promotionId)
         {
+            // Bỏ filter IsActive để có thể xem detail cả promotion đã inactive
             return await _context.Promotions
                 .Include(p => p.Books)
                     .ThenInclude(b => b.Chapters)
                         .ThenInclude(c => c.ChapterAudios)
                 .Include(p => p.Books)
                     .ThenInclude(b => b.Categories)
-                .FirstOrDefaultAsync(p => p.PromotionId == promotionId && p.IsActive);
+                .FirstOrDefaultAsync(p => p.PromotionId == promotionId);
         }
 
         public async Task<Promotion> UpdatePromotionAsync(Promotion promotion, List<int> bookIds)

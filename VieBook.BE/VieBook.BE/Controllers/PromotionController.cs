@@ -89,6 +89,70 @@ namespace VieBookAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("owner/{ownerId}/inactive")]
+        public async Task<IActionResult> GetInactivePromotionsByOwner(int ownerId)
+        {
+            var promotions = await _promotionService.GetInactivePromotionsByOwnerAsync(ownerId);
+            if (promotions == null || !promotions.Any())
+                return Ok(new List<PromotionDTO>()); // Trả về mảng rỗng thay vì NotFound
+
+            // Map entity -> DTO (giống như GetPromotionsByOwner)
+            var result = promotions.Select(p =>
+            {
+                var dto = new PromotionDTO
+                {
+                    PromotionId = p.PromotionId,
+                    OwnerId = p.OwnerId,
+                    PromotionName = p.PromotionName,
+                    Description = p.Description,
+                    DiscountType = p.DiscountType,
+                    DiscountValue = p.DiscountValue,
+                    StartAt = p.StartAt,
+                    EndAt = p.EndAt,
+                    IsActive = p.IsActive,
+                };
+
+                dto.Books = p.Books.Select(b => new BookWithPromotionDTO
+                {
+                    BookId = b.BookId,
+                    Title = b.Title,
+                    Description = b.Description,
+                    CoverUrl = b.CoverUrl,
+                    Isbn = b.Isbn,
+                    Language = b.Language,
+                    TotalView = b.TotalView,
+                    CreatedAt = b.CreatedAt,
+                    Author = b.Author,
+                    OwnerId = b.OwnerId,
+                    Status = b.Status,
+                    TotalPrice = b.Chapters
+                                  .Where(c => c.Status == "Active")
+                                  .Sum(c => (c.PriceSoft ?? 0) + 
+                                            (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                : 0)),
+                    DiscountedPrice = b.Chapters
+                                       .Where(c => c.Status == "Active")
+                                       .Sum(c => (c.PriceSoft ?? 0) + 
+                                                 (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                                     ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                                     : 0)) *
+                        (1 - (p.DiscountType == "Percent" ? (p.DiscountValue / 100) : 0)),
+                    Sold = 0,
+                    Rating = 0,
+                    OwnerName = b.Owner?.UserProfile?.FullName,
+                    CategoryIds = b.Categories?.Select(c => c.CategoryId).ToList() ?? new List<int>()
+                }).ToList();
+
+                dto.BookCount = dto.Books.Count;
+                dto.Status = DateTime.UtcNow < dto.StartAt ? "Upcoming" :
+                             DateTime.UtcNow > dto.EndAt ? "Expired" : "Active";
+                return dto;
+            });
+
+            return Ok(result);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreatePromotion([FromBody] PromotionCreateDTO dto)
         {
@@ -162,6 +226,10 @@ namespace VieBookAPI.Controllers
             var existing = await _promotionService.GetPromotionByIdAsync(promotionId);
             if (existing == null)
                 return NotFound(new { message = "Promotion không tồn tại." });
+
+            // Chỉ cho phép update promotion đang active
+            if (!existing.IsActive)
+                return BadRequest(new { message = "Không thể chỉnh sửa promotion đã vô hiệu hóa." });
 
             existing.PromotionName = dto.PromotionName;
             existing.Description = dto.Description;

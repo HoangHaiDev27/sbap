@@ -59,6 +59,41 @@ public class JwtService
         return Guid.NewGuid().ToString();
     }
 
+    // Tạo token xác thực email không có thời hạn (hoặc thời hạn rất dài)
+    public string GenerateVerificationToken(string userId, string email, List<string>? roles = null)
+    {
+        var jwtSettings = _configuration.GetSection("Jwt");
+
+        var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, userId),
+            new Claim(JwtRegisteredClaimNames.Email, email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        // Add roles to claims
+        if (roles != null && roles.Any())
+        {
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+        }
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddYears(100),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     private List<string> GetPermissionsForRoles(List<string> roles)
     {
         var allPermissions = new List<string>();
