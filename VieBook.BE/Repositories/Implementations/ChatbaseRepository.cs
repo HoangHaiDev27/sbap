@@ -16,7 +16,7 @@ namespace Repositories.Implementations
         {
             _chatbaseDAO = chatbaseDAO;
         }
-        public Task AddMessageAsync(int? userId, string message, string sender) => _chatbaseDAO.AddMessageAsync(userId, message, sender);
-        public Task<List<ChatbaseHistory>> GetHistoryByUserAsync(int? userId) => _chatbaseDAO.GetHistoryByUserAsync(userId);
+        public async Task AddMessageAsync(int? userId, string message, string sender) => await _chatbaseDAO.AddMessageAsync(userId, message, sender);
+        public async Task<List<ChatbaseHistory>> GetHistoryByUserAsync(int? userId) => await _chatbaseDAO.GetHistoryByUserAsync(userId);
     }
 }
