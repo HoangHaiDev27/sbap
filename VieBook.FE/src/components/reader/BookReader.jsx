@@ -125,24 +125,27 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                 if (!restored) {
                   window.scrollTo({ top: savedBookmark.pagePosition, behavior: 'auto' });
                 }
-                  
-                  // Update local bookmarks state with the loaded bookmark (chỉ của cuốn sách hiện tại)
-                  const existingBookmark = bookmarks.find(b => 
+                
+                // Update local bookmarks state with the loaded bookmark (chỉ của cuốn sách hiện tại)
+                const newBookmark = {
+                  bookmarkId: savedBookmark.bookmarkId,
+                  chapterReadId: parseInt(chapterId),
+                  bookId: book.bookId,
+                  pagePosition: savedBookmark.pagePosition,
+                  createdAt: savedBookmark.createdAt
+                };
+                // Dùng functional update và kiểm tra trên state mới nhất để tránh thêm trùng do stale closure
+                setBookmarks((prev) => {
+                  const exists = prev.some((b) =>
                     (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) &&
                     b.bookId === book.bookId
                   );
-                  
-                  if (!existingBookmark) {
-                    const newBookmark = {
-                      bookmarkId: savedBookmark.bookmarkId,
-                      chapterReadId: parseInt(chapterId),
-                      bookId: book.bookId,
-                      pagePosition: savedBookmark.pagePosition,
-                      createdAt: savedBookmark.createdAt
-                    };
-                    setBookmarks(prev => [...prev, newBookmark]);
-                    console.log("BookReader - Added bookmark to local state for book:", book.bookId, "chapter:", chapterId);
-                  }
+                  if (exists) return prev;
+                  const next = [...prev, newBookmark];
+                  const deduped = dedupeBookmarks(next);
+                  console.log("BookReader - Added bookmark to local state for book:", book.bookId, "chapter:", chapterId, "after dedupe size:", deduped.length);
+                  return deduped;
+                });
               }
             } catch (error) {
               console.error("Error loading bookmark position:", error);
@@ -366,6 +369,12 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   // Add/remove bookmarks with scroll position
   const addBookmark = async () => {
     try {
+      // Require selecting a character position before adding a bookmark
+      if (pendingCharOffset == null) {
+        toast.error("Hãy chọn từ mà bạn muốn đánh dấu");
+        return;
+      }
+
       // Check if bookmark already exists for this chapter (chỉ trong cuốn sách hiện tại)
       const existingBookmark = bookmarks.find(b => 
         (b.chapterReadId === parseInt(chapterId) || b.chapterListenId === parseInt(chapterId)) &&
@@ -383,13 +392,10 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         return;
       }
       
-      // Get current window scroll position (fallback)
-      const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-      
       const bookmarkData = {
         bookId: book.bookId,
         chapterReadId: parseInt(chapterId),
-        pagePosition: pendingCharOffset != null ? pendingCharOffset : scrollPosition
+        pagePosition: pendingCharOffset
       };
       
       const result = await createOrUpdateBookmark(bookmarkData);
@@ -404,13 +410,13 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         bookmarkId: result.bookmarkId,
         chapterReadId: parseInt(chapterId),
         bookId: book.bookId,
-        pagePosition: (pendingCharOffset != null ? pendingCharOffset : scrollPosition),
+        pagePosition: pendingCharOffset,
         createdAt: result.createdAt
       });
       setBookmarks(dedupeBookmarks(updatedBookmarks));
       console.log("BookReader - Added bookmark for book:", book.bookId, "chapter:", chapterId);
       
-      toast.success(pendingCharOffset != null ? "Đã thêm bookmark tại vị trí chữ đã chọn" : "Đã thêm bookmark theo vị trí cuộn");
+      toast.success("Đã thêm bookmark tại vị trí chữ đã chọn");
       
     } catch (error) {
       console.error("Error saving bookmark:", error);

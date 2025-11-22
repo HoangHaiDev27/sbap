@@ -2,7 +2,7 @@ using BusinessObject.Dtos;
 using BusinessObject.Models;
 using Repositories.Interfaces;
 using Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using System.Transactions;
 
 namespace Services.Implementations
 {
@@ -13,27 +13,24 @@ namespace Services.Implementations
         private readonly IChapterRepository _chapterRepository;
         private readonly IOrderItemRepository _orderItemRepository;
         private readonly INotificationService _notificationService;
-        private readonly DataAccess.VieBookContext _context;
 
         public ChapterPurchaseService(
             IUserRepository userRepository,
             IBookRepository bookRepository,
             IChapterRepository chapterRepository,
             IOrderItemRepository orderItemRepository,
-            INotificationService notificationService,
-            DataAccess.VieBookContext context)
+            INotificationService notificationService)
         {
             _userRepository = userRepository;
             _bookRepository = bookRepository;
             _chapterRepository = chapterRepository;
             _orderItemRepository = orderItemRepository;
             _notificationService = notificationService;
-            _context = context;
         }
 
         public async Task<ChapterPurchaseResponseDTO> PurchaseChaptersAsync(int userId, ChapterPurchaseRequestDTO request)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 // 1. VALIDATE USER & WALLET
@@ -163,13 +160,11 @@ namespace Services.Implementations
                 Dictionary<int, decimal> audioPrices = new Dictionary<int, decimal>();
                 if (request.PurchaseType == "audio" || request.PurchaseType == "both")
                 {
-                    // Lấy giá audio từ bảng ChapterAudios (PriceAudio)
-                    var audioData = await _context.ChapterAudios
-                        .Where(ca => request.ChapterIds.Contains(ca.ChapterId))
-                        .GroupBy(ca => ca.ChapterId)
-                        .Select(g => new { ChapterId = g.Key, Price = g.FirstOrDefault()!.PriceAudio ?? 0 })
-                        .ToDictionaryAsync(x => x.ChapterId, x => x.Price);
-                    audioPrices = audioData;
+                    // Lấy giá audio qua Repository để tuân thủ cấu trúc DAO-Repository-Service
+                    var allAudioPrices = await _bookRepository.GetChapterAudioPricesAsync(request.BookId);
+                    audioPrices = allAudioPrices
+                        .Where(kv => request.ChapterIds.Contains(kv.Key))
+                        .ToDictionary(kv => kv.Key, kv => kv.Value);
                 }
 
                 // 6.5. GET ACTIVE PROMOTION FOR BOOK
@@ -390,7 +385,7 @@ namespace Services.Implementations
                 var remainingBalance = updatedUser?.Wallet ?? 0;
 
                 // 16. COMMIT TRANSACTION
-                await transaction.CommitAsync();
+                transaction.Complete();
 
                 // 17. BUILD SUCCESS RESPONSE
                 string purchaseTypeMessage = request.PurchaseType switch
@@ -412,8 +407,6 @@ namespace Services.Implementations
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-
                 // Log chi tiết lỗi
                 Console.WriteLine($"Error purchasing chapters: {ex.Message}");
                 Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
