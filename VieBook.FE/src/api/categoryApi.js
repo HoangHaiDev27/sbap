@@ -67,11 +67,33 @@ export async function updateCategory(categoryId, categoryData) {
 
 // Xóa category
 export async function deleteCategory(categoryId) {
-  return handleFetch(API_ENDPOINTS.CATEGORIES.DELETE(categoryId), {
+  const res = await fetch(API_ENDPOINTS.CATEGORIES.DELETE(categoryId), {
     method: "DELETE",
     headers: { 
       "Content-Type": "application/json",
       "Authorization": `Bearer ${localStorage.getItem("token")}`
     },
-  }, "Xóa thể loại thất bại");
+  });
+  
+  if (!res.ok) {
+    let errorMessage = "Xóa thể loại thất bại";
+    try {
+      const data = await res.json();
+      errorMessage = data.message || errorMessage;
+    } catch {
+      if (res.status === 500) {
+        errorMessage = "Lỗi hệ thống.";
+      }
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Nếu response là 200 với message, category đã được chuyển sang không hoạt động
+  if (res.status === 200) {
+    const data = await res.json();
+    return { deactivated: true, message: data.message };
+  }
+
+  // Nếu response là 204, category đã được xóa thành công
+  return { deactivated: false, message: null };
 }

@@ -106,8 +106,6 @@ export default function CustomersManagement() {
             <option value="all">Tất cả trạng thái</option>
             <option value="Active">Hoạt động</option>
             <option value="Locked">Bị khóa</option>
-            <option value="Pending">Chờ duyệt</option>
-            <option value="Inactive">Không hoạt động</option>
           </select>
         </div>
 
@@ -117,8 +115,6 @@ export default function CustomersManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Khách hàng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tổng lượt nghe</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Đánh giá</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Trạng thái</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ngày đăng ký</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Hành động</th>
@@ -127,7 +123,7 @@ export default function CustomersManagement() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-6 text-gray-500">
+                  <td colSpan="4" className="text-center py-6 text-gray-500">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                       <span className="ml-2">Đang tải...</span>
@@ -150,8 +146,6 @@ export default function CustomersManagement() {
                         <div className="text-gray-500 text-sm">{customer.email}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{customer.orderCount || 0}</td>
-                  <td className="px-6 py-4">-</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -194,7 +188,7 @@ export default function CustomersManagement() {
               )}
               {!loading && paginatedCustomers.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="text-center py-6 text-gray-500">
+                  <td colSpan="4" className="text-center py-6 text-gray-500">
                     Không có dữ liệu
                   </td>
                 </tr>
