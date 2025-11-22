@@ -53,7 +53,6 @@ namespace VieBook.BE.Controllers
             await _openAIService.GenerateAndSaveEmbeddingsAsync(command.ChapterId, command.Content);
             return Ok(new { message = "Embeddings generated and saved successfully" });
         }
-        [Authorize(Roles = "Owner")]
         [HttpPost("summarize")]
         public async Task<IActionResult> Summarize([FromBody] SummarizeCommand command)
         {
