@@ -34,6 +34,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
   const [isOwner, setIsOwner] = useState(false); // Kiểm tra xem có phải owner không
   const [hasLoadedSavedPosition, setHasLoadedSavedPosition] = useState(false); // Đánh dấu đã load vị trí đã lưu
   const saveProgressTimeoutRef = useRef(null); // Ref cho debounce save progress
+  const sleepTimerRef = useRef(null); // Ref cho sleep timer
   
   // Audio ref
   const audioRef = useRef(null);
@@ -126,8 +127,8 @@ export default function AudioPlayer({ bookId, chapterId }) {
             
             return {
               id: chapter.chapterId,
-              title: chapter.chapterTitle, // Bỏ "Chương X:" vì đã có badge số
-              chapterNumber: audio?.chapterNumber, // Lấy chapterNumber từ audio data (backend tính từ toàn bộ chapters)
+              title: chapter.chapterTitle, 
+              chapterNumber: audio?.chapterNumber, 
               chapterId: chapter.chapterId,
               audioUrl: audioUrl,
               duration: audio?.durationSec || audio?.duration || audio?.audioLength || 0,
@@ -135,7 +136,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
               hasAudio: !!audio,
             };
           })
-          .filter(c => c.audioUrl); // Only chapters with valid audio URL
+          .filter(c => c.audioUrl); 
 
         // Store all audio data
         setAllAudioData(audioData);
@@ -436,6 +437,48 @@ export default function AudioPlayer({ bookId, chapterId }) {
       audioRef.current.volume = volume;
     }
   }, [volume]);
+
+  // Sleep timer - tự động dừng audio sau khi hết thời gian
+  useEffect(() => {
+    // Clear timer cũ nếu có
+    if (sleepTimerRef.current) {
+      clearTimeout(sleepTimerRef.current);
+      sleepTimerRef.current = null;
+    }
+
+    // Nếu sleep timer > 0 và đang phát, bắt đầu đếm ngược
+    if (sleepTimer > 0 && isPlaying) {
+      const timerMinutes = sleepTimer;
+      const timerMilliseconds = timerMinutes * 60 * 1000; // Chuyển phút sang milliseconds
+
+      sleepTimerRef.current = setTimeout(() => {
+        // Tự động dừng audio khi hết thời gian
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        }
+        setSleepTimer(0); // Reset sleep timer về 0
+        
+        // Hiển thị thông báo
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: {
+              type: "info",
+              message: `Đã tự động dừng sau ${timerMinutes} phút`,
+            },
+          })
+        );
+      }, timerMilliseconds);
+    }
+
+    // Cleanup khi component unmount hoặc sleep timer thay đổi
+    return () => {
+      if (sleepTimerRef.current) {
+        clearTimeout(sleepTimerRef.current);
+        sleepTimerRef.current = null;
+      }
+    };
+  }, [sleepTimer, isPlaying]);
 
   // Reset hasLoadedSavedPosition khi chuyển chapter
   useEffect(() => {

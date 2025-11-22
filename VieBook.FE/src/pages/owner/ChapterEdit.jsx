@@ -25,7 +25,7 @@ export default function ChapterEdit() {
     const location = useLocation();
 
     const [title, setTitle] = useState("");
-    const [price, setPrice] = useState(10);
+    const [price, setPrice] = useState(10.0);
     const [isFree, setIsFree] = useState(false);
     const [content, setContent] = useState("");
     const [originalContent, setOriginalContent] = useState("");
@@ -44,7 +44,7 @@ export default function ChapterEdit() {
     // Khi tick Free
     useEffect(() => {
         if (isFree) setPrice(0);
-        else if (price === 0) setPrice(10);
+        else if (price === 0) setPrice(10.0);
     }, [isFree, price]);
 
     // Kiểm tra PDF có text layer không
@@ -225,7 +225,7 @@ export default function ChapterEdit() {
             try {
                 const data = await getChapterById(chapterId);
                 setTitle(data.chapterTitle || "");
-                setPrice(data.priceSoft || 10);
+                setPrice(data.priceSoft || 10.0);
                 setIsFree(data.priceSoft === 0);
                 setBookTitle(data.bookTitle || "Không xác định");
                 setStatus(data.status || "Draft"); // ✅ lấy status từ BE
@@ -336,7 +336,7 @@ export default function ChapterEdit() {
 
     return (
         <div className="p-6 text-white">
-            <h1 className="text-2xl font-bold mb-6">Sửa chương: <span className="text-orange-400">{bookTitle}</span></h1>
+            <h1 className="text-2xl font-bold mb-6">Sửa chương của sách: <span className="text-orange-400">{bookTitle}</span></h1>
 
             {/* Thông tin chương */}
             <div className="bg-slate-800 p-6 rounded-lg mb-6">
@@ -356,14 +356,16 @@ export default function ChapterEdit() {
 
                     <div className="flex items-center space-x-6">
                         {/* Giá chương */}
-                        <div className="flex flex-col max-w-[120px]">
+                        <div className="flex flex-col max-w-[150px]">
                             <label className="block text-sm mb-1">Giá (xu)</label>
                             <input
                                 type="number"
+                                step="0.01"
+                                min="0"
                                 value={isFree ? 0 : price}
                                 onChange={(e) => {
                                     const val = e.target.value;
-                                    setPrice(val === "" ? 0 : parseInt(val, 10));
+                                    setPrice(val === "" ? 0 : parseFloat(val) || 0);
                                 }}
                                 disabled={isFree}
                                 className="w-full px-3 py-2 rounded-lg bg-gray-700 focus:outline-none"
@@ -457,10 +459,10 @@ export default function ChapterEdit() {
                 <h2 className="text-lg font-semibold mb-4">Nội dung chương</h2>
                 <textarea
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    readOnly
                     rows={30}
-                    className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Nội dung sẽ được trích xuất từ file hoặc bạn có thể nhập/chỉnh sửa trực tiếp..."
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none cursor-not-allowed opacity-75"
+                    placeholder="Nội dung chương (chỉ đọc)"
                 />
                 <div className="text-right text-xs text-gray-400 mt-2">{content.length}/50000 ký tự</div>
             </div>
