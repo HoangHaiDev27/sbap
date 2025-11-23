@@ -284,7 +284,6 @@ namespace VieBook.BE.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        [Authorize(Roles = "Customer")]
         // GET: api/books/{bookId}/chapters/audio-prices
         [HttpGet("{bookId:int}/chapters/audio-prices")]
         public async Task<IActionResult> GetChapterAudioPrices(int bookId)
@@ -302,7 +301,6 @@ namespace VieBook.BE.Controllers
 
         // GET: api/books/owner/{ownerId}
         [HttpGet("owner/{ownerId:int}")]
-        [Authorize(Roles = "Owner")]
         public async Task<ActionResult<IEnumerable<BookDTO>>> GetBooksByOwner(int ownerId)
         {
             var books = await _bookService.GetBooksByOwnerId(ownerId);
