@@ -94,7 +94,7 @@ export default function ChapterForm() {
   // Form data
   const [chapterId, setChapterId] = useState(null); // Thêm state để lưu chapterId
   const [title, setTitle] = useState("");
-  const [price, setPrice] = useState(10);
+  const [price, setPrice] = useState(10.0);
   const [isFree, setIsFree] = useState(false);
   const [content, setContent] = useState("");
   const [file, setFile] = useState(null);
@@ -300,7 +300,7 @@ export default function ChapterForm() {
   // Handler cho price input
   const handlePriceChange = useCallback((e) => {
     const val = e.target.value;
-    setPrice(val === "" ? 0 : parseInt(val, 10));
+    setPrice(val === "" ? 0 : parseFloat(val) || 0);
     // Clear price validation error when user types
     if (validationErrors.price) {
       setValidationErrors(prev => ({ ...prev, price: "" }));
@@ -319,7 +319,7 @@ export default function ChapterForm() {
   // Khi tick vào free, giá tự = 0
   useEffect(() => {
     if (isFree) setPrice(0);
-    else if (price === 0) setPrice(10);
+    else if (price === 0) setPrice(10.0);
   }, [isFree]);
 
   // Validate giá không âm
@@ -1061,10 +1061,12 @@ export default function ChapterForm() {
 
         <div className="flex items-center space-x-6">
           {/* Giá chương */}
-          <div className="flex flex-col max-w-[120px]">
+          <div className="flex flex-col max-w-[150px]">
             <label className="block text-sm mb-1">Giá (xu)</label>
             <input
               type="number"
+              step="0.01"
+              min="0"
               value={isFree ? 0 : price}
               onChange={handlePriceChange}
               disabled={isFree}

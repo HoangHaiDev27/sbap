@@ -13,13 +13,13 @@ import {
   getChaptersByBookId,
   deleteChapter,
   removeOldBookImage,
-  getWordCountFromUrl,
   getBookById,
   updateCompletionStatus,
   submitForApproval,
   checkAllChaptersActive,
   checkBookHasDraftChapters,
   updateDraftChaptersToInActive,
+  getBookChapterAudios,
 } from "../../api/ownerBookApi";
 
 export default function OwnerChapters() {
@@ -34,12 +34,12 @@ export default function OwnerChapters() {
     location.state?.bookTitle || "Không xác định"
   );
   const [chapterToDelete, setChapterToDelete] = useState(null);
-  const [wordCounts, setWordCounts] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [bookInfo, setBookInfo] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showSellerThankModal, setShowSellerThankModal] = useState(false);
   const [showDraftWarningModal, setShowDraftWarningModal] = useState(false);
+  const [chapterAudios, setChapterAudios] = useState([]); // Danh sách audio từ bảng ChapterAudio
   const pageSize = 5;
   const totalPages = Math.max(1, Math.ceil(chapters.length / pageSize));
   const paginatedChapters = chapters.slice(
@@ -82,40 +82,23 @@ export default function OwnerChapters() {
     fetchBookInfo();
   }, [bookId]);
 
-  // đếm từ
+  // Load ChapterAudio data từ bảng ChapterAudio
   useEffect(() => {
-    async function fetchWordCounts() {
+    async function fetchChapterAudios() {
       try {
-        const tasks = chapters.map(async (ch) => {
-          if (ch.chapterSoftUrl) {
-            try {
-              const count = await getWordCountFromUrl(ch.chapterSoftUrl);
-              return [ch.chapterId, Number(count) || 0];
-            } catch (e) {
-              console.warn("Wordcount failed for", ch.chapterId, e);
-              return [ch.chapterId, 0];
-            }
-          }
-          return [ch.chapterId, 0];
-        });
-
-        const results = await Promise.all(tasks);
-        const counts = {};
-        results.forEach(([id, cnt]) => {
-          counts[id] = cnt;
-        });
-        setWordCounts(counts);
-      } catch (e) {
-        console.error("Failed to fetch word counts:", e);
+        const audioData = await getBookChapterAudios(bookId);
+        setChapterAudios(audioData || []);
+      } catch (err) {
+        console.error("Failed to fetch chapter audios:", err);
+        setChapterAudios([]);
       }
     }
 
-    if (chapters.length > 0) {
-      fetchWordCounts();
-    } else {
-      setWordCounts({});
+    if (bookId) {
+      fetchChapterAudios();
     }
-  }, [chapters]);
+  }, [bookId]);
+
 
   useEffect(() => {
     const tp = Math.max(1, Math.ceil(chapters.length / pageSize));
@@ -494,7 +477,11 @@ export default function OwnerChapters() {
               paginatedChapters.map((ch, index) => {
                 const globalIndex = (currentPage - 1) * pageSize + index + 1;
                 const isFree = ch.priceSoft === 0;
-                const hasAudio = !!ch.chapterAudioUrl;
+                // Kiểm tra xem chapter có audio trong bảng ChapterAudio không
+                const chapterAudio = chapterAudios.find(audio => audio.chapterId === ch.chapterId);
+                const hasAudio = !!chapterAudio;
+                // Lấy duration từ ChapterAudio (có thể là durationSec hoặc duration)
+                const audioDuration = chapterAudio?.durationSec || chapterAudio?.duration || 0;
 
               // status badge
               let statusBadge = null;
@@ -542,31 +529,12 @@ export default function OwnerChapters() {
                       <p className="font-semibold break-words">
                         {ch.chapterTitle}
                       </p>
-
-                      <p className="text-xs text-gray-400 mt-2 flex items-center flex-wrap gap-2">
-                        <span className="inline-block min-w-[90px]">
-                          {wordCounts[ch.chapterId] !== undefined
-                            ? `${wordCounts[ch.chapterId]} từ`
-                            : "Đang đếm..."}
-                        </span>
-                        {statusBadge}
-                        {hasAudio && (
-                          <>
-                            <span className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs">
-                              Audio
-                            </span>
-                            <span className="text-xs text-gray-300">
-                              {formatDuration(ch.durationSec)}
-                            </span>
-                          </>
-                        )}
-                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-start space-x-4 flex-shrink-0">
                     {/* Giá chương và giá audio */}
-                    <div className="flex items-center gap-3 min-w-[280px]">
+                    <div className="flex items-start gap-3 min-w-[280px]">
                       <div className="flex-1 text-right">
                         {isFree ? (
                           <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">
@@ -574,15 +542,18 @@ export default function OwnerChapters() {
                           </span>
                         ) : (
                           <span className="text-orange-400 font-semibold text-sm whitespace-nowrap">
-                            Chương: {ch.priceSoft.toLocaleString()} xu
+                            Giá bản đọc: {ch.priceSoft.toLocaleString()} xu
                           </span>
                         )}
+                        <div className="mt-1 flex justify-end">
+                          {statusBadge}
+                        </div>
                       </div>
                       <div className="flex-1 text-right">
                         {ch.audioPrice !== undefined &&
                         ch.audioPrice !== null ? (
                           <span className="text-blue-400 text-sm whitespace-nowrap">
-                            Audio:{" "}
+                            Giá bản nghe:{" "}
                             {ch.audioPrice === 0
                               ? "Miễn phí"
                               : `${ch.audioPrice.toLocaleString()} xu`}
@@ -591,6 +562,16 @@ export default function OwnerChapters() {
                           <span className="text-gray-500 text-xs">
                             Chưa có audio
                           </span>
+                        )}
+                        {hasAudio && (
+                          <div className="mt-1 flex justify-end items-center gap-1">
+                            <span className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs">
+                              Audio
+                            </span>
+                            <span className="text-xs text-gray-300">
+                              {formatDuration(audioDuration)}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -615,7 +596,7 @@ export default function OwnerChapters() {
                         to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
                         state={{ bookTitle }}
                         className="px-2 py-1 min-w-[50px] text-center bg-green-500 rounded text-xs text-white hover:bg-green-600"
-                        aria-label={`Sửa chương ${ch.chapterTitle}`}
+                        aria-label={`Sửa chương của sách ${ch.chapterTitle}`}
                       >
                         Sửa
                       </Link>
