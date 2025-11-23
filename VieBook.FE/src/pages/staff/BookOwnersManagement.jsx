@@ -189,8 +189,6 @@ export default function BookOwnersManagement() {
             <option value="all">Tất cả trạng thái</option>
             <option value="Active">Hoạt động</option>
             <option value="Locked">Bị khóa</option>
-            <option value="Pending">Chờ duyệt</option>
-            <option value="Inactive">Không hoạt động</option>
           </select>
         </div>
 
@@ -203,12 +201,6 @@ export default function BookOwnersManagement() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Số sách
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Lượt xem
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Đánh giá
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Gói VIP
@@ -224,7 +216,7 @@ export default function BookOwnersManagement() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-6 text-gray-500">
+                  <td colSpan="5" className="text-center py-6 text-gray-500">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                       <span className="ml-2">Đang tải...</span>
@@ -254,10 +246,6 @@ export default function BookOwnersManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">{owner.bookCount}</td>
-                    <td className="px-6 py-4">
-                      {owner.orderCount || 0}
-                    </td>
-                    <td className="px-6 py-4">-</td>
                     <td className="px-6 py-4">
                       {renderVipBadge(owner)}
                     </td>
@@ -308,7 +296,7 @@ export default function BookOwnersManagement() {
               )}
               {!loading && paginatedOwners.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="text-center py-6 text-gray-500">
+                  <td colSpan="5" className="text-center py-6 text-gray-500">
                     Không có dữ liệu
                   </td>
                 </tr>
