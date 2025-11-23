@@ -675,7 +675,7 @@ export default function PurchaseModal({
                               </div>
                             ) : (
                               <div className="text-xs text-blue-400 font-bold">
-                                {((((chapter.priceSoft || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9).toFixed(0)).toLocaleString()} xu
+                                {parseFloat((((chapter.priceSoft || 0) + (audioPrices[chapter.chapterId] || 0)) * 0.9).toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu
                               </div>
                             )
                           )}
