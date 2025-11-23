@@ -125,15 +125,20 @@ namespace VieBook.BE.Controllers
         {
             try
             {
-                var category = await _categoryService.GetByIdAsync(id);
+                // Kiểm tra xem category có sách nào không
+                // Cần load Books để kiểm tra
+                var category = await _categoryService.GetByIdWithBooksAsync(id);
                 if (category == null) return NotFound();
 
-                // Kiểm tra xem category có sách nào không
                 if (category.Books != null && category.Books.Any())
                 {
-                    return BadRequest("Không thể xóa thể loại đang có sách");
+                    // Nếu category đang được sử dụng, chuyển sang trạng thái không hoạt động
+                    category.IsActive = false;
+                    await _categoryService.UpdateAsync(category);
+                    return Ok(new { message = $"Thể loại \"{category.Name}\" đang được sử dụng và đã chuyển sang trạng thái không hoạt động" });
                 }
 
+                // Nếu không có sách, xóa category
                 await _categoryService.DeleteAsync(category);
                 return NoContent();
             }

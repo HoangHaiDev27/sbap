@@ -31,5 +31,7 @@ namespace Repositories.Implementations
         public Task<List<Category>> GetChildrenAsync(int parentId) => _categoryDAO.GetChildrenAsync(parentId);
 
         public Task<bool> IsNameExistsAsync(string name, int? excludeId = null) => _categoryDAO.IsNameExistsAsync(name, excludeId);
+
+        public Task<Category?> GetByIdWithBooksAsync(int id) => _categoryDAO.GetByIdWithBooksAsync(id);
     }
 }

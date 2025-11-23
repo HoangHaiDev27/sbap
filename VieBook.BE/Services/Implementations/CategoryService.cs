@@ -31,5 +31,7 @@ namespace Services.Implementations
         public Task<List<Category>> GetChildrenAsync(int parentId) => _categoryRepo.GetChildrenAsync(parentId);
 
         public Task<bool> IsNameExistsAsync(string name, int? excludeId = null) => _categoryRepo.IsNameExistsAsync(name, excludeId);
+
+        public Task<Category?> GetByIdWithBooksAsync(int id) => _categoryRepo.GetByIdWithBooksAsync(id);
     }
 }

@@ -20,7 +20,9 @@ namespace DataAccess.DAO
         // get all Category
         public async Task<List<Category>> GetAllAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories
+                .Include(c => c.Books)
+                .ToListAsync();
         }
 
         // get Category by Id
@@ -29,6 +31,16 @@ namespace DataAccess.DAO
             return await _context.Categories
                 .Include(c => c.Parent)
                 .Include(c => c.InverseParent)
+                .FirstOrDefaultAsync(c => c.CategoryId == id);
+        }
+
+        // get Category by Id with Books
+        public async Task<Category?> GetByIdWithBooksAsync(int id)
+        {
+            return await _context.Categories
+                .Include(c => c.Parent)
+                .Include(c => c.InverseParent)
+                .Include(c => c.Books)
                 .FirstOrDefaultAsync(c => c.CategoryId == id);
         }
 

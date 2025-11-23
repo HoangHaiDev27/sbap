@@ -60,7 +60,7 @@ export default function CategoriesManagement() {
 
   const handleAddNew = () => {
     setEditingCategory(null);
-    setFormData({ name: '', type: 'Genre', isActive: true });
+    setFormData({ name: '', isActive: true });
     setShowCategoryModal(true);
   };
 
@@ -68,7 +68,6 @@ export default function CategoriesManagement() {
     setEditingCategory(category);
     setFormData({ 
       name: category.name, 
-      type: category.type || 'Genre', 
       isActive: category.isActive 
     });
     setShowCategoryModal(true);
@@ -82,23 +81,22 @@ export default function CategoriesManagement() {
         return;
       }
 
-      if (!formData.type.trim()) {
-        setError('Loại thể loại không được để trống');
-        toast.error('Loại thể loại không được để trống');
-        return;
-      }
-
       if (editingCategory) {
-        // Update existing category - cần thêm categoryId vào formData
+        // Update existing category - cần thêm categoryId vào formData và giữ type hiện tại
         const updateData = {
           ...formData,
-          categoryId: editingCategory.categoryId
+          categoryId: editingCategory.categoryId,
+          type: editingCategory.type || 'Genre' // Giữ type từ category hiện tại
         };
         await updateCategory(editingCategory.categoryId, updateData);
         toast.success(`Cập nhật thể loại "${formData.name}" thành công!`);
       } else {
-        // Create new category
-        await createCategory(formData);
+        // Create new category - tự động set type = 'Genre'
+        const createData = {
+          ...formData,
+          type: 'Genre' // Giá trị mặc định
+        };
+        await createCategory(createData);
         toast.success(`Tạo thể loại "${formData.name}" thành công!`);
       }
       await loadCategories(); // Reload data
@@ -119,12 +117,18 @@ export default function CategoriesManagement() {
   const confirmDelete = async () => {
     try {
       const categoryToDelete = categories.find(cat => cat.categoryId === deleteId);
-      await deleteCategory(deleteId);
+      const result = await deleteCategory(deleteId);
       await loadCategories(); // Reload data
       setShowDeleteModal(false);
       
-      // Hiển thị toast thành công
-      toast.success(`Xóa thể loại "${categoryToDelete?.name || 'này'}" thành công!`);
+      // Hiển thị toast phù hợp
+      if (result.deactivated) {
+        // Category đã được chuyển sang không hoạt động
+        toast.success(result.message || `Thể loại "${categoryToDelete?.name || 'này'}" đang được sử dụng và đã chuyển sang trạng thái không hoạt động`);
+      } else {
+        // Category đã được xóa thành công
+        toast.success(`Xóa thể loại "${categoryToDelete?.name || 'này'}" thành công!`);
+      }
     } catch (err) {
       setError(err.message);
       toast.error(`Lỗi khi xóa thể loại: ${err.message}`);
@@ -177,8 +181,8 @@ export default function CategoriesManagement() {
                 className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">Tất cả</option>
-                <option value="active">Đang dùng</option>
-                <option value="inactive">Không dùng</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Không hoạt động</option>
               </select>
 
               {/* Nút thêm */}
@@ -196,7 +200,6 @@ export default function CategoriesManagement() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên thể loại</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số lượng sách</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
@@ -205,7 +208,7 @@ export default function CategoriesManagement() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className="text-center py-6 text-gray-500">
+                      <td colSpan="4" className="text-center py-6 text-gray-500">
                         <div className="flex items-center justify-center">
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                           <span className="ml-2">Đang tải...</span>
@@ -216,7 +219,6 @@ export default function CategoriesManagement() {
                     paginatedCategories.map((category) => (
                       <tr key={category.categoryId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 font-medium text-gray-900">{category.name}</td>
-                        <td className="px-6 py-4 text-gray-900">{category.type}</td>
                         <td className="px-6 py-4">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -225,11 +227,11 @@ export default function CategoriesManagement() {
                                 : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {category.isActive ? 'Đang dùng' : 'Không dùng'}
+                            {category.isActive ? 'Hoạt động' : 'Không hoạt động'}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-gray-500">
-                          {category.books ? category.books.length : 0} sách
+                          {category.bookCount || 0} sách
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex space-x-2">
@@ -254,7 +256,7 @@ export default function CategoriesManagement() {
                   )}
                   {!loading && paginatedCategories.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="text-center py-6 text-gray-500">
+                      <td colSpan="4" className="text-center py-6 text-gray-500">
                         Không có dữ liệu
                       </td>
                     </tr>

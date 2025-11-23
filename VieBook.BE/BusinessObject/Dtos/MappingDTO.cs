@@ -128,7 +128,12 @@ namespace BusinessObject.Dtos
                 .ForMember(dest => dest.Promotions, opt => opt.Ignore());
 
             // Category → CategoryDTO
-            CreateMap<Category, CategoryDTO>().ReverseMap();
+            CreateMap<Category, CategoryDTO>()
+                .ForMember(dest => dest.BookCount, opt => opt.MapFrom(src => src.Books != null ? src.Books.Count : 0));
+            
+            // CategoryDTO → Category (reverse map, ignore BookCount)
+            CreateMap<CategoryDTO, Category>()
+                .ForMember(dest => dest.Books, opt => opt.Ignore());
             // Book → BookResponseDTO
             CreateMap<Book, BookResponseDTO>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BookId))

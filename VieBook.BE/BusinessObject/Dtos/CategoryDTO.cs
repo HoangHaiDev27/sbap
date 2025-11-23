@@ -13,6 +13,7 @@ namespace BusinessObject.Dtos
         public string Type { get; set; } = string.Empty;
         public int? ParentId { get; set; }
         public bool IsActive { get; set; }
+        public int BookCount { get; set; }
 
     }
 }

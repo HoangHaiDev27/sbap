@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  RiStarFill,
   RiBookOpenLine,
   RiEyeLine,
   RiEdit2Line,
@@ -253,7 +252,6 @@ export default function BookTable({ books, categories, onBookDeleted }) {
             <th className="p-3">Thể loại</th>
             <th className="p-3">Giá</th>
             <th className="p-3">Đã bán</th>
-            <th className="p-3">Đánh giá</th>
             <th className="p-3">Trạng thái</th>
             <th className="p-3">Hành động</th>
           </tr>
@@ -278,11 +276,6 @@ export default function BookTable({ books, categories, onBookDeleted }) {
               <td className="p-3">{getCategoryTags(book.categoryIds)}</td>
               <td className="p-3">{book.totalPrice || 0}</td>
               <td className="p-3">{book.sold || 0}</td>
-              <td className="p-3 align-middle text-yellow-400">
-                <div className="flex items-center">
-                  <RiStarFill className="mr-1" /> {book.rating || 0}
-                </div>
-              </td>
               <td className="p-3">{getStatusBadge(book.status)}</td>
               <td className="p-3 align-middle">
                 <div className="flex items-center space-x-2">
