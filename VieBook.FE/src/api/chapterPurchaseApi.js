@@ -14,7 +14,19 @@ export async function purchaseChapters(bookId, chapterIds, purchaseType = 'soft'
       purchaseType: purchaseType // 'soft' hoặc 'audio'
     }),
   });
-  return res.json();
+  
+  const data = await res.json();
+  
+  // Nếu response không OK, trả về object có error
+  if (!res.ok) {
+    return {
+      error: -1,
+      message: data.message || data.Message || `Lỗi ${res.status}: ${res.statusText}`,
+      success: false
+    };
+  }
+  
+  return data;
 }
 
 // Kiểm tra quyền sở hữu chapter

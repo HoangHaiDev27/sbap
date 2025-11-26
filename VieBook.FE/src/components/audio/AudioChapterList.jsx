@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { RiVoiceprintLine, RiCheckboxCircleLine, RiPlayCircleLine } from "react-icons/ri";
+import { RiVoiceprintLine, RiCheckboxCircleLine, RiPlayCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiShoppingCartLine, RiCloseLine } from "react-icons/ri";
 import { API_ENDPOINTS } from "../../config/apiConfig";
 import { getUserId } from "../../api/authApi";
+import { getVoiceDisplayName } from "../../utils/voiceMapping";
+import { purchaseChapters } from "../../api/chapterPurchaseApi";
+import { useCoinsStore } from "../../hooks/stores/coinStore";
+import { useNotificationStore } from "../../hooks/stores/notificationStore";
 import toast from "react-hot-toast";
 
 export default function AudioChapterList({
@@ -16,13 +20,63 @@ export default function AudioChapterList({
   setSelectedVoice,
   purchasedAudioChapters,
   isOwner,
+  bookId,
+  bookTitle,
+  onPurchaseSuccess,
 }) {
   const [chapterAudios, setChapterAudios] = useState({}); // { chapterId: [audios] }
   const [expandedChapters, setExpandedChapters] = useState(new Set([currentChapter]));
+  const [purchaseModal, setPurchaseModal] = useState({ open: false, chapter: null });
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [bookOwnerId, setBookOwnerId] = useState(null);
   
-  // Fetch audio cho các chapter khi popup mở
+  const coins = useCoinsStore((s) => s.coins || 0);
+  const fetchCoins = useCoinsStore((s) => s.fetchCoins);
+  const { addNotification } = useNotificationStore();
+  
+  // Fetch book data để lấy ownerId
   useEffect(() => {
-    if (showChapters && chapters.length > 0) {
+    if (bookId) {
+      const fetchBookOwner = async () => {
+        try {
+          let bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
+          if (!bookRes.ok) {
+            bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
+          }
+          if (bookRes.ok) {
+            const bookData = await bookRes.json();
+            // Lấy OwnerId từ BookDetailDTO (theo backend: OwnerId là int)
+            const ownerId = bookData.OwnerId || bookData.ownerId || null;
+            
+            console.log("AudioChapterList - Fetching book owner:", {
+              bookId: bookId,
+              OwnerId: bookData.OwnerId,
+              ownerId: bookData.ownerId,
+              finalOwnerId: ownerId
+            });
+            
+            setBookOwnerId(ownerId);
+          }
+        } catch (error) {
+          console.error("Error fetching book owner:", error);
+        }
+      };
+      fetchBookOwner();
+    }
+  }, [bookId]);
+  
+  // Kiểm tra xem user đang đăng nhập có phải là owner không
+  const currentUserId = getUserId();
+  const currentUserIdNum = currentUserId ? Number(currentUserId) : null;
+  const ownerIdNum = bookOwnerId ? Number(bookOwnerId) : null;
+  const isUserOwner = !!(currentUserIdNum && ownerIdNum && currentUserIdNum === ownerIdNum);
+  
+  // Ưu tiên dùng isOwner từ props, nếu không có thì dùng isUserOwner
+  const finalIsOwner = isOwner !== null && isOwner !== undefined ? !!isOwner : isUserOwner;
+  
+  // Fetch audio cho các chapter
+  useEffect(() => {
+    if (chapters.length > 0) {
       // Fetch audio cho tất cả chapter
       const fetchAllChapterAudios = async () => {
         const promises = chapters.map(async (chapter) => {
@@ -54,7 +108,7 @@ export default function AudioChapterList({
       
       fetchAllChapterAudios();
     }
-  }, [showChapters, chapters]);
+  }, [chapters]);
 
   const toggleChapterExpand = (index) => {
     const newExpanded = new Set(expandedChapters);
@@ -65,32 +119,102 @@ export default function AudioChapterList({
     }
     setExpandedChapters(newExpanded);
   };
+
+  const handlePurchase = async () => {
+    if (!purchaseModal.chapter || !bookId) return;
+    
+    // Kiểm tra nếu là owner của chapter audio hoặc sách thì không cho mua
+    const chapterAudiosForModal = chapterAudios[purchaseModal.chapter.chapterId] || [];
+    const isChapterAudioOwner = chapterAudiosForModal.some(audio => {
+      const audioUserId = audio.userId || audio.UserId || null;
+      return currentUserIdNum && audioUserId && currentUserIdNum === Number(audioUserId);
+    });
+    const isChapterOwner = isChapterAudioOwner || finalIsOwner;
+    
+    if (isChapterOwner) {
+      toast.error("Bạn là chủ sở hữu audio này, không cần mua");
+      setPurchaseModal({ open: false, chapter: null });
+      return;
+    }
+    
+    const chapter = purchaseModal.chapter;
+    const price = chapter.priceAudio || 0;
+    
+    if (coins < price) {
+      toast.error("Bạn không đủ xu để mua audio này");
+      return;
+    }
+    
+    setIsPurchasing(true);
+    try {
+      // Đảm bảo bookId là số nguyên
+      const bookIdInt = typeof bookId === 'string' ? parseInt(bookId, 10) : bookId;
+      const chapterIdInt = typeof chapter.chapterId === 'string' ? parseInt(chapter.chapterId, 10) : chapter.chapterId;
+      
+      if (isNaN(bookIdInt) || isNaN(chapterIdInt)) {
+        throw new Error("ID sách hoặc chương không hợp lệ");
+      }
+      
+      const response = await purchaseChapters(bookIdInt, [chapterIdInt], 'audio');
+      
+      // Kiểm tra response.success nếu có
+      if (response?.success === false) {
+        const errorMessage = response.message || response.Message || "Lỗi khi mua audio";
+        // Chuyển đổi thông báo lỗi tiếng Anh sang tiếng Việt nếu cần
+        const translatedMessage = errorMessage.includes("your own book") 
+          ? "Bạn là chủ sở hữu sách này, không thể mua audio của chính mình"
+          : errorMessage;
+        throw new Error(translatedMessage);
+      }
+      
+      if (response?.error !== undefined && response.error !== 0) {
+        const errorMessage = response.message || response.Message || "Lỗi khi mua audio";
+        // Chuyển đổi thông báo lỗi tiếng Anh sang tiếng Việt nếu cần
+        const translatedMessage = errorMessage.includes("your own book") 
+          ? "Bạn là chủ sở hữu sách này, không thể mua audio của chính mình"
+          : errorMessage;
+        throw new Error(translatedMessage);
+      }
+      
+      // Cập nhật số xu
+      await fetchCoins();
+      
+      // Thêm thông báo
+      const notification = {
+        notificationId: Date.now(),
+        userId: getUserId(),
+        type: "BOOK_PURCHASE",
+        title: "Mua audio thành công",
+        body: `Bạn đã mua thành công audio chương "${chapter.title}" của "${bookTitle || 'sách'}". Chi phí: ${price.toLocaleString('vi-VN')} xu.`,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      addNotification(notification);
+      
+      toast.success("Mua audio thành công!");
+      setPurchaseModal({ open: false, chapter: null });
+      
+      // Refresh purchased chapters
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess([chapter.chapterId]);
+      }
+    } catch (error) {
+      toast.error(error.message || "Không thể mua audio");
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
   
-  if (!showChapters) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Overlay tối nền */}
-      <div
-        className="fixed inset-0 bg-black/50"
-        onClick={() => setShowChapters(false)}
-      ></div>
+    <div className="h-full flex flex-col bg-gray-800/50" style={{ pointerEvents: 'auto' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800" style={{ pointerEvents: 'auto' }}>
+        <h3 className="text-lg font-semibold text-white">Danh sách chương</h3>
+        <span className="text-xs text-gray-400">{chapters.length} chương</span>
+      </div>
 
-      {/* Modal - Tăng width */}
-      <div className="relative bg-gray-800 p-6 rounded-lg max-w-3xl w-full shadow-2xl z-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-700">
-          <h3 className="text-lg font-semibold">Danh sách chương</h3>
-          <button
-            onClick={() => setShowChapters(false)}
-            className="p-1 rounded-lg hover:bg-gray-700 transition-colors text-gray-400 hover:text-white"
-          >
-            ✖
-          </button>
-        </div>
-
-        {/* List chapters */}
-        <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+      {/* List chapters */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar" style={{ pointerEvents: 'auto' }}>
           {chapters.map((chapter, index) => {
             const audios = chapterAudios[chapter.chapterId] || [];
             const isExpanded = expandedChapters.has(index);
@@ -98,121 +222,214 @@ export default function AudioChapterList({
             const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
             const isLoggedIn = getUserId() !== null;
             const isOwned = purchasedAudioChapters.includes(chapter.chapterId);
-            const hasAudioAccess = isOwned || isOwner || isFree;
-            const isDisabled = !isLoggedIn || (!hasAudioAccess && !isOwner);
+            
+            // Kiểm tra xem user hiện tại có phải là UserId trong ChapterAudio của chapter này không
+            const isChapterAudioOwner = audios.some(audio => {
+              const audioUserId = audio.userId || audio.UserId || null;
+              return currentUserIdNum && audioUserId && currentUserIdNum === Number(audioUserId);
+            });
+            
+            // Nếu user là owner của chapter audio hoặc owner của sách, thì có quyền truy cập
+            const isChapterOwner = isChapterAudioOwner || finalIsOwner;
+            
+            // Log để kiểm tra
+            if (index === 0) {
+              console.log("AudioChapterList - Owner check:", {
+                isOwner: isOwner,
+                finalIsOwner: finalIsOwner,
+                currentUserId: currentUserId,
+                currentUserIdNum: currentUserIdNum,
+                bookOwnerId: bookOwnerId,
+                ownerIdNum: ownerIdNum,
+                isUserOwner: isUserOwner,
+                isChapterAudioOwner: isChapterAudioOwner,
+                isChapterOwner: isChapterOwner,
+                isLoggedIn: isLoggedIn,
+                isOwned: isOwned,
+                isFree: isFree,
+                chapterId: chapter.chapterId,
+                chapterTitle: chapter.title,
+                audios: audios.map(a => ({ audioId: a.audioId, userId: a.userId || a.UserId }))
+              });
+            }
+            
+            // Logic kiểm tra quyền truy cập: owner của chapter audio hoặc owner của sách hoặc đã mua hoặc free
+            const hasAudioAccess = isOwned || isChapterOwner || isFree;
+            const canAccess = hasAudioAccess;
             
             return (
-              <div key={chapter.id} className="space-y-2">
-                {/* Chapter header */}
-                <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                  isCurrentChapter
-                    ? "bg-blue-600 text-white shadow-md"
-                    : isDisabled
-                    ? "bg-gray-700 opacity-60"
-                    : "bg-gray-700"
-                }`}>
+              <div key={chapter.id} className="space-y-1">
+                {/* Chapter header - clickable */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    
+                    // Luôn cho phép toggle expand để xem danh sách giọng
+                    if (audios.length > 0) {
+                      toggleChapterExpand(index);
+                    }
+                    
+                    // Chỉ chuyển chương nếu có quyền truy cập
+                    if (!isLoggedIn) {
+                      toast.error("Bạn phải đăng nhập để nghe audio");
+                      return;
+                    }
+                    if (!isOwned && !isFree && !isChapterOwner) {
+                      toast.error("Bạn cần mua audio này để nghe");
+                      return;
+                    }
+                    
+                    // Chọn giọng đầu tiên nếu có
+                    if (audios.length > 0 && audios[0].voiceName) {
+                      setSelectedVoice(audios[0].voiceName);
+                    }
+                    
+                    jumpToChapter(index);
+                  }}
+                  className={`group flex items-center gap-3 p-3 rounded-xl transition-all ${
+                    isCurrentChapter
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30 cursor-pointer"
+                      : !isLoggedIn || (!hasAudioAccess && !isChapterOwner)
+                      ? "bg-gray-700/30 opacity-50 cursor-not-allowed"
+                      : "bg-gray-700/50 hover:bg-gray-700 border border-gray-600/50 hover:border-gray-500 cursor-pointer"
+                  }`}
+                >
                   {/* Chapter Number Badge */}
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
+                  <div className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
                     isCurrentChapter 
-                      ? "bg-blue-700" 
-                      : "bg-gray-600"
+                      ? "bg-blue-800/50 text-white shadow-inner" 
+                      : "bg-gray-600/50 text-gray-300 group-hover:bg-gray-600"
                   }`}>
-                    {chapter.chapterNumber}
+                    {chapter.chapterNumber || index + 1}
                   </div>
                   
-                  {/* Chapter Info - clickable */}
-                  <button
-                    onClick={() => {
-                      if (!isLoggedIn) {
-                        toast.error("Bạn phải đăng nhập để nghe audio");
-                        return;
-                      }
-                      if (!hasAudioAccess && !isOwner) {
-                        toast.error("Bạn cần mua audio này để nghe");
-                        return;
-                      }
-                      jumpToChapter(index);
-                      setShowChapters(false);
-                    }}
-                    className={`flex-1 min-w-0 text-left transition-opacity ${
-                      isDisabled ? "cursor-not-allowed opacity-60" : "hover:opacity-80"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <RiPlayCircleLine className={`text-lg flex-shrink-0 ${
-                        hasAudioAccess ? "text-green-500" : "text-gray-500"
+                  {/* Chapter Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <RiPlayCircleLine className={`text-lg flex-shrink-0 transition-colors ${
+                        hasAudioAccess 
+                          ? isCurrentChapter ? "text-white" : "text-green-400" 
+                          : "text-gray-500"
                       }`} />
-                      <div className="font-medium truncate">{chapter.title}</div>
-                      {isOwner && (
-                        <span className="text-green-400 text-xs font-medium bg-green-600/20 px-2 py-0.5 rounded">
-                          Sách của bạn
+                      <div className={`font-semibold truncate ${
+                        isCurrentChapter ? "text-white" : "text-gray-200"
+                      }`}>
+                        {chapter.title}
+                      </div>
+                      {isChapterOwner && (
+                        <span className="text-green-300 text-xs font-medium bg-green-500/20 px-2 py-0.5 rounded-full border border-green-500/30">
+                          {isChapterAudioOwner ? "Audio của bạn" : "Sách của bạn"}
                         </span>
                       )}
-                      {!isOwner && isOwned && (
-                        <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
+                      {!isChapterOwner && isOwned && (
+                        <RiCheckboxCircleLine className="text-green-400 text-lg flex-shrink-0" />
                       )}
                     </div>
-                    <div className={`text-xs mt-1 flex items-center gap-2 ${isCurrentChapter ? "text-blue-200" : "text-gray-400"}`}>
-                      <span>⏱ {formatTime(chapter.duration)}</span>
+                    <div className={`text-xs flex items-center gap-3 ${
+                      isCurrentChapter ? "text-blue-100" : "text-gray-400"
+                    }`}>
+                      <span className="flex items-center gap-1">
+                        <span>⏱</span>
+                        <span>{formatTime(chapter.duration)}</span>
+                      </span>
                       {audios.length > 0 && (
                         <span className="flex items-center gap-1">
                           <RiVoiceprintLine className="text-xs" />
-                          {audios.length} giọng
+                          <span>{audios.length} giọng</span>
                         </span>
                       )}
                     </div>
-                  </button>
+                  </div>
+                  
+                  {/* Nút mua ngay - chỉ hiện khi đã đăng nhập, chưa mua, không phải owner của chapter audio và không phải free */}
+                  {isLoggedIn && !isChapterOwner && !isOwned && !isFree && chapter.priceAudio > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPurchaseModal({ open: true, chapter });
+                      }}
+                      className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 flex items-center gap-1.5 transform hover:scale-105 !opacity-100"
+                      style={{ opacity: 1 }}
+                    >
+                      <RiShoppingCartLine className="text-sm" />
+                      Mua ngay
+                    </button>
+                  )}
                   
                   {/* Playing Indicator */}
                   {isCurrentChapter && (
-                    <div className="flex-shrink-0 flex items-center gap-1">
+                    <div className="flex-shrink-0 flex items-center gap-1 mr-2">
                       <div className="w-1 h-3 bg-white rounded-full animate-pulse"></div>
-                      <div className="w-1 h-4 bg-white rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                      <div className="w-1 h-3 bg-white rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                      <div className="w-1 h-4 bg-white rounded-full animate-pulse" style={{animationDelay: '0.15s'}}></div>
+                      <div className="w-1 h-3 bg-white rounded-full animate-pulse" style={{animationDelay: '0.3s'}}></div>
                     </div>
                   )}
                   
-                  {/* Expand/Collapse button */}
+                  {/* Expand/Collapse indicator */}
                   {audios.length > 0 && (
-                    <button
-                      onClick={() => toggleChapterExpand(index)}
-                      className={`flex-shrink-0 p-2 rounded hover:bg-opacity-20 hover:bg-white transition-colors ${
-                        isCurrentChapter ? "text-white" : "text-gray-400"
-                      }`}
-                      title={isExpanded ? "Thu gọn" : "Xem giọng đọc"}
-                    >
-                      {isExpanded ? "▼" : "▶"}
-                    </button>
+                    <div className={`flex-shrink-0 p-1.5 ${
+                      isCurrentChapter 
+                        ? "text-white" 
+                        : "text-gray-400"
+                    }`}>
+                      {isExpanded ? (
+                        <RiArrowDownSLine className="text-lg" />
+                      ) : (
+                        <RiArrowRightSLine className="text-lg" />
+                      )}
+                    </div>
                   )}
                 </div>
                 
                 {/* Voice list - expanded */}
                 {isExpanded && audios.length > 0 && (
-                  <div className="ml-14 space-y-1 border-l-2 border-blue-500 pl-3">
+                  <div className="ml-4 space-y-1.5 border-l-2 border-blue-500/50 pl-4 pt-1">
                     {audios.map((audio) => (
                       <button
                         key={audio.audioId}
-                        onClick={() => {
-                          jumpToChapter(index);
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          
+                          // Kiểm tra quyền truy cập trước khi chuyển chương (giống BookDetailsPage)
+                          if (!isLoggedIn) {
+                            toast.error("Bạn phải đăng nhập để nghe audio");
+                            return;
+                          }
+                          if (!isOwned && !isFree && !isChapterOwner) {
+                            toast.error("Bạn cần mua audio này để nghe");
+                            return;
+                          }
+                          
                           setSelectedVoice(audio.voiceName);
-                          setShowChapters(false);
+                          jumpToChapter(index);
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all flex items-center justify-between ${
                           isCurrentChapter && selectedVoice === audio.voiceName
-                            ? "bg-blue-600 text-white font-medium"
-                            : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                            ? "bg-blue-600/80 text-white font-medium shadow-md border border-blue-400/50"
+                            : "bg-gray-700/50 hover:bg-gray-700 text-gray-300 border border-gray-600/30 hover:border-gray-500"
                         }`}
                       >
                         <div className="flex items-center gap-2">
-                          <RiVoiceprintLine className="text-base" />
-                          <span className="capitalize">{audio.voiceName || "Mặc định"}</span>
+                          <RiVoiceprintLine className={`text-base ${
+                            isCurrentChapter && selectedVoice === audio.voiceName 
+                              ? "text-white" 
+                              : "text-blue-400"
+                          }`} />
+                          <span className="font-medium">{getVoiceDisplayName(audio.voiceName)}</span>
                         </div>
-                        <div className="text-xs text-gray-400">
-                          {Math.floor((audio.durationSec || 0) / 60)}:{((audio.durationSec || 0) % 60).toString().padStart(2, '0')}
+                        <div className={`text-xs flex items-center gap-2 ${
+                          isCurrentChapter && selectedVoice === audio.voiceName 
+                            ? "text-blue-100" 
+                            : "text-gray-400"
+                        }`}>
+                          <span>
+                            {Math.floor((audio.durationSec || 0) / 60)}:{((audio.durationSec || 0) % 60).toString().padStart(2, '0')}
+                          </span>
+                          {isCurrentChapter && selectedVoice === audio.voiceName && (
+                            <span className="text-white bg-blue-500 rounded-full w-5 h-5 flex items-center justify-center text-xs">✓</span>
+                          )}
                         </div>
-                        {isCurrentChapter && selectedVoice === audio.voiceName && (
-                          <span className="text-xs ml-2">✓</span>
-                        )}
                       </button>
                     ))}
                   </div>
@@ -221,7 +438,82 @@ export default function AudioChapterList({
             );
           })}
         </div>
-      </div>
+        
+        {/* Purchase Confirmation Modal */}
+        {purchaseModal.open && purchaseModal.chapter && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Xác nhận mua audio</h3>
+                <button
+                  onClick={() => setPurchaseModal({ open: false, chapter: null })}
+                  className="text-gray-400 hover:text-white transition-colors"
+                  disabled={isPurchasing}
+                >
+                  <RiCloseLine className="text-xl" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-gray-700/50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Chương:</span>
+                    <span className="text-white font-medium">{purchaseModal.chapter.title}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Giá:</span>
+                    <span className="text-orange-400 font-bold">
+                      {purchaseModal.chapter.priceAudio?.toLocaleString('vi-VN') || 0} xu
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-gray-600">
+                    <span className="text-gray-400">Xu hiện có:</span>
+                    <span className="text-white font-medium">
+                      {coins.toLocaleString('vi-VN')} xu
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Xu còn lại:</span>
+                    <span className={`font-medium ${
+                      coins >= (purchaseModal.chapter.priceAudio || 0) 
+                        ? "text-green-400" 
+                        : "text-red-400"
+                    }`}>
+                      {(coins - (purchaseModal.chapter.priceAudio || 0)).toLocaleString('vi-VN')} xu
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPurchaseModal({ open: false, chapter: null })}
+                    disabled={isPurchasing}
+                    className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handlePurchase}
+                    disabled={isPurchasing || coins < (purchaseModal.chapter.priceAudio || 0)}
+                    className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isPurchasing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Đang xử lý...
+                      </>
+                    ) : (
+                      <>
+                        <RiShoppingCartLine />
+                        Xác nhận mua
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

@@ -7,12 +7,12 @@ import {
   RiPlayLine,
   RiPauseLine,
   RiSpeedLine,
-  RiListUnordered,
   RiMoonLine,
   RiVolumeDownLine,
   RiVolumeUpLine,
   RiVoiceprintLine,
 } from "react-icons/ri";
+import { getVoiceDisplayName } from "../../utils/voiceMapping";
 
 export default function AudioPlayerContent({
   book,
@@ -41,26 +41,18 @@ export default function AudioPlayerContent({
   showSleepTimer,
   setShowSleepTimer,
   setShowChapters,
+  purchasedAudioChapters,
+  isOwner,
 }) {
   const [showVoice, setShowVoice] = React.useState(false);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative">
-      {/* Chapter button - top right */}
-      <button
-        onClick={() => setShowChapters(true)}
-        className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
-        title="Xem danh sách chương"
-      >
-        <RiListUnordered className="text-lg" />
-        <span className="hidden md:inline">Danh sách chương</span>
-      </button>
-
       <div className="max-w-2xl w-full text-center space-y-6 md:space-y-8">
         {/* Book Cover - Always visible */}
-        <div className="relative mx-auto w-64 h-64 md:w-80 md:h-80 mb-6 md:mb-8">
+        <div className="relative mx-auto w-64 md:w-80 mb-6 md:mb-8">
           {!book ? (
-            <div className="w-full h-full rounded-lg shadow-2xl bg-gray-800 flex items-center justify-center">
+            <div className="w-full h-64 md:h-80 rounded-lg shadow-2xl bg-gray-800 flex items-center justify-center">
               <div className="text-gray-500">
                 <div className="text-5xl mb-2">📖</div>
                 <div className="text-sm">Đang tải...</div>
@@ -71,7 +63,7 @@ export default function AudioPlayerContent({
               <img
                 src={book?.cover || book?.imageUrl || "https://via.placeholder.com/400x400.png?text=Book+Cover"}
                 alt={book?.title || "Book Cover"}
-                className="w-full h-full rounded-lg shadow-2xl object-cover"
+                className="w-full h-auto rounded-lg shadow-2xl object-contain"
                 onError={(e) => {
                   e.target.src = "https://via.placeholder.com/400x400.png?text=Book+Cover";
                 }}
@@ -91,15 +83,15 @@ export default function AudioPlayerContent({
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-400">Đang phát</p>
             {selectedVoice && (
-              <span className="text-xs bg-blue-600 px-2 py-1 rounded">🎤 {selectedVoice}</span>
+              <span className="text-xs bg-blue-600 px-2 py-1 rounded">🎤 {getVoiceDisplayName(selectedVoice)}</span>
             )}
           </div>
-          <p className="font-medium text-lg">{chapters[currentChapter]?.title || "Không có chương"}</p>
           {chapters[currentChapter] && (
-            <p className="text-sm text-blue-400 mt-1">
-              Chương {currentChapter + 1} / {chapters.length}
+            <p className="text-sm text-blue-400 mb-1">
+              Chương {chapters[currentChapter]?.chapterNumber || currentChapter + 1} / {chapters[chapters.length - 1]?.chapterNumber || chapters.length}
             </p>
           )}
+          <p className="font-medium text-lg">{chapters[currentChapter]?.title || "Không có chương"}</p>
         </div>
 
         {/* Progress Bar */}
@@ -134,7 +126,12 @@ export default function AudioPlayerContent({
             <RiReplay10Line className="text-xl md:text-2xl" />
           </button>
           <button
-            onClick={() => jumpToChapter(Math.max(0, currentChapter - 1))}
+            onClick={() => {
+              const prevIndex = Math.max(0, currentChapter - 1);
+              if (prevIndex !== currentChapter) {
+                jumpToChapter(prevIndex);
+              }
+            }}
             className="p-2 rounded-full hover:bg-gray-700 transition-colors"
             title="Chương trước"
           >
@@ -152,7 +149,12 @@ export default function AudioPlayerContent({
             )}
           </button>
           <button
-            onClick={() => jumpToChapter(Math.min(chapters.length - 1, currentChapter + 1))}
+            onClick={() => {
+              const nextIndex = Math.min(chapters.length - 1, currentChapter + 1);
+              if (nextIndex !== currentChapter) {
+                jumpToChapter(nextIndex);
+              }
+            }}
             className="p-2 rounded-full hover:bg-gray-700 transition-colors"
             title="Chương tiếp theo"
           >
@@ -209,7 +211,7 @@ export default function AudioPlayerContent({
               title="Chọn giọng đọc cho chương này"
             >
               <RiVoiceprintLine className="text-base" /> 
-              <span className="font-medium">{selectedVoice ? selectedVoice : "Giọng đọc"}</span>
+              <span className="font-medium">{selectedVoice ? getVoiceDisplayName(selectedVoice) : "Giọng đọc"}</span>
             </button>
             {showVoice && availableVoices && availableVoices.length > 0 && (
               <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 border border-gray-700 rounded-lg p-2 shadow-xl z-10 w-48">
@@ -220,7 +222,6 @@ export default function AudioPlayerContent({
                   <button
                     key={voice}
                     onClick={() => {
-                      console.log(`Switching to voice: ${voice}`);
                       setSelectedVoice(voice);
                       setShowVoice(false);
                     }}
@@ -232,7 +233,7 @@ export default function AudioPlayerContent({
                     title={`Đổi sang giọng ${voice}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium capitalize">{voice || "Mặc định"}</span>
+                      <span className="font-medium">{getVoiceDisplayName(voice)}</span>
                       {selectedVoice === voice && (
                         <span className="text-xs">✓</span>
                       )}

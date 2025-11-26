@@ -61,7 +61,7 @@ namespace VieBook.BE.Controllers
                     return BadRequest(new 
                     { 
                         success = false, 
-                        message = "Không thể tạo audio. Vui lòng kiểm tra subscription của bạn (hết hạn hoặc không đủ lượt chuyển đổi).",
+                        message = "Không thể tạo audio. Vui lòng kiểm tra gói đăng kí của bạn (hết hạn hoặc không đủ lượt chuyển đổi).",
                         characterCount = characterCount,
                         requiredConversions = characterCount > 10000 ? 2 : 1
                     });

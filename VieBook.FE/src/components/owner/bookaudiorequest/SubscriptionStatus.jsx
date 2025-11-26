@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { RiInformationLine } from "react-icons/ri";
 import { getSubscriptionStatus } from "../../../api/ownerBookApi";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
@@ -47,11 +48,17 @@ export default function SubscriptionStatus() {
       <div className="bg-red-900/30 border border-red-500 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <RiInformationLine className="text-red-400 text-xl flex-shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <h3 className="text-red-400 font-semibold mb-2">Chưa có gói đăng ký</h3>
-            <p className="text-gray-300 text-sm">
+            <p className="text-gray-300 text-sm mb-3">
               Bạn cần đăng ký gói để sử dụng tính năng chuyển đổi văn bản thành audio.
             </p>
+            <Link
+              to="/vip"
+              className="inline-block px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors text-sm"
+            >
+              Bấm vào đây để mua
+            </Link>
           </div>
         </div>
       </div>
