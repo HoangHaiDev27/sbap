@@ -119,6 +119,18 @@ export default function VipPackagesPage() {
 
   const canPurchasePlan = subscriptionStatus.canPurchase;
 
+  // Hàm chuyển đổi period từ tiếng Anh sang tiếng Việt
+  const getPeriodInVietnamese = (period) => {
+    if (!period) return '';
+    const periodLower = String(period).toLowerCase();
+    const periodMap = {
+      'weekly': 'tuần',
+      'monthly': 'tháng',
+      'yearly': 'năm'
+    };
+    return periodMap[periodLower] || periodLower;
+  };
+
   const faqs = [
     {
       question: "Có thể dùng trên tất cả thiết bị không?",
@@ -295,7 +307,7 @@ export default function VipPackagesPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-white">{p.name}</h3>
                     <span className="text-xs px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 font-medium uppercase">
-                      {p.period}
+                      {getPeriodInVietnamese(p.period)}
                     </span>
                   </div>
                   <div className="mb-6 pb-4 border-b border-gray-700/50">
@@ -312,7 +324,7 @@ export default function VipPackagesPage() {
                       <span>
                         Số lượt chuyển đổi:{" "}
                         <span className="ml-1 text-white font-semibold">
-                          {p.conversionLimit} lần/{String(p.period || '').toLowerCase()}
+                          {p.conversionLimit} lần/{getPeriodInVietnamese(p.period)}
                         </span>
                       </span>
                     </li>
@@ -321,7 +333,7 @@ export default function VipPackagesPage() {
                       <span>
                         Chu kỳ:{" "}
                         <span className="ml-1 capitalize text-white font-medium">
-                          {String(p.period || '').toLowerCase()}
+                          {getPeriodInVietnamese(p.period)}
                         </span>
                       </span>
                     </li>
@@ -431,7 +443,7 @@ export default function VipPackagesPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Chu kỳ:</span>
                   <span className="text-white font-medium capitalize">
-                    {String(confirmPlan.period || '').toLowerCase()}
+                    {getPeriodInVietnamese(confirmPlan.period)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-700">

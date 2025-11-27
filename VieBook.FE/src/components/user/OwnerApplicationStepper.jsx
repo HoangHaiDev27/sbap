@@ -1,15 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { upsertMyProfile, becomeOwner } from "../../api/userApi";
 import { sendOtpToPhone } from "../../lib/phoneAuth";
 import { getSupportedBanks } from "../../api/vietQrApi";
+import { logout } from "../../api/authApi";
 
 export default function OwnerApplicationStepper({ initialProfile, onClose, onSuccess }) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [banks, setBanks] = useState([]);
   const [loadingBanks, setLoadingBanks] = useState(false);
+  const [triedSubmit, setTriedSubmit] = useState(false); // Track if user tried to submit
 
   const [form, setForm] = useState({
     fullName: initialProfile?.fullName || "",
@@ -64,23 +68,112 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
 
   const setField = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
 
+  // Validation helpers
+  const validatePhoneNumber = (phone) => {
+    if (!phone?.trim()) return "Vui lòng nhập số điện thoại";
+    const cleaned = phone.replace(/\s+/g, '');
+    // Cho phép: số bắt đầu bằng 0, +84, hoặc 84
+    const phoneRegex = /^(\+84|84|0)[0-9]{9,10}$/;
+    if (!phoneRegex.test(cleaned)) {
+      return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam (10-11 số)";
+    }
+    return null;
+  };
+
+  const validateDateOfBirth = (dateStr) => {
+    if (!dateStr) return null; // Tùy chọn
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    
+    if (isNaN(date.getTime())) return "Ngày sinh không hợp lệ";
+    if (date > today) return "Ngày sinh không thể trong tương lai";
+    
+    // Tính tuổi chính xác
+    let age = today.getFullYear() - date.getFullYear();
+    const monthDiff = today.getMonth() - date.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+    
+    if (age < 16) return "Bạn phải đủ 16 tuổi để đăng ký";
+    if (age > 100) return "Ngày sinh không hợp lệ";
+    
+    return null;
+  };
+
+  const validateBankNumber = (bankNumber) => {
+    if (!bankNumber?.trim()) return "Vui lòng nhập số tài khoản";
+    const cleaned = bankNumber.replace(/\s+/g, '');
+    // Số tài khoản thường là số, độ dài từ 8-19 số
+    if (!/^[0-9]{8,19}$/.test(cleaned)) {
+      return "Số tài khoản không hợp lệ. Vui lòng nhập số tài khoản (8-19 chữ số)";
+    }
+    return null;
+  };
+
+  const validateUrl = (url) => {
+    if (!url?.trim()) return null; // Tùy chọn
+    try {
+      new URL(url);
+      return null;
+    } catch {
+      return "URL không hợp lệ. Vui lòng nhập đầy đủ URL (ví dụ: https://example.com)";
+    }
+  };
+
   const validateStep = () => {
     setError("");
     if (step === 1) {
+      // Validate họ tên
       if (!form.fullName?.trim()) return "Vui lòng nhập họ tên";
-      if (!form.phoneNumber?.trim()) return "Vui lòng nhập số điện thoại";
+      if (form.fullName.trim().length < 2) return "Họ tên phải có ít nhất 2 ký tự";
+      if (form.fullName.trim().length > 150) return "Họ tên không được vượt quá 150 ký tự";
+      
+      // Validate số điện thoại
+      const phoneError = validatePhoneNumber(form.phoneNumber);
+      if (phoneError) return phoneError;
+      
+      // Validate ngày sinh (tùy chọn nhưng nếu có thì phải hợp lệ)
+      const dobError = validateDateOfBirth(form.dateOfBirth);
+      if (dobError) return dobError;
+      
       return null;
     }
     if (step === 2) {
-      if (!form.otp && !confirmationResult) return "Vui lòng gửi OTP trước";
+      if (!form.phoneNumber?.trim()) {
+        const phoneError = validatePhoneNumber(form.phoneNumber);
+        if (phoneError) return phoneError;
+      }
+      if (!confirmationResult) return "Vui lòng gửi OTP trước";
+      if (!form.otp?.trim()) return "Vui lòng nhập mã OTP";
+      if (!/^[0-9]{6}$/.test(form.otp.trim())) {
+        return "Mã OTP phải là 6 chữ số";
+      }
       return null;
     }
     if (step === 3) {
-      if (!form.bankNumber?.trim()) return "Vui lòng nhập số tài khoản";
-      if (!form.bankName?.trim()) return "Vui lòng nhập tên ngân hàng";
+      // Validate số tài khoản
+      const bankNumberError = validateBankNumber(form.bankNumber);
+      if (bankNumberError) return bankNumberError;
+      
+      // Validate tên ngân hàng
+      if (!form.bankName?.trim()) return "Vui lòng chọn ngân hàng";
       return null;
     }
     if (step === 4) {
+      // Validate Portfolio URL nếu có
+      if (form.portfolioUrl?.trim()) {
+        const urlError = validateUrl(form.portfolioUrl);
+        if (urlError) return urlError;
+      }
+      
+      // Validate Bio độ dài nếu có
+      if (form.bio?.trim() && form.bio.trim().length > 1000) {
+        return "Giới thiệu bản thân không được vượt quá 1000 ký tự";
+      }
+      
       if (!form.agreeTos) return "Bạn cần đồng ý điều khoản";
       return null;
     }
@@ -101,18 +194,26 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
       }
       setLoading(false);
     }
+    setTriedSubmit(false); // Reset when moving to next step
     setStep(s => Math.min(s + 1, steps.length));
   };
 
-  const back = () => setStep(s => Math.max(1, s - 1));
+  const back = () => {
+    setTriedSubmit(false); // Reset when going back
+    setError(""); // Clear error when going back
+    setStep(s => Math.max(1, s - 1));
+  };
 
   const sendOtp = async () => {
     setError("");
     try {
-      if (!form.phoneNumber) {
-        setError("Vui lòng nhập số điện thoại");
+      // Validate số điện thoại trước khi gửi
+      const phoneError = validatePhoneNumber(form.phoneNumber);
+      if (phoneError) {
+        setError(phoneError);
         return;
       }
+      
       setLoading(true);
       const phone = normalizeToE164(form.phoneNumber);
       const res = await sendOtpToPhone(phone, recaptchaId);
@@ -127,6 +228,15 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
 
   const submitAll = async () => {
     setError("");
+    setTriedSubmit(true); // Mark that user tried to submit
+    
+    // Validate step 4 first
+    const err = validateStep();
+    if (err) {
+      setError(err);
+      return;
+    }
+    
     try {
       setLoading(true);
       // Upsert profile first
@@ -143,8 +253,30 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
       await upsertMyProfile(payload);
       // Then call become owner (server will enforce requirements)
       const res = await becomeOwner();
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: res?.message || "Đăng ký chủ sách thành công" } }));
+      
+      // Hiển thị thông báo thành công
+      window.dispatchEvent(new CustomEvent("app:toast", { 
+        detail: { 
+          type: "success", 
+          message: "Đăng ký chủ sách thành công! Vui lòng đăng nhập lại để sử dụng quyền mới." 
+        } 
+      }));
+      
       setStep(5);
+      setTriedSubmit(false); // Reset on success
+      
+      // Đợi 2 giây để user đọc thông báo, sau đó logout và redirect về login
+      setTimeout(async () => {
+        try {
+          await logout();
+          navigate("/auth");
+        } catch (err) {
+          console.error("Error during logout:", err);
+          // Vẫn redirect dù logout có lỗi
+          navigate("/auth");
+        }
+      }, 5000);
+      
       onSuccess && onSuccess();
     } catch (e) {
       setError(e?.message || "Không thể hoàn tất đăng ký");
@@ -169,14 +301,35 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
       <div className="mt-4">
         {step === 1 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Họ và tên">
-              <input value={form.fullName} onChange={e=>setField('fullName', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+            <Field label="Họ và tên *">
+              <input 
+                value={form.fullName} 
+                onChange={e=>setField('fullName', e.target.value)} 
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                placeholder="Nhập họ và tên đầy đủ"
+                maxLength={150}
+                required
+              />
             </Field>
-            <Field label="Số điện thoại">
-              <input value={form.phoneNumber} onChange={e=>setField('phoneNumber', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+            <Field label="Số điện thoại *">
+              <input 
+                type="tel"
+                value={form.phoneNumber} 
+                onChange={e=>setField('phoneNumber', e.target.value)} 
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                placeholder="0xxx xxx xxx hoặc +84xxx xxx xxx"
+                maxLength={15}
+                required
+              />
             </Field>
-            <Field label="Ngày sinh">
-              <input type="date" value={form.dateOfBirth} onChange={e=>setField('dateOfBirth', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+            <Field label="Ngày sinh (tùy chọn)">
+              <input 
+                type="date" 
+                value={form.dateOfBirth} 
+                onChange={e=>setField('dateOfBirth', e.target.value)} 
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white"
+                max={new Date().toISOString().split('T')[0]}
+              />
             </Field>
           </div>
         )}
@@ -186,23 +339,54 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
             <div id={recaptchaId} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="md:col-span-2">
-                <Field label="Số điện thoại (E.164 nếu quốc tế)">
-                  <input value={form.phoneNumber} onChange={e=>setField('phoneNumber', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+                <Field label="Số điện thoại (E.164 nếu quốc tế) *">
+                  <input 
+                    type="tel"
+                    value={form.phoneNumber} 
+                    onChange={e=>setField('phoneNumber', e.target.value)} 
+                    className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                    placeholder="0xxx xxx xxx hoặc +84xxx xxx xxx"
+                    maxLength={15}
+                    required
+                  />
                 </Field>
               </div>
               <div className="flex items-end">
-                <button onClick={sendOtp} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">Gửi OTP</button>
+                <button 
+                  onClick={sendOtp} 
+                  disabled={loading || !form.phoneNumber?.trim()} 
+                  className="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Gửi OTP
+                </button>
               </div>
             </div>
             {confirmationResult && (
               <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="md:col-span-2">
-                  <Field label="Nhập OTP">
-                    <input value={form.otp} onChange={e=>setField('otp', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+                  <Field label="Nhập OTP *">
+                    <input 
+                      type="text"
+                      value={form.otp} 
+                      onChange={e=>{
+                        const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
+                        setField('otp', value.slice(0, 6)); // Giới hạn 6 số
+                      }} 
+                      className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                      placeholder="Nhập 6 chữ số"
+                      maxLength={6}
+                      required
+                    />
                   </Field>
                 </div>
                 <div className="flex items-end">
-                  <button onClick={next} disabled={loading || !form.otp} className="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg">Xác nhận OTP</button>
+                  <button 
+                    onClick={next} 
+                    disabled={loading || !form.otp || form.otp.length !== 6} 
+                    className="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Xác nhận OTP
+                  </button>
                 </div>
               </div>
             )}
@@ -211,10 +395,21 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
 
         {step === 3 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Số tài khoản">
-              <input value={form.bankNumber} onChange={e=>setField('bankNumber', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+            <Field label="Số tài khoản *">
+              <input 
+                type="text"
+                value={form.bankNumber} 
+                onChange={e=>{
+                  const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
+                  setField('bankNumber', value.slice(0, 19)); // Giới hạn 19 số
+                }} 
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                placeholder="Nhập số tài khoản (8-19 chữ số)"
+                maxLength={19}
+                required
+              />
             </Field>
-            <Field label="Tên ngân hàng">
+            <Field label="Tên ngân hàng *">
               {loadingBanks ? (
                 <div className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-gray-400 text-sm">
                   Đang tải danh sách ngân hàng...
@@ -224,6 +419,7 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
                   value={form.bankName}
                   onChange={(e) => setField('bankName', e.target.value)}
                   className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white"
+                  required
                 >
                   <option value="">-- Chọn ngân hàng --</option>
                   {banks.map((bank) => (
@@ -239,23 +435,74 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
 
         {step === 4 && (
           <div className="space-y-4">
-            <Field label="Portfolio (tuỳ chọn)">
-              <input value={form.portfolioUrl} onChange={e=>setField('portfolioUrl', e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" placeholder="Link tác phẩm, mạng xã hội, Google Drive..." />
+            <Field label="Portfolio (tùy chọn)">
+              <input 
+                type="url"
+                value={form.portfolioUrl} 
+                onChange={e=>setField('portfolioUrl', e.target.value)} 
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                placeholder="https://example.com hoặc link tác phẩm, mạng xã hội, Google Drive..."
+              />
+              <p className="mt-1 text-xs text-gray-400">Ví dụ: https://drive.google.com/... hoặc https://facebook.com/...</p>
             </Field>
-            <Field label="Giới thiệu bản thân (tuỳ chọn)">
-              <textarea value={form.bio} onChange={e=>setField('bio', e.target.value)} rows={4} className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" />
+            <Field label="Giới thiệu bản thân (tùy chọn)">
+              <textarea 
+                value={form.bio} 
+                onChange={e=>setField('bio', e.target.value)} 
+                rows={4} 
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                placeholder="Giới thiệu về bản thân, kinh nghiệm, tác phẩm..."
+                maxLength={1000}
+              />
+              <p className="mt-1 text-xs text-gray-400">
+                {form.bio?.length || 0}/1000 ký tự
+              </p>
             </Field>
-            <label className="flex items-center gap-2 text-sm text-gray-300">
-              <input type="checkbox" checked={form.agreeTos} onChange={e=>setField('agreeTos', e.target.checked)} />
-              Tôi cam kết tuân thủ quy định và điều khoản của VieBook.
-            </label>
+            <div>
+              <label className={`flex items-center gap-2 text-sm ${
+                triedSubmit && !form.agreeTos 
+                  ? 'text-red-300' 
+                  : 'text-gray-300'
+              }`}>
+                <input 
+                  type="checkbox" 
+                  checked={form.agreeTos} 
+                  onChange={e=>{
+                    setField('agreeTos', e.target.checked);
+                    if (e.target.checked) {
+                      setTriedSubmit(false); // Reset error when checked
+                      setError(""); // Clear error message
+                    }
+                  }} 
+                  className={`w-4 h-4 rounded ${
+                    triedSubmit && !form.agreeTos 
+                      ? 'border-red-500' 
+                      : 'border-gray-600'
+                  }`}
+                  required
+                />
+                <span>Tôi cam kết tuân thủ quy định và điều khoản của VieBook. *</span>
+              </label>
+              {triedSubmit && !form.agreeTos && (
+                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                  <i className="ri-error-warning-line"></i>
+                  <span>Bạn cần đồng ý điều khoản để tiếp tục đăng ký</span>
+                </p>
+              )}
+            </div>
           </div>
         )}
 
         {step === 5 && (
           <div className="text-center py-6">
             <i className="ri-checkbox-circle-line text-5xl text-green-500"></i>
-            <p className="mt-2 text-lg">Bạn đã đăng ký chủ sách thành công!</p>
+            <p className="mt-2 text-lg font-semibold">Bạn đã đăng ký chủ sách thành công!</p>
+            <p className="mt-3 text-sm text-gray-300">
+              Vui lòng đăng nhập lại để sử dụng quyền chủ sách.
+            </p>
+            <p className="mt-2 text-xs text-gray-400">
+              Bạn sẽ được chuyển đến trang đăng nhập sau vài giây...
+            </p>
           </div>
         )}
       </div>
@@ -263,8 +510,31 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
       <div className="mt-6 flex justify-between">
         <button onClick={back} disabled={step===1 || step===5} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg disabled:opacity-50">Quay lại</button>
         {step < 4 && <button onClick={next} disabled={step===2 && !confirmationResult} className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg">Tiếp tục</button>}
-        {step === 4 && <button onClick={submitAll} disabled={loading || !form.agreeTos} className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg">Gửi đăng ký</button>}
-        {step === 5 && <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">Đóng</button>}
+        {step === 4 && (
+          <button 
+            onClick={submitAll} 
+            disabled={loading} 
+            className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!form.agreeTos ? "Vui lòng đồng ý điều khoản để tiếp tục" : ""}
+          >
+            Gửi đăng ký
+          </button>
+        )}
+        {step === 5 && (
+          <button 
+            onClick={async () => {
+              try {
+                await logout();
+                navigate("/auth");
+              } catch (err) {
+                navigate("/auth");
+              }
+            }} 
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
+          >
+            Đăng nhập ngay
+          </button>
+        )}
       </div>
     </div>
   );
