@@ -1,22 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  RiBookLine,
-  RiHeadphoneLine,
-  RiUserStarLine,
-  RiUserLine,
-  RiAdminLine,
-  RiExchangeLine,
-  RiThumbUpLine,
-} from "react-icons/ri";
+import {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,} from "recharts";
+import {RiBookLine,RiHeadphoneLine,RiUserStarLine,RiUserLine,RiAdminLine,RiExchangeLine,RiThumbUpLine,} from "react-icons/ri";
 import { getStatistic } from "../../api/adminApi";
 
 export default function AdminPage() {
@@ -69,6 +53,7 @@ export default function AdminPage() {
             change: `${safePercent(data.booksChangePercent)}%`,
             icon: <RiBookLine size={28} className="text-white" />,
             color: "bg-blue-500",
+            link: "/staff/books",
           },
           {
             title: "Sách nói",
@@ -76,6 +61,7 @@ export default function AdminPage() {
             change: `${safePercent(data.audioChangePercent)}%`,
             icon: <RiHeadphoneLine size={28} className="text-white" />,
             color: "bg-purple-500",
+            link: "/staff/books",
           },
           {
             title: "Chủ sở hữu sách",
@@ -83,6 +69,7 @@ export default function AdminPage() {
             change: `${safePercent(data.bookOwnerChangePercent)}%`,
             icon: <RiUserStarLine size={28} className="text-white" />,
             color: "bg-green-500",
+            link: "/staff/book-owners",
           },
           {
             title: "Khách hàng",
@@ -90,6 +77,7 @@ export default function AdminPage() {
             change: `${safePercent(data.customerChangePercent)}%`,
             icon: <RiUserLine size={28} className="text-white" />,
             color: "bg-orange-500",
+            link: "/staff/customers",
           },
           {
             title: "Nhân viên",
@@ -97,6 +85,7 @@ export default function AdminPage() {
             change: `${safePercent(data.staffChangePercent)}%`,
             icon: <RiAdminLine size={28} className="text-white" />,
             color: "bg-red-500",
+            link: "/admin/staff",
           },
           {
             title: "Giao dịch trong tháng",
@@ -104,6 +93,7 @@ export default function AdminPage() {
             change: `${safePercent(data.transactionChangePercent)}%`,
             icon: <RiExchangeLine size={28} className="text-white" />,
             color: "bg-cyan-500",
+            link: "/staff/transactions",
           },
           {
             title: "Doanh thu tháng (VNĐ)",
@@ -111,6 +101,7 @@ export default function AdminPage() {
             change: `${safePercent(data.revenueChangePercent)}%`,
             icon: <RiDongIcon size={28} className="text-white" />,
             color: "bg-amber-500",
+            link: "/staff/transactions",
           },
           {
             title: "Phản hồi tích cực",
@@ -118,6 +109,7 @@ export default function AdminPage() {
             change: `${safePercent(data.feedbackChangePercent)}%`,
             icon: <RiThumbUpLine size={28} className="text-white" />,
             color: "bg-pink-500",
+            link: "/staff/feedback",
           },
         ]);
 
@@ -191,33 +183,34 @@ export default function AdminPage() {
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {statsData.map((stat, index) => (
-                  <div
-                    key={index}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                        <p
-                          className={`text-sm mt-1 ${
-                            parseFloat(stat.change) >= 0 ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {parseFloat(stat.change) >= 0 ? "+" : ""}
-                          {stat.change}
-                        </p>
-                      </div>
-                      <div
-                        className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}
+              {statsData.map((stat, index) => (
+                <a
+                  key={index}
+                  href={stat.link ?? "#"} // nếu không có link thì không chuyển trang
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                      <p
+                        className={`text-sm mt-1 ${
+                          parseFloat(stat.change) >= 0 ? "text-green-600" : "text-red-600"
+                        }`}
                       >
-                        {stat.icon}
-                      </div>
+                        {parseFloat(stat.change) >= 0 ? "+" : ""}
+                        {stat.change}
+                      </p>
+                    </div>
+                    <div
+                      className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}
+                    >
+                      {stat.icon}
                     </div>
                   </div>
-                ))}
-              </div>
+                </a>
+              ))}
+            </div>
 
               {/* Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -242,27 +235,35 @@ export default function AdminPage() {
                 </div>
 
                 {/* Revenue Chart */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Doanh thu theo tháng</h3>
-                  <div className="h-64 flex items-center justify-center">
-                    {revenueData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={revenueData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip
-                            formatter={(value) => `${value.toLocaleString()} vnđ`}
-                            labelFormatter={(label) => `Tháng ${label}`}
-                          />
-                          <Bar dataKey="revenue" name="Tổng" fill="#10B981" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <p className="text-gray-500">Không có dữ liệu</p>
-                    )}
-                  </div>
+               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Doanh thu theo tháng</h3>
+                <div className="h-64 flex items-center justify-center">
+                  {revenueData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={revenueData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis
+                          width={70}
+                          tickFormatter={(value) => {
+                            if (value >= 1_000_000) return Math.round(value / 1_000_000) + " triệu";
+                            if (value >= 1_000) return Math.round(value / 1_000) + "k";
+                            return value;
+                          }}
+                          domain={[0, 'dataMax + dataMax*0.1']}
+                        />
+                        <Tooltip
+                          formatter={(value) => `${value.toLocaleString()} vnđ`}
+                          labelFormatter={(label) => `Tháng ${label}`}
+                        />
+                        <Bar dataKey="revenue" name="Tổng" fill="#10B981" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <p className="text-gray-500">Không có dữ liệu</p>
+                  )}
                 </div>
+              </div>
               </div>
 
               {/* Category & Feedback */}

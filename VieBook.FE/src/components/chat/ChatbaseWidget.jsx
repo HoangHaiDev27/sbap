@@ -27,7 +27,7 @@ export default function ChatbaseWidget() {
       // Chuyển markdown → thẻ <a>
       line = line.replace(linkRegex, (match, label, url) => {
         if (/chi tiết/i.test(label)) {
-          return `<strong>Link chi tiết:</strong> <a href="${url}" class="text-blue-400 underline hover:text-blue-200 transition">${label}</a>`;
+          return `<a href="${url}" class="text-blue-400 underline hover:text-blue-200 transition">${label}</a>`;
         }
         return `<a href="${url}" class="text-blue-400 underline hover:text-blue-200 transition">${label}</a>`;
       });

@@ -96,20 +96,100 @@ namespace DataAccess.DAO.Admin
             double staffChange = CalcChange(staffs, prevStaffs);
 
             // ===== 6. Giao dịch & doanh thu =====
-            var transactionsQuery = _context.WalletTransactions
+            // ---------- OrderItem ----------
+            var orderQuery = _context.OrderItems
+                .Where(o => o.PaidAt >= startDate && o.PaidAt <= endDate);
+
+            // ---------- WalletTransaction ----------
+            var walletQuery = _context.WalletTransactions
                 .Where(t => t.CreatedAt >= startDate && t.CreatedAt <= endDate && t.Status == "Succeeded");
 
-            int monthlyTransactions = await transactionsQuery.CountAsync();
-            decimal monthlyRevenue = await transactionsQuery.SumAsync(t => (decimal?)t.AmountMoney) ?? 0;
+            // ---------- Subscription ----------
+            var subscriptionQuery = _context.Subscriptions
+                .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate && s.Status == "Active");
 
-            // Kỳ trước
-            var prevTransactionsQuery = _context.WalletTransactions
+            // ---------- PaymentRequest ----------
+            var paymentQuery = _context.PaymentRequests
+                .Where(p => p.RequestDate >= startDate && p.RequestDate <= endDate);
+
+
+            // ========== SỐ GIAO DỊCH ==========
+
+            int monthlyOrderTransactions = await orderQuery.CountAsync();
+            int monthlyWalletTransactions = await walletQuery.CountAsync();
+            int monthlySubscriptionTransactions = await subscriptionQuery.CountAsync();
+            int monthlyPaymentTransactions = await paymentQuery.CountAsync();
+
+            int monthlyTransactions =
+                monthlyOrderTransactions
+                + monthlyWalletTransactions
+                + monthlySubscriptionTransactions
+                + monthlyPaymentTransactions;
+
+
+            // ========== DOANH THU ==========
+
+            // Order → xu → VND
+            decimal orderRevenue =
+                (await orderQuery.SumAsync(o => (decimal?)o.CashSpent) ?? 0) * 1000;
+
+            // Wallet → VNĐ
+            decimal walletRevenue =
+                await walletQuery.SumAsync(t => (decimal?)t.AmountMoney) ?? 0;
+
+            // Subscription → lấy giá từ Plan
+            decimal subscriptionRevenue =
+                (await subscriptionQuery.SumAsync(s => (decimal?)s.Plan.Price) ?? 0);
+
+            // PaymentRequest → không cộng vào doanh thu
+            decimal monthlyRevenue = orderRevenue + walletRevenue + subscriptionRevenue;
+
+
+            // ============ KỲ TRƯỚC ============
+
+            // OrderItem trước kỳ
+            var prevOrderQuery = _context.OrderItems
+                .Where(o => o.PaidAt < startDate);
+
+            // WalletTransaction trước kỳ
+            var prevWalletQuery = _context.WalletTransactions
                 .Where(t => t.CreatedAt < startDate && t.Status == "Succeeded");
-            int prevTransactions = await prevTransactionsQuery.CountAsync();
-            decimal prevRevenue = await prevTransactionsQuery.SumAsync(t => (decimal?)t.AmountMoney) ?? 0;
+
+            // Subscription trước kỳ
+            var prevSubscriptionQuery = _context.Subscriptions
+                .Where(s => s.CreatedAt < startDate && s.Status == "Active");
+
+            // PaymentRequest trước kỳ
+            var prevPaymentQuery = _context.PaymentRequests
+                .Where(p => p.RequestDate < startDate);
+
+
+            // ----- Số giao dịch kỳ trước -----
+            int prevTransactions =
+                await prevOrderQuery.CountAsync()
+                + await prevWalletQuery.CountAsync()
+                + await prevSubscriptionQuery.CountAsync()
+                + await prevPaymentQuery.CountAsync();
+
+
+            // ----- Doanh thu kỳ trước -----
+            decimal prevOrderRevenue =
+                (await prevOrderQuery.SumAsync(o => (decimal?)o.CashSpent) ?? 0) * 1000;
+
+            decimal prevWalletRevenue =
+                await prevWalletQuery.SumAsync(t => (decimal?)t.AmountMoney) ?? 0;
+
+            decimal prevSubscriptionRevenue =
+                (await prevSubscriptionQuery.SumAsync(s => (decimal?)s.Plan.Price) ?? 0);
+
+            decimal prevRevenue = prevOrderRevenue + prevWalletRevenue + prevSubscriptionRevenue;
+
+
+            // ========== % THAY ĐỔI ==========
 
             double transactionChange = CalcChange(monthlyTransactions, prevTransactions);
             double revenueChange = CalcChange((double)monthlyRevenue, (double)prevRevenue);
+
 
             // ===== 7. Feedback =====
             // Phản hồi trong kỳ hiện tại
@@ -158,14 +238,60 @@ namespace DataAccess.DAO.Admin
                 .ToList();
 
             // ===== 9. Biểu đồ: Doanh thu theo tháng =====
-            var revenueRaw = await _context.WalletTransactions
+            // === 1. WalletTransactions (VNĐ) ===
+            var totalWalletRevenue = await _context.WalletTransactions
                 .Where(t => t.CreatedAt >= startDate && t.CreatedAt <= endDate && t.Status == "Succeeded")
                 .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
-                .Select(g => new { g.Key.Year, g.Key.Month, Revenue = g.Sum(t => t.AmountMoney) })
-                .OrderBy(g => g.Year)
-                .ThenBy(g => g.Month)
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Revenue = g.Sum(t => t.AmountMoney)
+                })
                 .ToListAsync();
 
+            // === 2. OrderItems (xu → VNĐ) ===
+            var totalOrderRevenue  = await _context.OrderItems
+                .Where(o => o.PaidAt >= startDate && o.PaidAt <= endDate)
+                .GroupBy(o => new { o.PaidAt.Value.Year, o.PaidAt.Value.Month })
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Revenue = g.Sum(o => o.CashSpent * 1000)   // Xu → VNĐ
+                })
+                .ToListAsync();
+
+            // === 3. Subscription (VNĐ) ===
+            var totalSubscriptionRevenue = await _context.Subscriptions
+                .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate && s.Status == "Active")
+                .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Revenue = g.Sum(s => s.Plan.Price)        // lấy price của gói
+                })
+                .ToListAsync();
+
+
+            // === GỘP 3 LOẠI DOANH THU LẠI ===
+            var revenueRaw = totalWalletRevenue
+                .Concat(totalOrderRevenue)
+                .Concat(totalSubscriptionRevenue)
+                .GroupBy(x => new { x.Year, x.Month })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Revenue = g.Sum(x => x.Revenue)
+                })
+                .OrderBy(g => g.Year)
+                .ThenBy(g => g.Month)
+                .ToList();
+
+
+            // === TẠO DANH SÁCH DTO ===
             var revenueData = revenueRaw
                 .Select(r => new RevenueByMonthDTO
                 {
@@ -173,6 +299,7 @@ namespace DataAccess.DAO.Admin
                     Revenue = r.Revenue
                 })
                 .ToList();
+
 
             // ===== 10. Phân loại sách =====
             var categoryRaw = await _context.Categories

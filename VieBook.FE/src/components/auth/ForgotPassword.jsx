@@ -206,7 +206,7 @@ export default function ForgotPassword({ setActiveTab }) {
                 type="text"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder="123456"
+                placeholder="CL6XNL"
                 className="w-full text-center text-lg tracking-widest py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500"
                 maxLength={6}
                 required
