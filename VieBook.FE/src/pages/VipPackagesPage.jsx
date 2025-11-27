@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { isBookOwner, getUserId } from "../api/authApi";
 import { getOwnerPlans, purchaseOwnerPlan } from "../api/userApi";
 import { getSubscriptionStatus } from "../api/ownerBookApi";
@@ -267,6 +268,14 @@ export default function VipPackagesPage() {
                         : 'Vui lòng mua gói mới để tiếp tục sử dụng dịch vụ chuyển đổi sách sang audio.'
                       }
                     </p>
+                    {status === 'active' && (
+                      <Link
+                        to="/owner/books"
+                        className="mt-4 inline-block px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors text-sm"
+                      >
+                        Thử tạo Audio ngay
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
