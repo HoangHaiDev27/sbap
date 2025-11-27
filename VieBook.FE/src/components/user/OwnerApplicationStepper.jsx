@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { upsertMyProfile, becomeOwner } from "../../api/userApi";
 import { sendOtpToPhone } from "../../lib/phoneAuth";
 import { getSupportedBanks } from "../../api/vietQrApi";
+import { logout } from "../../api/authApi";
 
 export default function OwnerApplicationStepper({ initialProfile, onClose, onSuccess }) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -250,9 +253,30 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
       await upsertMyProfile(payload);
       // Then call become owner (server will enforce requirements)
       const res = await becomeOwner();
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: res?.message || "Đăng ký chủ sách thành công" } }));
+      
+      // Hiển thị thông báo thành công
+      window.dispatchEvent(new CustomEvent("app:toast", { 
+        detail: { 
+          type: "success", 
+          message: "Đăng ký chủ sách thành công! Vui lòng đăng nhập lại để sử dụng quyền mới." 
+        } 
+      }));
+      
       setStep(5);
       setTriedSubmit(false); // Reset on success
+      
+      // Đợi 2 giây để user đọc thông báo, sau đó logout và redirect về login
+      setTimeout(async () => {
+        try {
+          await logout();
+          navigate("/auth");
+        } catch (err) {
+          console.error("Error during logout:", err);
+          // Vẫn redirect dù logout có lỗi
+          navigate("/auth");
+        }
+      }, 5000);
+      
       onSuccess && onSuccess();
     } catch (e) {
       setError(e?.message || "Không thể hoàn tất đăng ký");
@@ -472,7 +496,13 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
         {step === 5 && (
           <div className="text-center py-6">
             <i className="ri-checkbox-circle-line text-5xl text-green-500"></i>
-            <p className="mt-2 text-lg">Bạn đã đăng ký chủ sách thành công!</p>
+            <p className="mt-2 text-lg font-semibold">Bạn đã đăng ký chủ sách thành công!</p>
+            <p className="mt-3 text-sm text-gray-300">
+              Vui lòng đăng nhập lại để sử dụng quyền chủ sách.
+            </p>
+            <p className="mt-2 text-xs text-gray-400">
+              Bạn sẽ được chuyển đến trang đăng nhập sau vài giây...
+            </p>
           </div>
         )}
       </div>
@@ -490,7 +520,21 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
             Gửi đăng ký
           </button>
         )}
-        {step === 5 && <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">Đóng</button>}
+        {step === 5 && (
+          <button 
+            onClick={async () => {
+              try {
+                await logout();
+                navigate("/auth");
+              } catch (err) {
+                navigate("/auth");
+              }
+            }} 
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
+          >
+            Đăng nhập ngay
+          </button>
+        )}
       </div>
     </div>
   );
