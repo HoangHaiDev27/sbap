@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using VieBook.BE.Helpers;
+using System.Security.Claims;
 
 namespace VieBook.BE.Controllers
 {
@@ -22,7 +23,7 @@ namespace VieBook.BE.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPosts([FromQuery] string? postType, [FromQuery] string? searchQuery, [FromQuery] string? filter, [FromQuery] string? tag, [FromQuery] int? authorId, [FromQuery] string? subFilter)
+        public async Task<IActionResult> GetPosts([FromQuery] string? postType, [FromQuery] string? searchQuery, [FromQuery] string? filter, [FromQuery] string? tag, [FromQuery] int? authorId, [FromQuery] string? subFilter, [FromQuery] string? visibility)
         {
             try
             {
@@ -31,7 +32,7 @@ namespace VieBook.BE.Controllers
                 {
                     var userId = UserHelper.GetCurrentUserId(HttpContext);
                     if (!userId.HasValue)
-                        return Unauthorized(new { message = "Non authentifié" });
+                        return Unauthorized(new { message = "Not authenticated" });
                     
                     var posts = await _postService.GetPostsByClaimedUserAsync(userId.Value);
                     return Ok(posts);
@@ -42,7 +43,7 @@ namespace VieBook.BE.Controllers
                 {
                     var userId = UserHelper.GetCurrentUserId(HttpContext);
                     if (!userId.HasValue)
-                        return Unauthorized(new { message = "Non authentifié" });
+                        return Unauthorized(new { message = "Not authenticated" });
                     
                     // subFilter: "all" or "hidden"
                     var includeHidden = subFilter == "hidden";
@@ -50,7 +51,7 @@ namespace VieBook.BE.Controllers
                     return Ok(posts);
                 }
 
-                var allPosts = await _postService.GetPostsAsync(postType, searchQuery, tag, authorId);
+                var allPosts = await _postService.GetPostsAsync(postType, searchQuery, tag, authorId, visibility);
                 return Ok(allPosts);
             }
             catch (Exception ex)
@@ -78,7 +79,7 @@ namespace VieBook.BE.Controllers
 
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentication" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
@@ -96,7 +97,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
@@ -118,14 +119,20 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             if (updateDto == null || string.IsNullOrEmpty(updateDto.Visibility))
                 return BadRequest(new { message = "Visibility is required" });
 
+            // Check if user is staff or admin
+            var isStaff = HttpContext.User.Claims
+                .Any(c => c.Type == ClaimTypes.Role && 
+                         (c.Value.Equals("Staff", StringComparison.OrdinalIgnoreCase) || 
+                          c.Value.Equals("Admin", StringComparison.OrdinalIgnoreCase)));
+
             try
             {
-                var post = await _postService.UpdateVisibilityAsync(id, updateDto.Visibility, userId.Value);
+                var post = await _postService.UpdateVisibilityAsync(id, updateDto.Visibility, userId.Value, isStaff);
                 return Ok(post);
             }
             catch (UnauthorizedAccessException)
@@ -147,14 +154,14 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
                 var result = await _postService.DeleteAsync(id, userId.Value);
                 if (result)
-                    return Ok(new { message = "Post supprimé" });
-                return NotFound(new { message = "Post non trouvé" });
+                    return Ok(new { message = "Post deleted" });
+                return NotFound(new { message = "Post not found" });
             }
             catch (Exception ex)
             {
@@ -174,7 +181,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue || userId.Value != ownerId)
-                return Unauthorized(new { message = "Non autorisé" });
+                return Unauthorized(new { message = "Not authorized" });
 
             var offers = await _bookOfferService.GetByOwnerIdAsync(ownerId);
             return Ok(offers);
@@ -185,7 +192,7 @@ namespace VieBook.BE.Controllers
         {
             var offer = await _bookOfferService.GetByIdAsync(offerId);
             if (offer == null)
-                return NotFound(new { message = "Offre non trouvée" });
+                return NotFound(new { message = "Offer not found" });
             return Ok(offer);
         }
 
@@ -194,7 +201,7 @@ namespace VieBook.BE.Controllers
         {
             var offer = await _bookOfferService.GetByPostIdAsync(postId);
             if (offer == null)
-                return NotFound(new { message = "Offre non trouvée" });
+                return NotFound(new { message = "Offer not found" });
             return Ok(offer);
         }
 
@@ -203,7 +210,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
@@ -225,14 +232,14 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
                 var result = await _bookOfferService.DeleteAsync(id, userId.Value);
                 if (result)
-                    return Ok(new { message = "Offre supprimée" });
-                return NotFound(new { message = "Offre non trouvée" });
+                    return Ok(new { message = "Offer deleted" });
+                return NotFound(new { message = "Offer not found" });
             }
             catch (UnauthorizedAccessException)
             {
@@ -256,7 +263,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
@@ -274,7 +281,7 @@ namespace VieBook.BE.Controllers
         {
             var claim = await _bookClaimService.GetByIdAsync(claimId);
             if (claim == null)
-                return NotFound(new { message = "Claim non trouvé" });
+                return NotFound(new { message = "Claim not found" });
             return Ok(claim);
         }
 
@@ -283,7 +290,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             var claims = await _bookClaimService.GetByCustomerIdAsync(userId.Value);
             return Ok(claims);
@@ -301,7 +308,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
@@ -319,7 +326,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
@@ -341,14 +348,14 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
                 var result = await _bookClaimService.ApproveClaimAsync(id, userId.Value);
                 if (result)
-                    return Ok(new { message = "Claim approuvé" });
-                return BadRequest(new { message = "Impossible d'approuver le claim" });
+                    return Ok(new { message = "Claim approved" });
+                return BadRequest(new { message = "Unable to approve the claim" });
             }
             catch (Exception ex)
             {
@@ -361,14 +368,14 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
                 var result = await _bookClaimService.DeleteAsync(id, userId.Value);
                 if (result)
-                    return Ok(new { message = "Claim supprimé" });
-                return NotFound(new { message = "Claim non trouvé" });
+                    return Ok(new { message = "Claim deleted" });
+                return NotFound(new { message = "Claim not found" });
             }
             catch (UnauthorizedAccessException)
             {

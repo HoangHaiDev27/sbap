@@ -15,7 +15,7 @@ import PopularTopics from "../components/forum/PopularTopics";
 import ActiveUsers from "../components/forum/ActiveUsers";
 import CreatePostModal from "../components/forum/CreatePostModal";
 import { getPosts } from "../api/postApi";
-import { isBookOwner } from "../api/authApi";
+import { isBookOwner, getUserId } from "../api/authApi";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import bg from "../assets/forum-bg.png"; // ảnh nền
 
@@ -55,7 +55,7 @@ export default function ForumManager() {
         }
     };
 
-    // Calculate popular topics from posts tags - limit to 10
+    // Calculate popular topics from posts tags - limit to 5
     const popularTopics = useMemo(() => {
         const tagCounts = {};
         allPosts.forEach(post => {
@@ -68,7 +68,7 @@ export default function ForumManager() {
 
         const sortedTags = Object.entries(tagCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 10) // Limit to 10 tags
+            .slice(0, 5) // Limit to 5 tags
             .map(([tag, count], index) => ({
                 name: tag,
                 count: `${count} bài viết`,
@@ -78,7 +78,7 @@ export default function ForumManager() {
         return sortedTags;
     }, [allPosts]);
 
-    // Calculate active owners (book owners) based on total reactions - limit to 10
+    // Calculate active owners (book owners) based on total reactions - limit to 5
     const activeUsers = useMemo(() => {
         const ownerReactions = {};
         const ownerPosts = {}; // Track if user has giveaway posts (owners only)
@@ -110,10 +110,10 @@ export default function ForumManager() {
             }
         });
 
-        // Sort by total reactions and limit to 10
+        // Sort by total reactions and limit to 5
         return Object.values(ownerReactions)
             .sort((a, b) => b.totalReactions - a.totalReactions)
-            .slice(0, 10);
+            .slice(0, 5);
     }, [allPosts]);
 
     return (
@@ -154,7 +154,7 @@ export default function ForumManager() {
                                     className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-300 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                                 />
                             </div>
-                            {isBookOwner() && (
+                            {getUserId() && (
                                 <button
                                     onClick={() => setShowCreateModal(true)}
                                     className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors"

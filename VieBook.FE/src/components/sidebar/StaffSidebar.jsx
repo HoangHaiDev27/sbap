@@ -27,6 +27,7 @@ export default function StaffSidebar({ isOpen, onClose }) {
     { id: 'withdrawals', label: 'Phê duyệt rút tiền', icon: 'ri-bank-card-line', href: '/staff/withdrawals' },
     { id: 'support-chat', label: 'Hỗ trợ khách hàng', icon: 'ri-customer-service-2-line', href: '/staff/support-chat' },
     { id: 'feedback', label: 'Đánh giá', icon: 'ri-message-2-line', href: '/staff/feedback' },
+    { id: 'pending-posts', label: 'Duyệt bài đăng', icon: 'ri-file-check-line', href: '/staff/pending-posts' },
   ];
 
   return (

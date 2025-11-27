@@ -72,3 +72,41 @@ export async function updatePostVisibility(postId, visibility) {
   return res.json();
 }
 
+// Staff functions for post approval
+export async function getPendingPosts() {
+  const res = await authFetch(`${API_ENDPOINTS.POSTS.GET_ALL}?visibility=Pending`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch pending posts");
+  }
+  const data = await res.json();
+  // Handle both array and object with data property
+  return Array.isArray(data) ? data : (data?.data || []);
+}
+
+export async function approvePost(postId) {
+  const res = await authFetch(API_ENDPOINTS.POSTS.UPDATE_VISIBILITY(postId), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ visibility: "Public" }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to approve post");
+  }
+  return res.json();
+}
+
+export async function rejectPost(postId) {
+  const res = await authFetch(API_ENDPOINTS.POSTS.UPDATE_VISIBILITY(postId), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ visibility: "Rejected" }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to reject post");
+  }
+  return res.json();
+}
+

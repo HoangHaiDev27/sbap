@@ -16,8 +16,8 @@ namespace Repositories.Implementations
         public Task<Post?> GetByIdAsync(long postId)
             => _postDAO.GetByIdAsync(postId);
 
-        public Task<List<Post>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null)
-            => _postDAO.GetPostsAsync(postType, searchQuery, tag, authorId);
+        public Task<List<Post>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null, string? visibility = null)
+            => _postDAO.GetPostsAsync(postType, searchQuery, tag, authorId, visibility);
 
         public Task<List<Post>> GetPostsByClaimedUserAsync(int userId)
             => _postDAO.GetPostsByClaimedUserAsync(userId);

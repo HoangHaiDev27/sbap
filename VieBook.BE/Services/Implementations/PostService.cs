@@ -52,9 +52,9 @@ namespace Services.Implementations
             return postDto;
         }
 
-        public async Task<List<PostDTO>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null)
+        public async Task<List<PostDTO>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null, string? visibility = null)
         {
-            var posts = await _postRepository.GetPostsAsync(postType, searchQuery, tag, authorId);
+            var posts = await _postRepository.GetPostsAsync(postType, searchQuery, tag, authorId, visibility);
             var postDtos = _mapper.Map<List<PostDTO>>(posts);
             
             // Calculate ClaimCount (total claims) and ApprovedClaimCount for each BookOffer
@@ -206,17 +206,29 @@ namespace Services.Implementations
             return await _postRepository.DeleteAsync(postId, deletedBy);
         }
 
-        public async Task<PostDTO> UpdateVisibilityAsync(long postId, string visibility, int userId)
+        public async Task<PostDTO> UpdateVisibilityAsync(long postId, string visibility, int userId, bool isStaff = false)
         {
             var post = await _postRepository.GetByIdAsync(postId);
             if (post == null)
                 throw new Exception("Post not found");
 
-            if (post.AuthorId != userId)
-                throw new UnauthorizedAccessException("Not authorized to update this post");
+            // Staff can approve/reject posts (Pending -> Public/Rejected)
+            // Authors can only change between Public and Hidden
+            if (isStaff)
+            {
+                // Staff can change visibility to Public, Rejected, or Hidden
+                if (visibility != "Public" && visibility != "Rejected" && visibility != "Hidden")
+                    throw new ArgumentException("Visibility must be 'Public', 'Rejected', or 'Hidden'");
+            }
+            else
+            {
+                // Non-staff users can only change their own posts between Public and Hidden
+                if (post.AuthorId != userId)
+                    throw new UnauthorizedAccessException("Not authorized to update this post");
 
-            if (visibility != "Public" && visibility != "Hidden")
-                throw new ArgumentException("Visibility must be 'Public' or 'Hidden'");
+                if (visibility != "Public" && visibility != "Hidden")
+                    throw new ArgumentException("Visibility must be 'Public' or 'Hidden'");
+            }
 
             post.Visibility = visibility;
             post.UpdatedAt = DateTime.UtcNow;
