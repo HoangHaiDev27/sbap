@@ -6,6 +6,7 @@ import { saveReadingProgress, getCurrentReadingProgress } from "../../api/readin
 import { API_ENDPOINTS } from "../../config/apiConfig";
 import { getUserId } from "../../api/authApi";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
+import toast from "react-hot-toast";
 
 export default function AudioPlayer({ bookId, chapterId }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -21,21 +22,20 @@ export default function AudioPlayer({ bookId, chapterId }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
   
-  // State for data
   const [book, setBook] = useState(null);
   const [chapters, setChapters] = useState([]);
-  const [allAudioData, setAllAudioData] = useState([]); // Store all audio data
-  const [selectedVoice, setSelectedVoice] = useState(null); // Selected voice name
-  const [availableVoices, setAvailableVoices] = useState([]); // Available voices for current chapter
-  const [currentAudioUrl, setCurrentAudioUrl] = useState(""); // Current audio URL to play
+  const [allAudioData, setAllAudioData] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [currentAudioUrl, setCurrentAudioUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [purchasedAudioChapters, setPurchasedAudioChapters] = useState([]); // Lưu danh sách chương đã mua audio
-  const [isOwner, setIsOwner] = useState(false); // Kiểm tra xem có phải owner không
-  const [hasLoadedSavedPosition, setHasLoadedSavedPosition] = useState(false); // Đánh dấu đã load vị trí đã lưu
-  const saveProgressTimeoutRef = useRef(null); // Ref cho debounce save progress
+  const [purchasedAudioChapters, setPurchasedAudioChapters] = useState([]);
+  const [isOwner, setIsOwner] = useState(false);
+  const [hasLoadedSavedPosition, setHasLoadedSavedPosition] = useState(false);
+  const saveProgressTimeoutRef = useRef(null);
+  const sleepTimerRef = useRef(null);
   
-  // Audio ref
   const audioRef = useRef(null);
 
   // Fetch book data
@@ -45,7 +45,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
         setLoading(true);
         setError(null);
 
-        // Fetch book details - try audio book endpoint first
         let bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
         if (!bookRes.ok) {
           bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
@@ -53,12 +52,25 @@ export default function AudioPlayer({ bookId, chapterId }) {
         if (!bookRes.ok) throw new Error("Không thể tải thông tin sách");
         const bookData = await bookRes.json();
 
-        // Check if user is owner
         const currentUserId = getUserId();
-        const userIsOwner = currentUserId && bookData.ownerId && currentUserId === bookData.ownerId;
+        // Lấy OwnerId từ BookDetailDTO (theo backend: OwnerId là int)
+        const bookOwnerId = bookData.OwnerId || bookData.ownerId || null;
+        // Đảm bảo so sánh đúng kiểu dữ liệu (chuyển cả hai về số để so sánh)
+        const currentUserIdNum = currentUserId ? Number(currentUserId) : null;
+        const ownerIdNum = bookOwnerId ? Number(bookOwnerId) : null;
+        const userIsOwner = !!(currentUserIdNum && ownerIdNum && currentUserIdNum === ownerIdNum);
         setIsOwner(userIsOwner);
+        
+        console.log("AudioPlayer - Setting isOwner:", {
+          currentUserId: currentUserId,
+          currentUserIdNum: currentUserIdNum,
+          bookDataOwnerId: bookData.OwnerId,
+          bookOwnerId: bookOwnerId,
+          ownerIdNum: ownerIdNum,
+          userIsOwner: userIsOwner,
+          userIsOwnerType: typeof userIsOwner
+        });
 
-        // Load purchased audio chapters if logged in
         if (currentUserId) {
           try {
             const purchasesResponse = await getMyPurchases();
@@ -73,29 +85,23 @@ export default function AudioPlayer({ bookId, chapterId }) {
           }
         }
 
-        // Fetch chapters
         const chaptersRes = await fetch(API_ENDPOINTS.CHAPTERS.GET_BY_BOOK_ID(bookId));
         if (!chaptersRes.ok) throw new Error("Không thể tải danh sách chương");
         const chaptersData = await chaptersRes.json();
 
-        // Fetch chapter audios
         let audioData = [];
         try {
           const audioRes = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_BOOK_CHAPTER_AUDIOS(bookId));
           if (audioRes.ok) {
             const audioResponse = await audioRes.json();
             
-            // Handle different response structures
             if (Array.isArray(audioResponse)) {
               audioData = audioResponse;
             } else if (audioResponse && typeof audioResponse === 'object') {
-              // Try different common property names
               audioData = audioResponse.data || audioResponse.$values || audioResponse.items || [];
               
-              // If still not array, check if the response itself contains the array somewhere
               if (!Array.isArray(audioData)) {
                 const keys = Object.keys(audioResponse);
-                // Try to find first array property
                 for (const key of keys) {
                   if (Array.isArray(audioResponse[key])) {
                     audioData = audioResponse[key];
@@ -106,10 +112,8 @@ export default function AudioPlayer({ bookId, chapterId }) {
             }
           }
         } catch (error) {
-          // Continue with empty audioData
         }
 
-        // Map chapters with audio info
         const chaptersWithAudio = chaptersData
           .map((chapter, index) => {
             let audio = null;
@@ -117,30 +121,26 @@ export default function AudioPlayer({ bookId, chapterId }) {
               audio = audioData.find(a => a.chapterId === chapter.chapterId);
             }
             
-            // Try different field names for audio URL
             let audioUrl = null;
             if (audio) {
-              // Backend returns audioLink (camelCase)
               audioUrl = audio.audioLink || audio.AudioLink || audio.audioUrl || audio.url || null;
             }
             
             return {
               id: chapter.chapterId,
-              title: chapter.chapterTitle, // Bỏ "Chương X:" vì đã có badge số
-              chapterNumber: audio?.chapterNumber, // Lấy chapterNumber từ audio data (backend tính từ toàn bộ chapters)
+              title: chapter.chapterTitle, 
+              chapterNumber: audio?.chapterNumber, 
               chapterId: chapter.chapterId,
               audioUrl: audioUrl,
               duration: audio?.durationSec || audio?.duration || audio?.audioLength || 0,
-              priceAudio: audio?.priceAudio || 0, // Giá audio
+              priceAudio: audio?.priceAudio || 0,
               hasAudio: !!audio,
             };
           })
-          .filter(c => c.audioUrl); // Only chapters with valid audio URL
+          .filter(c => c.audioUrl); 
 
-        // Store all audio data
         setAllAudioData(audioData);
         
-        // Get voices for first chapter
         if (chaptersWithAudio.length > 0) {
           const firstChapterId = chaptersWithAudio[0].chapterId;
           
@@ -151,7 +151,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
           
           setAvailableVoices(uniqueVoices);
           
-          // Set default voice to first available
           const defaultVoice = uniqueVoices.length > 0 ? uniqueVoices[0] : null;
           setSelectedVoice(defaultVoice);
         }
@@ -170,7 +169,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
         setChapters(chaptersWithAudio);
         
         if (chaptersWithAudio.length > 0) {
-          // Find chapter index based on chapterId from URL
           let initialChapterIndex = 0;
           if (chapterId) {
             const foundIndex = chaptersWithAudio.findIndex(
@@ -183,7 +181,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
           
           setCurrentChapter(initialChapterIndex);
           setDuration(chaptersWithAudio[initialChapterIndex].duration);
-          // Set initial audio URL
           setCurrentAudioUrl(chaptersWithAudio[initialChapterIndex].audioUrl || "");
         }
 
@@ -199,7 +196,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
     }
   }, [bookId, chapterId]);
 
-  // Fetch all audios for current chapter when chapter changes
   useEffect(() => {
     const fetchChapterAudios = async () => {
       if (chapters.length > 0 && currentChapter >= 0) {
@@ -208,7 +204,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
         if (!currentChapterId) return;
         
         try {
-          // Call API to get ALL audios for this specific chapter
           const response = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_CHAPTER_AUDIOS(currentChapterId));
           
           if (!response.ok) {
@@ -217,7 +212,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
           
           const data = await response.json();
           
-          // Extract audio array from response
           let chapterAudios = [];
           if (data.success && Array.isArray(data.data)) {
             chapterAudios = data.data;
@@ -225,7 +219,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
             chapterAudios = data;
           }
           
-          // Extract unique voices
           const voices = chapterAudios
             .filter(a => a.voiceName)
             .map(a => a.voiceName);
@@ -233,22 +226,17 @@ export default function AudioPlayer({ bookId, chapterId }) {
           
           setAvailableVoices(uniqueVoices);
           
-          // Update allAudioData for this chapter (replace old data)
           setAllAudioData(prevData => {
-            // Remove old audios for this chapter
             const filtered = prevData.filter(a => a.chapterId !== currentChapterId);
-            // Add new audios
             return [...filtered, ...chapterAudios];
           });
           
-          // If no voice selected or current voice not available, select first one
           if (uniqueVoices.length > 0) {
             if (!selectedVoice || !uniqueVoices.includes(selectedVoice)) {
               setSelectedVoice(uniqueVoices[0]);
             }
           }
         } catch (error) {
-          // Error fetching chapter audios
         }
       }
     };
@@ -256,13 +244,11 @@ export default function AudioPlayer({ bookId, chapterId }) {
     fetchChapterAudios();
   }, [currentChapter, chapters]);
 
-  // Load audio when voice or chapter changes
   useEffect(() => {
     if (allAudioData.length > 0 && chapters.length > 0 && currentChapter >= 0) {
       const currentChapterId = chapters[currentChapter]?.chapterId;
       if (!currentChapterId) return;
       
-      // Find audio for current chapter with selected voice
       let audio = null;
       
       if (selectedVoice) {
@@ -271,7 +257,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
         );
       }
       
-      // If no audio with selected voice, try to get any audio for this chapter
       if (!audio) {
         audio = allAudioData.find(a => a.chapterId === currentChapterId);
       }
@@ -282,14 +267,11 @@ export default function AudioPlayer({ bookId, chapterId }) {
         if (audioUrl && audioUrl !== currentAudioUrl) {
           const wasPlaying = isPlaying;
           
-          // Update the audio URL state
           setCurrentAudioUrl(audioUrl);
           
-          // Wait for next tick to ensure state is updated
           setTimeout(() => {
             if (audioRef.current && wasPlaying) {
               audioRef.current.play().catch(err => {
-                // Error playing audio
               });
             }
           }, 100);
@@ -327,18 +309,51 @@ export default function AudioPlayer({ bookId, chapterId }) {
     }
   };
 
-  const jumpToChapter = (index) => {
+  const jumpToChapter = async (index) => {
     if (index < 0 || index >= chapters.length) return;
+    
+    // Kiểm tra quyền truy cập chương
+    const chapter = chapters[index];
+    if (!chapter) return;
+    
+    const currentUserId = getUserId();
+    const currentUserIdNum = currentUserId ? Number(currentUserId) : null;
+    
+    // Fetch chapter audios để lấy UserId (vì GET_BOOK_CHAPTER_AUDIOS không trả về UserId)
+    let isChapterAudioOwner = false;
+    try {
+      const audioRes = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_CHAPTER_AUDIOS(chapter.chapterId));
+      if (audioRes.ok) {
+        const audioData = await audioRes.json();
+        const audios = audioData.success && Array.isArray(audioData.data) 
+          ? audioData.data 
+          : Array.isArray(audioData) ? audioData : [];
+        
+        isChapterAudioOwner = audios.some(audio => {
+          const audioUserId = audio.userId || audio.UserId || null;
+          return currentUserIdNum && audioUserId && currentUserIdNum === Number(audioUserId);
+        });
+      }
+    } catch (error) {
+      console.error("Error checking chapter audio owner:", error);
+    }
+    
+    const isFree = !chapter.priceAudio || chapter.priceAudio === 0;
+    const isOwned = purchasedAudioChapters.includes(chapter.chapterId);
+    // Owner của audio hoặc owner của sách luôn có quyền truy cập, không cần mua
+    const isChapterOwner = isChapterAudioOwner || isOwner;
+    const hasAccess = isOwned || isChapterOwner || isFree;
+    
+    if (!hasAccess) {
+      toast.error("Bạn cần mua audio chương này để nghe");
+      return;
+    }
     
     const wasPlaying = isPlaying;
     setCurrentChapter(index);
     setCurrentTime(0);
-    setHasLoadedSavedPosition(false); // Reset để load lại vị trí đã lưu cho chapter mới
+    setHasLoadedSavedPosition(false);
     
-    // The voice will be loaded by the useEffect that fetches chapter audios
-    // Just update the chapter index, the rest will be handled automatically
-    
-    // If was playing, resume after a short delay to allow audio to load
     if (wasPlaying) {
       setTimeout(() => {
         if (audioRef.current) {
@@ -372,7 +387,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
     const handleLoadedMetadata = () => {
       setDuration(audio.duration);
       
-      // Load lại vị trí đã lưu sau khi audio metadata đã load
       if (!hasLoadedSavedPosition && bookId && chapters.length > 0) {
         const loadSavedPosition = async () => {
           try {
@@ -388,7 +402,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
             if (savedProgress && savedProgress.audioPosition && savedProgress.audioPosition > 0) {
               audio.currentTime = savedProgress.audioPosition;
               setCurrentTime(savedProgress.audioPosition);
-              console.log("AudioPlayer - Loaded saved position from metadata:", savedProgress.audioPosition);
             }
             
             setHasLoadedSavedPosition(true);
@@ -421,32 +434,63 @@ export default function AudioPlayer({ bookId, chapterId }) {
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
     };
-  }, [chapters, currentChapter]); // Re-attach when chapter changes
+  }, [chapters, currentChapter]);
 
-  // Set playback speed
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.playbackRate = playbackSpeed;
     }
   }, [playbackSpeed]);
 
-  // Set volume
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
     }
   }, [volume]);
 
-  // Reset hasLoadedSavedPosition khi chuyển chapter
+  useEffect(() => {
+    if (sleepTimerRef.current) {
+      clearTimeout(sleepTimerRef.current);
+      sleepTimerRef.current = null;
+    }
+
+    if (sleepTimer > 0 && isPlaying) {
+      const timerMinutes = sleepTimer;
+      const timerMilliseconds = timerMinutes * 60 * 1000;
+
+      sleepTimerRef.current = setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        }
+        setSleepTimer(0);
+        
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: {
+              type: "info",
+              message: `Đã tự động dừng sau ${timerMinutes} phút`,
+            },
+          })
+        );
+      }, timerMilliseconds);
+    }
+
+    return () => {
+      if (sleepTimerRef.current) {
+        clearTimeout(sleepTimerRef.current);
+        sleepTimerRef.current = null;
+      }
+    };
+  }, [sleepTimer, isPlaying]);
+
   useEffect(() => {
     setHasLoadedSavedPosition(false);
   }, [currentChapter]);
 
-  // Lưu lịch sử nghe khi vào trang (sau khi đã load xong vị trí đã lưu)
   useEffect(() => {
     if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
     
-    // Clear timeout cũ nếu có
     if (saveProgressTimeoutRef.current) {
       clearTimeout(saveProgressTimeoutRef.current);
     }
@@ -460,17 +504,15 @@ export default function AudioPlayer({ bookId, chapterId }) {
           bookId: parseInt(bookId),
           chapterId: currentChapterId,
           readingType: 'Listening',
-          audioPosition: Math.floor(currentTime) // Lưu số nguyên (giây)
+          audioPosition: Math.floor(currentTime)
         };
         
         await saveReadingProgress(listeningData);
-        console.log("AudioPlayer - Listening history saved:", listeningData);
       } catch (error) {
         console.error("Error saving listening history:", error);
       }
     };
 
-    // Debounce 1 giây để đảm bảo vị trí đã được load xong
     saveProgressTimeoutRef.current = setTimeout(saveListeningHistory, 1000);
 
     return () => {
@@ -480,16 +522,13 @@ export default function AudioPlayer({ bookId, chapterId }) {
     };
   }, [bookId, currentChapter, chapters, hasLoadedSavedPosition, currentTime]);
 
-  // Lưu lịch sử nghe khi thay đổi thời gian (với debounce tốt hơn)
   useEffect(() => {
     if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
     
-    // Clear timeout cũ nếu có
     if (saveProgressTimeoutRef.current) {
       clearTimeout(saveProgressTimeoutRef.current);
     }
 
-    // Chỉ lưu nếu currentTime > 5 giây (tránh lưu khi vừa load)
     if (currentTime < 5) return;
 
     const saveProgress = async () => {
@@ -501,17 +540,15 @@ export default function AudioPlayer({ bookId, chapterId }) {
           bookId: parseInt(bookId),
           chapterId: currentChapterId,
           readingType: 'Listening',
-          audioPosition: Math.floor(currentTime) // Lưu số nguyên (giây)
+          audioPosition: Math.floor(currentTime)
         };
         
         await saveReadingProgress(progressData);
-        console.log("AudioPlayer - Progress saved:", progressData);
       } catch (error) {
         console.error("Error saving progress:", error);
       }
     };
 
-    // Debounce 3 giây để tránh gọi API quá nhiều khi user đang nghe
     saveProgressTimeoutRef.current = setTimeout(saveProgress, 3000);
     
     return () => {
@@ -521,7 +558,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
     };
   }, [currentTime, bookId, currentChapter, chapters, hasLoadedSavedPosition]);
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -533,7 +569,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -552,7 +587,6 @@ export default function AudioPlayer({ bookId, chapterId }) {
     );
   }
 
-  // No chapters with audio
   if (!book || chapters.length === 0) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -573,13 +607,50 @@ export default function AudioPlayer({ bookId, chapterId }) {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      {/* Hidden audio element */}
       <audio
         ref={audioRef}
         src={currentAudioUrl}
-        onEnded={() => {
+        onEnded={async () => {
           if (currentChapter < chapters.length - 1) {
-            jumpToChapter(currentChapter + 1);
+            // Kiểm tra quyền truy cập chương tiếp theo trước khi chuyển
+            const nextChapter = chapters[currentChapter + 1];
+            if (nextChapter) {
+              const currentUserId = getUserId();
+              const currentUserIdNum = currentUserId ? Number(currentUserId) : null;
+              
+              // Fetch chapter audios để lấy UserId
+              let isNextChapterAudioOwner = false;
+              try {
+                const audioRes = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_CHAPTER_AUDIOS(nextChapter.chapterId));
+                if (audioRes.ok) {
+                  const audioData = await audioRes.json();
+                  const audios = audioData.success && Array.isArray(audioData.data) 
+                    ? audioData.data 
+                    : Array.isArray(audioData) ? audioData : [];
+                  
+                  isNextChapterAudioOwner = audios.some(audio => {
+                    const audioUserId = audio.userId || audio.UserId || null;
+                    return currentUserIdNum && audioUserId && currentUserIdNum === Number(audioUserId);
+                  });
+                }
+              } catch (error) {
+                console.error("Error checking next chapter audio owner:", error);
+              }
+              
+              const isFree = !nextChapter.priceAudio || nextChapter.priceAudio === 0;
+              const isOwned = purchasedAudioChapters.includes(nextChapter.chapterId);
+              const isNextChapterOwner = isNextChapterAudioOwner || isOwner;
+              const hasAccess = isOwned || isNextChapterOwner || isFree;
+              
+              if (hasAccess) {
+                jumpToChapter(currentChapter + 1);
+              } else {
+                setIsPlaying(false);
+                toast.error("Bạn cần mua audio chương tiếp theo để nghe");
+              }
+            } else {
+              setIsPlaying(false);
+            }
           } else {
             setIsPlaying(false);
           }
@@ -594,54 +665,78 @@ export default function AudioPlayer({ bookId, chapterId }) {
         toggleTranscript={() => setShowTranscript(!showTranscript)}
       />
 
-      <AudioPlayerContent
-        book={book}
-        chapters={chapters}
-        currentChapter={currentChapter}
-        currentTime={currentTime}
-        duration={duration}
-        isPlaying={isPlaying}
-        playbackSpeed={playbackSpeed}
-        sleepTimer={sleepTimer}
-        volume={volume}
-        selectedVoice={selectedVoice}
-        availableVoices={availableVoices}
-        setSelectedVoice={setSelectedVoice}
-        formatTime={formatTime}
-        togglePlay={togglePlay}
-        skipForward={skipForward}
-        skipBackward={skipBackward}
-        jumpToChapter={jumpToChapter}
-        setCurrentTime={(time) => {
-          if (audioRef.current) {
-            audioRef.current.currentTime = time;
-          }
-        }}
-        setPlaybackSpeed={setPlaybackSpeed}
-        setSleepTimer={setSleepTimer}
-        setVolume={setVolume}
-        showSpeed={showSpeed}
-        setShowSpeed={setShowSpeed}
-        showSleepTimer={showSleepTimer}
-        setShowSleepTimer={setShowSleepTimer}
-        setShowChapters={setShowChapters}
-      />
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-r border-gray-700 bg-gray-800 overflow-y-auto flex-shrink-0" style={{ zIndex: 20 }}>
+          <AudioChapterList
+            chapters={chapters}
+            currentChapter={currentChapter}
+            jumpToChapter={jumpToChapter}
+            showChapters={true}
+            setShowChapters={setShowChapters}
+            formatTime={formatTime}
+            allAudioData={allAudioData}
+            selectedVoice={selectedVoice}
+            setSelectedVoice={setSelectedVoice}
+            purchasedAudioChapters={purchasedAudioChapters}
+            isOwner={isOwner}
+            bookId={bookId}
+            bookTitle={book?.title}
+            onPurchaseSuccess={(chapterIds) => {
+              // Refresh purchased chapters
+              const currentUserId = getUserId();
+              if (currentUserId) {
+                getMyPurchases().then(purchasesResponse => {
+                  const purchases = purchasesResponse?.data || [];
+                  const audioPurchases = purchases.filter(p => 
+                    p.orderType === "BuyChapterAudio" || p.orderType === "BuyChapterBoth"
+                  );
+                  const purchasedAudioChapterIds = audioPurchases.map((p) => p.chapterId);
+                  setPurchasedAudioChapters(purchasedAudioChapterIds);
+                }).catch(err => {
+                  console.error("Error refreshing purchases:", err);
+                });
+              }
+            }}
+          />
+        </div>
 
-      {showChapters && (
-        <AudioChapterList
-          chapters={chapters}
-          currentChapter={currentChapter}
-          jumpToChapter={jumpToChapter}
-          showChapters={showChapters}
-          setShowChapters={setShowChapters}
-          formatTime={formatTime}
-          allAudioData={allAudioData}
-          selectedVoice={selectedVoice}
-          setSelectedVoice={setSelectedVoice}
-          purchasedAudioChapters={purchasedAudioChapters}
-          isOwner={isOwner}
-        />
-      )}
+        <div className="flex-1 flex items-center justify-center min-w-0" style={{ zIndex: 1 }}>
+          <AudioPlayerContent
+            book={book}
+            chapters={chapters}
+            currentChapter={currentChapter}
+            currentTime={currentTime}
+            duration={duration}
+            isPlaying={isPlaying}
+            playbackSpeed={playbackSpeed}
+            sleepTimer={sleepTimer}
+            volume={volume}
+            selectedVoice={selectedVoice}
+            availableVoices={availableVoices}
+            setSelectedVoice={setSelectedVoice}
+            formatTime={formatTime}
+            togglePlay={togglePlay}
+            skipForward={skipForward}
+            skipBackward={skipBackward}
+            jumpToChapter={jumpToChapter}
+            setCurrentTime={(time) => {
+              if (audioRef.current) {
+                audioRef.current.currentTime = time;
+              }
+            }}
+            setPlaybackSpeed={setPlaybackSpeed}
+            setSleepTimer={setSleepTimer}
+            setVolume={setVolume}
+            showSpeed={showSpeed}
+            setShowSpeed={setShowSpeed}
+            showSleepTimer={showSleepTimer}
+            setShowSleepTimer={setShowSleepTimer}
+            setShowChapters={setShowChapters}
+            purchasedAudioChapters={purchasedAudioChapters}
+            isOwner={isOwner}
+          />
+        </div>
+      </div>
     </div>
   );
 }

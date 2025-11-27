@@ -44,30 +44,30 @@ namespace VieBook.BE.Controllers
                     return BadRequest($"Chapter already has audio with voice '{voiceName}'.");
                 }
 
-                // 🔹 Tải nội dung text từ ChapterSoftUrl (Cloudinary link của file .txt)
+                // Tải nội dung text từ ChapterSoftUrl (Cloudinary link của file .txt)
                 using var httpClient = new HttpClient();
                 var textContent = await httpClient.GetStringAsync(chapter.ChapterSoftUrl);
 
                 if (string.IsNullOrWhiteSpace(textContent))
                     return BadRequest("The chapter text content is empty.");
 
-                // 🔹 Đếm số ký tự
+                // Đếm số ký tự
                 int characterCount = textContent.Length;
 
-                // 🔹 Kiểm tra subscription
+                // Kiểm tra subscription
                 bool canCreate = await _subscriptionService.CanCreateAudioAsync(userId, characterCount);
                 if (!canCreate)
                 {
                     return BadRequest(new 
                     { 
                         success = false, 
-                        message = "Không thể tạo audio. Vui lòng kiểm tra subscription của bạn (hết hạn hoặc không đủ lượt chuyển đổi).",
+                        message = "Không thể tạo audio. Vui lòng kiểm tra gói đăng kí của bạn (hết hạn hoặc không đủ lượt chuyển đổi).",
                         characterCount = characterCount,
                         requiredConversions = characterCount > 10000 ? 2 : 1
                     });
                 }
 
-                // 🔹 Gọi FPT AI TTS + upload Cloudinary (audio folder)
+                // Gọi FPT AI TTS + upload Cloudinary (audio folder)
                 var audioUrl = await _audioService.ConvertTextToSpeechAndUploadAsync(
                     textContent,
                     voiceName,
@@ -129,7 +129,7 @@ namespace VieBook.BE.Controllers
                     Console.WriteLine($"[WARN] Không thể đọc thời lượng audio: {ex.Message}");
                 }
 
-                // 🔹 Lấy giá từ audio đã có trong cùng chapter (nếu có)
+                // Lấy giá từ audio đã có trong cùng chapter (nếu có)
                 decimal? priceSoft = null;
                 var existingAudios = await _chapterAudioService.GetChapterAudiosByChapterIdAsync(chapterId);
                 if (existingAudios != null && existingAudios.Any())
@@ -137,7 +137,7 @@ namespace VieBook.BE.Controllers
                     priceSoft = existingAudios.First().PriceAudio;
                 }
 
-                // 🔹 Lưu thông tin audio vào bảng ChapterAudio
+                // Lưu thông tin audio vào bảng ChapterAudio
                 var chapterAudio = new ChapterAudio
                 {
                     ChapterId = chapterId,
@@ -151,7 +151,7 @@ namespace VieBook.BE.Controllers
 
                 await _chapterAudioService.AddChapterAudioAsync(chapterAudio);
 
-                // 🔹 Trừ conversions sau khi tạo thành công
+                // Trừ conversions sau khi tạo thành công
                 await _subscriptionService.DeductConversionAsync(userId, characterCount);
 
                 return Ok(new
