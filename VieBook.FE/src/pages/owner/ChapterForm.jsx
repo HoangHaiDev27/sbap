@@ -40,7 +40,7 @@ async function checkPolicy(content) {
     } else {
       return {
         passed: true,
-        message: "Nội dung hợp lệ và tuân thủ chính sách",
+        message: "Nội dung hợp lệ và tuân thủ chính sách nội dụng",
         flaggedCategories: [],
         categoryScores: result.categoryScores || {}
       };
@@ -1368,7 +1368,7 @@ export default function ChapterForm() {
         {!isCheckingMeaning && contentHasMeaning === true && (
           <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
             <div className="flex items-center mb-2">
-              <span className="text-green-400 font-semibold text-lg">✅ Nội dung có ý nghĩa</span>
+              <span className="text-green-400 font-semibold text-lg">✅ Đạt yêu cầu</span>
               <span className="ml-2 text-sm text-gray-300">(Điểm: {meaningScore}/100)</span>
             </div>
             {meaningReason && (
@@ -1478,32 +1478,30 @@ export default function ChapterForm() {
         )}
 
         {plagiarismResult && (
-          <div className={`flex items-start space-x-3 p-4 rounded-lg ${
+          <div className={`p-4 rounded-lg ${
             plagiarismResult.passed ? "bg-green-900/30 border border-green-500/50" : "bg-red-900/30 border border-red-500/50"
           }`}>
-            <span className="text-2xl mt-1">{plagiarismResult.passed ? "✅" : "❌"}</span>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <div className={`font-semibold text-lg ${plagiarismResult.passed ? "text-green-400" : "text-red-400"}`}>
-                  {plagiarismResult.passed ? "Không đạo văn" : "Có đạo văn"}
-                </div>
-                <div className={`text-lg font-bold ${plagiarismResult.passed ? "text-green-400" : "text-red-400"}`}>
-                  {plagiarismResult.similarity}%
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start space-x-3">
+                <span className="text-2xl mt-1">{plagiarismResult.passed ? "✅" : "⚠️"}</span>
+                <div>
+                  <div className={`font-semibold text-lg ${plagiarismResult.passed ? "text-green-400" : "text-red-400"}`}>
+                    {plagiarismResult.passed ? "Không phát hiện đạo văn" : "Phát hiện nội dung trùng lặp"}
+                  </div>
+                  <div className="text-sm text-gray-300 mt-1">
+                    {plagiarismResult.message}
+                  </div>
                 </div>
               </div>
-              
-              <div className="text-sm text-gray-300 mb-3">
-                {plagiarismResult.message}
-              </div>
-
-              {/* Hiển thị thanh progress cho phần trăm đạo văn */}
-              <div className="mb-3">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs text-gray-400">Mức độ tương đồng</span>
-                  <span className="text-xs font-semibold">{plagiarismResult.similarity}%</span>
+              <div className="text-right">
+                <div className={`text-sm font-semibold ${
+                  plagiarismResult.similarity <= 20 ? "text-green-400" :
+                  plagiarismResult.similarity <= 50 ? "text-yellow-400" : "text-red-400"
+                }`}>
+                  {plagiarismResult.similarity}% tương đồng tối đa
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div 
+                <div className="w-32 bg-gray-700 rounded-full h-2 mt-1">
+                  <div
                     className={`h-2 rounded-full transition-all duration-500 ${
                       plagiarismResult.similarity <= 20 ? "bg-green-500" :
                       plagiarismResult.similarity <= 50 ? "bg-yellow-500" : "bg-red-500"
@@ -1512,47 +1510,88 @@ export default function ChapterForm() {
                   ></div>
                 </div>
               </div>
+            </div>
 
-              {/* Hiển thị chương tương tự nếu có đạo văn */}
-              {!plagiarismResult.passed && plagiarismResult.matches && plagiarismResult.matches.length > 0 && (
-                <div className="mt-3">
-                  <div className="text-sm font-semibold text-red-300 mb-2">Chương tương tự được tìm thấy:</div>
-                  <div className="space-y-2">
-                    {plagiarismResult.matches.slice(0, 3).map((match, index) => (
-                      <div key={index} className="bg-red-800/30 p-3 rounded-lg border border-red-500/30">
-                        <div className="font-semibold text-red-200 mb-1">{match.chapterTitle}</div>
-                        <div className="text-sm text-gray-300 mb-1">
-                          Từ sách: <span className="font-medium">{match.bookTitle || "Không xác định"}</span>
+            {/* Danh sách sách/chương bị trùng */}
+            {!plagiarismResult.passed && plagiarismResult.matches && plagiarismResult.matches.length > 0 && (
+              <div className="mt-3">
+                <div className="text-sm font-semibold text-red-300 mb-2">
+                  Chương/sách tương tự được tìm thấy:
+                </div>
+                <div className="space-y-3">
+                  {plagiarismResult.matches.slice(0, 3).map((match, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start justify-between bg-red-900/20 hover:bg-red-900/30 transition-colors rounded-lg border border-red-500/40 px-3 py-2"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="w-10 h-14 bg-gray-800 rounded overflow-hidden flex items-center justify-center text-gray-500 text-xs">
+                          {/* Cover đơn giản, dùng màu nền nếu không có ảnh */}
+                          {match.bookCoverUrl ? (
+                            <img
+                              src={match.bookCoverUrl}
+                              alt={match.bookTitle}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.style.display = "none"; }}
+                            />
+                          ) : (
+                            <span>BOOK</span>
+                          )}
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-400">Tương đồng:</span>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-16 bg-gray-600 rounded-full h-1.5">
-                              <div 
-                                className="bg-red-400 h-1.5 rounded-full" 
+                        <div>
+                          <div className="font-semibold text-red-100 text-sm mb-0.5" title={match.chapterTitle}>
+                            {match.chapterTitle}
+                          </div>
+                          <div className="text-xs text-gray-300 mb-0.5">
+                            Từ sách: <span className="font-medium">{match.bookTitle || "Không xác định"}</span>
+                          </div>
+                          {match.bookAuthor && (
+                            <div className="text-xs text-gray-400 mb-0.5">
+                              Tác giả: {match.bookAuthor}
+                            </div>
+                          )}
+                          {match.bookCreatedAt && (
+                            <div className="text-xs text-gray-500">
+                              Ngày đăng: {new Date(match.bookCreatedAt).toLocaleDateString("vi-VN")}
+                            </div>
+                          )}
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-xs text-gray-400">Tương đồng:</span>
+                            <div className="w-16 bg-gray-700 rounded-full h-1.5">
+                              <div
+                                className="bg-red-400 h-1.5 rounded-full"
                                 style={{ width: `${Math.min(match.similarity * 100, 100)}%` }}
                               ></div>
                             </div>
-                            <span className="text-sm font-bold text-red-400">
+                            <span className="text-xs font-semibold text-red-300">
                               {Math.round(match.similarity * 100)}%
                             </span>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Hiển thị thông báo nếu không có đạo văn */}
-              {plagiarismResult.passed && (
-                <div className="mt-3 p-3 bg-green-800/30 rounded-lg border border-green-500/30">
-                  <div className="text-sm text-green-200">
-                    ✅ Nội dung chương hoàn toàn độc đáo và không có dấu hiệu đạo văn
-                  </div>
+                      {/* Nút xem chi tiết sách */}
+                      <button
+                        type="button"
+                        title="Xem chi tiết sách gốc"
+                        onClick={() => navigate(`/bookdetails/${match.bookId}`)}
+                        className="ml-3 inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-colors group"
+                      >
+                        <span className="mr-1">Xem</span>
+                        <span className="text-sm group-hover:translate-x-0.5 transition-transform">↗</span>
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Trạng thái pass */}
+            {plagiarismResult.passed && (
+              <div className="mt-3 p-3 bg-green-800/30 rounded-lg border border-green-500/30 text-sm text-green-200">
+                ✅ Nội dung chương hoàn toàn độc đáo và không có dấu hiệu đạo văn
+              </div>
+            )}
           </div>
         )}
       </div>

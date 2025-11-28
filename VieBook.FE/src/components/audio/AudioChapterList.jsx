@@ -29,6 +29,11 @@ export default function AudioChapterList({
   const [purchaseModal, setPurchaseModal] = useState({ open: false, chapter: null });
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [bookOwnerId, setBookOwnerId] = useState(null);
+  const [promotionInfo, setPromotionInfo] = useState({
+    hasPromotion: false,
+    discountType: null,
+    discountValue: null,
+  });
   
   const coins = useCoinsStore((s) => s.coins || 0);
   const fetchCoins = useCoinsStore((s) => s.fetchCoins);
@@ -39,23 +44,41 @@ export default function AudioChapterList({
     if (bookId) {
       const fetchBookOwner = async () => {
         try {
-          let bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
+          // Ưu tiên dùng BOOK_DETAIL để chắc chắn có thông tin promotion
+          let bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
+
+          // Nếu BOOK_DETAIL lỗi, fallback sang AUDIO_BOOK_DETAIL
           if (!bookRes.ok) {
-            bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
+            bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
           }
+
           if (bookRes.ok) {
             const bookData = await bookRes.json();
+
             // Lấy OwnerId từ BookDetailDTO (theo backend: OwnerId là int)
             const ownerId = bookData.OwnerId || bookData.ownerId || null;
-            
-            console.log("AudioChapterList - Fetching book owner:", {
+
+            // Lấy thông tin promotion nếu có (HasPromotion, DiscountType, DiscountValue)
+            const hasPromotion = bookData.HasPromotion ?? bookData.hasPromotion ?? false;
+            const discountType = bookData.DiscountType ?? bookData.discountType ?? null;
+            const discountValue = bookData.DiscountValue ?? bookData.discountValue ?? null;
+
+            console.log("AudioChapterList - Fetching book owner & promotion:", {
               bookId: bookId,
               OwnerId: bookData.OwnerId,
               ownerId: bookData.ownerId,
-              finalOwnerId: ownerId
+              finalOwnerId: ownerId,
+              hasPromotion,
+              discountType,
+              discountValue,
             });
-            
+
             setBookOwnerId(ownerId);
+            setPromotionInfo({
+              hasPromotion: !!hasPromotion,
+              discountType,
+              discountValue,
+            });
           }
         } catch (error) {
           console.error("Error fetching book owner:", error);
@@ -138,7 +161,17 @@ export default function AudioChapterList({
     }
     
     const chapter = purchaseModal.chapter;
-    const price = chapter.priceAudio || 0;
+    const basePriceAudio = chapter.priceAudio || 0;
+
+    // Áp dụng promotion nếu sách có khuyến mãi dạng phần trăm
+    const hasBookPromotion =
+      promotionInfo.hasPromotion &&
+      promotionInfo.discountType === "Percent" &&
+      promotionInfo.discountValue;
+    const discountPercent = hasBookPromotion ? (promotionInfo.discountValue || 0) : 0;
+    const price = discountPercent > 0
+      ? Math.round(basePriceAudio * (1 - discountPercent / 100) * 100) / 100
+      : basePriceAudio;
     
     if (coins < price) {
       toast.error("Bạn không đủ xu để mua audio này");
@@ -185,7 +218,7 @@ export default function AudioChapterList({
         userId: getUserId(),
         type: "BOOK_PURCHASE",
         title: "Mua audio thành công",
-        body: `Bạn đã mua thành công audio chương "${chapter.title}" của "${bookTitle || 'sách'}". Chi phí: ${price.toLocaleString('vi-VN')} xu.`,
+        body: `Bạn đã mua thành công audio chương "${chapter.title}" của "${bookTitle || 'sách'}". Chi phí: ${price.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu.`,
         isRead: false,
         createdAt: new Date().toISOString(),
       };
@@ -460,28 +493,57 @@ export default function AudioChapterList({
                     <span className="text-gray-400">Chương:</span>
                     <span className="text-white font-medium">{purchaseModal.chapter.title}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Giá:</span>
-                    <span className="text-orange-400 font-bold">
-                      {purchaseModal.chapter.priceAudio?.toLocaleString('vi-VN') || 0} xu
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-gray-600">
-                    <span className="text-gray-400">Xu hiện có:</span>
-                    <span className="text-white font-medium">
-                      {coins.toLocaleString('vi-VN')} xu
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Xu còn lại:</span>
-                    <span className={`font-medium ${
-                      coins >= (purchaseModal.chapter.priceAudio || 0) 
-                        ? "text-green-400" 
-                        : "text-red-400"
-                    }`}>
-                      {(coins - (purchaseModal.chapter.priceAudio || 0)).toLocaleString('vi-VN')} xu
-                    </span>
-                  </div>
+                  {(() => {
+                    const basePriceAudio = purchaseModal.chapter.priceAudio || 0;
+                    const hasBookPromotion =
+                      promotionInfo.hasPromotion &&
+                      promotionInfo.discountType === "Percent" &&
+                      promotionInfo.discountValue;
+                    const discountPercent = hasBookPromotion ? (promotionInfo.discountValue || 0) : 0;
+                    const effectivePriceAudio = discountPercent > 0
+                      ? Math.round(basePriceAudio * (1 - discountPercent / 100) * 100) / 100
+                      : basePriceAudio;
+
+                    return (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Giá:</span>
+                          <div className="text-right">
+                            {hasBookPromotion && discountPercent > 0 ? (
+                              <>
+                                <div className="text-gray-400 line-through text-xs">
+                                  {basePriceAudio.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu
+                                </div>
+                                <div className="text-orange-400 font-bold">
+                                  {effectivePriceAudio.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-orange-400 font-bold">
+                                {basePriceAudio.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t border-gray-600">
+                          <span className="text-gray-400">Xu hiện có:</span>
+                          <span className="text-white font-medium">
+                            {coins.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Xu còn lại:</span>
+                          <span className={`font-medium ${
+                            coins >= effectivePriceAudio
+                              ? "text-green-400" 
+                              : "text-red-400"
+                          }`}>
+                            {(coins - effectivePriceAudio).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 
                 <div className="flex gap-3">

@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { RiCloseLine, RiFileTextLine, RiLoader4Line } from "react-icons/ri";
 import { summarizeContent } from "../../api/openAiApi";
+import { updateChapterSummary } from "../../api/ownerBookApi";
 
 export default function ReaderSummary({ 
+  chapterId,
   chapterContent, 
   chapterTitle, 
-  onClose 
+  onClose,
+  initialSummary,
+  onSummarySaved
 }) {
-  const [summary, setSummary] = useState("");
+  const [summary, setSummary] = useState(initialSummary || "");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSummarize = async () => {
@@ -20,12 +24,31 @@ export default function ReaderSummary({
       console.log("ReaderSummary - API response:", result);
       
       if (result && result.summary) {
-        setSummary(`
+        const html = `
           <h3 class="text-lg font-semibold mb-3">Tóm tắt chương: ${chapterTitle}</h3>
           <div class="prose prose-sm max-w-none text-gray-300">
             ${result.summary}
           </div>
-        `);
+        `;
+        setSummary(html);
+
+        // Lưu summary thô vào DB nếu có chapterId
+        if (chapterId) {
+          try {
+            await updateChapterSummary(chapterId, result.summary);
+          } catch (err) {
+            console.error("ReaderSummary - Failed to save summary to DB:", err);
+          }
+        }
+
+        // Thông báo cho parent biết summary thô để lưu local state
+        if (onSummarySaved) {
+          try {
+            onSummarySaved(result.summary);
+          } catch (cbErr) {
+            console.error("ReaderSummary - onSummarySaved callback error:", cbErr);
+          }
+        }
       } else {
         setSummary("<p class='text-yellow-500'>Không thể tạo tóm tắt cho nội dung này.</p>");
       }

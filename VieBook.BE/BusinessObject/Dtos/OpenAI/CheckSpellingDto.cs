@@ -13,5 +13,6 @@ namespace BusinessObject.Dtos.OpenAI
     public class CheckMeaningDto
     {
         public string Content { get; set; } = string.Empty;
+        public string? Title { get; set; }
     }
 }

@@ -79,6 +79,26 @@ namespace VieBook.BE.Controllers
             return Ok(new { message = "Chapter updated successfully" });
         }
 
+        // PUT api/chapter/{id}/summary
+        [HttpPut("{id:int}/summary")]
+        [Authorize]
+        public async Task<ActionResult> UpdateChapterSummary(int id, [FromBody] UpdateChapterSummaryDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Summary))
+            {
+                return BadRequest(new { message = "Summary is required" });
+            }
+
+            var chapter = await _chapterService.GetChapterByIdAsync(id);
+            if (chapter == null)
+                return NotFound(new { message = "Chapter not found" });
+
+            chapter.ChapterSummarize = dto.Summary;
+            await _chapterService.UpdateChapterAsync(chapter);
+
+            return Ok(new { message = "Chapter summary updated successfully" });
+        }
+
         // DELETE api/chapter/{id}
         [HttpDelete("{id:int}")]
         [Authorize]

@@ -253,7 +253,7 @@ namespace BusinessObject.Dtos
                     opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Name,
                     opt => opt.MapFrom(src => src.UserProfile.FullName));
-            // Map giữa Chapter ↔ ChapterViewDTO
+            // Map giữa Chapter ↔ ChapterViewDTO (bao gồm ChapterSummarize)
             CreateMap<Chapter, ChapterViewDTO>()
                 .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))
                 .ForMember(dest => dest.AudioPrice, opt => opt.MapFrom(src => 

@@ -27,6 +27,7 @@ export default function PurchaseModal({
   promotionPercent = 0,
   onPurchaseSuccess 
 }) {
+  if (!isOpen) return null;
   const [selectedChapters, setSelectedChapters] = useState([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchasedChapters, setPurchasedChapters] = useState([]);
@@ -37,11 +38,17 @@ export default function PurchaseModal({
   const [selectedSoftChapters, setSelectedSoftChapters] = useState([]);
   const [selectedAudioChapters, setSelectedAudioChapters] = useState([]);
   const [audioPrices, setAudioPrices] = useState({});
+  const [showConfirmPurchase, setShowConfirmPurchase] = useState(false);
   
   const { coins, setCoins } = useCoinsStore();
   const { addNotification } = useNotificationStore();
   const { userId } = useCurrentUser();
   const navigate = useNavigate();
+
+  const handleCloseModal = () => {
+    setShowConfirmPurchase(false);
+    onClose();
+  };
 
   // Load purchased chapters when modal opens
   useEffect(() => {
@@ -67,6 +74,11 @@ export default function PurchaseModal({
       // Set empty object nếu lỗi để tránh crash
       setAudioPrices({});
     }
+  };
+
+  const handleRecharge = () => {
+    // Điều hướng tới trang nạp xu (chỉnh lại route này nếu bạn có trang khác)
+    navigate('/wallet/topup');
   };
 
   const loadPurchasedChapters = async () => {
@@ -363,64 +375,39 @@ export default function PurchaseModal({
       
     } catch (error) {
       console.error("Error purchasing chapters:", error);
-      
+
       // Nếu lỗi là do chapter đã được mua, reload và thông báo
       if (error.message?.includes("already been purchased") || error.message?.includes("đã được mua")) {
         toast.error(error.message || "Một số chương đã được mua rồi. Đang cập nhật...");
-        // Reload purchased chapters để cập nhật UI
         await loadPurchasedChapters();
-        // Reset selection để user chọn lại
-        setSelectedSoftChapters([]);
-        setSelectedAudioChapters([]);
       } else {
-        toast.error(error.message || "Có lỗi xảy ra khi mua chương. Vui lòng thử lại.");
+        toast.error("Đã xảy ra lỗi khi mua chương. Vui lòng thử lại sau.");
       }
     } finally {
       setIsPurchasing(false);
     }
   };
 
-  // Toggle chọn tất cả / bỏ chọn tất cả
-  const toggleSelectAll = () => {
-    const availableChapters = chapters
-      .filter(ch => {
-        const isPurchased = purchasedChapters.includes(ch.chapterId);
-        const isFree = !ch.priceSoft || ch.priceSoft === 0;
-        return !isPurchased && !isFree;
-      })
-      .map(ch => ch.chapterId);
-    
-    const allAvailableSelected = availableChapters.length > 0 && 
-      availableChapters.every(chapterId => selectedChapters.includes(chapterId));
-    
-    if (allAvailableSelected) {
-      // Nếu đã chọn tất cả -> bỏ chọn tất cả
-      setSelectedChapters([]);
-      setButtonState('deselecting');
-    } else {
-      // Nếu chưa chọn tất cả -> chọn tất cả
-      setSelectedChapters(availableChapters);
-      setButtonState('selecting');
+  const openConfirmPurchase = () => {
+    const totalSelected = selectedSoftChapters.length + selectedAudioChapters.length;
+    if (totalSelected === 0) {
+      toast.error("Vui lòng chọn ít nhất một chương để mua");
+      return;
     }
-    
-    // Reset button state after 1.5 seconds
-    setTimeout(() => setButtonState('normal'), 1500);
+    setShowConfirmPurchase(true);
   };
 
-  // Xử lý nạp xu
-  const handleRecharge = () => {
-    onClose(); // Đóng modal trước
-    navigate("/recharge"); // Chuyển sang trang nạp tiền
+  const handleConfirmPurchase = async () => {
+    setShowConfirmPurchase(false);
+    await handlePurchase();
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-1 sm:p-2 md:p-4 lg:p-6">
       {/* Overlay */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleCloseModal}
       ></div>
 
       {/* Modal */}
@@ -435,7 +422,7 @@ export default function PurchaseModal({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleCloseModal}
             className="p-1.5 sm:p-2 hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0 ml-1 sm:ml-2"
           >
             <RiCloseLine className="text-gray-400 text-lg sm:text-xl" />
@@ -484,16 +471,8 @@ export default function PurchaseModal({
           </div>
           )}
 
-          {/* Thông tin đã mua */}
-          {!isOwner && (
-          <div className="text-xs text-gray-400 text-center mb-4">
-            {loadingPurchases ? (
-              <span>Đang tải...</span>
-            ) : (
-              <span>Đã mua: {purchasedChapters.length} chương</span>
-            )}
-          </div>
-          )}
+          
+          
 
           {/* Danh sách chương */}
           {!isOwner && (
@@ -723,7 +702,7 @@ export default function PurchaseModal({
               Hủy
             </button>
             <button
-              onClick={handlePurchase}
+              onClick={openConfirmPurchase}
               disabled={selectedSoftChapters.length + selectedAudioChapters.length === 0 || coins < totalPrice || isPurchasing}
               className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm md:text-base"
             >
@@ -745,6 +724,63 @@ export default function PurchaseModal({
         </div>
         )}
       </div>
+      {showConfirmPurchase && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setShowConfirmPurchase(false)}
+        >
+          <div
+            className="relative bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="absolute top-2 right-2 p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+            >
+              <RiCloseLine className="w-4 h-4" />
+            </button>
+            <h3 className="text-lg font-semibold text-white mb-2">Xác nhận mua chương</h3>
+            <p className="text-sm text-gray-300 mb-3">
+              Bạn đang chuẩn bị mua <span className="font-semibold">{selectedSoftChapters.length + selectedAudioChapters.length}</span> chương
+              với tổng giá&nbsp;
+              <span className="font-semibold text-orange-400">
+                {parseFloat(totalPrice.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} xu
+              </span>.
+            </p>
+            <p className="text-xs text-gray-400 mb-4">
+              Vui lòng kiểm tra kỹ trước khi xác nhận. Giao dịch sau khi hoàn tất sẽ không thể hoàn tiền.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowConfirmPurchase(false)}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-gray-600 hover:bg-gray-700 text-white transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPurchase}
+                disabled={coins < totalPrice || isPurchasing}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center gap-2"
+              >
+                {isPurchasing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+                    <span>Đang xử lý...</span>
+                  </>
+                ) : (
+                  <>
+                    <RiShoppingCartLine className="text-xs sm:text-sm" />
+                    <span>Xác nhận mua</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 }

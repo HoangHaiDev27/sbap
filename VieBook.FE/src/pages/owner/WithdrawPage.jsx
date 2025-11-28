@@ -19,6 +19,7 @@ export default function WithdrawPage() {
   const [viewReasonLoading, setViewReasonLoading] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [showConfirmWithdraw, setShowConfirmWithdraw] = useState(false);
   
   // Notification store
   const { fetchNotifications, fetchUnreadCount } = useNotificationStore();
@@ -116,6 +117,35 @@ export default function WithdrawPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+
+    const coinsValue = parseInt(amount);
+    if (!amount || isNaN(coinsValue) || coinsValue <= 0) {
+      setError("Số xu không hợp lệ");
+      return;
+    }
+
+    if (coinsValue < 50) {
+      setError("Số xu rút tối thiểu là 50 xu (nhận được 45.000 VNĐ sau phí 10%)");
+      return;
+    }
+
+    if (coinsValue > walletCoins) {
+      setError("Số dư xu không đủ để thực hiện giao dịch");
+      return;
+    }
+
+    setError("");
+    setShowConfirmWithdraw(true);
+  };
+
+  const handleConfirmWithdraw = async () => {
+    // Gọi lại logic submit hiện tại mà không submit form lần nữa
+    await handleSubmit({ preventDefault: () => {} });
+    setShowConfirmWithdraw(false);
   };
 
   // Map status từ API sang tiếng Việt
@@ -219,7 +249,7 @@ export default function WithdrawPage() {
           </h2>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleFormSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
@@ -407,6 +437,46 @@ export default function WithdrawPage() {
           </div>
         </div>
       )}
+
+      {showConfirmWithdraw && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-white mb-3">Xác nhận yêu cầu rút tiền</h3>
+            <p className="text-sm text-gray-300 mb-2">
+              Bạn đang yêu cầu rút <span className="font-semibold text-orange-400">{amount || 0} xu</span>.
+            </p>
+            <p className="text-sm text-gray-300 mb-2">
+              Số tiền nhận được dự kiến: <span className="font-semibold text-green-400">{vndAmount.toLocaleString("vi-VN")} VNĐ</span>
+              <span className="text-xs text-gray-400"> (sau khi trừ 10% phí)</span>
+            </p>
+            <p className="text-xs text-gray-400 mb-4">
+              Số dư hiện tại: <span className="font-semibold text-yellow-300">{walletCoins.toLocaleString("vi-VN")} xu</span>. Sau khi rút sẽ còn khoảng&nbsp;
+              <span className="font-semibold text-yellow-300">{(walletCoins - (parseInt(amount) || 0)).toLocaleString("vi-VN")} xu</span>.
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
+              Vui lòng kiểm tra kỹ thông tin trước khi xác nhận. Yêu cầu rút tiền sau khi gửi sẽ được xử lý bởi hệ thống và không thể chỉnh sửa.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setShowConfirmWithdraw(false)}
+                className="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white text-sm"
+                type="button"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleConfirmWithdraw}
+                disabled={loading}
+                className="px-4 py-2 rounded-md bg-orange-600 hover:bg-orange-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center gap-2"
+                type="button"
+              >
+                {loading ? "Đang xử lý..." : "Xác nhận rút"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
