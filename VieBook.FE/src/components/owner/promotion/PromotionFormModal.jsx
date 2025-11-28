@@ -138,6 +138,18 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
           <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
         </div>
 
+        {/* Thông báo cảnh báo */}
+        <div className="bg-amber-900/50 border border-amber-600 rounded-lg p-3 mb-4 flex items-start gap-3">
+          <span className="text-amber-400 text-xl">⚠️</span>
+          <div className="text-sm">
+            <p className="font-semibold text-amber-400">Lưu ý quan trọng</p>
+            <p className="text-amber-200/90 mt-1">
+              Khi khuyến mãi đã bắt đầu diễn ra, bạn sẽ <span className="font-semibold text-amber-400">không thể chỉnh sửa hoặc xóa</span> được nữa. 
+              Vui lòng kiểm tra kỹ thông tin trước khi tạo.
+            </p>
+          </div>
+        </div>
+
         {/* Form */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>

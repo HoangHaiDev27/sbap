@@ -242,7 +242,12 @@ builder.Services.AddAuthentication()
         options.ClientSecret = builder.Configuration["GoogleAuth:ClientSecret"] ?? throw new Exception("Google ClientSecret not found");
     });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Đăng ký UtcDateTimeConverter để xử lý DateTime đúng với UTC
+        options.JsonSerializerOptions.Converters.Add(new VieBook.BE.Helpers.UtcDateTimeConverter());
+    });
 
 // Add SignalR
 builder.Services.AddSignalR();
