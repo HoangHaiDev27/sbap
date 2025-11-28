@@ -30,6 +30,30 @@ export async function getBookById(bookId) {
   return res.json();
 }
 
+// Cập nhật tóm tắt chapter (ChapterSummarize)
+export async function updateChapterSummary(chapterId, summary) {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Không tìm thấy token, vui lòng đăng nhập lại!");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/chapter/${chapterId}/summary`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({ summary }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || "Cập nhật tóm tắt chương thất bại");
+  }
+
+  return res.json();
+}
+
 // Tạo mới sách
 export async function createBook(payload) {
   const token = getToken();

@@ -39,6 +39,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   const isSavingRef = useRef(false);
   const offsetHintTimerRef = useRef(null);
   const [offsetHint, setOffsetHint] = useState(null);
+  const [chapterSummary, setChapterSummary] = useState("");
 
   const dedupeBookmarks = (items) => {
     const map = new Map();
@@ -52,6 +53,14 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   // Tìm chương hiện tại
   const currentChapter = book?.chapters?.find(ch => ch.chapterId === parseInt(chapterId));
   
+  // Đồng bộ summary ban đầu từ dữ liệu book (nếu có)
+  useEffect(() => {
+    if (currentChapter?.chapterSummarize) {
+      setChapterSummary(currentChapter.chapterSummarize);
+    } else {
+      setChapterSummary("");
+    }
+  }, [currentChapter?.chapterId, currentChapter?.chapterSummarize]);
 
   // Lưu lịch sử đọc khi vào trang (với debounce để tránh gọi nhiều lần)
   useEffect(() => {
@@ -453,24 +462,36 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       </div>
     );
   }
-    return (
-      <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text}`}>
-        {/* Header */}
-        <ReaderHeader
-          book={book}
-          currentChapter={currentChapter}
-          bookmarks={bookmarks}
-          isFullscreen={isFullscreen}
-          toggleFullscreen={toggleFullscreen}
-          setShowSettings={setShowSettings}
-          setShowBookmarks={setShowBookmarks}
-          setShowContents={setShowContents}
-          addBookmark={addBookmark}
-        />
 
+  return (
+    <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text}`}>
+      {/* Header */}
+      <ReaderHeader
+        book={book}
+        currentChapter={currentChapter}
+        bookmarks={bookmarks}
+        isFullscreen={isFullscreen}
+        toggleFullscreen={toggleFullscreen}
+        setShowSettings={setShowSettings}
+        setShowBookmarks={setShowBookmarks}
+        setShowContents={setShowContents}
+        addBookmark={addBookmark}
+      />
 
-        {/* Nội dung chính */}
-        <main className="max-w-4xl mx-auto px-4 py-8 relative">
+      {/* Layout tổng: dùng full width, chỉ padding ngang để mục lục sát lề trái */}
+      <div className="w-full px-4 py-8">
+        <div className="bg-gray-900/70 border border-gray-800 rounded-2xl shadow-xl px-4 py-5 lg:px-6 lg:py-6 flex gap-4 lg:gap-10 items-start">
+          {/* Sidebar danh sách chương */}
+          <div className="w-80 hidden lg:block flex-shrink-0">
+            <ReaderContents
+              book={book}
+              purchasedChapters={purchasedChapters}
+              mode="sidebar"
+            />
+          </div>
+
+          {/* Nội dung chính */}
+          <main className="flex-1 relative">
           <div className="flex justify-between items-start mb-6">
             <h2 className="text-2xl font-bold">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
             
@@ -539,9 +560,11 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
               </div>
             </>
           )}
-        </main>
+          </main>
+        </div>
+      </div>
 
-        {/* Panels */}
+      {/* Panels */}
         {showSettings && (
           <>
             {console.log("BookReader - Rendering ReaderSettings")}
@@ -603,11 +626,17 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
 
         {showSummary && (
           <ReaderSummary
+            chapterId={currentChapter?.chapterId}
             chapterContent={chapterContent}
             chapterTitle={currentChapter?.chapterTitle}
+            initialSummary={chapterSummary}
             onClose={() => setShowSummary(false)}
+            onSummarySaved={(rawSummary) => {
+              // Lưu lại tóm tắt thô để lần mở sau dùng luôn, không cần reload
+              setChapterSummary(rawSummary || "");
+            }}
           />
         )}
-      </div>
-    );
+    </div>
+  );
 }

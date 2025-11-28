@@ -123,19 +123,37 @@ namespace Services.Implementations
                 throw new ArgumentException("Nội dung không được để trống.");
 
             var prompt =
-                "Hãy đánh giá xem nội dung sau có ý nghĩa và có giá trị hay không.\n" +
+                "Hãy đánh giá nội dung và kiểm tra xem nội dung có phù hợp với tiêu đề chương không.\n" +
                 "Trả kết quả theo định dạng JSON:\n" +
-                "{" +
+                "{\n" +
                 "  \"hasMeaning\": boolean,\n" +
                 "  \"meaningScore\": number (0-100),\n" +
-                "  \"meaningReason\": string\n" +
+                "  \"isTitleContentConsistent\": boolean,\n" +
+                "  \"consistencyScore\": number (0-100),\n" +
+                "  \"evaluation\": {\n" +
+                "    \"meaningReason\": string,\n" +
+                "    \"consistencyAnalysis\": string,\n" +
+                "    \"suggestions\": string[]\n" +
+                "  }\n" +
                 "}\n" +
                 "Trong đó:\n" +
                 "- hasMeaning: true nếu nội dung có ý nghĩa, false nếu chỉ là ký tự vô nghĩa, spam, hoặc nội dung rỗng\n" +
                 "- meaningScore: điểm từ 0-100 đánh giá mức độ ý nghĩa của nội dung\n" +
-                "- meaningReason: lý do tại sao đánh giá như vậy\n" +
-                "Đừng thêm giải thích bên ngoài JSON.\n" +
-                $"Nội dung:\n\"\"\"{content}\"\"\"";
+                "- isTitleContentConsistent: true nếu nội dung phù hợp với tiêu đề chương\n" +
+                "- consistencyScore: điểm từ 0-100 đánh giá mức độ phù hợp giữa tiêu đề và nội dung\n" +
+                "- evaluation: đánh giá chi tiết\n" +
+                "  - meaningReason: lý do đánh giá ý nghĩa nội dung\n" +
+                "  - consistencyAnalysis: phân tích sự tương đồng giữa tiêu đề và nội dung\n" +
+                "  - suggestions: mảng các gợi ý cải thiện nếu có\n" +
+                "\n" +
+                "Yêu cầu:\n" +
+                "1. Đánh giá xem nội dung có ý nghĩa và phù hợp không\n" +
+                "2. Phân tích xem nội dung có phù hợp với tiêu đề chương không\n" +
+                "3. Đưa ra các gợi ý cải thiện nếu cần\n" +
+                "\n" +
+                "Chỉ trả về JSON hợp lệ, không thêm bất kỳ văn bản nào khác.\n" +
+                $"Tiêu đề chương: {dto.Title ?? "(Chưa có tiêu đề)"}\n" +
+                $"Nội dung chương:\n\"\"\"{content}\"\"\"";
 
             var url = string.IsNullOrWhiteSpace(_config.SummaryUrl)
                 ? "https://api.openai.com/v1/chat/completions"
@@ -382,6 +400,9 @@ namespace Services.Implementations
                             ChapterTitle = storedEmbedding.Chapter?.ChapterTitle ?? "",
                             BookId = storedEmbedding.BookId,
                             BookTitle = storedEmbedding.Book?.Title ?? "",
+                            BookAuthor = storedEmbedding.Book?.Author,
+                            BookCoverUrl = storedEmbedding.Book?.CoverUrl,
+                            BookCreatedAt = storedEmbedding.Book?.CreatedAt,
                             Similarity = scoreFull,
                             Coverage = coverage,
                             LiteralOverlap = literalOverlap,

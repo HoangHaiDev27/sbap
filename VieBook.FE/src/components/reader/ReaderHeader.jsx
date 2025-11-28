@@ -78,7 +78,7 @@ export default function ReaderHeader({
         >
           <RiBookmarkLine size={20} />
           <AiOutlinePlus size={14} />
-          <span className="hidden sm:inline">Thêm bookmark</span>
+          <span className="hidden sm:inline">Thêm dấu chương</span>
         </button>
 
         <button

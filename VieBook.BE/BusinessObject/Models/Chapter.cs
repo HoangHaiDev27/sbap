@@ -25,6 +25,8 @@ public partial class Chapter
 
     public string? StorageMeta { get; set; }
 
+    public string? ChapterSummarize { get; set; }
+
     public DateTime UploadedAt { get; set; }
     public string? Status { get; set; }
     public string? VoiceName { get; set; }

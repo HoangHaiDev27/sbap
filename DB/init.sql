@@ -163,6 +163,8 @@ CREATE TABLE dbo.Chapters (
   UploadedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 CREATE INDEX IX_Chapters_Book ON dbo.Chapters(BookId);
+ALTER TABLE dbo.Chapters
+ADD ChapterSummarize NVARCHAR(MAX) NULL;
 
 -- Thêm bảng nhiều audio (phải tạo trước BookOffers và BookClaims vì được tham chiếu)
 CREATE TABLE dbo.ChapterAudios (

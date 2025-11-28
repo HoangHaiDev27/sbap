@@ -20,6 +20,9 @@ namespace BusinessObject.Dtos.OpenAI
         public string ChapterTitle { get; set; } = string.Empty;
         public int BookId { get; set; }
         public string BookTitle { get; set; } = string.Empty;
+        public string? BookAuthor { get; set; }
+        public string? BookCoverUrl { get; set; }
+        public DateTime? BookCreatedAt { get; set; }
         public double Similarity { get; set; }
         public double Coverage { get; set; }
         public double LiteralOverlap { get; set; }
