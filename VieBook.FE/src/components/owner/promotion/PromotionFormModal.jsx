@@ -64,6 +64,18 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
   if (!isOpen) return null;
 
+  // Helper: Parse datetime-local string thành Date object một cách nhất quán
+  // Safari có thể parse "2025-01-15T10:00" khác với Chrome/Firefox
+  const parseDatetimeLocal = (datetimeStr) => {
+    if (!datetimeStr) return null;
+    // datetime-local format: "YYYY-MM-DDTHH:mm"
+    const [datePart, timePart] = datetimeStr.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+    // Tạo Date object từ components -> đảm bảo là LOCAL time
+    return new Date(year, month - 1, day, hours, minutes);
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return; // Prevent double submit
     
@@ -75,25 +87,28 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
       
       setIsSubmitting(true);
 
-      const start = new Date(form.startDate).getTime();
-      const end = new Date(form.endDate).getTime();
-      const now = new Date().getTime();
+      // Parse datetime-local một cách nhất quán (tránh bug Safari)
+      const startDate = parseDatetimeLocal(form.startDate);
+      const endDate = parseDatetimeLocal(form.endDate);
+      const now = new Date();
       
-      if (start <= now) {
+      if (startDate.getTime() <= now.getTime()) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Ngày bắt đầu phải sau thời điểm hiện tại" }}));
+        setIsSubmitting(false);
         return;
       }
       
-      if (end <= start) {
+      if (endDate.getTime() <= startDate.getTime()) {
         window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Ngày kết thúc phải sau ngày bắt đầu" }}));
+        setIsSubmitting(false);
         return;
       }
 
       const ownerId = getUserId();
       
-      // Convert local datetime-local input sang ISO UTC string
-      const startAtUTC = new Date(form.startDate).toISOString();
-      const endAtUTC = new Date(form.endDate).toISOString();
+      // Convert local Date sang ISO UTC string
+      const startAtUTC = startDate.toISOString();
+      const endAtUTC = endDate.toISOString();
       
       const payload = {
         ownerId,
