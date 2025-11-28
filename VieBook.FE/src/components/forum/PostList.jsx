@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   RiHeartLine,
   RiHeartFill,
@@ -49,11 +49,29 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
   const [deleteConfirmPost, setDeleteConfirmPost] = useState(null); // Post to be deleted (for confirmation modal)
   const [isDeleting, setIsDeleting] = useState(false); // Track if deletion is in progress
   const [userOwnedChapters, setUserOwnedChapters] = useState({}); // { offerId: boolean } - track if user already owns the chapter
+  const dropdownRef = useRef(null);
 
   // Load posts from API
   useEffect(() => {
     loadPosts();
   }, [activeTab, searchQuery, tag, authorId, subTab]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownPost(null);
+      }
+    };
+
+    if (dropdownPost) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownPost]);
 
   const loadPosts = async () => {
     try {
@@ -98,7 +116,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
       const data = await getPosts(params);
       const postsArray = Array.isArray(data) ? data : (data?.data || []);
       
-      // Debug: vérifier si les attachments sont présents
+      // Debug: check if attachments are present
       postsArray.forEach(post => {
         if (post.attachments && post.attachments.length > 0) {
           console.log(`Post ${post.postId} has ${post.attachments.length} attachments:`, post.attachments);
@@ -563,7 +581,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
               </div>
             </div>
 
-            <div className="flex items-center gap-2 relative">
+            <div className="flex items-center gap-2 relative" ref={dropdownRef}>
               <div className="flex items-center gap-1 text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">
                 {getPostTypeIcon(post.postType)}
                 <span>{getPostTypeLabel(post.postType)}</span>
@@ -582,7 +600,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
               {!(activeTab === "my-posts" && subTab === "hidden") && (
                 <>
                   <button
-                    className="text-slate-400 hover:text-white p-1"
+                    className="text-slate-400 hover:text-white p-1 transition-colors"
                     onClick={() =>
                       setDropdownPost(dropdownPost === post.postId ? null : post.postId)
                     }
@@ -592,11 +610,11 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
 
                   {/* Dropdown */}
                   {dropdownPost === post.postId && (
-                    <div className="absolute right-0 top-6 bg-slate-700 rounded shadow-md w-40 z-10 border border-slate-600">
+                    <div className="absolute right-0 top-8 bg-slate-700 rounded-lg shadow-lg w-40 z-20 border border-slate-600 overflow-hidden">
                       {post.authorId === userId && (
                         <button
                           onClick={() => handleDeletePost(post)}
-                          className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white text-sm"
+                          className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white text-sm transition-colors"
                         >
                           Xóa
                         </button>
@@ -606,7 +624,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                           handleHidePost(post.postId);
                           setDropdownPost(null);
                         }}
-                        className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white text-sm"
+                        className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white text-sm transition-colors"
                       >
                         Ẩn
                       </button>
@@ -616,7 +634,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                             handleReport(post);
                             setDropdownPost(null);
                           }}
-                          className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white text-sm"
+                          className="block w-full px-4 py-2 text-left hover:bg-slate-600 text-white text-sm transition-colors"
                         >
                           Báo cáo
                         </button>
@@ -661,11 +679,11 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
           {post.bookOffer?.book && (
             <div className="bg-slate-750 rounded-lg p-4 mb-4 border border-slate-600">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-20 bg-slate-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="w-24 h-32 bg-slate-600 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                   {post.bookOffer.book.coverUrl ? (
                     <img src={post.bookOffer.book.coverUrl} alt={post.bookOffer.book.title} className="w-full h-full object-cover" />
                   ) : (
-                    <RiBookLine className="text-slate-400" size={24} />
+                    <RiBookLine className="text-slate-400" size={32} />
                   )}
                 </div>
                 <div className="flex-1">
@@ -677,11 +695,19 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                       Chương: {post.bookOffer.chapter.chapterTitle}
                     </p>
                   )}
-                  {post.bookOffer.quantity > 0 && (
-                    <span className="text-sm bg-slate-700 text-slate-300 px-2 py-1 rounded">
-                      Số suất còn lại: {Math.max(0, post.bookOffer.quantity - (post.bookOffer.claimCount || 0))}/{post.bookOffer.quantity}
-                    </span>
-                  )}
+                  <div className="mb-2">
+                    {post.bookOffer.quantity > 0 && (
+                      <span className="text-sm bg-slate-700 text-slate-300 px-2 py-1 rounded inline-block mb-2">
+                        Số suất còn lại: {Math.max(0, post.bookOffer.quantity - (post.bookOffer.claimCount || 0))}/{post.bookOffer.quantity}
+                      </span>
+                    )}
+                    {post.bookOffer.endAt && (
+                      <div className="text-sm bg-orange-500/20 text-orange-300 px-2 py-1 rounded border border-orange-500/30 flex items-center gap-1 w-fit">
+                        <RiTimeLine size={14} />
+                        Hết hạn đăng ký: {new Date(post.bookOffer.endAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {post.postType === "giveaway" && post.bookOffer && (() => {
                   // Kiểm tra xem user hiện tại có phải là chủ sách không
@@ -811,141 +837,180 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
 
       {/* Popup xem chi tiết */}
       {selectedPost && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-slate-800 w-full max-w-2xl rounded-lg p-6 relative">
-            <button
-              onClick={() => setSelectedPost(null)}
-              className="absolute top-3 right-3 text-slate-400 hover:text-white"
-            >
-              <RiCloseLine size={24} />
-            </button>
-
-            <h2 className="text-xl font-bold text-white mb-3">
-              {selectedPost.title || "Không có tiêu đề"}
-            </h2>
-            <p className="text-slate-300 mb-6">{selectedPost.content || ""}</p>
-            
-            {/* Post Attachments (Images) in modal */}
-            {selectedPost.attachments && selectedPost.attachments.length > 0 && (
-              <div className="mb-6 space-y-2">
-                {selectedPost.attachments
-                  .filter(att => att.fileType === "Image" || att.fileType === "image" || !att.fileType)
-                  .map((attachment, index) => (
-                    <div key={attachment.attachmentId || index} className="rounded-lg overflow-hidden border border-slate-600">
-                      <img 
-                        src={attachment.fileUrl} 
-                        alt={`Attachment ${index + 1}`}
-                        className="w-full h-auto max-h-96 object-contain bg-slate-700"
-                        onError={(e) => {
-                          console.error("Failed to load image:", attachment.fileUrl);
-                          e.target.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  ))}
-              </div>
-            )}
-
-            <h3 className="text-lg font-semibold text-white mb-4">Bình luận</h3>
-            <div className="space-y-4 max-h-64 overflow-y-auto">
-              {loadingComments[selectedPost.postId] ? (
-                <div className="text-slate-400 text-center py-4">Đang tải bình luận...</div>
-              ) : postComments[selectedPost.postId]?.length > 0 ? (
-                postComments[selectedPost.postId].map((cmt) => (
-                  <div key={cmt.commentId} className="bg-slate-700 p-3 rounded">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center overflow-hidden">
-                        {cmt.user?.userProfile?.avatarUrl ? (
-                          <img src={cmt.user.userProfile.avatarUrl} alt={cmt.user.fullName} className="w-full h-full object-cover" />
-                        ) : (
-                          <RiUserLine className="text-slate-400" size={16} />
-                        )}
-                      </div>
-                      <p className="text-white font-medium text-sm">
-                        {cmt.user?.fullName || cmt.user?.email || "Người dùng"}
-                      </p>
-                      <span className="text-xs text-slate-400">{getTimeAgo(cmt.createdAt)}</span>
-                    </div>
-                    <p className="text-slate-300 text-sm ml-10">{cmt.content}</p>
-                    <div className="mt-2 ml-10">
-                      <button
-                        className="text-xs text-slate-300 hover:text-white underline"
-                        onClick={() =>
-                          setOpenReplyBox((prev) => ({ ...prev, [cmt.commentId]: !prev[cmt.commentId] }))
-                        }
-                      >
-                        Trả lời
-                      </button>
-                    </div>
-                    {cmt.replies?.length > 0 && (
-                      <div className="pl-4 mt-2 space-y-2 border-l border-slate-600 ml-10">
-                        {cmt.replies.map((rep) => (
-                          <div key={rep.commentId} className="bg-slate-600 p-2 rounded">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm text-white font-medium">
-                                {rep.user?.fullName || rep.user?.email || "Người dùng"}
-                              </p>
-                              <span className="text-xs text-slate-400">{getTimeAgo(rep.createdAt)}</span>
-                            </div>
-                            <p className="text-sm text-slate-300">{rep.content}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {openReplyBox[cmt.commentId] && (
-                      <div className="mt-3 ml-10 flex items-center gap-2">
-                        <input
-                          value={modalReplyTexts[cmt.commentId] || ""}
-                          onChange={(e) =>
-                            setModalReplyTexts((prev) => ({ ...prev, [cmt.commentId]: e.target.value }))
-                          }
-                          placeholder="Trả lời bình luận..."
-                          className="flex-1 bg-slate-600 text-white rounded px-3 py-2 outline-none text-sm"
-                        />
-                        <button
-                          onClick={async () => {
-                            const replyText = modalReplyTexts[cmt.commentId]?.trim();
-                            if (!replyText) return;
-                            if (!userId) {
-                              toast.error("Vui lòng đăng nhập để trả lời");
-                              return;
-                            }
-                            try {
-                              await createComment(selectedPost.postId, replyText, cmt.commentId);
-                              setModalReplyTexts((prev) => ({ ...prev, [cmt.commentId]: "" }));
-                              setOpenReplyBox((prev) => ({ ...prev, [cmt.commentId]: false }));
-                              await loadPostComments(selectedPost.postId);
-                              toast.success("Đã thêm trả lời");
-                            } catch (error) {
-                              toast.error(error.message || "Không thể thêm trả lời");
-                            }
-                          }}
-                          className="bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded text-white text-sm"
-                        >
-                          Trả lời
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-slate-400 text-center py-4">Chưa có bình luận nào</div>
-              )}
+        <div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedPost(null);
+            }
+          }}
+        >
+          <div className="bg-slate-800 w-full max-w-2xl rounded-lg relative max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-700 flex-shrink-0">
+              <button
+                onClick={() => setSelectedPost(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+              >
+                <RiCloseLine size={24} />
+              </button>
+              <h2 className="text-xl font-bold text-white pr-8">
+                {selectedPost.title || "Không có tiêu đề"}
+              </h2>
             </div>
 
-            <div className="mt-4 flex items-center gap-2">
-              <input
-                value={modalCommentText}
-                onChange={(e) => setModalCommentText(e.target.value)}
-                placeholder="Viết bình luận mới..."
-                className="flex-1 bg-slate-700 text-white rounded px-3 py-2 outline-none"
-              />
-              <button
-                onClick={handleAddModalComment}
-                className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-white"
-              >
-                Gửi bình luận
-              </button>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <p className="text-slate-300 mb-6 whitespace-pre-wrap">{selectedPost.content || ""}</p>
+              
+              {/* Post Attachments (Images) in modal */}
+              {selectedPost.attachments && selectedPost.attachments.length > 0 && (
+                <div className="mb-6 space-y-2">
+                  {selectedPost.attachments
+                    .filter(att => att.fileType === "Image" || att.fileType === "image" || !att.fileType)
+                    .map((attachment, index) => (
+                      <div key={attachment.attachmentId || index} className="rounded-lg overflow-hidden border border-slate-600">
+                        <img 
+                          src={attachment.fileUrl} 
+                          alt={`Attachment ${index + 1}`}
+                          className="w-full h-auto max-h-96 object-contain bg-slate-700"
+                          onError={(e) => {
+                            console.error("Failed to load image:", attachment.fileUrl);
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              <h3 className="text-lg font-semibold text-white mb-4">Bình luận</h3>
+              <div className="space-y-4">
+                {loadingComments[selectedPost.postId] ? (
+                  <div className="text-slate-400 text-center py-4">Đang tải bình luận...</div>
+                ) : postComments[selectedPost.postId]?.length > 0 ? (
+                  postComments[selectedPost.postId].map((cmt) => (
+                    <div key={cmt.commentId} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 hover:border-slate-500 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {cmt.user?.userProfile?.avatarUrl ? (
+                            <img src={cmt.user.userProfile.avatarUrl} alt={cmt.user.fullName} className="w-full h-full object-cover" />
+                          ) : (
+                            <RiUserLine className="text-slate-400" size={18} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-white font-semibold text-sm">
+                              {cmt.user?.fullName || cmt.user?.email || "Người dùng"}
+                            </p>
+                            <span className="text-xs text-slate-400">{getTimeAgo(cmt.createdAt)}</span>
+                          </div>
+                          <p className="text-slate-200 text-sm mb-2 whitespace-pre-wrap">{cmt.content}</p>
+                          <button
+                            className="text-xs text-slate-400 hover:text-orange-400 transition-colors font-medium"
+                            onClick={() =>
+                              setOpenReplyBox((prev) => ({ ...prev, [cmt.commentId]: !prev[cmt.commentId] }))
+                            }
+                          >
+                            Trả lời
+                          </button>
+                          
+                          {/* Replies */}
+                          {cmt.replies?.length > 0 && (
+                            <div className="mt-3 space-y-3 pl-4 border-l-2 border-slate-600">
+                              {cmt.replies.map((rep) => (
+                                <div key={rep.commentId} className="bg-slate-600/50 rounded-lg p-3 border border-slate-500/50">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-sm text-white font-semibold">
+                                      {rep.user?.fullName || rep.user?.email || "Người dùng"}
+                                    </p>
+                                    <span className="text-xs text-slate-400">{getTimeAgo(rep.createdAt)}</span>
+                                  </div>
+                                  <p className="text-sm text-slate-200 whitespace-pre-wrap">{rep.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Reply Box */}
+                          {openReplyBox[cmt.commentId] && (
+                            <div className="mt-3 flex items-center gap-2">
+                              <input
+                                value={modalReplyTexts[cmt.commentId] || ""}
+                                onChange={(e) =>
+                                  setModalReplyTexts((prev) => ({ ...prev, [cmt.commentId]: e.target.value }))
+                                }
+                                placeholder="Trả lời bình luận..."
+                                className="flex-1 bg-slate-600 text-white rounded-lg px-3 py-2 outline-none text-sm border border-slate-500 focus:border-orange-500 transition-colors"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    const replyText = modalReplyTexts[cmt.commentId]?.trim();
+                                    if (replyText && userId) {
+                                      // Trigger reply
+                                      document.querySelector(`button[data-reply-btn="${cmt.commentId}"]`)?.click();
+                                    }
+                                  }
+                                }}
+                              />
+                              <button
+                                data-reply-btn={cmt.commentId}
+                                onClick={async () => {
+                                  const replyText = modalReplyTexts[cmt.commentId]?.trim();
+                                  if (!replyText) return;
+                                  if (!userId) {
+                                    toast.error("Vui lòng đăng nhập để trả lời");
+                                    return;
+                                  }
+                                  try {
+                                    await createComment(selectedPost.postId, replyText, cmt.commentId);
+                                    setModalReplyTexts((prev) => ({ ...prev, [cmt.commentId]: "" }));
+                                    setOpenReplyBox((prev) => ({ ...prev, [cmt.commentId]: false }));
+                                    await loadPostComments(selectedPost.postId);
+                                    toast.success("Đã thêm trả lời");
+                                  } catch (error) {
+                                    toast.error(error.message || "Không thể thêm trả lời");
+                                  }
+                                }}
+                                className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+                              >
+                                Gửi
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-slate-400 text-center py-8">Chưa có bình luận nào</div>
+                )}
+              </div>
+            </div>
+
+            {/* Fixed Comment Input */}
+            <div className="p-4 border-t border-slate-700 flex-shrink-0 bg-slate-800">
+              <div className="flex items-center gap-2">
+                <input
+                  value={modalCommentText}
+                  onChange={(e) => setModalCommentText(e.target.value)}
+                  placeholder="Viết bình luận mới..."
+                  className="flex-1 bg-slate-700 text-white rounded-lg px-4 py-2 outline-none border border-slate-600 focus:border-orange-500 transition-colors"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddModalComment();
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleAddModalComment}
+                  className="bg-orange-500 hover:bg-orange-600 px-6 py-2 rounded-lg text-white font-medium transition-colors"
+                >
+                  Gửi
+                </button>
+              </div>
             </div>
           </div>
         </div>

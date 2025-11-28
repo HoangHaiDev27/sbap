@@ -17,7 +17,7 @@ namespace Services.Implementations
         private readonly IMapper _mapper;
         private readonly VieBookContext _context;
         
-        // JSON options pour ne pas échapper les caractères Unicode
+        // JSON options to not escape Unicode characters
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -52,9 +52,9 @@ namespace Services.Implementations
             return postDto;
         }
 
-        public async Task<List<PostDTO>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null)
+        public async Task<List<PostDTO>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null, string? visibility = null)
         {
-            var posts = await _postRepository.GetPostsAsync(postType, searchQuery, tag, authorId);
+            var posts = await _postRepository.GetPostsAsync(postType, searchQuery, tag, authorId, visibility);
             var postDtos = _mapper.Map<List<PostDTO>>(posts);
             
             // Calculate ClaimCount (total claims) and ApprovedClaimCount for each BookOffer
@@ -126,9 +126,9 @@ namespace Services.Implementations
                     CreatedAt = DateTime.UtcNow
                 };
 
-                // Ajouter le post directement au contexte
+                // Add the post directly to the context
                 _context.Posts.Add(post);
-                // Sauvegarder pour obtenir le PostId
+                // Save to get the PostId
                 await _context.SaveChangesAsync();
 
                 // If it's a giveaway post, create the BookOffer
@@ -139,7 +139,7 @@ namespace Services.Implementations
                     await _bookOfferService.CreateAsync(createOfferDto, authorId);
                 }
 
-                // Create PostAttachment if imageUrl is provided (après avoir obtenu PostId)
+                // Create PostAttachment if imageUrl is provided (after getting PostId)
                 if (!string.IsNullOrWhiteSpace(createDto.ImageUrl))
                 {
                     var attachment = new PostAttachment
@@ -151,12 +151,12 @@ namespace Services.Implementations
                         UploadedAt = DateTime.UtcNow
                     };
                     _context.PostAttachments.Add(attachment);
-                    await _context.SaveChangesAsync(); // Sauvegarder l'attachment
+                    await _context.SaveChangesAsync(); // Save the attachment
                 }
 
                 await transaction.CommitAsync();
 
-                // Reload post with includes pour s'assurer que les attachments sont chargés
+                // Reload post with includes to ensure attachments are loaded
                 var postWithIncludes = await _postRepository.GetByIdAsync(post.PostId);
                 if (postWithIncludes == null)
                     throw new Exception("Failed to reload post after creation");
@@ -206,17 +206,29 @@ namespace Services.Implementations
             return await _postRepository.DeleteAsync(postId, deletedBy);
         }
 
-        public async Task<PostDTO> UpdateVisibilityAsync(long postId, string visibility, int userId)
+        public async Task<PostDTO> UpdateVisibilityAsync(long postId, string visibility, int userId, bool isStaff = false)
         {
             var post = await _postRepository.GetByIdAsync(postId);
             if (post == null)
                 throw new Exception("Post not found");
 
-            if (post.AuthorId != userId)
-                throw new UnauthorizedAccessException("Not authorized to update this post");
+            // Staff can approve/reject posts (Pending -> Public/Rejected)
+            // Authors can only change between Public and Hidden
+            if (isStaff)
+            {
+                // Staff can change visibility to Public, Rejected, or Hidden
+                if (visibility != "Public" && visibility != "Rejected" && visibility != "Hidden")
+                    throw new ArgumentException("Visibility must be 'Public', 'Rejected', or 'Hidden'");
+            }
+            else
+            {
+                // Non-staff users can only change their own posts between Public and Hidden
+                if (post.AuthorId != userId)
+                    throw new UnauthorizedAccessException("Not authorized to update this post");
 
-            if (visibility != "Public" && visibility != "Hidden")
-                throw new ArgumentException("Visibility must be 'Public' or 'Hidden'");
+                if (visibility != "Public" && visibility != "Hidden")
+                    throw new ArgumentException("Visibility must be 'Public' or 'Hidden'");
+            }
 
             post.Visibility = visibility;
             post.UpdatedAt = DateTime.UtcNow;

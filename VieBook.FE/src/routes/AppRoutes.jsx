@@ -17,6 +17,7 @@ import BookOwnersManagement from "../pages/staff/BookOwnersManagement";
 import TransactionsManagement from "../pages/staff/TransactionsManagement";
 import FeedbackManagement from "../pages/staff/FeedbackManagement";
 import StaffSupportChat from "../pages/staff/StaffSupportChat";
+import PendingPostsManagement from "../pages/staff/PendingPostsManagement";
 
 import Dashboard from "../pages/owner/Dashboard";
 import OwnerBooks from "../pages/owner/OwnerBooks";
@@ -362,6 +363,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["Staff"]}>
             <StaffSupportChat />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff/pending-posts"
+        element={
+          <ProtectedRoute allowedRoles={["Staff"]}>
+            <PendingPostsManagement />
           </ProtectedRoute>
         }
       />

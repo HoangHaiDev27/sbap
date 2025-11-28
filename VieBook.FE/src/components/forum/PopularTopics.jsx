@@ -33,10 +33,6 @@ export default function PopularTopics({ topics, onTagClick }) {
           </div>
         ))}
       </div>
-      
-      <button className="w-full mt-4 text-orange-400 hover:text-orange-300 text-sm font-medium py-2 border-t border-slate-700 transition-colors">
-        Xem tất cả chủ đề
-      </button>
     </div>
   );
 }

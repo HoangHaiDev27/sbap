@@ -26,7 +26,7 @@ namespace DataAccess.DAO
                 .FirstOrDefaultAsync(p => p.PostId == postId);
         }
 
-        public async Task<List<Post>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null)
+        public async Task<List<Post>> GetPostsAsync(string? postType = null, string? searchQuery = null, string? tag = null, int? authorId = null, string? visibility = null)
         {
             var query = _context.Posts
                 .Include(p => p.Author)
@@ -38,8 +38,20 @@ namespace DataAccess.DAO
                 .Include(p => p.BookOffer)
                     .ThenInclude(bo => bo.ChapterAudio)
                 .Include(p => p.PostAttachments)
-                .Where(p => p.DeletedAt == null && p.Visibility == "Public")
+                .Where(p => p.DeletedAt == null)
                 .AsQueryable();
+
+            // Filter by visibility: if not specified, default to "Public" for regular users
+            // Staff can specify "Pending" to see pending posts
+            if (!string.IsNullOrEmpty(visibility))
+            {
+                query = query.Where(p => p.Visibility == visibility);
+            }
+            else
+            {
+                // Default: only show Public posts
+                query = query.Where(p => p.Visibility == "Public");
+            }
 
             if (!string.IsNullOrEmpty(postType))
             {

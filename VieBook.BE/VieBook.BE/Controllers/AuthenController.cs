@@ -80,7 +80,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = result });
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Owner,Customer")]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
     {

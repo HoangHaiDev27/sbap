@@ -16,6 +16,7 @@ import { getChapterAudioPrices } from "../../api/ownerBookApi";
 import { createPost } from "../../api/postApi";
 import { uploadPostImage } from "../../api/uploadApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { isBookOwner } from "../../api/authApi";
 import toast from "react-hot-toast";
 
 export default function CreatePostModal({ onClose, onPostCreated }) {
@@ -294,10 +295,14 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
         }
       }
       
+      // Determine visibility: Pending for discuss posts from non-owners, Public for owners or giveaway posts
+      const isOwner = isBookOwner();
+      const visibility = (postType === "discuss" && !isOwner) ? "Pending" : "Public";
+      
       const postPayload = {
         content: formData.content,
         postType: postType === "giveaway" ? "giveaway" : "discuss",
-        visibility: "Public",
+        visibility: visibility,
         title: formData.title,
         tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : []
       };
@@ -321,7 +326,11 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
       }
       
       const response = await createPost(postPayload);
-      toast.success("Đăng bài thành công!");
+      if (visibility === "Pending") {
+        toast.success("Bài đăng của bạn đã được gửi và đang chờ duyệt!");
+      } else {
+        toast.success("Đăng bài thành công!");
+      }
       onClose();
       // Reload danh sách bài viết sau khi đăng bài
       if (onPostCreated) {
@@ -367,17 +376,19 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
               <RiMessage3Line size={18} />
               Thảo luận
             </button>
-            <button
-              onClick={() => setPostType("giveaway")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                postType === "giveaway"
-                  ? "bg-orange-500 text-white border-orange-500"
-                  : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
-              }`}
-            >
-              <RiGiftLine size={18} />
-              Tặng sách
-            </button>
+            {isBookOwner() && (
+              <button
+                onClick={() => setPostType("giveaway")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                  postType === "giveaway"
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-slate-700 text-slate-300 border-slate-600 hover:border-slate-500"
+                }`}
+              >
+                <RiGiftLine size={18} />
+                Tặng sách
+              </button>
+            )}
           </div>
         </div>
 
@@ -467,8 +478,8 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
             />
           </div>
 
-          {/* Book Information (only for giveaway) */}
-          {postType === "giveaway" && (
+          {/* Book Information (only for giveaway, and only for book owners) */}
+          {postType === "giveaway" && isBookOwner() && (
             <div className="bg-slate-750 rounded-lg p-4 border border-slate-600">
               <h4 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
                 <RiBookLine size={16} />
@@ -695,6 +706,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
                       onChange={(e) =>
                         handleInputChange("deadline", e.target.value)
                       }
+                      min={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                       required
                     />

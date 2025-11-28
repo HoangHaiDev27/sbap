@@ -59,26 +59,26 @@ namespace Services.Implementations
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Vérifier si l'utilisateur a déjà fait une demande
+                // Check if user has already made a claim
                 var hasClaimed = await _bookClaimRepository.HasUserClaimedAsync(createDto.BookOfferId, customerId);
                 if (hasClaimed)
-                    throw new Exception("Vous avez déjà fait une demande pour cette offre");
+                    throw new Exception("You have already made a request for this offer");
 
-                // Vérifier l'offre
+                // Check the offer
                 var bookOffer = await _bookOfferRepository.GetByIdAsync(createDto.BookOfferId);
                 if (bookOffer == null)
-                    throw new Exception("Offre non trouvée");
+                    throw new Exception("Offer not found");
 
                 if (bookOffer.Status != "Active")
-                    throw new Exception("Cette offre n'est plus active");
+                    throw new Exception("Đã đạt giới hạn đăng kí");
 
                 if (bookOffer.EndAt.HasValue && bookOffer.EndAt < DateTime.UtcNow)
-                    throw new Exception("Cette offre a expiré");
+                    throw new Exception("Đã hết thời hạn đăng ký");
 
-                // Vérifier le nombre de claims (tous sont maintenant auto-approuvés)
+                // Check the number of claims (all are now auto-approved)
                 var claimCount = await _bookOfferRepository.GetClaimCountAsync(createDto.BookOfferId);
                 if (claimCount >= bookOffer.Quantity)
-                    throw new Exception("Cette offre est complète");
+                    throw new Exception("Đã hết số lượng đăng ký");
 
                 var bookClaim = _mapper.Map<BookClaim>(createDto);
                 bookClaim.CustomerId = customerId;
@@ -87,22 +87,22 @@ namespace Services.Implementations
                 bookClaim.ProcessedAt = DateTime.UtcNow;
                 bookClaim.ProcessedBy = null; // Auto-approved, no processor
 
-                // Si ChapterId n'est pas fourni, utiliser celui de l'offre
+                // If ChapterId is not provided, use the one from the offer
                 if (!bookClaim.ChapterId.HasValue && bookOffer.ChapterId.HasValue)
                 {
                     bookClaim.ChapterId = bookOffer.ChapterId;
                 }
 
-                // Si AudioId n'est pas fourni, utiliser celui de l'offre
+                // If AudioId is not provided, use the one from the offer
                 if (!bookClaim.AudioId.HasValue && bookOffer.AudioId.HasValue)
                 {
                     bookClaim.AudioId = bookOffer.AudioId;
                 }
 
-                // Créer le claim
+                // Create the claim
                 var created = await _bookClaimRepository.CreateAsync(bookClaim);
 
-                // Créer les OrderItems avec prix 0 immédiatement
+                // Create OrderItems with price 0 immediately
                 var chapterId = bookClaim.ChapterId ?? bookOffer.ChapterId;
                 var audioId = bookClaim.AudioId ?? bookOffer.AudioId;
 
@@ -110,7 +110,7 @@ namespace Services.Implementations
                 {
                     var orderItems = new List<OrderItem>();
 
-                    // Créer OrderItem selon AccessType de l'offre
+                    // Create OrderItem according to offer's AccessType
                     if (bookOffer.AccessType == "Soft" || bookOffer.AccessType == "Both")
                     {
                         orderItems.Add(new OrderItem
@@ -157,7 +157,7 @@ namespace Services.Implementations
         {
             var bookClaim = await _bookClaimRepository.GetByIdAsync(claimId);
             if (bookClaim == null)
-                throw new Exception("Claim non trouvé");
+                throw new Exception("Claim not found");
 
             if (!string.IsNullOrEmpty(updateDto.Status))
             {
@@ -192,27 +192,27 @@ namespace Services.Implementations
             {
                 var bookClaim = await _bookClaimRepository.GetByIdAsync(claimId);
                 if (bookClaim == null)
-                    throw new Exception("Claim non trouvé");
+                    throw new Exception("Claim not found");
 
                 if (bookClaim.Status != "Pending")
-                    throw new Exception("Ce claim a déjà été traité");
+                    throw new Exception("This claim has already been processed");
 
                 var bookOffer = await _bookOfferRepository.GetByIdAsync(bookClaim.BookOfferId);
                 if (bookOffer == null)
-                    throw new Exception("Offre non trouvée");
+                    throw new Exception("Offer not found");
 
-                // Vérifier le nombre de claims approuvés
+                // Check the number of approved claims
                 var approvedCount = await _bookOfferRepository.GetApprovedClaimCountAsync(bookOffer.BookOfferId);
                 if (approvedCount >= bookOffer.Quantity)
-                    throw new Exception("Cette offre est complète");
+                    throw new Exception("This offer is full");
 
-                // Mettre à jour le statut du claim
+                // Update the claim status
                 bookClaim.Status = "Approved";
                 bookClaim.ProcessedAt = DateTime.UtcNow;
                 bookClaim.ProcessedBy = processedBy;
                 await _bookClaimRepository.UpdateAsync(bookClaim);
 
-                // Créer les OrderItems avec prix 0
+                // Create OrderItems with price 0
                 var chapterId = bookClaim.ChapterId ?? bookOffer.ChapterId;
                 var audioId = bookClaim.AudioId ?? bookOffer.AudioId;
 
@@ -220,7 +220,7 @@ namespace Services.Implementations
                 {
                     var orderItems = new List<OrderItem>();
 
-                    // Créer OrderItem selon AccessType de l'offre
+                    // Create OrderItem according to offer's AccessType
                     if (bookOffer.AccessType == "Soft" || bookOffer.AccessType == "Both")
                     {
                         orderItems.Add(new OrderItem

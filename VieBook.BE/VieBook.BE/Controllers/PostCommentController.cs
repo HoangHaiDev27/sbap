@@ -65,7 +65,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             if (createDto.PostId != postId)
                 return BadRequest(new { message = "PostId mismatch" });
@@ -86,7 +86,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
@@ -108,7 +108,7 @@ namespace VieBook.BE.Controllers
         {
             var userId = UserHelper.GetCurrentUserId(HttpContext);
             if (!userId.HasValue)
-                return Unauthorized(new { message = "Non authentifié" });
+                return Unauthorized(new { message = "Not authenticated" });
 
             try
             {
