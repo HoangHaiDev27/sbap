@@ -169,43 +169,70 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
                   </td>
                   <td className="p-3 align-top">
                     <div className="flex gap-2 justify-center">
-                      {isInactive ? (
-                        // Nếu đã vô hiệu hóa, chỉ hiển thị nút xem detail
-                        <button
-                          className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/owner/promotions/${promo.promotionId}`);
-                          }}
-                          title="Xem chi tiết"
-                        >
-                          <RiEyeLine />
-                        </button>
-                      ) : (
-                        // Nếu còn active, hiển thị nút edit và delete
-                        <>
-                          <button
-                            className="p-2 bg-green-500 rounded hover:bg-green-600 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEdit && onEdit(promo);
-                            }}
-                            title="Chỉnh sửa"
-                          >
-                            <RiEdit2Line />
-                          </button>
-                          <button
-                            className="p-2 bg-red-500 rounded hover:bg-red-600 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDelete(promo);
-                            }}
-                            title="Xóa"
-                          >
-                            <RiDeleteBin6Line />
-                          </button>
-                        </>
-                      )}
+                      {(() => {
+                        // Kiểm tra trạng thái promotion
+                        const now = new Date().getTime();
+                        const start = new Date(promo.startAt).getTime();
+                        const isUpcoming = now < start; // Chỉ "Sắp diễn ra" mới được sửa
+                        
+                        if (isInactive) {
+                          // Nếu đã vô hiệu hóa, chỉ hiển thị nút xem detail
+                          return (
+                            <button
+                              className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/owner/promotions/${promo.promotionId}`);
+                              }}
+                              title="Xem chi tiết"
+                            >
+                              <RiEyeLine />
+                            </button>
+                          );
+                        }
+                        
+                        return (
+                          <>
+                            {/* Nút xem chi tiết */}
+                            <button
+                              className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/owner/promotions/${promo.promotionId}`);
+                              }}
+                              title="Xem chi tiết"
+                            >
+                              <RiEyeLine />
+                            </button>
+                            {/* Nút sửa - chỉ hiển thị nếu promotion chưa bắt đầu */}
+                            {isUpcoming && (
+                              <button
+                                className="p-2 bg-green-500 rounded hover:bg-green-600 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEdit && onEdit(promo);
+                                }}
+                                title="Chỉnh sửa"
+                              >
+                                <RiEdit2Line />
+                              </button>
+                            )}
+                            {/* Nút xóa - chỉ hiển thị nếu promotion chưa bắt đầu */}
+                            {isUpcoming && (
+                              <button
+                                className="p-2 bg-red-500 rounded hover:bg-red-600 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDelete(promo);
+                                }}
+                                title="Xóa"
+                              >
+                                <RiDeleteBin6Line />
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </td>
                 </tr>

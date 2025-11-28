@@ -162,9 +162,13 @@ namespace VieBookAPI.Controllers
             if (dto.DiscountPercent <= 0 || dto.DiscountPercent > 100)
                 return BadRequest(new { message = "Giá trị giảm phải nằm trong khoảng 1% - 100%." });
 
-            // Frontend đã gửi ISO UTC string, chỉ cần đảm bảo Kind là UTC
-            var startUtc = DateTime.SpecifyKind(dto.StartAt, DateTimeKind.Utc);
-            var endUtc = DateTime.SpecifyKind(dto.EndAt, DateTimeKind.Utc);
+            // Đảm bảo DateTime là UTC (converter đã xử lý, nhưng double-check)
+            var startUtc = dto.StartAt.Kind == DateTimeKind.Utc 
+                ? dto.StartAt 
+                : dto.StartAt.ToUniversalTime();
+            var endUtc = dto.EndAt.Kind == DateTimeKind.Utc 
+                ? dto.EndAt 
+                : dto.EndAt.ToUniversalTime();
 
             var promotion = new Promotion
             {
@@ -227,17 +231,26 @@ namespace VieBookAPI.Controllers
             if (existing == null)
                 return NotFound(new { message = "Promotion không tồn tại." });
 
-            // Chỉ cho phép update promotion đang active
+            // Chỉ cho phép update promotion đang active (chưa bị soft delete)
             if (!existing.IsActive)
                 return BadRequest(new { message = "Không thể chỉnh sửa promotion đã vô hiệu hóa." });
+
+            // Kiểm tra thời gian: chỉ cho phép sửa promotion "Sắp diễn ra" (chưa bắt đầu)
+            var now = DateTime.UtcNow;
+            if (now >= existing.StartAt)
+                return BadRequest(new { message = "Không thể chỉnh sửa promotion đang diễn ra hoặc đã kết thúc." });
 
             existing.PromotionName = dto.PromotionName;
             existing.Description = dto.Description;
             existing.DiscountType = "Percent";
             existing.DiscountValue = dto.DiscountPercent;
-            // Frontend đã gửi ISO UTC string, chỉ cần đảm bảo Kind là UTC
-            existing.StartAt = DateTime.SpecifyKind(dto.StartAt, DateTimeKind.Utc);
-            existing.EndAt = DateTime.SpecifyKind(dto.EndAt, DateTimeKind.Utc);
+            // Đảm bảo DateTime là UTC (converter đã xử lý, nhưng double-check)
+            existing.StartAt = dto.StartAt.Kind == DateTimeKind.Utc 
+                ? dto.StartAt 
+                : dto.StartAt.ToUniversalTime();
+            existing.EndAt = dto.EndAt.Kind == DateTimeKind.Utc 
+                ? dto.EndAt 
+                : dto.EndAt.ToUniversalTime();
 
             try
             {
@@ -332,6 +345,16 @@ namespace VieBookAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePromotion(int id, [FromQuery] int ownerId)
         {
+            // Kiểm tra promotion tồn tại và thuộc quyền sở hữu
+            var existing = await _promotionService.GetPromotionByIdAsync(id);
+            if (existing == null || existing.OwnerId != ownerId)
+                return NotFound(new { message = "Promotion không tồn tại hoặc không thuộc quyền sở hữu" });
+
+            // Kiểm tra thời gian: chỉ cho phép xóa promotion "Sắp diễn ra" (chưa bắt đầu)
+            var now = DateTime.UtcNow;
+            if (now >= existing.StartAt)
+                return BadRequest(new { message = "Không thể xóa promotion đang diễn ra hoặc đã kết thúc." });
+
             var result = await _promotionService.DeletePromotionAsync(id, ownerId);
 
             if (!result)

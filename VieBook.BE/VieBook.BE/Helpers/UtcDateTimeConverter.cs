@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,39 +8,42 @@ public class UtcDateTimeConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        // Deserialize: Nhận ISO string từ frontend và parse thành UTC
         var value = reader.GetString();
-        if (DateTime.TryParse(value, out var date))
+        if (string.IsNullOrEmpty(value))
         {
-            // Nếu string có 'Z' hoặc timezone offset, parse sẽ tự động xử lý
-            // Chỉ cần ensure Kind là UTC
-            return DateTime.SpecifyKind(date.ToUniversalTime(), DateTimeKind.Utc);
+            throw new JsonException("DateTime value cannot be null or empty");
         }
+
+        // Parse với DateTimeStyles.RoundtripKind để giữ nguyên timezone info từ ISO string
+        // ISO string có 'Z' suffix sẽ được parse là UTC
+        if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dateOffset))
+        {
+            // Luôn trả về UTC DateTime
+            return dateOffset.UtcDateTime;
+        }
+
+        // Fallback: thử parse như local time rồi convert sang UTC
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        {
+            return date.Kind == DateTimeKind.Utc 
+                ? date 
+                : DateTime.SpecifyKind(date, DateTimeKind.Utc);
+        }
+
         throw new JsonException($"Unable to parse DateTime: {value}");
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        // Serialize: Luôn output ISO UTC string
-        // Nếu value.Kind là Unspecified, coi như UTC (không convert)
-        DateTime utcValue;
-        if (value.Kind == DateTimeKind.Unspecified)
+        // Serialize: Luôn output ISO UTC string với 'Z' suffix
+        DateTime utcValue = value.Kind switch
         {
-            // Giữ nguyên giá trị, chỉ set Kind
-            utcValue = DateTime.SpecifyKind(value, DateTimeKind.Utc);
-        }
-        else if (value.Kind == DateTimeKind.Local)
-        {
-            // Convert Local -> UTC
-            utcValue = value.ToUniversalTime();
-        }
-        else
-        {
-            // Đã là UTC rồi
-            utcValue = value;
-        }
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc) // Unspecified -> treat as UTC
+        };
         
-        writer.WriteStringValue(utcValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+        writer.WriteStringValue(utcValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture));
     }
 }
 
