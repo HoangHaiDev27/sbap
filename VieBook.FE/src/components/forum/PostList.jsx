@@ -679,11 +679,11 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
           {post.bookOffer?.book && (
             <div className="bg-slate-750 rounded-lg p-4 mb-4 border border-slate-600">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-20 bg-slate-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="w-24 h-32 bg-slate-600 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                   {post.bookOffer.book.coverUrl ? (
                     <img src={post.bookOffer.book.coverUrl} alt={post.bookOffer.book.title} className="w-full h-full object-cover" />
                   ) : (
-                    <RiBookLine className="text-slate-400" size={24} />
+                    <RiBookLine className="text-slate-400" size={32} />
                   )}
                 </div>
                 <div className="flex-1">
@@ -695,11 +695,19 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                       Chương: {post.bookOffer.chapter.chapterTitle}
                     </p>
                   )}
-                  {post.bookOffer.quantity > 0 && (
-                    <span className="text-sm bg-slate-700 text-slate-300 px-2 py-1 rounded">
-                      Số suất còn lại: {Math.max(0, post.bookOffer.quantity - (post.bookOffer.claimCount || 0))}/{post.bookOffer.quantity}
-                    </span>
-                  )}
+                  <div className="mb-2">
+                    {post.bookOffer.quantity > 0 && (
+                      <span className="text-sm bg-slate-700 text-slate-300 px-2 py-1 rounded inline-block mb-2">
+                        Số suất còn lại: {Math.max(0, post.bookOffer.quantity - (post.bookOffer.claimCount || 0))}/{post.bookOffer.quantity}
+                      </span>
+                    )}
+                    {post.bookOffer.endAt && (
+                      <div className="text-sm bg-orange-500/20 text-orange-300 px-2 py-1 rounded border border-orange-500/30 flex items-center gap-1 w-fit">
+                        <RiTimeLine size={14} />
+                        Hết hạn đăng ký: {new Date(post.bookOffer.endAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {post.postType === "giveaway" && post.bookOffer && (() => {
                   // Kiểm tra xem user hiện tại có phải là chủ sách không

@@ -706,6 +706,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
                       onChange={(e) =>
                         handleInputChange("deadline", e.target.value)
                       }
+                      min={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                       required
                     />

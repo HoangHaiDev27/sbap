@@ -17,7 +17,7 @@ namespace Services.Implementations
         private readonly IMapper _mapper;
         private readonly VieBookContext _context;
         
-        // JSON options pour ne pas échapper les caractères Unicode
+        // JSON options to not escape Unicode characters
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -126,9 +126,9 @@ namespace Services.Implementations
                     CreatedAt = DateTime.UtcNow
                 };
 
-                // Ajouter le post directement au contexte
+                // Add the post directly to the context
                 _context.Posts.Add(post);
-                // Sauvegarder pour obtenir le PostId
+                // Save to get the PostId
                 await _context.SaveChangesAsync();
 
                 // If it's a giveaway post, create the BookOffer
@@ -139,7 +139,7 @@ namespace Services.Implementations
                     await _bookOfferService.CreateAsync(createOfferDto, authorId);
                 }
 
-                // Create PostAttachment if imageUrl is provided (après avoir obtenu PostId)
+                // Create PostAttachment if imageUrl is provided (after getting PostId)
                 if (!string.IsNullOrWhiteSpace(createDto.ImageUrl))
                 {
                     var attachment = new PostAttachment
@@ -151,12 +151,12 @@ namespace Services.Implementations
                         UploadedAt = DateTime.UtcNow
                     };
                     _context.PostAttachments.Add(attachment);
-                    await _context.SaveChangesAsync(); // Sauvegarder l'attachment
+                    await _context.SaveChangesAsync(); // Save the attachment
                 }
 
                 await transaction.CommitAsync();
 
-                // Reload post with includes pour s'assurer que les attachments sont chargés
+                // Reload post with includes to ensure attachments are loaded
                 var postWithIncludes = await _postRepository.GetByIdAsync(post.PostId);
                 if (postWithIncludes == null)
                     throw new Exception("Failed to reload post after creation");
