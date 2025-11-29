@@ -40,7 +40,7 @@ namespace BusinessObject.Dtos
     {
         public int BookId { get; set; }
         public string Title { get; set; }
-        public int Price { get; set; }
+        public decimal Price { get; set; }
         public bool IsFree { get; set; }
         public string Content { get; set; }
         public string? Status { get; set; }
