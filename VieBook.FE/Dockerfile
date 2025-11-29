@@ -2,6 +2,7 @@ FROM node:20.19-alpine AS build
 WORKDIR /app
 
 COPY VieBook.FE/package*.json ./
+COPY VieBook.FE/copy-pdf-worker.js ./
 RUN npm ci --legacy-peer-deps
 
 COPY VieBook.FE/ .
