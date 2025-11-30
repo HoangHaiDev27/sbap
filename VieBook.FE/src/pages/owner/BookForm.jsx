@@ -65,8 +65,8 @@ export default function BookForm() {
     const loadData = async () => {
       try {
         const categoriesData = await getCategories();
-        setCategories(categoriesData);
-
+        const activeCategories = categoriesData.filter(cat => String(cat.isActive).toLowerCase() === "true");
+        setCategories(activeCategories);
         // Fetch user profile from API (to get UserProfile.FullName from database)
         const userProfile = await fetchCurrentUserProfile();
         setUserProfile(userProfile);
