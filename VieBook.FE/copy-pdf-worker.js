@@ -10,6 +10,12 @@ const workerSrc = path.join(__dirname, 'node_modules', 'pdfjs-dist', 'legacy', '
 const workerDest = path.join(__dirname, 'public', 'pdf.worker.min.js');
 
 try {
+  // Ensure public directory exists
+  const publicDir = path.join(__dirname, 'public');
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+  }
+
   if (fs.existsSync(workerSrc)) {
     fs.copyFileSync(workerSrc, workerDest);
     console.log('✓ Successfully copied PDF.js worker to public folder');

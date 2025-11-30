@@ -20,7 +20,6 @@ namespace VieBook.BE.Controllers.WalletTransaction
         {
             _payOS = payOS;
         }
-        [Authorize(Roles = "Customer")]
         [HttpPost("payos_transfer_handler")]
         public IActionResult payOSTransferHandler(WebhookType body)
         {
