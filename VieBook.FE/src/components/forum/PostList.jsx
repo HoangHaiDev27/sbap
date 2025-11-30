@@ -610,7 +610,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
 
                   {/* Dropdown */}
                   {dropdownPost === post.postId && (
-                    <div className="absolute right-0 top-8 bg-slate-700 rounded-lg shadow-lg w-40 z-20 border border-slate-600 overflow-hidden">
+                    <div ref={dropdownRef} className="absolute right-0 top-8 bg-slate-700 rounded-lg shadow-lg w-40 z-20 border border-slate-600 overflow-hidden">
                       {post.authorId === userId && (
                         <button
                           onClick={() => handleDeletePost(post)}

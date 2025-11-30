@@ -10,7 +10,7 @@ namespace Repositories.Interfaces
         Task<List<Post>> GetPostsByAuthorIdAsync(int authorId, bool includeHidden = false);
         Task<Post> CreateAsync(Post post);
         Task<Post> UpdateAsync(Post post);
-        Task<bool> DeleteAsync(long postId, int? deletedBy);
+        Task<bool> DeleteAsync(long postId, int? deletedBy, bool isStaffOrAdmin = false);
     }
 }
 

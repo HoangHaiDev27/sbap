@@ -11,7 +11,7 @@ namespace Services.Interfaces
         Task<List<PostDTO>> GetPostsByAuthorIdAsync(int authorId, bool includeHidden = false);
         Task<PostDTO> CreateAsync(CreatePostDTO createDto, int authorId);
         Task<PostDTO> UpdateAsync(long postId, CreatePostDTO updateDto, int authorId);
-        Task<bool> DeleteAsync(long postId, int? deletedBy);
+        Task<bool> DeleteAsync(long postId, int? deletedBy, bool isStaffOrAdmin = false);
         Task<PostDTO> UpdateVisibilityAsync(long postId, string visibility, int userId, bool isStaff = false);
     }
 }

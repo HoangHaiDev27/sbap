@@ -31,8 +31,8 @@ namespace Repositories.Implementations
         public Task<Post> UpdateAsync(Post post)
             => _postDAO.UpdateAsync(post);
 
-        public Task<bool> DeleteAsync(long postId, int? deletedBy)
-            => _postDAO.DeleteAsync(postId, deletedBy);
+        public Task<bool> DeleteAsync(long postId, int? deletedBy, bool isStaffOrAdmin = false)
+            => _postDAO.DeleteAsync(postId, deletedBy, isStaffOrAdmin);
     }
 }
 
