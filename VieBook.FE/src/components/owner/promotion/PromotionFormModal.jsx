@@ -139,9 +139,9 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
     }
   };
 
-  // filter theo từ khóa search
+  // filter theo từ khóa search và chỉ lấy sách đã được duyệt (Approved)
   const filteredBooks = books.filter(b => 
-    b.title.toLowerCase().includes(bookSearch.toLowerCase())
+    b.status === "Approved" && b.title.toLowerCase().includes(bookSearch.toLowerCase())
   );
 
   return (
