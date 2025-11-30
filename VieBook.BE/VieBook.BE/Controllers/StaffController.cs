@@ -84,8 +84,15 @@ namespace VieBook.BE.Controllers
                     Phone = user.UserProfile?.PhoneNumber,
                     Address = "", // UserProfile không có Address
                     RoleName = "Customer",
-                    BookCount = user.Books?.Count ?? 0,
-                    OrderCount = user.OrderItems?.Count ?? 0
+                    // BookCount cho customer = số sách khác nhau đã mua (tính từ order items đã thanh toán)
+                    BookCount = user.OrderItems?
+                        .Where(oi => oi.PaidAt != null)
+                        .Select(oi => oi.Chapter?.BookId)
+                        .Where(bookId => bookId.HasValue)
+                        .Distinct()
+                        .Count() ?? 0,
+                    // OrderCount = số chương đã mua (order items đã thanh toán)
+                    OrderCount = user.OrderItems?.Count(oi => oi.PaidAt != null) ?? 0
                 }).ToList();
 
                 return Ok(result);

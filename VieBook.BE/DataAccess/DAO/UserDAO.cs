@@ -71,6 +71,7 @@ namespace DataAccess
                     .ThenInclude(b => b.Chapters)
                         .ThenInclude(c => c.OrderItems)
                 .Include(u => u.OrderItems)
+                    .ThenInclude(oi => oi.Chapter)
                 .Where(u => u.Roles.Any(r => r.RoleName == roleName))
                 .ToListAsync();
 
@@ -92,6 +93,7 @@ namespace DataAccess
                     .ThenInclude(b => b.Chapters)
                         .ThenInclude(c => c.OrderItems)
                 .Include(u => u.OrderItems)
+                    .ThenInclude(oi => oi.Chapter)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
         }
         public async Task<bool> AddRoleToUserByNameAsync(int userId, string roleName)
