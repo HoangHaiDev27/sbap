@@ -16,13 +16,14 @@ export function setAuth(token, user, roles, refreshToken = null) {
   if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
   
   // Lưu tất cả roles
+  let selectedRole = null;
   if (roles && Array.isArray(roles)) {
     const normalizedRoles = roles.map(r => String(r).toLowerCase());
     localStorage.setItem(ROLES_KEY, JSON.stringify(normalizedRoles));
     
-    // Ưu tiên role user trước, sau đó mới đến các role khác
-    const rolePriority = [ 'customer', 'owner', 'staff', 'admin'];
-    let selectedRole = null;
+    // Ưu tiên role: Admin cao nhất, sau đó Staff, Owner, Customer
+    // Điều này đảm bảo sidebar hiển thị đúng cho admin/staff
+    const rolePriority = [ 'admin', 'staff', 'owner', 'customer'];
     
     // Tìm role theo thứ tự ưu tiên
     for (const priorityRole of rolePriority) {
@@ -48,8 +49,11 @@ export function setAuth(token, user, roles, refreshToken = null) {
   }
   
   try {
+    // Truyền role trực tiếp thay vì gọi getCurrentRole() để đảm bảo role được set đúng
+    const roleToDispatch = selectedRole || getCurrentRole();
+    console.log('[setAuth] Setting role:', roleToDispatch, 'from roles:', roles);
     window.dispatchEvent(
-      new CustomEvent("auth:changed", { detail: { token, user, role: getCurrentRole(), refreshToken } })
+      new CustomEvent("auth:changed", { detail: { token, user, role: roleToDispatch, refreshToken } })
     );
   } catch { /* empty */ }
 }
