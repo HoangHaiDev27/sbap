@@ -176,6 +176,12 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
     const handleScroll = () => {
       const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
       const targetPos = pendingCharOffset != null ? pendingCharOffset : scrollPosition;
+      
+      // Only auto-save if we have a valid character offset (user selected text)
+      // Don't auto-save with scrollPosition only as it can be 0
+      if (pendingCharOffset == null) {
+        return;
+      }
 
       // Debounce: 1s sau khi dừng scroll mới lưu
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
