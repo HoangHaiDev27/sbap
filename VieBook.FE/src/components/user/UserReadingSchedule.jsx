@@ -35,24 +35,22 @@ function UserReadingSchedule() {
     }, 3000);
   };
 
-  // Helper function to get AM/PM (database stores UTC, convert to Vietnam time for display only)
+  // Helper function to get AM/PM (database stores UTC, JavaScript auto-converts to local time)
   const getAMPM = (date) => {
     const dateObj = new Date(date);
-    // Convert from UTC to Vietnam timezone (UTC+7) for display only
-    const vietnamTime = new Date(dateObj.getTime() + (7 * 60 * 60 * 1000));
-    return vietnamTime.toLocaleTimeString('en-US', { 
+    // JavaScript automatically converts UTC to local timezone, no need to add 7h
+    return dateObj.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit',
       hour12: true 
     }).split(' ')[1];
   };
 
-  // Helper function to format time for display (database stores UTC, convert to Vietnam time for display only)
+  // Helper function to format time for display (database stores UTC, JavaScript auto-converts to local time)
   const formatTimeForDisplay = (date) => {
     const dateObj = new Date(date);
-    // Convert from UTC to Vietnam timezone (UTC+7) for display only
-    const vietnamTime = new Date(dateObj.getTime() + (7 * 60 * 60 * 1000));
-    return vietnamTime.toLocaleTimeString('en-US', { 
+    // JavaScript automatically converts UTC to local timezone, no need to add 7h
+    return dateObj.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: true 
@@ -180,12 +178,11 @@ function UserReadingSchedule() {
   const handleEditClick = (schedule) => {
     setEditingSchedule(schedule);
     const beginReadAt = new Date(schedule.beginReadAt);
-    // Convert UTC to Vietnam time for display only
-    const vietnamTime = new Date(beginReadAt.getTime() + (7 * 60 * 60 * 1000));
+    // JavaScript automatically converts UTC to local timezone, no need to add 7h
     setEditFormData({
-      time: vietnamTime.toTimeString().slice(0, 5),
+      time: beginReadAt.toTimeString().slice(0, 5),
       duration: schedule.readingTime.toString(),
-      reminder: true
+      reminder: schedule.isActive
     });
     setShowEditModal(true);
   };
