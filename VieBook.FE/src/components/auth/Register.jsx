@@ -50,7 +50,8 @@ export default function Register({ setActiveTab }) {
     }
 
     // Kiểm tra ký tự hợp lệ (chỉ cho phép chữ cái, dấu cách, dấu gạch ngang và dấu chấm)
-    const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂÂĐÊÔƠƯăâđêôơư\s\-\.]+$/;
+    // Bao gồm đầy đủ tất cả ký tự tiếng Việt có dấu
+    const nameRegex = /^[a-zA-ZàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\s\-\.]+$/;
     if (!nameRegex.test(trimmedName)) {
       setFullNameError("Họ tên chỉ được chứa chữ cái, dấu cách, dấu gạch ngang và dấu chấm");
       return;
