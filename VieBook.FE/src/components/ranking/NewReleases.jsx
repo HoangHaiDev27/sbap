@@ -31,7 +31,7 @@ export default function NewReleases() {
           categoryNames: book.categoryNames?.join(", ") || "Không rõ thể loại",
           duration: book.duration || "—",
           description: book.description || "Không có mô tả.",
-          image: book.image || "https://picsum.photos/200/300?random=" + index,
+          coverUrl: book.coverUrl || "https://picsum.photos/200/300?random=" + index,
           isNew: true,
           liked: false,
         }))
@@ -154,7 +154,7 @@ export default function NewReleases() {
 
             <div className="text-center">
               <img
-                src={book.image}
+                src={book.coverUrl}
                 alt={book.title}
                 className="w-24 h-32 object-cover rounded-lg mx-auto mb-3"
               />
@@ -188,7 +188,7 @@ export default function NewReleases() {
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0 relative">
                 <img
-                  src={book.image}
+                  src={book.coverUrl}
                   alt={book.title}
                   className="w-16 h-20 object-cover rounded"
                 />
