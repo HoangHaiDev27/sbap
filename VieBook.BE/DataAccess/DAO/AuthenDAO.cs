@@ -14,7 +14,9 @@ namespace DataAccess.DAO
                 .FirstOrDefaultAsync(u => u.Email == email);
 
         public async Task<User?> GetByIdAsync(int id) =>
-            await _context.Users.FindAsync(id);
+            await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.UserId == id);
 
         public async Task UpdateAsync(User user)
         {

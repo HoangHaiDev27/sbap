@@ -1,8 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { getCurrentRole, getAllRoles } from '../../api/authApi';
 
 const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => {
+  const [authKey, setAuthKey] = useState(0);
+
+  // Lắng nghe event auth:changed để re-render khi token được refresh
+  useEffect(() => {
+    const handleAuthChanged = () => {
+      // Force re-render bằng cách update state
+      setAuthKey(prev => prev + 1);
+    };
+
+    window.addEventListener("auth:changed", handleAuthChanged);
+    return () => {
+      window.removeEventListener("auth:changed", handleAuthChanged);
+    };
+  }, []);
+
   // Nếu không yêu cầu auth, cho phép truy cập
   if (!requireAuth) {
     return children;
