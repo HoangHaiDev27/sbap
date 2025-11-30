@@ -38,7 +38,7 @@ export default function Register({ setActiveTab }) {
 
     const trimmedName = fullName.trim();
     
-    // Kiểm tra độ dài
+    // Kiểm tra độ dài (sau khi trim)
     if (trimmedName.length < 2) {
       setFullNameError("Họ tên phải có ít nhất 2 ký tự");
       return;
@@ -53,12 +53,6 @@ export default function Register({ setActiveTab }) {
     const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂÂĐÊÔƠƯăâđêôơư\s\-\.]+$/;
     if (!nameRegex.test(trimmedName)) {
       setFullNameError("Họ tên chỉ được chứa chữ cái, dấu cách, dấu gạch ngang và dấu chấm");
-      return;
-    }
-
-    // Kiểm tra không được bắt đầu hoặc kết thúc bằng dấu cách
-    if (trimmedName !== fullName) {
-      setFullNameError("Họ tên không được bắt đầu hoặc kết thúc bằng dấu cách");
       return;
     }
 
@@ -172,11 +166,11 @@ export default function Register({ setActiveTab }) {
       return;
     }
 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
     if (!passwordRegex.test(formData.password)) {
       showToast(
         "error",
-        "Mật khẩu phải có ít nhất 6 ký tự và bao gồm cả chữ và số!"
+        "Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ thường, chữ in hoa và số!"
       );
       return;
     }
@@ -192,8 +186,10 @@ export default function Register({ setActiveTab }) {
 
     setLoading(true);
     try {
+      // Tự động trim họ tên trước khi gửi
+      const trimmedFullName = formData.fullName.trim();
       const res = await register(
-        formData.fullName,
+        trimmedFullName,
         formData.email,
         formData.password
       );
