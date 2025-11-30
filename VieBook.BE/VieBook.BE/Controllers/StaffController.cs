@@ -47,7 +47,11 @@ namespace VieBook.BE.Controllers
                     Address = "", 
                     RoleName = "Owner",
                     BookCount = user.Books?.Count ?? 0,
-                    OrderCount = user.OrderItems?.Count ?? 0
+                    // OrderCount for book owners = số chapter đã bán (order items của các chapter thuộc sách của owner)
+                    OrderCount = user.Books?
+                        .SelectMany(b => b.Chapters)
+                        .SelectMany(c => c.OrderItems)
+                        .Count(oi => oi.PaidAt != null) ?? 0
                 }).ToList();
 
                 Console.WriteLine($"[DEBUG] GetBookOwners: Returning {result.Count} DTOs");
@@ -148,6 +152,7 @@ namespace VieBook.BE.Controllers
                 if (user == null)
                     return NotFound(new { message = $"Không tìm thấy user với id = {id}" });
 
+                var roleName = user.Roles?.FirstOrDefault()?.RoleName ?? "Unknown";
                 var result = new UserManagementDTO
                 {
                     UserId = user.UserId,
@@ -160,9 +165,15 @@ namespace VieBook.BE.Controllers
                     AvatarUrl = user.UserProfile?.AvatarUrl,
                     Phone = user.UserProfile?.PhoneNumber,
                     Address = "", // UserProfile không có Address
-                    RoleName = user.Roles?.FirstOrDefault()?.RoleName ?? "Unknown",
+                    RoleName = roleName,
                     BookCount = user.Books?.Count ?? 0,
-                    OrderCount = user.OrderItems?.Count ?? 0
+                    // OrderCount: nếu là Owner thì tính số chapter đã bán, nếu không thì tính order items của user
+                    OrderCount = roleName == "Owner" 
+                        ? (user.Books?
+                            .SelectMany(b => b.Chapters)
+                            .SelectMany(c => c.OrderItems)
+                            .Count(oi => oi.PaidAt != null) ?? 0)
+                        : (user.OrderItems?.Count ?? 0)
                 };
 
                 return Ok(result);
@@ -238,21 +249,30 @@ namespace VieBook.BE.Controllers
             try
             {
                 var users = await _userManagementService.GetUsersByRoleAsync(roleName);
-                var result = users.Select(user => new UserManagementDTO
-                {
-                    UserId = user.UserId,
-                    Email = user.Email,
-                    Status = user.Status,
-                    CreatedAt = user.CreatedAt,
-                    LastLoginAt = user.LastLoginAt,
-                    Wallet = user.Wallet,
-                    FullName = user.UserProfile?.FullName,
-                    AvatarUrl = user.UserProfile?.AvatarUrl,
-                    Phone = user.UserProfile?.PhoneNumber,
-                    Address = "", // UserProfile không có Address
-                    RoleName = user.Roles?.FirstOrDefault()?.RoleName ?? "Unknown",
-                    BookCount = user.Books?.Count ?? 0,
-                    OrderCount = user.OrderItems?.Count ?? 0
+                var result = users.Select(user => {
+                    var roleName = user.Roles?.FirstOrDefault()?.RoleName ?? "Unknown";
+                    return new UserManagementDTO
+                    {
+                        UserId = user.UserId,
+                        Email = user.Email,
+                        Status = user.Status,
+                        CreatedAt = user.CreatedAt,
+                        LastLoginAt = user.LastLoginAt,
+                        Wallet = user.Wallet,
+                        FullName = user.UserProfile?.FullName,
+                        AvatarUrl = user.UserProfile?.AvatarUrl,
+                        Phone = user.UserProfile?.PhoneNumber,
+                        Address = "", // UserProfile không có Address
+                        RoleName = roleName,
+                        BookCount = user.Books?.Count ?? 0,
+                        // OrderCount: nếu là Owner thì tính số chapter đã bán, nếu không thì tính order items của user
+                        OrderCount = roleName == "Owner" 
+                            ? (user.Books?
+                                .SelectMany(b => b.Chapters)
+                                .SelectMany(c => c.OrderItems)
+                                .Count(oi => oi.PaidAt != null) ?? 0)
+                            : (user.OrderItems?.Count ?? 0)
+                    };
                 }).ToList();
 
                 return Ok(result);

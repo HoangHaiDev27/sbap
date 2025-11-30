@@ -1,4 +1,4 @@
-﻿using BusinessObject;
+using BusinessObject;
 using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
@@ -68,6 +68,8 @@ namespace DataAccess
                 .Include(u => u.Roles)
                 .Include(u => u.UserProfile)
                 .Include(u => u.Books)
+                    .ThenInclude(b => b.Chapters)
+                        .ThenInclude(c => c.OrderItems)
                 .Include(u => u.OrderItems)
                 .Where(u => u.Roles.Any(r => r.RoleName == roleName))
                 .ToListAsync();
@@ -87,6 +89,8 @@ namespace DataAccess
                 .Include(u => u.UserProfile)
                 .Include(u => u.Roles)
                 .Include(u => u.Books)
+                    .ThenInclude(b => b.Chapters)
+                        .ThenInclude(c => c.OrderItems)
                 .Include(u => u.OrderItems)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
         }
