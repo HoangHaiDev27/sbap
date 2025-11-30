@@ -27,10 +27,10 @@ namespace DataAccess
                 .Where(oi => oi.Chapter.Book.OwnerId == ownerId && oi.PaidAt != null)
                 .CountAsync();
 
-            // Total Views - tổng lượt xem của tất cả sách của owner
-            stats.TotalViews = await _context.Books
-                .Where(b => b.OwnerId == ownerId)
-                .SumAsync(b => b.TotalView);
+            // Total Views - tổng lượt xem của tất cả sách của owner (tính từ Chapter.ChapterView)
+            stats.TotalViews = await _context.Chapters
+                .Where(c => c.Book.OwnerId == ownerId && c.Status == "Active")
+                .SumAsync(c => (int?)c.ChapterView) ?? 0;
 
             // Total Reviews - tổng số đánh giá của tất cả sách của owner
             stats.TotalReviews = await _context.BookReviews
