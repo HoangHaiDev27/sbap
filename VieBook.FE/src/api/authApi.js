@@ -143,12 +143,31 @@ export async function refreshToken() {
     const data = await res.json();
     const newToken = data.token || data.Token;
     const newRefreshToken = data.refreshToken || data.RefreshToken;
+    let roles = data.roles || data.Roles || [];
 
-    // Update tokens in localStorage
-    if (newToken) localStorage.setItem(TOKEN_KEY, newToken);
-    if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+    // Fallback: Parse JWT token to extract roles if not provided in response
+    if (!roles || roles.length === 0) {
+      try {
+        const payload = JSON.parse(atob(newToken.split('.')[1]));
+        // Extract roles from token claims
+        const roleClaim = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        if (roleClaim) {
+          roles = Array.isArray(roleClaim) ? roleClaim : [roleClaim];
+        }
+      } catch (e) {
+        console.error("Failed to parse token for roles:", e);
+      }
+    }
 
-    return { token: newToken, refreshToken: newRefreshToken };
+    // Get current user from localStorage (don't lose user data)
+    const currentUser = getCurrentUser();
+
+    // Update auth with new tokens and preserve roles
+    setAuth(newToken, currentUser, roles, newRefreshToken);
+
+    console.log("Token refreshed successfully with roles:", roles);
+
+    return { token: newToken, refreshToken: newRefreshToken, roles };
   } catch (error) {
     // If refresh fails, clear auth and redirect to login
     clearAuth();

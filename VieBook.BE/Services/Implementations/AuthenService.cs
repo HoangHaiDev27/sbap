@@ -366,7 +366,8 @@ namespace Services.Implementations
             return new RefreshTokenResponseDto
             {
                 Token = newToken,
-                RefreshToken = newRefreshToken
+                RefreshToken = newRefreshToken,
+                Roles = roles // Add roles to response for frontend
             };
         }
 
