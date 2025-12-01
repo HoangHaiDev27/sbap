@@ -76,7 +76,11 @@ namespace DataAccess.DAO.Staff
 
             _context.BookApprovals.Add(newApproval);
 
-            var book = await _context.Books.FindAsync(bookId);
+            // Lấy Book với thông tin đầy đủ để có thể tạo thông báo
+            var book = await _context.Books
+                .Include(b => b.Owner)
+                .FirstOrDefaultAsync(b => b.BookId == bookId);
+            
             if (book != null)
             {
                 book.Status = "Approved";
@@ -84,6 +88,14 @@ namespace DataAccess.DAO.Staff
 
             await _context.SaveChangesAsync();
             return newApproval;
+        }
+
+        // Lấy Book với OwnerId và Title để tạo thông báo
+        public async Task<Book?> GetBookWithOwnerAsync(int bookId)
+        {
+            return await _context.Books
+                .Include(b => b.Owner)
+                .FirstOrDefaultAsync(b => b.BookId == bookId);
         }
 
         // Từ chối sách -> tạo dòng mới và set status sách
@@ -100,7 +112,11 @@ namespace DataAccess.DAO.Staff
 
             _context.BookApprovals.Add(newApproval);
 
-            var book = await _context.Books.FindAsync(bookId);
+            // Lấy Book với thông tin đầy đủ để có thể tạo thông báo
+            var book = await _context.Books
+                .Include(b => b.Owner)
+                .FirstOrDefaultAsync(b => b.BookId == bookId);
+            
             if (book != null)
             {
                 book.Status = "Refused";

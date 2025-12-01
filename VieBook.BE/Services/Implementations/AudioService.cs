@@ -30,7 +30,7 @@ namespace Services.Implementations
         public async Task<string> ConvertTextToSpeechAndUploadAsync(string text, string voiceName, string fileName, double speed)
         {
             var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("api-key", _apiKey);
+            // Note: api_key sẽ được thêm vào từng request riêng biệt
 
             const int chunkSize = 1000;
             var chunks = SplitTextIntoChunks(text, chunkSize);
@@ -50,22 +50,25 @@ namespace Services.Implementations
 
                 try
                 {
-                    var requestBody = new
-                    {
-                        text = CleanText(chunk, chunkSize),
-                        voice = voiceName,
-                        speed
-                    };
+                    // FPT AI TTS v5 yêu cầu:
+                    // - Headers: api_key, voice, speed, format
+                    // - Body: plain text (không phải JSON)
+                    var cleanedText = CleanText(chunk, chunkSize);
+                    
+                    // Tạo request với headers đúng format
+                    var request = new HttpRequestMessage(HttpMethod.Post, _baseUrl);
+                    request.Headers.Add("api_key", _apiKey);
+                    request.Headers.Add("voice", voiceName);
+                    request.Headers.Add("speed", speed.ToString());
+                    request.Headers.Add("format", "mp3");
+                    
+                    // Body là plain text, không phải JSON
+                    request.Content = new StringContent(cleanedText, new UTF8Encoding(false), "text/plain");
 
-                    var options = new JsonSerializerOptions
-                    {
-                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                    };
+                    Console.WriteLine($"[DEBUG] Request headers: api_key=***, voice={voiceName}, speed={speed}, format=mp3");
+                    Console.WriteLine($"[DEBUG] Request body (first 100 chars): {cleanedText.Substring(0, Math.Min(100, cleanedText.Length))}...");
 
-                    var json = JsonSerializer.Serialize(requestBody, options);
-                    var content = new StringContent(json, new UTF8Encoding(false), "application/json");
-
-                    var response = await client.PostAsync(_baseUrl, content);
+                    var response = await client.SendAsync(request);
                     var resultJson = await response.Content.ReadAsStringAsync();
 
                     Console.WriteLine($"[DEBUG] FPT Response for chunk {chunkIndex}: {resultJson}");
