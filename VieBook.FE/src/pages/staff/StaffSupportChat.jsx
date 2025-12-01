@@ -493,7 +493,7 @@ export default function StaffSupportChat() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white items-center justify-center">
+      <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white items-center justify-center mt-20">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Đang tải...</p>
@@ -503,13 +503,13 @@ export default function StaffSupportChat() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white overflow-hidden">
+    <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white overflow-hidden mt-20">
       {/* Sidebar - Danh sách Owners */}
-      <div className="w-80 lg:w-96 border-r border-slate-700 flex flex-col bg-slate-900 flex-shrink-0">
-        <div className="p-4 font-bold text-lg border-b border-slate-700">Danh sách Book Owners</div>
+      <div className="w-80 lg:w-96 border-r border-slate-700 flex flex-col bg-slate-900 flex-shrink-0 h-full">
+        <div className="p-4 font-bold text-lg border-b border-slate-700 flex-shrink-0">Danh sách Book Owners</div>
         
         {/* Search box */}
-        <div className="p-3 border-b border-slate-800">
+        <div className="p-3 border-b border-slate-800 flex-shrink-0">
           <div className="relative">
             <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -523,7 +523,7 @@ export default function StaffSupportChat() {
         </div>
 
         {/* Danh sách owners */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
           {filteredOwners.length === 0 ? (
             <div className="p-4 text-center text-gray-400">
               {searchQuery ? "Không tìm thấy owner" : "Chưa có owner nào"}
@@ -593,7 +593,7 @@ export default function StaffSupportChat() {
         </div>
 
         {/* Staff info */}
-        <div className="p-4 border-t border-slate-700 bg-slate-800">
+        <div className="p-4 border-t border-slate-700 bg-slate-800 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-semibold">
               {staffName.charAt(0).toUpperCase()}
@@ -608,7 +608,7 @@ export default function StaffSupportChat() {
 
       {/* Chat window */}
       {selectedOwner ? (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden h-full">
           {/* Header */}
           <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-shrink-0 bg-slate-900">
             <div className="flex items-center gap-3 min-w-0">
@@ -640,9 +640,9 @@ export default function StaffSupportChat() {
             </div>
           </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950 scrollbar-hide scroll-smooth">
-          {loadingChatHistory ? (
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950 scrollbar-hide scroll-smooth min-h-0">
+            {loadingChatHistory ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-gray-400">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>

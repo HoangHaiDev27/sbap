@@ -110,11 +110,17 @@ namespace DataAccess.DAO
             return post;
         }
 
-        public async Task<bool> DeleteAsync(long postId, int? deletedBy)
+        public async Task<bool> DeleteAsync(long postId, int? deletedBy, bool isStaffOrAdmin = false)
         {
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
                 return false;
+
+            // Check permission: only author or staff/admin can delete
+            if (!isStaffOrAdmin && deletedBy.HasValue && post.AuthorId != deletedBy.Value)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to delete this post");
+            }
 
             post.DeletedAt = DateTime.UtcNow;
             post.DeletedBy = deletedBy;

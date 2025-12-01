@@ -16,13 +16,14 @@ export function setAuth(token, user, roles, refreshToken = null) {
   if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
   
   // Lưu tất cả roles
+  let selectedRole = null;
   if (roles && Array.isArray(roles)) {
     const normalizedRoles = roles.map(r => String(r).toLowerCase());
     localStorage.setItem(ROLES_KEY, JSON.stringify(normalizedRoles));
     
-    // Ưu tiên role user trước, sau đó mới đến các role khác
-    const rolePriority = [ 'customer', 'owner', 'staff', 'admin'];
-    let selectedRole = null;
+    // Ưu tiên role: Admin cao nhất, sau đó Staff, Owner, Customer
+    // Điều này đảm bảo sidebar hiển thị đúng cho admin/staff
+    const rolePriority = [ 'admin', 'staff', 'owner', 'customer'];
     
     // Tìm role theo thứ tự ưu tiên
     for (const priorityRole of rolePriority) {
@@ -48,8 +49,11 @@ export function setAuth(token, user, roles, refreshToken = null) {
   }
   
   try {
+    // Truyền role trực tiếp thay vì gọi getCurrentRole() để đảm bảo role được set đúng
+    const roleToDispatch = selectedRole || getCurrentRole();
+    console.log('[setAuth] Setting role:', roleToDispatch, 'from roles:', roles);
     window.dispatchEvent(
-      new CustomEvent("auth:changed", { detail: { token, user, role: getCurrentRole(), refreshToken } })
+      new CustomEvent("auth:changed", { detail: { token, user, role: roleToDispatch, refreshToken } })
     );
   } catch { /* empty */ }
 }
@@ -143,12 +147,31 @@ export async function refreshToken() {
     const data = await res.json();
     const newToken = data.token || data.Token;
     const newRefreshToken = data.refreshToken || data.RefreshToken;
+    let roles = data.roles || data.Roles || [];
 
-    // Update tokens in localStorage
-    if (newToken) localStorage.setItem(TOKEN_KEY, newToken);
-    if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+    // Fallback: Parse JWT token to extract roles if not provided in response
+    if (!roles || roles.length === 0) {
+      try {
+        const payload = JSON.parse(atob(newToken.split('.')[1]));
+        // Extract roles from token claims
+        const roleClaim = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        if (roleClaim) {
+          roles = Array.isArray(roleClaim) ? roleClaim : [roleClaim];
+        }
+      } catch (e) {
+        console.error("Failed to parse token for roles:", e);
+      }
+    }
 
-    return { token: newToken, refreshToken: newRefreshToken };
+    // Get current user from localStorage (don't lose user data)
+    const currentUser = getCurrentUser();
+
+    // Update auth with new tokens and preserve roles
+    setAuth(newToken, currentUser, roles, newRefreshToken);
+
+    console.log("Token refreshed successfully with roles:", roles);
+
+    return { token: newToken, refreshToken: newRefreshToken, roles };
   } catch (error) {
     // If refresh fails, clear auth and redirect to login
     clearAuth();

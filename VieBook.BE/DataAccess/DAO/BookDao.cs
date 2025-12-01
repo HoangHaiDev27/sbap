@@ -155,6 +155,17 @@ namespace DataAccess.DAO
                 .Include(b => b.BookReviews).ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
                 .ToListAsync();
         }
+        public async Task<List<Book>> GetAllInforAsync()
+        {
+            return await _context.Books
+                //.Where(b => b.Status == "Approved")
+                .Include(b => b.Promotions)
+                .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews).ThenInclude(r => r.User).ThenInclude(u => u.UserProfile)
+                .ToListAsync();
+        }
 
         public async Task AddAsync(Book book)
         {

@@ -31,13 +31,13 @@ public class ChatbaseService : IChatbaseService
         _chatbaseRepository = chatbaseRepository;
     }
 
-    public async Task<string> GetChatResponseAsync(string question, string frontendUrl, int? userId = null)
+   public async Task<string> GetChatResponseAsync(string question, string frontendUrl, int? userId = null)
 {
     // --- 1️⃣ Lưu tin nhắn người dùng ---
     await _chatbaseRepository.AddMessageAsync(userId, question, "user");
 
     // --- 2️⃣ Lấy danh sách sách ---
-    var books = await _bookRepository.GetAllAsync();
+    var books = await _bookRepository.GetAllInforAsync();
 
     if (!books.Any())
     {
@@ -49,54 +49,90 @@ public class ChatbaseService : IChatbaseService
     // --- 3️⃣ Chuẩn hóa câu hỏi ---
     string normalizedQuestion = question.ToLower();
 
-    // --- 4️⃣ Kiểm tra xem người dùng hỏi về tác giả ---
-    bool isAuthorQuery = normalizedQuestion.Contains("sách của") || normalizedQuestion.Contains("tác phẩm của");
-
-    // --- 4a️⃣ Lọc sách theo tác giả nếu có ---
     List<Book> filteredBooks;
 
-    if (isAuthorQuery)
+    // --- 4️⃣ Nếu hỏi về khuyến mãi ---
+    if (normalizedQuestion.Contains("khuyến mãi") || normalizedQuestion.Contains("giảm giá"))
     {
-        // Lấy tên tác giả trong câu hỏi
-        // VD: "sách của Nguyễn Nhật Ánh"
-        string authorQuery = normalizedQuestion.Contains("sách của")
-            ? normalizedQuestion.Split("sách của")[1].Trim()
-            : normalizedQuestion.Split("tác phẩm của")[1].Trim();
-
+        var nowVN = DateTime.UtcNow.AddHours(7); // Giờ VN
         filteredBooks = books
-            .Where(b => !string.IsNullOrEmpty(b.Author) && 
-                        b.Author.ToLower().Contains(authorQuery))
-            .ToList();
-
-        // if (!filteredBooks.Any())
-        // {
-        //     var noAuthorBooks = "Chưa có tác phẩm nào của tác giả này.";
-        //     await _chatbaseRepository.AddMessageAsync(userId, noAuthorBooks, "bot");
-        //     return noAuthorBooks;
-        // }
-    }
-    else
-    {
-        // --- 4b️⃣ Lọc thể loại hoặc tên sách bình thường ---
-        var allCategories = books
-            .SelectMany(b => b.Categories.Select(c => c.Name.ToLower()))
-            .Distinct()
-            .ToList();
-
-        var matchingCategories = allCategories
-            .Where(cat => normalizedQuestion.Contains(cat))
-            .ToList();
-
-        filteredBooks = books
-            .Where(b =>
-                b.Status == "Approved" &&
-                (matchingCategories.Any(cat => b.Categories.Any(c => c.Name.ToLower() == cat)) ||
-                normalizedQuestion.Contains(b.Title.ToLower()) ||
-                (!string.IsNullOrEmpty(b.Author) && normalizedQuestion.Contains(b.Author.ToLower()))))
+            .Where(b => (b.Promotions ?? Enumerable.Empty<Promotion>())
+                .Any(p => p.IsActive && p.StartAt <= nowVN && p.EndAt >= nowVN && p.DiscountValue > 0))
             .ToList();
 
         if (!filteredBooks.Any())
-            filteredBooks = books.Where(b => b.Status == "Approved").ToList();
+        {
+            var noPromotion = "Hiện tại không có sách nào đang có khuyến mãi. Tất cả các sách đều không có chương trình giảm giá.";
+            await _chatbaseRepository.AddMessageAsync(userId, noPromotion, "bot");
+            return noPromotion;
+        }
+    }
+    else
+    {
+        // --- 4a️⃣ Kiểm tra tác giả ---
+        bool isAuthorQuery = normalizedQuestion.Contains("sách của") || normalizedQuestion.Contains("tác phẩm của");
+        if (isAuthorQuery)
+        {
+            string authorQuery = normalizedQuestion.Contains("sách của")
+                ? normalizedQuestion.Split("sách của")[1].Trim()
+                : normalizedQuestion.Split("tác phẩm của")[1].Trim();
+
+            filteredBooks = books
+                .Where(b => !string.IsNullOrEmpty(b.Author) && b.Author.ToLower().Contains(authorQuery))
+                .ToList();
+
+            if (!filteredBooks.Any())
+            {
+                var noAuthorBooks = "Chưa có tác phẩm nào của tác giả này.";
+                await _chatbaseRepository.AddMessageAsync(userId, noAuthorBooks, "bot");
+                return noAuthorBooks;
+            }
+        }
+        else
+        {
+            // --- 4b️⃣ Lọc theo thể loại hoặc tên sách ---
+            var keywords = normalizedQuestion.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            var categoryLookup = books
+                .SelectMany(b => b.Categories)
+                .Select(c => c.Name.ToLower())
+                .Distinct()
+                .ToList();
+
+            var matchedCategories = categoryLookup
+                .Where(cat => keywords.Any(k => cat.Contains(k)))
+                .ToList();
+
+            if (matchedCategories.Any())
+            {
+                filteredBooks = books
+                    .Where(b => b.Status == "Approved" &&
+                                b.Categories.Any(c => matchedCategories.Contains(c.Name.ToLower())))
+                    .ToList();
+
+                if (!filteredBooks.Any())
+                {
+                    var noCategoryBooks = "Hiện chưa có sách trong thể loại này.";
+                    await _chatbaseRepository.AddMessageAsync(userId, noCategoryBooks, "bot");
+                    return noCategoryBooks;
+                }
+            }
+            else
+            {
+                filteredBooks = books
+                    .Where(b => b.Status == "Approved" &&
+                                (normalizedQuestion.Contains(b.Title.ToLower()) ||
+                                 (!string.IsNullOrEmpty(b.Author) && normalizedQuestion.Contains(b.Author.ToLower()))))
+                    .ToList();
+
+                if (!filteredBooks.Any())
+                {
+                    var noMatchBooks = "Không tìm thấy sách phù hợp với yêu cầu.";
+                    await _chatbaseRepository.AddMessageAsync(userId, noMatchBooks, "bot");
+                    return noMatchBooks;
+                }
+            }
+        }
     }
 
     // --- 5️⃣ Tạo context chi tiết sách ---
@@ -105,8 +141,8 @@ public class ChatbaseService : IChatbaseService
         var activeChapters = b.Chapters.Where(c => c.Status == "Active").ToList();
         var readChapters = activeChapters.Where(c => !string.IsNullOrEmpty(c.ChapterSoftUrl)).ToList();
         var audioChapters = activeChapters.Where(c => c.ChapterAudios != null &&
-                                                    c.ChapterAudios.Any(a => !string.IsNullOrEmpty(a.AudioLink)))
-                                        .ToList();
+                                                     c.ChapterAudios.Any(a => !string.IsNullOrEmpty(a.AudioLink)))
+                                         .ToList();
 
         var totalSoftPrice = readChapters.Sum(c => c.PriceSoft ?? 0);
         var totalAudioPrice = audioChapters.Sum(c =>
@@ -120,7 +156,13 @@ public class ChatbaseService : IChatbaseService
             _ => "Không xác định"
         };
 
-        var promotion = b.Promotions?.FirstOrDefault(p => p.IsActive && p.StartAt <= DateTime.UtcNow && p.EndAt >= DateTime.UtcNow);
+        // --- Lấy promotion đúng giờ VN ---
+        var nowVN = DateTime.UtcNow.AddHours(7); // Giờ VN
+        var promotion = (b.Promotions ?? Enumerable.Empty<Promotion>())
+            .Where(p => p.IsActive && p.StartAt <= nowVN && p.EndAt >= nowVN && p.DiscountValue > 0)
+            .OrderByDescending(p => p.DiscountValue)
+            .FirstOrDefault();
+
         var discountText = promotion != null
             ? $"{promotion.DiscountValue}% (Từ {promotion.StartAt:dd/MM} đến {promotion.EndAt:dd/MM})"
             : "Không có";
@@ -141,16 +183,10 @@ public class ChatbaseService : IChatbaseService
             $"Chi tiết: {frontendUrl}/bookdetails/{b.BookId}\n";
     }));
 
-    // --- 6️⃣ Thêm context gói chuyển đổi ---
-    List<Plan> plans = new List<Plan>();
-    if (userId == null || userId == 0)
-        plans = await _userRepository.GetPlansByRoleAsync("Owner");
-    else
-    {
-        plans = await _userRepository.GetPlansByRoleAsync("User");
-        if (plans == null || !plans.Any())
-            plans = await _userRepository.GetPlansByRoleAsync("Owner");
-    }
+    // --- 6️⃣ Gói chuyển đổi ---
+    List<Plan> plans = userId == null || userId == 0
+        ? await _userRepository.GetPlansByRoleAsync("Owner")
+        : (await _userRepository.GetPlansByRoleAsync("User")) ?? await _userRepository.GetPlansByRoleAsync("Owner");
 
     Plan? matchedPlan = null;
     if (normalizedQuestion.Contains("tuần") || normalizedQuestion.Contains("week"))
@@ -170,7 +206,7 @@ public class ChatbaseService : IChatbaseService
 
     context += "\n\n--- Các gói chuyển đổi âm thanh ---\n" + planContext;
 
-    // --- 7️⃣ Thông tin subscription ---
+    // --- 7️⃣ Subscription ---
     string subscriptionContext;
     if (userId != null && userId > 0)
     {
@@ -219,9 +255,7 @@ public class ChatbaseService : IChatbaseService
     string botResponse = "";
 
     if (!response.IsSuccessStatusCode)
-    {
         botResponse = $"OpenAI API lỗi: {response.StatusCode} - {result}";
-    }
     else
     {
         try
@@ -244,8 +278,6 @@ public class ChatbaseService : IChatbaseService
 
     return botResponse;
 }
-
-
     public async Task<List<ChatbaseHistory>> GetChatHistoryAsync(int? userId)
     {
         if (userId == null) return new List<ChatbaseHistory>();

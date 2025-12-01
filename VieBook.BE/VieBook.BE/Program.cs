@@ -72,7 +72,9 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"])),
         // Map role claims để [Authorize(Roles = "...")] hoạt động đúng
-        RoleClaimType = System.Security.Claims.ClaimTypes.Role
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+        // Set ClockSkew to zero to be strict about token expiration
+        ClockSkew = TimeSpan.Zero
     };
 });
 // CORS policy registration (single source of truth)

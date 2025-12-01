@@ -225,9 +225,33 @@ export default function UserProfile() {
       
       await upsertMyProfile(updateData);
       
-      // Reload data from server to ensure consistency and notify other components
-      await updateUserData();
-      await loadUserData();
+      // Force reload data from server to ensure consistency and notify other components
+      // First update the store, then reload component data from store
+      const updatedUser = await updateUserData();
+      
+      // Use the updated user data directly instead of calling loadUserData which might use cached data
+      if (updatedUser) {
+        const profileData = {
+          fullName: updatedUser.userProfile?.fullName || "",
+          email: updatedUser.email || "",
+          phoneNumber: updatedUser.userProfile?.phoneNumber || "",
+          dateOfBirth: updatedUser.userProfile?.dateOfBirth ? 
+            new Date(updatedUser.userProfile.dateOfBirth).toISOString().split('T')[0] : "",
+          avatarUrl: updatedUser.userProfile?.avatarUrl || "",
+          bankNumber: updatedUser.userProfile?.bankNumber || "",
+          bankName: updatedUser.userProfile?.bankName || "",
+          address: updatedUser.userProfile?.address || "",
+          wallet: updatedUser.wallet || 0,
+          isPhoneVerified: updatedUser.userProfile?.isPhoneVerified || false,
+          phoneVerifiedAt: updatedUser.userProfile?.phoneVerifiedAt
+        };
+        setFormData(profileData);
+        setTempData(profileData);
+      } else {
+        // Fallback: reload from store
+        await loadUserData();
+      }
+      
       setIsEditing(false);
       
       window.dispatchEvent(new CustomEvent("app:toast", { 

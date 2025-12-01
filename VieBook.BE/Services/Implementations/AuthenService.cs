@@ -339,6 +339,22 @@ namespace Services.Implementations
             if (user == null)
                 throw new Exception("Người dùng không tồn tại");
 
+            // Kiểm tra trạng thái user - chỉ cho phép user có status "Active" refresh token
+            if (user.Status != "Active")
+            {
+                // Revoke refresh token nếu user không còn active
+                refreshToken.RevokedAt = DateTime.UtcNow;
+                refreshToken.ReasonRevoked = $"User status changed to {user.Status}";
+                await _refreshTokenRepo.UpdateAsync(refreshToken);
+
+                if (user.Status == "Pending")
+                    throw new Exception("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email và bấm vào link xác thực.");
+                else if (user.Status == "Banned" || user.Status == "Locked" || user.Status == "NotActive")
+                    throw new Exception("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                else
+                    throw new Exception("Tài khoản không được phép truy cập. Vui lòng liên hệ quản trị viên.");
+            }
+
             // Generate new tokens
             var roles = user.Roles?.Select(r => r.RoleName).ToList() ?? new List<string>();
             var newToken = _jwtService.GenerateToken(user.UserId.ToString(), user.Email, roles);
@@ -366,7 +382,8 @@ namespace Services.Implementations
             return new RefreshTokenResponseDto
             {
                 Token = newToken,
-                RefreshToken = newRefreshToken
+                RefreshToken = newRefreshToken,
+                Roles = roles // Add roles to response for frontend
             };
         }
 
