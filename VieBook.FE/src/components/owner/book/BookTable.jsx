@@ -312,9 +312,14 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                   </button>
 
                   <button
-                    className="p-2 bg-red-500 rounded hover:bg-red-600 transition"
+                    className={`p-2 rounded transition ${
+                      book.status === "InActive"
+                        ? "bg-gray-500 cursor-not-allowed opacity-50"
+                        : "bg-red-500 hover:bg-red-600"
+                    }`}
                     title="Tạm dừng"
                     onClick={() => setSelectedBook(book)}
+                    disabled={book.status === "InActive"}
                   >
                     <RiDeleteBinLine className="text-white text-lg" />
                   </button>

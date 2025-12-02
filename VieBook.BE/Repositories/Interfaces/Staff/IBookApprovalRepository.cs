@@ -18,5 +18,6 @@ namespace Repositories.Interfaces.Staff
         Task RefuseAsync(int bookId, int staffId, string? reason = null);
         Task<BookApproval?> GetLatestByBookIdAsync(int bookId);
         Task<Book?> GetBookByIdAsync(int bookId);
+        Task<Book?> GetBookWithOwnerAsync(int bookId);
     }
 }
