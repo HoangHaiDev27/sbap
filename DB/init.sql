@@ -38,6 +38,7 @@ CREATE TABLE dbo.UserProfiles (
 );
 ALTER TABLE dbo.UserProfiles ADD BankNumber VARCHAR(50) NULL;  -- số tài khoản
 ALTER TABLE dbo.UserProfiles ADD BankName NVARCHAR(150) NULL;  -- tên ngân hàng
+ALTER TABLE dbo.UserProfiles ADD Address NVARCHAR(200) NULL;
 -- Xác thực số điện thoại cho quy trình đăng ký Owner
 IF COL_LENGTH('dbo.UserProfiles','IsPhoneVerified') IS NULL
 BEGIN
@@ -605,20 +606,20 @@ VALUES
   ('bob@viebook.local',    NULL, 'Active');
 
 -- UserProfiles (kèm Bank)
-INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet)
-SELECT UserId, 'System Admin',  '0900000001', '1990-01-01', 'https://cdn/vb/admin.png', 0
+INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, [Address])
+SELECT UserId, 'System Admin',  '0900000001', '1990-01-01', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729672/avatarImages/qabvj4ot7ivggsr6bjte.jpg', 0, N'Đà Nẵng'
 FROM dbo.Users WHERE Email='admin@viebook.local';
-INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet)
-SELECT UserId, 'Support Staff', '0900000002', '1992-02-02', 'https://cdn/vb/staff.png', 0
+INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, [Address])
+SELECT UserId, 'Support Staff', '0900000002', '1992-02-02', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729672/avatarImages/qabvj4ot7ivggsr6bjte.jpg', 0, N'Đà Nẵng'
 FROM dbo.Users WHERE Email='staff@viebook.local';
-INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet)
-SELECT UserId, 'Book Owner',    '0900000003', '1993-03-03', 'https://cdn/vb/owner.png', 150000
+INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, [Address])
+SELECT UserId, 'Book Owner',    '0900000003', '1993-03-03', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729672/avatarImages/qabvj4ot7ivggsr6bjte.jpg', 2000, N'Đà Nẵng'
 FROM dbo.Users WHERE Email='owner@viebook.local';
-INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet)
-SELECT UserId, 'Alice',         '0900000004', '1995-04-04', 'https://cdn/vb/alice.png', 50000
+INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, [Address])
+SELECT UserId, 'Alice',         '0900000004', '1995-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729672/avatarImages/qabvj4ot7ivggsr6bjte.jpg', 50000, N'Đà Nẵng'
 FROM dbo.Users WHERE Email='alice@viebook.local';
-INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet)
-SELECT UserId, 'Bob',           '0900000005', '1996-05-05', 'https://cdn/vb/bob.png',   20000
+INSERT INTO dbo.UserProfiles(UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, [Address])
+SELECT UserId, 'Bob',           '0900000005', '1996-05-05', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729672/avatarImages/qabvj4ot7ivggsr6bjte.jpg',   20000, N'Đà Nẵng'
 FROM dbo.Users WHERE Email='bob@viebook.local';
 
 -- Bank info
@@ -1506,17 +1507,17 @@ INSERT INTO Users (Email, PasswordHash, Status, CreatedAt, LastLoginAt, Wallet)
 VALUES 
 ('vie.book.contact@gmail.com', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
 ('tantvde170310@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
-('anhtvde170315@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
+('anhtvde170315@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 2000),
 ('nhantdtde170313@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 0),
-('haindhde170464@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 200);
+('haindhde170464@fpt.edu.vn', 0x243261243131246475613852744D5A4C634A6A5958534E48465157634F427561506954522F61337A585361485A623934315937774475762F32533265, 'Active', GETDATE(), NULL, 5000);
 -- Thêm UserProfiles
-INSERT INTO UserProfiles (UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, BankNumber, BankName)
+INSERT INTO UserProfiles (UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, BankNumber, BankName, [Address])
 VALUES
-(7, N'VieBookSupport', '0909000001', '2003-01-01', 'https://example.com/avatar/admin.png', 0, '111111', 'Vietcombank'),
-(8, N'Tấn Trần', '0909000002', '1992-02-02', 'https://example.com/avatar/staff.png', 0, '222222', 'Techcombank'),
-(9, N'Văn Anh', '0909000003', '1995-03-03', 'https://example.com/avatar/customer.png', 0, '333333', 'ACB'),
-(10, N'Trương Nhân', '0909000004', '1988-04-04', 'https://example.com/avatar/owner.png', 0, '444444', 'Sacombank'),
-(11, N'Nguyễn Đình Hoàng Hải', '0909000004', '1988-04-04', 'https://example.com/avatar/owner.png', 0, '444444', 'Sacombank');
+(7, N'VieBookSupport', '0909000001', '2003-01-01', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729089/avatarImages/usawtquonrcofnowvtcu.jpg', 0, '111111', 'Vietcombank', N'Quảng Bình'),
+(8, N'Tấn Trần', '0909000002', '1992-02-02', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729154/avatarImages/zhdcwjo3qsaebz6ywfbv.jpg', 0, '222222', 'Techcombank', N'Quảng Trị'),
+(9, N'Văn Anh', '0909000003', '1995-03-03', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729408/avatarImages/lqlyga2avgux8hqdsklf.jpg', 0, '333333', 'ACB', N'Quảng Nam'),
+(10, N'Trương Nhân', '0909000004', '1988-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729284/avatarImages/fnhbdcuien4vq5bjre9g.jpg', 5000, '444444', 'Sacombank', N'Quảng Nam'),
+(11, N'Nguyễn Đình Hoàng Hải', '0909000004', '1988-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729457/avatarImages/fimepkkzo6nqymkc1yk5.jpg', 0, '444444', 'Sacombank', N'Đà Nẵng');
 
 -- Gán Role cho từng User
 INSERT INTO UserRoles (UserId, RoleId)
@@ -1527,14 +1528,14 @@ VALUES
 (9, 3), --Book Owner
 (9, 4), --Customer
 (10, 4), --Customer
+(3, 4), --Customer
+(11, 4), --Customer
 (11, 3); --Customer
 
 
 ALTER TABLE Chapters
 ADD VoiceName NVARCHAR(200) NULL;
 
--- Hương//////////
-ALTER TABLE dbo.UserProfiles ADD Address NVARCHAR(200) NULL;
 ---------------------------
 -- =========================================================
 -- Reading History - Lịch sử đọc/nghe
