@@ -222,12 +222,12 @@ namespace Services.Implementations
             if (result)
             {
                 // Tạo notification cho user
-                var reasonText = string.IsNullOrEmpty(reason) ? "" : $" Lý do: {reason}";
+                var reasonText = string.IsNullOrEmpty(reason) ? "" : $"\nLý do: {reason}";
                 await _notificationService.CreateAsync(new CreateNotificationDTO
                 {
                     UserId = paymentRequest.UserId,
                     Title = "Yêu cầu rút tiền đã bị từ chối",
-                    Body = $"Yêu cầu rút {paymentRequest.RequestedCoin} xu của bạn đã bị từ chối.{reasonText} Số xu đã được hoàn lại vào ví của bạn.",
+                    Body = $"Yêu cầu rút {paymentRequest.RequestedCoin} xu của bạn đã bị từ chối.{reasonText}\nSố xu đã được hoàn lại vào ví của bạn.",
                     Type = "WALLET_WITHDRAWAL"
                 });
             }
