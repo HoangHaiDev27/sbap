@@ -1,90 +1,302 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { 
+  RiArrowLeftLine, 
+  RiUserLine, 
+  RiBookLine, 
+  RiTimeLine, 
+  RiMoneyDollarCircleLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiCoinsLine
+} from "react-icons/ri";
+import orderItemApi from "../../api/orderItemApi";
+
+// Helper function to format order type
+const getOrderTypeLabel = (orderType) => {
+  const typeMap = {
+    'BuyChapter': 'Mua chương',
+    'BuyChapterSoft': 'Bản mềm',
+    'BuyChapterAudio': 'Bản audio',
+    'BuyChapterBoth': 'Cả hai (Soft + Audio)',
+    'Refund': 'Hoàn tiền'
+  };
+  return typeMap[orderType] || orderType;
+};
+
+// Helper function to get order type badge color
+const getOrderTypeBadgeColor = (orderType) => {
+  const colorMap = {
+    'BuyChapter': 'bg-blue-600',
+    'BuyChapterSoft': 'bg-purple-600',
+    'BuyChapterAudio': 'bg-indigo-600',
+    'BuyChapterBoth': 'bg-green-600',
+    'Refund': 'bg-red-600'
+  };
+  return colorMap[orderType] || 'bg-gray-600';
+};
 
 export default function OrderDetail() {
   const { orderId } = useParams();
+  const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Giả lập API lấy chi tiết đơn hàng
-    const mockData = {
-      id: orderId,
-      customer: "Nguyễn Văn A",
-      status: "Hoàn thành",
-      total: 150000,
-      date: "20/01/2024 10:30",
-      items: [
-        { id: "B001", title: "Triết học cuộc sống", price: 50000, qty: 1 },
-        { id: "B002", title: "Khoa học vui", price: 100000, qty: 1 },
-      ],
-      payment: "Ví MoMo",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
+    const fetchOrderDetail = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Lấy orderId từ URL (bỏ prefix "ORD-" nếu có)
+        const actualOrderId = orderId.replace('ORD-', '');
+        const response = await orderItemApi.getOrderById(parseInt(actualOrderId));
+
+        if (response.success) {
+          setOrder(response.data);
+        } else {
+          setError(response.message || "Không thể tải chi tiết đơn hàng");
+        }
+      } catch (err) {
+        console.error('Error fetching order detail:', err);
+        setError("Có lỗi xảy ra khi tải chi tiết đơn hàng");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setOrder(mockData);
+    fetchOrderDetail();
   }, [orderId]);
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Hoàn thành":
+        return "bg-green-600";
+      case "Đã hoàn tiền":
+        return "bg-red-600";
+      case "Đang chờ":
+        return "bg-yellow-600";
+      default:
+        return "bg-gray-600";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "Hoàn thành":
+        return <RiCheckLine className="text-green-400" />;
+      case "Đã hoàn tiền":
+        return <RiCloseLine className="text-red-400" />;
+      case "Đang chờ":
+        return <RiTimeLine className="text-yellow-400" />;
+      default:
+        return <RiTimeLine className="text-gray-400" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 text-white">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => navigate('/owner/sales-history')}
+            className="flex items-center text-gray-400 hover:text-white mr-4"
+          >
+            <RiArrowLeftLine size={20} />
+            <span className="ml-2">Quay lại</span>
+          </button>
+          <h1 className="text-2xl font-bold">Chi tiết đơn hàng</h1>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Đang tải dữ liệu...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 text-white">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => navigate('/owner/sales-history')}
+            className="flex items-center text-gray-400 hover:text-white mr-4"
+          >
+            <RiArrowLeftLine size={20} />
+            <span className="ml-2">Quay lại</span>
+          </button>
+          <h1 className="text-2xl font-bold">Chi tiết đơn hàng</h1>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-red-400">Lỗi: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!order) {
-    return <div className="text-white p-6">Đang tải dữ liệu...</div>;
+    return (
+      <div className="p-6 text-white">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => navigate('/owner/sales-history')}
+            className="flex items-center text-gray-400 hover:text-white mr-4"
+          >
+            <RiArrowLeftLine size={20} />
+            <span className="ml-2">Quay lại</span>
+          </button>
+          <h1 className="text-2xl font-bold">Chi tiết đơn hàng</h1>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Không tìm thấy đơn hàng</div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">Chi tiết đơn hàng</h1>
-
-      {/* Thông tin cơ bản */}
-      <div className="bg-slate-800 p-4 rounded-lg mb-6">
-        <p><span className="font-semibold">Mã đơn:</span> {order.id}</p>
-        <p><span className="font-semibold">Khách hàng:</span> {order.customer}</p>
-        <p><span className="font-semibold">Trạng thái:</span> {order.status}</p>
-        <p><span className="font-semibold">Ngày giờ:</span> {order.date}</p>
-        <p><span className="font-semibold">Phương thức thanh toán:</span> {order.payment}</p>
-        <p><span className="font-semibold">Địa chỉ giao hàng:</span> {order.address}</p>
+      {/* Header */}
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => navigate('/owner/sales-history')}
+          className="flex items-center text-gray-400 hover:text-white mr-4"
+        >
+          <RiArrowLeftLine size={20} />
+          <span className="ml-2">Quay lại</span>
+        </button>
+        <h1 className="text-2xl font-bold">Chi tiết đơn hàng</h1>
       </div>
 
-      {/* Danh sách sản phẩm */}
-      <div className="bg-slate-800 p-4 rounded-lg mb-6">
-        <h2 className="text-lg font-semibold mb-3">Sản phẩm</h2>
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-700 text-gray-300">
-              <th className="p-3">Mã sách</th>
-              <th className="p-3">Tên sách</th>
-              <th className="p-3">Số lượng</th>
-              <th className="p-3">Giá</th>
-              <th className="p-3">Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.items.map((item) => (
-              <tr key={item.id} className="border-b border-gray-600">
-                <td className="p-3">{item.id}</td>
-                <td className="p-3">{item.title}</td>
-                <td className="p-3">{item.qty}</td>
-                <td className="p-3">{item.price.toLocaleString()} VND</td>
-                <td className="p-3">
-                  {(item.price * item.qty).toLocaleString()} VND
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Thông tin đơn hàng */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Thông tin cơ bản */}
+          <div className="bg-slate-800 p-6 rounded-lg">
+            <h2 className="text-xl font-bold mb-4 flex items-center">
+              <RiBookLine className="mr-2" />
+              Thông tin đơn hàng
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-gray-400 text-sm">Mã đơn hàng</label>
+                <p className="text-white font-semibold">ORD-{order.orderItemId}</p>
+              </div>
+              <div>
+                <label className="text-gray-400 text-sm">Loại giao dịch</label>
+                <div className="mt-1">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getOrderTypeBadgeColor(order.orderType)}`}>
+                    {getOrderTypeLabel(order.orderType)}
+                  </span>
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-gray-400 text-sm">Thời gian thanh toán</label>
+                <p className="text-white">{new Date(order.paidAt).toLocaleString('vi-VN')}</p>
+              </div>
+            </div>
+          </div>
 
-      {/* Tổng cộng */}
-      <div className="bg-slate-800 p-4 rounded-lg mb-6">
-        <p className="text-lg font-bold">
-          Tổng cộng: {order.total.toLocaleString()} VND
-        </p>
-      </div>
+          {/* Thông tin sách */}
+          <div className="bg-slate-800 p-6 rounded-lg">
+            <h2 className="text-xl font-bold mb-4 flex items-center">
+              <RiBookLine className="mr-2" />
+              Thông tin sách
+            </h2>
+            <div className="flex items-start space-x-4">
+              <img
+                src={order.bookCoverUrl || "https://via.placeholder.com/120x160.png?text=Book"}
+                alt={order.bookTitle}
+                className="w-24 h-32 object-cover rounded"
+              />
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-2">{order.bookTitle}</h3>
+                <p className="text-gray-400 mb-2">Chương: {order.chapterTitle}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="text-gray-400 text-sm">Giá chương</label>
+                    <p className="text-white font-semibold">{order.unitPrice.toLocaleString()} xu</p>
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm">Tổng thanh toán</label>
+                    <p className="text-white font-semibold text-lg">{order.cashSpent.toLocaleString()} xu</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {/* Quay lại */}
-      <Link
-        to="/owner/orders"
-        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded"
-      >
-        Quay lại danh sách
-      </Link>
+        {/* Sidebar - Thông tin khách hàng và tổng kết */}
+        <div className="space-y-6">
+          {/* Thông tin khách hàng */}
+          <div className="bg-slate-800 p-6 rounded-lg">
+            <h2 className="text-xl font-bold mb-4 flex items-center">
+              <RiUserLine className="mr-2" />
+              Thông tin khách hàng
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-gray-400 text-sm">Tên khách hàng</label>
+                <p className="text-white font-semibold">{order.customerName}</p>
+              </div>
+              <div>
+                <label className="text-gray-400 text-sm">Email</label>
+                <p className="text-white">{order.customerEmail}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tổng kết đơn hàng */}
+          <div className="bg-slate-800 p-6 rounded-lg">
+            <h2 className="text-xl font-bold mb-4 flex items-center">
+              <RiCoinsLine className="mr-2" />
+              Tổng kết đơn hàng
+            </h2>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Giá gốc:</span>
+                <span className="text-white">{order.unitPrice.toLocaleString()} xu</span>
+              </div>
+              {order.unitPrice !== order.cashSpent && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Giảm giá:</span>
+                  <span className="text-green-400">-{(order.unitPrice - order.cashSpent).toLocaleString()} xu</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-400">Phí dịch vụ:</span>
+                <span className="text-white">0 xu</span>
+              </div>
+              <hr className="border-gray-600" />
+              <div className="flex justify-between text-lg font-bold">
+                <span>Khách hàng đã trả:</span>
+                <span className="text-orange-400">{order.cashSpent.toLocaleString()} xu</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hành động */}
+          <div className="bg-slate-800 p-6 rounded-lg">
+            <h2 className="text-xl font-bold mb-4">Hành động</h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/owner/sales-history')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+              >
+                Quay lại danh sách
+              </button>
+              {/* TODO: Thêm các hành động khác khi cần thiết */}
+              {/* {order.status === "Hoàn thành" && (
+                <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">
+                  Xác nhận hoàn thành
+                </button>
+              )} */}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

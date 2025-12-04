@@ -1,0 +1,355 @@
+﻿using BusinessObject.Dtos;
+using BusinessObject.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DataAccess.DAO.Admin
+{
+    public class AdminDAO
+    {
+        private readonly VieBookContext _context;
+
+        public AdminDAO(VieBookContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<User?> GetAdminByIdAsync(int id)
+        {
+            return await _context.Users
+                .Include(u => u.UserProfile)
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.UserId == id && u.Roles.Any(r => r.RoleName == "Admin"));
+        }
+
+        public async Task<User> UpdateAdminAsync(User user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return user;
+        }
+       public async Task<AdminStatisticDTO> GetStatisticsAsync(DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            // Nếu không truyền vào, mặc định lấy 30 ngày gần nhất
+            var now = DateTime.UtcNow;
+            var startDate = fromDate ?? now.AddDays(-30);
+            var endDate = toDate ?? now;
+            if (startDate > endDate)
+            {
+                return new AdminStatisticDTO
+                {
+                    Message = "Ngày bắt đầu không được lớn hơn ngày kết thúc."
+                };
+            }
+            // ===== Helper tính phần trăm thay đổi =====
+           double CalcChange(double current, double previous)
+            {
+                if (previous <= 0)
+                {
+                    if (current <= 0) return 0;        // Không tăng, không giảm
+                    return 100;                        // Hoặc chọn giá trị đại diện "tăng từ 0"
+                }
+
+                return Math.Round((current - previous) / previous * 100, 1);
+            }
+
+            // ===== 1. Tổng số sách =====
+            int totalBooks = await _context.Books.CountAsync(b => b.Status == "Approved" && b.CreatedAt <= endDate);
+            int prevBooks = await _context.Books.CountAsync(b => b.Status == "Approved" && b.CreatedAt < startDate);
+            double bookChange = CalcChange(totalBooks, prevBooks);
+
+            // ===== 2. Sách nói =====
+            int audioBooks = await _context.Books
+            .Where(b => b.Status == "Approved" && 
+                        b.Chapters.Any(c => c.ChapterAudios.Any() && c.Status == "Active") &&
+                        b.CreatedAt <= endDate)
+            .CountAsync();
+
+            int prevAudioBooks = await _context.Books
+                .Where(b => b.Status == "Approved" && 
+                            b.Chapters.Any(c => c.ChapterAudios.Any() && c.Status == "Active") &&
+                            b.CreatedAt < startDate)
+                .CountAsync();
+
+            double audioChange = CalcChange(audioBooks, prevAudioBooks);
+
+            // ===== 3. Chủ sở hữu =====
+            int owners = await _context.Users.CountAsync(u => u.Roles.Any(r => r.RoleName == "Owner") && u.CreatedAt <= endDate);
+            int prevOwners = await _context.Users.CountAsync(u => u.Roles.Any(r => r.RoleName == "Owner") && u.CreatedAt < startDate);
+            double ownerChange = CalcChange(owners, prevOwners);
+
+            // ===== 4. Khách hàng =====
+            int customers = await _context.Users.CountAsync(u => u.Roles.Any(r => r.RoleName == "Customer") && u.CreatedAt <= endDate);
+            int prevCustomers = await _context.Users.CountAsync(u => u.Roles.Any(r => r.RoleName == "Customer") && u.CreatedAt < startDate);
+            double customerChange = CalcChange(customers, prevCustomers);
+
+            // ===== 5. Nhân viên =====
+            int staffs = await _context.Users
+            .Where(u => u.Roles.Count == 1 && u.Roles.Any(r => r.RoleName == "Staff") && u.CreatedAt <= endDate).CountAsync();
+
+            int prevStaffs = await _context.Users
+            .Where(u => u.Roles.Count == 1 && u.Roles.Any(r => r.RoleName == "Staff") && u.CreatedAt < startDate).CountAsync();
+            double staffChange = CalcChange(staffs, prevStaffs);
+
+            // ===== 6. Giao dịch & doanh thu =====
+            // ---------- OrderItem ----------
+            var orderQuery = _context.OrderItems
+                .Where(o => o.PaidAt >= startDate && o.PaidAt <= endDate);
+
+            // ---------- WalletTransaction ----------
+            var walletQuery = _context.WalletTransactions
+                .Where(t => t.CreatedAt >= startDate && t.CreatedAt <= endDate && t.Status == "Succeeded");
+
+            // ---------- Subscription ----------
+            var subscriptionQuery = _context.Subscriptions
+                .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate && s.Status == "Active");
+
+            // ---------- PaymentRequest ----------
+            var paymentQuery = _context.PaymentRequests
+                .Where(p => p.RequestDate >= startDate && p.RequestDate <= endDate);
+
+
+            // ========== SỐ GIAO DỊCH ==========
+
+            int monthlyOrderTransactions = await orderQuery.CountAsync();
+            int monthlyWalletTransactions = await walletQuery.CountAsync();
+            int monthlySubscriptionTransactions = await subscriptionQuery.CountAsync();
+            int monthlyPaymentTransactions = await paymentQuery.CountAsync();
+
+            int monthlyTransactions =
+                monthlyOrderTransactions
+                + monthlyWalletTransactions
+                + monthlySubscriptionTransactions
+                + monthlyPaymentTransactions;
+
+
+            // ========== DOANH THU ==========
+
+            // Order → xu → VND
+            decimal orderRevenue =
+                (await orderQuery.SumAsync(o => (decimal?)o.CashSpent) ?? 0) * 1000;
+
+            // Wallet → VNĐ
+            decimal walletRevenue =
+                await walletQuery.SumAsync(t => (decimal?)t.AmountMoney) ?? 0;
+
+            // Subscription → lấy giá từ Plan
+            decimal subscriptionRevenue =
+                (await subscriptionQuery.SumAsync(s => (decimal?)s.Plan.Price) ?? 0);
+
+            // PaymentRequest → không cộng vào doanh thu
+            decimal monthlyRevenue = orderRevenue + walletRevenue + subscriptionRevenue;
+
+
+            // ============ KỲ TRƯỚC ============
+
+            // OrderItem trước kỳ
+            var prevOrderQuery = _context.OrderItems
+                .Where(o => o.PaidAt < startDate);
+
+            // WalletTransaction trước kỳ
+            var prevWalletQuery = _context.WalletTransactions
+                .Where(t => t.CreatedAt < startDate && t.Status == "Succeeded");
+
+            // Subscription trước kỳ
+            var prevSubscriptionQuery = _context.Subscriptions
+                .Where(s => s.CreatedAt < startDate && s.Status == "Active");
+
+            // PaymentRequest trước kỳ
+            var prevPaymentQuery = _context.PaymentRequests
+                .Where(p => p.RequestDate < startDate);
+
+
+            // ----- Số giao dịch kỳ trước -----
+            int prevTransactions =
+                await prevOrderQuery.CountAsync()
+                + await prevWalletQuery.CountAsync()
+                + await prevSubscriptionQuery.CountAsync()
+                + await prevPaymentQuery.CountAsync();
+
+
+            // ----- Doanh thu kỳ trước -----
+            decimal prevOrderRevenue =
+                (await prevOrderQuery.SumAsync(o => (decimal?)o.CashSpent) ?? 0) * 1000;
+
+            decimal prevWalletRevenue =
+                await prevWalletQuery.SumAsync(t => (decimal?)t.AmountMoney) ?? 0;
+
+            decimal prevSubscriptionRevenue =
+                (await prevSubscriptionQuery.SumAsync(s => (decimal?)s.Plan.Price) ?? 0);
+
+            decimal prevRevenue = prevOrderRevenue + prevWalletRevenue + prevSubscriptionRevenue;
+
+
+            // ========== % THAY ĐỔI ==========
+
+            double transactionChange = CalcChange(monthlyTransactions, prevTransactions);
+            double revenueChange = CalcChange((double)monthlyRevenue, (double)prevRevenue);
+
+
+            // ===== 7. Feedback =====
+            // Phản hồi trong kỳ hiện tại
+            var reviewsQuery = _context.BookReviews
+                .Where(r => r.CreatedAt >= startDate && r.CreatedAt <= endDate);
+
+            int currentReviews = await reviewsQuery.CountAsync();
+
+            // Phản hồi kỳ trước
+            var prevReviewsQuery = _context.BookReviews
+                .Where(r => r.CreatedAt < startDate);
+
+            int prevReviews = await prevReviewsQuery.CountAsync();
+
+            // Phản hồi tích cực (>= 4 sao) trong kỳ hiện tại
+            int positiveReviews = await reviewsQuery.CountAsync(r => r.Rating >= 4);
+
+            // Trung bình điểm đánh giá trong kỳ hiện tại
+            double avgRating = currentReviews > 0
+                ? await reviewsQuery.AverageAsync(r => r.Rating)
+                : 0;
+
+            // Tỷ lệ phản hồi tích cực trong kỳ hiện tại
+            double positivePercent = currentReviews > 0
+                ? Math.Round((double)positiveReviews / currentReviews * 100, 1)
+                : 0;
+
+            // So sánh thay đổi phản hồi mới giữa 2 kỳ
+            double feedbackChangePercent = CalcChange(currentReviews, prevReviews);
+
+
+            // ===== 8. Biểu đồ: Sách theo ngày =====
+            var booksByDayRaw = await _context.Books
+                .Where(b => b.Status == "Approved" && b.CreatedAt >= startDate && b.CreatedAt <= endDate)
+                .GroupBy(b => b.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Books = g.Count() })
+                .OrderBy(g => g.Date)
+                .ToListAsync();
+
+            var booksByDayData = booksByDayRaw
+                .Select(x => new BookByDayDTO
+                {
+                    Date = x.Date.ToString("dd/MM"),
+                    Books = x.Books
+                })
+                .ToList();
+
+            // ===== 9. Biểu đồ: Doanh thu theo tháng =====
+            // === 1. WalletTransactions (VNĐ) ===
+            var totalWalletRevenue = await _context.WalletTransactions
+                .Where(t => t.CreatedAt >= startDate && t.CreatedAt <= endDate && t.Status == "Succeeded")
+                .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Revenue = g.Sum(t => t.AmountMoney)
+                })
+                .ToListAsync();
+
+            // === 2. OrderItems (xu → VNĐ) ===
+            var totalOrderRevenue  = await _context.OrderItems
+                .Where(o => o.PaidAt >= startDate && o.PaidAt <= endDate)
+                .GroupBy(o => new { o.PaidAt.Value.Year, o.PaidAt.Value.Month })
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Revenue = g.Sum(o => o.CashSpent * 1000)   // Xu → VNĐ
+                })
+                .ToListAsync();
+
+            // === 3. Subscription (VNĐ) ===
+            var totalSubscriptionRevenue = await _context.Subscriptions
+                .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate && s.Status == "Active")
+                .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Revenue = g.Sum(s => s.Plan.Price)        // lấy price của gói
+                })
+                .ToListAsync();
+
+
+            // === GỘP 3 LOẠI DOANH THU LẠI ===
+            var revenueRaw = totalWalletRevenue
+                .Concat(totalOrderRevenue)
+                .Concat(totalSubscriptionRevenue)
+                .GroupBy(x => new { x.Year, x.Month })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Revenue = g.Sum(x => x.Revenue)
+                })
+                .OrderBy(g => g.Year)
+                .ThenBy(g => g.Month)
+                .ToList();
+
+
+            // === TẠO DANH SÁCH DTO ===
+            var revenueData = revenueRaw
+                .Select(r => new RevenueByMonthDTO
+                {
+                    Month = $"Th{r.Month}",
+                    Revenue = r.Revenue
+                })
+                .ToList();
+
+
+            // ===== 10. Phân loại sách =====
+            var categoryRaw = await _context.Categories
+                .Select(c => new
+                {
+                    c.Name,
+                    Count = c.Books.Count(b => b.Status == "Approved" && b.CreatedAt >= startDate && b.CreatedAt <= endDate)
+                })
+                .ToListAsync();
+
+            int totalCategoryBooks = categoryRaw.Sum(c => c.Count);
+            var categoryDistribution = categoryRaw
+                .Select(c => new CategoryDistributionDTO
+                {
+                    Name = c.Name,
+                    Count = c.Count,
+                    Percentage = totalCategoryBooks > 0
+                        ? Math.Round((double)c.Count / totalCategoryBooks * 100, 1)
+                        : 0
+                })
+                .OrderByDescending(c => c.Count)
+                .ToList();
+
+            // ===== 11. Trả về DTO =====
+            return new AdminStatisticDTO
+            {
+                TotalBooks = totalBooks,
+                AudioBooks = audioBooks,
+                BookOwners = owners,
+                Customers = customers,
+                Staffs = staffs,
+                MonthlyTransactions = monthlyTransactions,
+                MonthlyRevenue = Math.Round(monthlyRevenue, 2),
+                PositiveFeedbackPercent = positivePercent,
+                AverageRating = Math.Round(avgRating, 2),
+
+                // Change %
+                BooksChangePercent = bookChange,
+                AudioChangePercent = audioChange,
+                BookOwnerChangePercent = ownerChange,
+                CustomerChangePercent = customerChange,
+                StaffChangePercent = staffChange,
+                TransactionChangePercent = transactionChange,
+                RevenueChangePercent = revenueChange,
+                FeedbackChangePercent = feedbackChangePercent,
+
+                BooksByDayData = booksByDayData,
+                RevenueData = revenueData,
+                CategoryDistribution = categoryDistribution
+            };
+        }
+    }
+}

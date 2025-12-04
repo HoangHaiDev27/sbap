@@ -3,7 +3,6 @@ import React from "react";
 export default function FeedbackDetailModal({
   feedback,
   onClose,
-  onMarkAsReviewed,
   onDelete,
   getTypeText,
   getTypeColor,
@@ -25,7 +24,7 @@ export default function FeedbackDetailModal({
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">
-            Chi tiết Feedback
+            Chi tiết Đánh giá
           </h3>
           <button
             onClick={onClose}
@@ -61,23 +60,16 @@ export default function FeedbackDetailModal({
                   ></i>
                   {getTypeText(feedback.type)}
                 </span>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                    feedback.status
-                  )}`}
-                >
-                  {getStatusText(feedback.status)}
-                </span>
+                {feedback.status !== "new" && (
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                      feedback.status
+                    )}`}
+                  >
+                    {getStatusText(feedback.status)}
+                  </span>
+                )}
               </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tiêu đề
-            </label>
-            <div className="text-lg font-medium text-gray-900">
-              {feedback.title}
             </div>
           </div>
 
@@ -110,21 +102,12 @@ export default function FeedbackDetailModal({
 
           {/* Actions */}
           <div className="flex space-x-3">
-            {feedback.status === "new" && (
-              <button
-                onClick={() => onMarkAsReviewed(feedback.id)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer whitespace-nowrap"
-              >
-                <i className="ri-check-line mr-2 w-4 h-4 inline-flex items-center justify-center"></i>
-                Đánh dấu đã xem
-              </button>
-            )}
             <button
               onClick={() => onDelete(feedback.id)}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer whitespace-nowrap"
             >
               <i className="ri-delete-bin-line mr-2 w-4 h-4 inline-flex items-center justify-center"></i>
-              Xóa feedback
+              Xóa đánh giá
             </button>
           </div>
         </div>

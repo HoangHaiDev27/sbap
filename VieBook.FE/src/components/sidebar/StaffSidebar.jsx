@@ -1,9 +1,20 @@
 'use client';
-import { Link, useLocation } from 'react-router-dom';
-import logo from '../../assets/logo.png'; // ⚡ nhớ chỉnh lại đường dẫn cho đúng
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import logo from '../../assets/logo.png';
+import { switchRole, getCurrentRole, hasRole, canSwitchStaffAdmin } from '../../api/authApi';
+import { RiAdminLine, RiUserLine } from 'react-icons/ri';
 
-export default function StaffSidebar() {
+export default function StaffSidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleRoleSwitch = () => {
+    // Chuyển từ staff sang admin
+    const success = switchRole('admin');
+    if (success) {
+      navigate('/admin');
+    }
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Tổng quan', icon: 'ri-dashboard-line', href: '/staff' },
@@ -14,40 +25,74 @@ export default function StaffSidebar() {
     { id: 'pending-books', label: 'Duyệt sách mới', icon: 'ri-file-check-line', href: '/staff/pending-books' },
     { id: 'transactions', label: 'Giao dịch', icon: 'ri-money-dollar-circle-line', href: '/staff/transactions' },
     { id: 'withdrawals', label: 'Phê duyệt rút tiền', icon: 'ri-bank-card-line', href: '/staff/withdrawals' },
+    { id: 'support-chat', label: 'Hỗ trợ khách hàng', icon: 'ri-customer-service-2-line', href: '/staff/support-chat' },
     { id: 'feedback', label: 'Đánh giá', icon: 'ri-message-2-line', href: '/staff/feedback' },
+    { id: 'pending-posts', label: 'Duyệt bài đăng', icon: 'ri-file-check-line', href: '/staff/pending-posts' },
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white overflow-y-auto z-40 flex flex-col">
-      {/* Logo */}
-      <div className="p-6">
-        <Link to="/" className="flex items-center space-x-3">
-          <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
-          <span className="text-2xl font-bold text-orange-500">VieBook</span>
-        </Link>
-      </div>
+    <>
+      {/* Overlay cho mobile */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      ></div>
 
-      {/* Menu */}
-      <nav className="px-4 space-y-1 flex-1">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-            <Link
-              key={item.id}
-              to={item.href}
-              className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <i className={`${item.icon} w-5 h-5 flex items-center justify-center`}></i>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <aside
+        className={`fixed top-0 left-0 w-64 h-screen bg-gray-900 text-white overflow-y-auto z-50 shadow-lg transform transition-transform duration-200 lg:translate-x-0 flex flex-col ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        {/* Logo */}
+        <div className="p-6">
+          <Link to="/" className="flex items-center space-x-3">
+            <img src={logo} alt="Logo" className="h-[1.5em] w-auto scale-300" />
+            <span className="text-2xl font-bold text-orange-500">VieBook</span>
+          </Link>
+        </div>
 
-    </div>
+        {/* Menu */}
+        <nav className="px-4 flex-1">
+          <ul className="space-y-2">
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <li key={item.id}>
+                  <Link
+                    to={item.href}
+                    onClick={onClose} // đóng khi click menu trên mobile
+                    className={`flex items-center px-3 py-3 rounded-lg transition-colors whitespace-nowrap ${
+                      isActive
+                        ? 'bg-orange-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    <i className={`${item.icon} w-5 h-5 mr-3`}></i>
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Role Switch Button - chỉ hiển thị khi user có thể chuyển đổi giữa staff và admin - nằm dưới cùng */}
+        {canSwitchStaffAdmin() && (
+          <div className="px-4 pb-4">
+            <div className="border-t border-gray-700 pt-4">
+              <button
+                onClick={handleRoleSwitch}
+                className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-colors"
+              >
+                <RiAdminLine className="w-4 h-4" />
+                <span>Chuyển sang Admin</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </aside>
+    </>
   );
 }

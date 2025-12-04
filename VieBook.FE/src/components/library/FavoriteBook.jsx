@@ -1,158 +1,107 @@
-import React from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getMyWishlist, removeFromWishlist } from "../../api/wishlistApi";
+import { Link, useNavigate } from "react-router-dom";
+import { getUserId } from "../../api/authApi";
+import { RiCloseLine } from "react-icons/ri";
+import toast from "react-hot-toast";
+import { dispatchWishlistChangeDelayed } from "../../utils/wishlistEvents";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function FavoriteBook() {
-  const [filter, setFilter] = useState("all");
+  const { isAuthenticated, isLoading: authLoading } = useCurrentUser();
+  const [filter] = useState("all");
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
   const itemsPerPage = 6;
 
-  // 🔹 Dữ liệu mẫu
-  const favoriteBooks = [
-    {
-      id: 1,
-      title: "Sapiens: A Brief History of Humankind",
-      author: "Yuval Noah Harari",
-      cover:
-        "https://readdy.ai/api/search-image?query=Sapiens%20human%20evolution%20history%20book%20cover&width=200&height=280",
-      category: "Lịch sử",
-      rating: 4.9,
-      duration: "15h 17m",
-      narrator: "Derek Perkins",
-      dateAdded: "2024-01-20",
-      lastAccessed: "2024-01-19",
-      progress: 78,
-      isPremium: true,
-      isOwned: false,
-      status: "reading",
-    },
-    {
-      id: 2,
-      title: "Homo Deus: A Brief History of Tomorrow",
-      author: "Yuval Noah Harari",
-      cover:
-        "https://readdy.ai/api/search-image?query=Homo%20deus%20future%20technology%20book%20cover&width=200&height=280",
-      category: "Khoa học",
-      rating: 4.8,
-      duration: "14h 54m",
-      narrator: "Derek Perkins",
-      dateAdded: "2024-01-18",
-      lastAccessed: "2024-01-17",
-      progress: 45,
-      isPremium: true,
-      isOwned: false,
-      status: "reading",
-    },
-    {
-      id: 3,
-      title: "Educated",
-      author: "Tara Westover",
-      cover:
-        "https://readdy.ai/api/search-image?query=Educated%20memoir%20education%20book%20cover&width=200&height=280",
-      category: "Hồi ký",
-      rating: 4.7,
-      duration: "12h 10m",
-      narrator: "Julia Whelan",
-      dateAdded: "2024-01-15",
-      lastAccessed: "2024-01-14",
-      progress: 100,
-      isPremium: false,
-      isOwned: true,
-      status: "completed",
-    },
-    {
-      id: 4,
-      title: "The Midnight Library",
-      author: "Matt Haig",
-      cover:
-        "https://readdy.ai/api/search-image?query=Midnight%20library%20philosophical%20fiction%20book%20cover&width=200&height=280",
-      category: "Triết học",
-      rating: 4.6,
-      duration: "8h 49m",
-      narrator: "Carey Mulligan",
-      dateAdded: "2024-01-12",
-      lastAccessed: "2024-01-10",
-      progress: 0,
-      isPremium: true,
-      isOwned: false,
-      status: "wishlist",
-    },
-    {
-      id: 5,
-      title: "Becoming",
-      author: "Michelle Obama",
-      cover:
-        "https://readdy.ai/api/search-image?query=Becoming%20Michelle%20Obama%20memoir%20book%20cover&width=200&height=280",
-      category: "Hồi ký",
-      rating: 4.9,
-      duration: "19h 3m",
-      narrator: "Michelle Obama",
-      dateAdded: "2024-01-10",
-      lastAccessed: "2024-01-09",
-      progress: 32,
-      isPremium: false,
-      isOwned: true,
-      status: "reading",
-    },
-    {
-      id: 6,
-      title: "The Silent Patient",
-      author: "Alex Michaelides",
-      cover:
-        "https://readdy.ai/api/search-image?query=Silent%20patient%20psychological%20thriller%20book%20cover&width=200&height=280",
-      category: "Tâm lý",
-      rating: 4.5,
-      duration: "8h 43m",
-      narrator: "Jack Hawkins",
-      dateAdded: "2024-01-08",
-      lastAccessed: "2024-01-07",
-      progress: 100,
-      isPremium: true,
-      isOwned: false,
-      status: "completed",
-    },
-    {
-      id: 7,
-      title: "The Seven Husbands of Evelyn Hugo",
-      author: "Taylor Jenkins Reid",
-      cover:
-        "https://readdy.ai/api/search-image?query=Seven%20husbands%20Evelyn%20Hugo%20romance%20novel%20book%20cover&width=200&height=280",
-      category: "Tiểu thuyết",
-      rating: 4.8,
-      duration: "12h 10m",
-      narrator: "Alma Cuervo",
-      dateAdded: "2024-01-05",
-      lastAccessed: "2024-01-04",
-      progress: 65,
-      isPremium: false,
-      isOwned: true,
-      status: "reading",
-    },
-  ];
+  const [favoriteBooks, setFavoriteBooks] = useState([]);
+
+  const handleRemoveFromWishlist = async (bookId) => {
+    try {
+      await removeFromWishlist(bookId);
+      setFavoriteBooks(prev => prev.filter(b => b.id !== bookId));
+      toast.success("Đã gỡ khỏi danh sách yêu thích");
+      // Dispatch event to update wishlist count
+      dispatchWishlistChangeDelayed();
+    } catch {
+      toast.error("Có lỗi khi gỡ khỏi danh sách yêu thích");
+    }
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+    
+    (async () => {
+      try {
+        setLoading(true);
+        const books = await getMyWishlist();
+        // Map backend Book -> UI fields
+        const mapped = (books || []).map((b) => ({
+            id: b.bookId,
+            title: b.title,
+            author: b.author || b.owner?.userProfile?.fullName || b.owner?.email || "Tác giả",
+            cover: b.coverUrl,
+            categories: Array.isArray(b.categories) ? b.categories.map(c => c.name) : [],
+            rating: b.averageRating > 0 ? b.averageRating.toFixed(1) : "0.0",
+            duration: "", // Xóa hiển thị duration
+            dateAdded: new Date(b.createdAt).toLocaleDateString(),
+            lastAccessed: new Date(b.updatedAt || b.createdAt).toLocaleDateString(),
+            progress: 0,
+            isPremium: false,
+            isOwned: false,
+            status: "wishlist",
+        }));
+        setFavoriteBooks(mapped);
+      } catch {
+        setError("Không tải được danh sách Yêu thích");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [isAuthenticated]);
 
   // 🔹 Filter
   const getFilteredBooks = () => {
     switch (filter) {
-      case "reading":
-        return favoriteBooks.filter((b) => b.status === "reading");
-      case "completed":
-        return favoriteBooks.filter((b) => b.status === "completed");
-      case "wishlist":
-        return favoriteBooks.filter((b) => b.status === "wishlist");
-      case "owned":
-        return favoriteBooks.filter((b) => b.isOwned);
-      case "premium":
-        return favoriteBooks.filter((b) => b.isPremium && !b.isOwned);
-      default:
+      case "all":
         return favoriteBooks;
+      default:
+        return favoriteBooks.filter((b) => b.categories?.includes(filter));
     }
   };
-
-  const filteredBooks = getFilteredBooks();
+  const filteredBooks = getFilteredBooks().filter(b => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (b.title || "").toLowerCase().includes(q) ||
+      (b.author || "").toLowerCase().includes(q)
+    );
+  });
   const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
   const currentBooks = filteredBooks.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const buildPageNumbers = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = [];
+    const add = (p) => pages.push(p);
+    add(1);
+    if (currentPage > 4) add("...");
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let p = start; p <= end; p++) add(p);
+    if (currentPage < totalPages - 3) add("...");
+    add(totalPages);
+    return pages;
+  };
 
   // 🔹 Badges
   const getStatusBadge = (status) => {
@@ -177,25 +126,7 @@ export default function FavoriteBook() {
     return null;
   };
 
-  const getAccessBadge = (isOwned, isPremium) => {
-    if (isOwned)
-      return (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-600/20 text-green-300">
-          Sở hữu
-        </span>
-      );
-    if (isPremium)
-      return (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
-          VIP
-        </span>
-      );
-    return (
-      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
-        Miễn phí
-      </span>
-    );
-  };
+  // Removed unused getAccessBadge
 
   const getProgressColor = (progress) => {
     if (progress === 100) return "bg-green-500";
@@ -204,25 +135,44 @@ export default function FavoriteBook() {
     return "bg-gray-500";
   };
 
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem sách yêu thích
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem danh sách sách yêu thích của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {loading && <div className="text-gray-300">Đang tải danh sách yêu thích...</div>}
+      {error && <div className="text-red-400">{error}</div>}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Sách yêu thích</h2>
-        <select
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto"
-        >
-          <option value="all">Tất cả</option>
-          <option value="reading">Đang đọc</option>
-          <option value="completed">Đã hoàn thành</option>
-          <option value="wishlist">Muốn đọc</option>
-          <option value="owned">Đã sở hữu</option>
-          <option value="premium">Yêu cầu VIP</option>
-        </select>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Tìm theo tên hoặc tác giả..."
+            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white flex-1"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -231,8 +181,20 @@ export default function FavoriteBook() {
             key={book.id}
             className="bg-gray-800 rounded-xl p-4 flex flex-col hover:bg-gray-700 transition-colors relative"
           >
+            {/* Remove button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveFromWishlist(book.id);
+              }}
+              className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 transition-colors z-10"
+              title="Gỡ khỏi danh sách yêu thích"
+            >
+              <RiCloseLine size={14} />
+            </button>
+
             {/* Nội dung chính */}
-            <div className="flex gap-4">
+            <div className="flex gap-4 pr-8">
               {/* Cover */}
               <img
                 src={book.cover}
@@ -241,17 +203,19 @@ export default function FavoriteBook() {
               />
 
               {/* Thông tin sách */}
-              <div className="flex-1 flex flex-col">
-                <h3 className="font-semibold text-white text-sm mb-1 truncate">
+              <div className="flex-1 flex flex-col min-w-0">
+                <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">
                   {book.title}
                 </h3>
-                <p className="text-xs text-gray-300 mb-2">{book.author}</p>
+                <p className="text-xs text-gray-300 mb-2 truncate">{book.author}</p>
 
                 {/* Badge */}
-                <div className="flex items-center flex-wrap gap-2 mb-2">
-                  <span className="px-2 py-0.5 text-xs bg-gray-600 text-gray-300 rounded-full">
-                    {book.category}
-                  </span>
+                <div className="flex items-center flex-wrap gap-1 mb-2">
+                  {(book.categories || []).slice(0, 2).map((c) => (
+                    <span key={c} className="px-2 py-0.5 text-xs bg-gray-600 text-gray-300 rounded-full">
+                      {c}
+                    </span>
+                  ))}
                   {getStatusBadge(book.status)}
                 </div>
 
@@ -275,30 +239,45 @@ export default function FavoriteBook() {
                   </div>
                 )}
 
-                {/* Thời lượng – rating – ngày thêm */}
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>{book.duration}</span>
-                  <span>⭐ {book.rating}</span>
-                  <span>{book.dateAdded}</span>
+                {/* Rating – ngày thêm */}
+                <div className="flex items-center justify-between text-xs text-gray-400 mt-auto">
+                  <span className="truncate">
+                    {book.rating === "0.0" ? "⭐ Chưa có đánh giá" : `⭐ ${book.rating}`}
+                  </span>
+                  <span className="truncate">{book.dateAdded}</span>
                 </div>
               </div>
             </div>
 
             {/* Nút hành động full width */}
-            <button
-              className={`mt-4 w-full py-2 rounded-lg font-medium text-white ${
-                book.status === "wishlist"
-                  ? "bg-blue-500 hover:bg-blue-600"
-                  : "bg-orange-500 hover:bg-orange-600"
-              }`}
+            <Link
+              to={`/bookdetails/${book.id}`}
+              className="mt-4 w-full py-2 rounded-lg font-medium text-white bg-orange-500 hover:bg-orange-600 text-center"
             >
-              {book.status === "wishlist"
-                ? "Thêm vào thư viện"
-                : "Tiếp tục đọc"}
-            </button>
+              Xem chi tiết
+            </Link>
           </div>
         ))}
       </div>
+
+      {/* Empty state when no favorite books */}
+      {!loading && !error && currentBooks.length === 0 && (
+        <div className="text-center py-12">
+          <i className="ri-heart-line text-6xl text-gray-600 mb-4"></i>
+          <h3 className="text-lg font-medium text-gray-400 mb-2">
+            Chưa có sách yêu thích nào
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Hãy khám phá và thêm sách vào danh sách yêu thích của bạn
+          </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
+            Khám phá sách hay
+          </button>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -310,18 +289,20 @@ export default function FavoriteBook() {
           >
             Trước
           </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded ${
-                currentPage === i + 1
-                  ? "bg-orange-500 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
-            >
-              {i + 1}
-            </button>
+          {buildPageNumbers().map((p, idx) => (
+            typeof p === "number" ? (
+              <button
+                key={`p-${p}`}
+                onClick={() => setCurrentPage(p)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === p ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
+                }`}
+              >
+                {p}
+              </button>
+            ) : (
+              <span key={`e-${idx}`} className="px-2 text-gray-400">{p}</span>
+            )
           ))}
           <button
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}

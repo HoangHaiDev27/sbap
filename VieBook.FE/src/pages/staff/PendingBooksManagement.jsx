@@ -1,112 +1,138 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getAllActiveBooks, getAllUsersWithProfile } from '../../api/staffApi';
+import { getCategories } from '../../api/ownerBookApi';
 import BookDetailModal from '../../components/staff/pending-books/BookDetailModal';
+import ApproveRejectModal from '../../components/staff/pending-books/ApproveRejectModal';
+import { getUserId } from '../../api/authApi';
 
 export default function PendingBooksManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
 
-  const books = [
-    {
-      id: 1,
-      title: 'Sapiens',
-      author: 'Yuval Noah Harari',
-      owner: 'Nguyễn Văn A',
-      category: 'Khoa học',
-      submitDate: '2024-01-20',
-      status: 'pending',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Khám phá lịch sử loài người từ thời kỳ đồ đá đến hiện tại...'
-    },
-    {
-      id: 2,
-      title: 'Đắc nhân tâm',
-      author: 'Dale Carnegie',
-      owner: 'Trần Thị B',
-      category: 'Kỹ năng sống',
-      submitDate: '2024-01-19',
-      status: 'approved',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Cuốn sách kinh điển về nghệ thuật giao tiếp...'
-    },
-    {
-      id: 3,
-      title: 'Atomic Habits',
-      author: 'James Clear',
-      owner: 'Lê Văn C',
-      category: 'Phát triển bản thân',
-      submitDate: '2024-01-18',
-      status: 'rejected',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Phương pháp thay đổi thói quen nhỏ để đạt kết quả lớn.'
-    },
-    {
-      id: 4,
-      title: 'Thinking, Fast and Slow',
-      author: 'Daniel Kahneman',
-      owner: 'Phạm Thị D',
-      category: 'Tâm lý học',
-      submitDate: '2024-01-17',
-      status: 'pending',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Hai hệ thống tư duy của con người và cách chúng ảnh hưởng đến quyết định hàng ngày.'
-    },
-    {
-      id: 5,
-      title: 'The Lean Startup',
-      author: 'Eric Ries',
-      owner: 'Hoàng Văn E',
-      category: 'Kinh doanh',
-      submitDate: '2024-01-16',
-      status: 'pending',
-      cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8ZiGxsnY5zk7Jzh_D0uIRnq-CYm1XiueQ1YluH9E7zDYK4Mjv',
-      summary: 'Phương pháp khởi nghiệp tinh gọn giúp doanh nghiệp phát triển nhanh chóng và bền vững.'
-    }
-  ];
+  // popup duyệt/từ chối
+  const [actionType, setActionType] = useState(null);
 
-  const categoryColors = {
-    'Khoa học': 'bg-blue-100 text-blue-800',
-    'Kỹ năng sống': 'bg-green-100 text-green-800',
-    'Phát triển bản thân': 'bg-purple-100 text-purple-800',
-    'Tâm lý học': 'bg-pink-100 text-pink-800',
-    'Kinh doanh': 'bg-yellow-100 text-yellow-800'
-  };
+  // phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // ✅ data từ API
+  const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [users, setUsers] = useState([]); // ✅ danh sách user
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [cateRes, bookRes, userRes] = await Promise.all([
+          getCategories(),
+          getAllActiveBooks(),
+          getAllUsersWithProfile() // ✅ lấy tên user
+        ]);
+
+        setCategories(cateRes);
+        setUsers(userRes);
+
+        // map id -> name cho category
+        const cateMap = Object.fromEntries(
+          cateRes.map(c => [c.categoryId, c.name])
+        );
+
+        // map userId -> name
+        const userMap = Object.fromEntries(
+          userRes.map(u => [u.userId, u.name || u.email])
+        );
+
+        const mappedBooks = bookRes.map(b => {
+          const categoryNames = b.categoryIds?.length > 0
+            ? b.categoryIds.map(id => cateMap[id] || 'Khác')
+            : ['Khác'];
+
+          return {
+            id: b.bookId,
+            title: b.title,
+            author: b.author,
+            owner: userMap[b.ownerId] || '—',
+            categories: categoryNames,
+            submitDate: (() => {
+              const d = new Date(b.createdAt);
+              const day = String(d.getDate()).padStart(2, '0');
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const year = d.getFullYear();
+              const hours = String(d.getHours()).padStart(2, '0');
+              const minutes = String(d.getMinutes()).padStart(2, '0');
+              return `${hours}:${minutes} ${day}/${month}/${year}`;
+            })(),
+            cover: b.coverUrl || 'https://placehold.co/80x120',
+            summary: b.description || '',
+            certificateUrl: b.certificateUrl || null,
+            uploaderType: b.uploaderType || null
+          };
+        });
+
+        setBooks(mappedBooks);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Màu động cho từng category
+  const categoryColors = Object.fromEntries(
+    categories.map((c, idx) => [
+      c.name,
+      [
+        'bg-blue-100 text-blue-800',
+        'bg-green-100 text-green-800',
+        'bg-purple-100 text-purple-800',
+        'bg-pink-100 text-pink-800',
+        'bg-yellow-100 text-yellow-800'
+      ][idx % 5]
+    ])
+  );
 
   const filteredBooks = books.filter((book) => {
     const matchSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCategory = filterCategory === 'all' || book.category === filterCategory;
-    const matchStatus = filterStatus === 'all' || book.status === filterStatus;
-    return matchSearch && matchCategory && matchStatus;
+    const matchCategory = filterCategory === 'all' || book.categories?.includes(filterCategory);
+    return matchSearch && matchCategory; // ✅ bỏ matchStatus
   });
+
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+  const paginatedBooks = filteredBooks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleViewDetails = (book) => {
     setSelectedBook(book);
     setShowModal(true);
   };
 
-  const handleApprove = (id) => {
-    if (confirm('Bạn có chắc chắn muốn duyệt sách này?')) {
-      alert('✅ Duyệt sách thành công!');
-      setShowModal(false);
-    }
+  const handleActionClick = (type, book) => {
+    setSelectedBook(book);
+    setActionType(type);
   };
 
-  const handleReject = (id) => {
-    const reason = prompt('Nhập lý do từ chối:');
-    if (reason && reason.trim()) {
-      alert(`❌ Đã từ chối sách.\nLý do: ${reason}`);
-      setShowModal(false);
-    } else {
-      alert('Bạn chưa nhập lý do từ chối!');
-    }
+  const handleConfirmAction = (type, bookId) => {
+    setBooks(prev => prev.filter(b => b.id !== bookId));
+    setActionType(null);
+    setShowModal(false);
   };
+
+
+  if (loading) return <p className="p-6">Đang tải dữ liệu...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="pt-16">
+      <main className="pt-24">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Duyệt sách mới</h2>
 
@@ -126,20 +152,9 @@ export default function PendingBooksManagement() {
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
             >
               <option value="all">Tất cả thể loại</option>
-              {Object.keys(categoryColors).map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+              {categories.map((cat) => (
+                <option key={cat.categoryId} value={cat.name}>{cat.name}</option>
               ))}
-            </select>
-
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="pending">Chờ duyệt</option>
-              <option value="approved">Đã duyệt</option>
-              <option value="rejected">Từ chối</option>
             </select>
           </div>
 
@@ -154,14 +169,15 @@ export default function PendingBooksManagement() {
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Chủ sách</th>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Thể loại</th>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Ngày gửi</th>
-                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Trạng thái</th>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredBooks.map((book, index) => (
+                  {paginatedBooks.map((book, index) => (
                     <tr key={book.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 font-semibold text-gray-700">{index + 1}</td>
+                      <td className="px-4 py-2 font-semibold text-gray-700">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
                       <td className="px-4 py-2 flex items-center space-x-3">
                         <img
                           src={book.cover}
@@ -175,77 +191,97 @@ export default function PendingBooksManagement() {
                       </td>
                       <td className="px-4 py-2 text-gray-700">{book.owner}</td>
                       <td className="px-4 py-2">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            categoryColors[book.category] || 'bg-gray-100 text-gray-800'
-                          }`}
+                        <div
+                          className={`flex flex-wrap gap-1 ${book.categories?.length > 2 ? 'flex-col items-start' : ''}`}
                         >
-                          {book.category}
-                        </span>
+                          {book.categories?.map(cat => (
+                            <span
+                              key={cat}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${categoryColors[cat] || 'bg-gray-100 text-gray-800'}`}
+                            >
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-4 py-2 text-gray-700">{book.submitDate}</td>
-                      <td className="px-4 py-2">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            book.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : book.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {book.status === 'pending'
-                            ? 'Chờ duyệt'
-                            : book.status === 'approved'
-                            ? 'Đã duyệt'
-                            : 'Từ chối'}
-                        </span>
-                      </td>
                       <td className="px-4 py-2 flex space-x-2">
-                        {/* Nút xem luôn đầu tiên */}
                         <button
+                          title="Xem chi tiết"
                           onClick={() => handleViewDetails(book)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
                         >
                           <i className="ri-eye-line"></i>
                         </button>
 
-                        {book.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(book.id)}
-                              className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
-                            >
-                              <i className="ri-check-line"></i>
-                            </button>
-                            <button
-                              onClick={() => handleReject(book.id)}
-                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
-                            >
-                              <i className="ri-close-line"></i>
-                            </button>
-                          </>
-                        )}
+                        <button
+                          title="Duyệt sách"
+                          onClick={() => handleActionClick("approve", book)}
+                          className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
+                        >
+                          <i className="ri-check-line"></i>
+                        </button>
+                        <button
+                          title="Từ chối sách"
+                          onClick={() => handleActionClick("reject", book)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                        >
+                          <i className="ri-close-line"></i>
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
               {filteredBooks.length === 0 && (
                 <p className="p-4 text-center text-gray-500">Không có sách nào phù hợp</p>
               )}
+            </div>
+            {/* Pagination */}
+            <div className="flex justify-between items-center px-6 py-4 border-t">
+              <p className="text-sm text-gray-600">
+                Trang {currentPage}/{totalPages}
+              </p>
+              <div className="space-x-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                >
+                  Trước
+                </button>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+                >
+                  Sau
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Popup */}
+      {/* Popup chi tiết */}
       {showModal && selectedBook && (
         <BookDetailModal
           book={selectedBook}
           onClose={() => setShowModal(false)}
-          onApprove={handleApprove}
-          onReject={handleReject}
+          staffId={getUserId()}
+          onConfirm={(type, bookId) => handleConfirmAction(type, bookId)}
+        />
+      )}
+
+      {/* Popup duyệt/từ chối */}
+      {actionType && selectedBook && (
+        <ApproveRejectModal
+          type={actionType}
+          book={selectedBook}
+          staffId={getUserId()}
+          onClose={() => setActionType(null)}
+          onConfirm={handleConfirmAction}
         />
       )}
     </div>

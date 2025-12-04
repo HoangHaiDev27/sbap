@@ -1,16 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getPromotionStats } from "../../../api/promotionApi";
+import { getUserId } from "../../../api/authApi";
 
-const stats = [
-  { title: "Promotion đang hoạt động", value: "3", sub: "+2 so với tuần trước" },
-  { title: "Đã lên lịch", value: "1", sub: "Sắp tới trong tháng" },
-  { title: "Tổng doanh thu từ promotion", value: "33M", sub: "+15% so với tháng trước" },
-  { title: "Tổng lượt sử dụng", value: "243", sub: "Từ 5 promotion" },
-];
+export default function PromotionStats({ refreshTrigger }) {
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState(null);
 
-export default function PromotionStats() {
+  useEffect(() => {
+    const ownerId = getUserId();
+    if (!ownerId) return;
+    getPromotionStats(ownerId)
+      .then(setStats)
+      .catch((e) => setError(e.message || "Lỗi lấy thống kê"));
+  }, [refreshTrigger]); // Re-fetch khi refreshTrigger thay đổi
+
+  if (error) {
+    return <div className="text-red-400">{error}</div>;
+  }
+
+  if (!stats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[1,2,3,4].map((i) => (
+          <div key={i} className="bg-slate-800 text-white p-4 rounded-2xl shadow animate-pulse h-20" />
+        ))}
+      </div>
+    );
+  }
+
+  const cards = [
+    { title: "Đang hoạt động", value: String(stats.activeCount), sub: `${stats.totalPromotions} khuyến mãi` },
+    { title: "Sắp diễn ra", value: String(stats.upcomingCount), sub: `${stats.totalBooksApplied} sách áp dụng` },
+    { title: "Đã kết thúc", value: String(stats.expiredCount), sub: `${stats.totalPromotions} tổng cộng` },
+    { title: "Doanh thu từ khuyến mãi", value: `${stats.totalRevenue?.toLocaleString()} xu`, sub: `${stats.totalUses} lượt sử dụng` },
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {stats.map((stat, i) => (
+      {cards.map((stat, i) => (
         <div
           key={i}
           className="bg-slate-800 text-white p-4 rounded-2xl shadow"

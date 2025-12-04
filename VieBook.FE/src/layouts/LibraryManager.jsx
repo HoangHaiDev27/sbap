@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   RiBookReadLine,
   RiHeadphoneLine,
@@ -9,32 +10,85 @@ import ReadingHistory from "../components/library/ReadingHistory";
 import ListeningHistory from "../components/library/ListeningHistory";
 import PurchasedBook from "../components/library/PurchasedBook";
 import FavoriteBook from "../components/library/FavoriteBook";
+import readingStatsApi from "../api/readingStatsApi";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 export default function LibraryManager() {
+  const { user, userId, isAuthenticated, isLoading } = useCurrentUser();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("reading");
+  const [booksReadCount, setBooksReadCount] = useState(0);
+  const [booksPurchasedCount, setBooksPurchasedCount] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [booksListenedCount, setBooksListenedCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Check for tab parameter in URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['reading', 'listening', 'purchased', 'favorites'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  // Fetch books read count and purchased count
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!isAuthenticated || !userId) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        // Fetch books read count
+        const readCount = await readingStatsApi.getBooksReadCount(userId);
+        setBooksReadCount(readCount);
+        
+        // Fetch books purchased count
+        const purchasedCount = await readingStatsApi.getBooksPurchasedCount(userId);
+        setBooksPurchasedCount(purchasedCount);
+        
+        // Fetch favorites count
+        const favorites = await readingStatsApi.getFavoritesCount(userId);
+        setFavoritesCount(favorites);
+        
+        // Fetch books listened count
+        const listenedCount = await readingStatsApi.getBooksListenedCount(userId);
+        setBooksListenedCount(listenedCount);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [isAuthenticated, userId]);
 
   const stats = [
     {
-      label: "Sách đã nghe",
-      value: 142,
+      label: "Sách đã đọc",
+      value: loading ? "..." : booksReadCount,
       color: "bg-blue-500",
-      icon: <RiHeadphoneLine size={28} />,
-    },
-    {
-      label: "Tổng thời gian",
-      value: "847h",
-      color: "bg-green-500",
       icon: <RiBookReadLine size={28} />,
     },
     {
+      label: "Sách đã nghe",
+      value: loading ? "..." : booksListenedCount,
+      color: "bg-green-500",
+      icon: <RiHeadphoneLine size={28} />,
+    },
+    {
       label: "Sách đã mua",
-      value: 89,
+      value: loading ? "..." : booksPurchasedCount,
       color: "bg-purple-500",
       icon: <RiShoppingBagLine size={28} />,
     },
     {
       label: "Yêu thích",
-      value: 37,
+      value: loading ? "..." : favoritesCount,
       color: "bg-orange-500",
       icon: <RiHeartLine size={28} />,
     },
@@ -46,6 +100,11 @@ export default function LibraryManager() {
     { id: "purchased", label: "Đã mua", icon: <RiShoppingBagLine /> },
     { id: "favorites", label: "Yêu thích", icon: <RiHeartLine /> },
   ];
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -61,6 +120,37 @@ export default function LibraryManager() {
         return <ReadingHistory />;
     }
   };
+
+  // Show login prompt if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    return (
+      <div className="bg-gray-900 p-6 text-white min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="mb-6">
+            <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+            <h1 className="text-3xl font-bold mb-2">Đăng nhập để truy cập thư viện</h1>
+            <p className="text-gray-400 mb-6">
+              Vui lòng đăng nhập để xem lịch sử đọc, sách đã mua và danh sách yêu thích của bạn
+            </p>
+          </div>
+          <div className="space-y-4">
+            <button 
+              onClick={() => window.location.href = '/auth'}
+              className="w-full bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium transition-colors"
+            >
+              Đăng nhập ngay
+            </button>
+            <button 
+              onClick={() => window.location.href = '/auth?mode=register'}
+              className="w-full bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg text-white font-medium transition-colors"
+            >
+              Tạo tài khoản mới
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-900  p-6 text-white">
@@ -92,7 +182,7 @@ export default function LibraryManager() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center space-x-2 px-6 py-4 whitespace-nowrap font-medium transition-colors border-b-2 flex-1 justify-center ${
                 activeTab === tab.id
                   ? "text-orange-500 border-orange-500 bg-gray-750"

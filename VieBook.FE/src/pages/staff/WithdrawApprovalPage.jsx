@@ -1,25 +1,115 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import WithdrawDetailModal from "../../components/staff/withdrawals/WithdrawDetailModal";
+import WithdrawApproveModal from "../../components/staff/withdrawals/WithdrawApproveModal";
+import WithdrawRejectModal from "../../components/staff/withdrawals/WithdrawRejectModal";
+import { getAllPaymentRequests } from "../../api/paymentRequestApi";
 
 const WithdrawApprovalPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedWithdraw, setSelectedWithdraw] = useState(null);
+  const [approveWithdraw, setApproveWithdraw] = useState(null);
+  const [rejectWithdraw, setRejectWithdraw] = useState(null);
+  const [withdraws, setWithdraws] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  useEffect(() => {
+    loadPaymentRequests();
+  }, []);
+
+  const loadPaymentRequests = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getAllPaymentRequests();
+      
+      // Map dữ liệu từ API sang format của component
+      const mappedData = data.map((item) => {
+        // Map status từ API sang tiếng Việt
+        let statusText = "Chờ duyệt";
+        if (item.status === "Succeeded") statusText = "Hoàn thành";
+        else if (item.status === "Rejected") statusText = "Từ chối";
+        else if (item.status === "Pending" || item.status === "Processing") statusText = "Chờ duyệt";
+        
+        // Format date - Convert UTC to Vietnam timezone (UTC+7)
+        const requestDate = new Date(item.requestDate);
+        // Convert UTC to Vietnam timezone (UTC+7)
+        const vietnamDate = new Date(requestDate.getTime() + (7 * 60 * 60 * 1000));
+        const formattedDate = `${vietnamDate.getFullYear()}-${String(vietnamDate.getMonth() + 1).padStart(2, "0")}-${String(vietnamDate.getDate()).padStart(2, "0")} ${String(vietnamDate.getHours()).padStart(2, "0")}:${String(vietnamDate.getMinutes()).padStart(2, "0")}:${String(vietnamDate.getSeconds()).padStart(2, "0")}`;
+        
+        // Format amount
+        const amountFormatted = Math.floor(item.amountReceived).toLocaleString("vi-VN") + "đ";
+        
+        // Format bank info
+        const bankInfo = item.bankName && item.bankNumber 
+          ? `${item.bankName}\n${item.bankNumber}`
+          : item.bankName || item.bankNumber || "Chưa có";
+        
+        return {
+          id: `WD${String(item.paymentRequestId).padStart(3, "0")}`,
+          paymentRequestId: item.paymentRequestId,
+          user: item.userName || item.userEmail || "N/A",
+          userEmail: item.userEmail,
+          type: "Book Owner", // TODO: Có thể thêm logic để xác định loại user
+          amount: amountFormatted,
+          amountReceived: item.amountReceived,
+          bank: bankInfo,
+          bankName: item.bankName,
+          bankNumber: item.bankNumber,
+          status: statusText,
+          statusRaw: item.status,
+          date: formattedDate,
+          requestedCoin: item.requestedCoin,
+          userId: item.userId,
+        };
+      });
+      
+      setWithdraws(mappedData);
+    } catch (err) {
+      console.error("Error loading payment requests:", err);
+      setError(err.message || "Không thể tải danh sách yêu cầu rút tiền");
+      setWithdraws([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tính stats từ dữ liệu thực
   const stats = [
-    { label: "Tổng yêu cầu", value: 5, color: "text-blue-600" },
-    { label: "Chờ duyệt", value: 2, color: "text-yellow-600" },
-    { label: "Hoàn thành", value: 1, color: "text-green-600" },
-    { label: "Từ chối", value: 1, color: "text-red-600" },
+    { 
+      label: "Tổng yêu cầu", 
+      value: withdraws.length, 
+      color: "text-blue-600" 
+    },
+    { 
+      label: "Chờ duyệt", 
+      value: withdraws.filter(w => w.status === "Chờ duyệt").length, 
+      color: "text-yellow-600" 
+    },
+    { 
+      label: "Hoàn thành", 
+      value: withdraws.filter(w => w.status === "Hoàn thành").length, 
+      color: "text-green-600" 
+    },
+    { 
+      label: "Từ chối", 
+      value: withdraws.filter(w => w.status === "Từ chối").length, 
+      color: "text-red-600" 
+    },
   ];
 
-  const withdraws = [
-    { id: "WD001", user: "Nguyễn Văn A", type: "Book Owner", amount: "2.500.000đ", bank: "Vietcombank\n1234567890", status: "Chờ duyệt", date: "2024-01-22 14:30:25" },
-    { id: "WD002", user: "Trần Thị B", type: "Book Owner", amount: "1.800.000đ", bank: "Techcombank\n0987654321", status: "Đã duyệt", date: "2024-01-21 10:15:42" },
-    { id: "WD003", user: "Lê Văn C", type: "Book Owner", amount: "500.000đ", bank: "BIDV\n5555666677", status: "Từ chối", date: "2024-01-20 16:45:30" },
-    { id: "WD004", user: "Phạm Thị D", type: "Affiliate", amount: "350.000đ", bank: "ACB\n1111222233", status: "Chờ duyệt", date: "2024-01-22 11:28:00" },
-    { id: "WD005", user: "Hoàng Văn E", type: "Book Owner", amount: "4.200.000đ", bank: "VPBank\n9999888877", status: "Hoàn thành", date: "2024-01-19 15:30:00" },
-  ];
+  // Tính tổng tiền chờ xử lý và đã chi trả
+  const pendingAmount = withdraws
+    .filter(w => w.status === "Chờ duyệt")
+    .reduce((sum, w) => sum + (w.amountReceived || 0), 0);
+  
+  const completedAmount = withdraws
+    .filter(w => w.status === "Hoàn thành")
+    .reduce((sum, w) => sum + (w.amountReceived || 0), 0);
 
   const filteredWithdraws = withdraws.filter(
     (w) =>
@@ -28,23 +118,15 @@ const WithdrawApprovalPage = () => {
         w.id.toLowerCase().includes(search.toLowerCase()))
   );
 
-  // ✅ Hàm xử lý duyệt
-  const handleApprove = (id) => {
-    if (window.confirm(`Bạn có chắc muốn duyệt yêu cầu ${id}?`)) {
-      alert("✅ Duyệt thành công!");
-    }
-  };
-
-  // ✅ Hàm xử lý từ chối
-  const handleReject = (id) => {
-    const reason = window.prompt(`Nhập lý do từ chối yêu cầu ${id}:`);
-    if (reason) {
-      alert(`❌ Từ chối thành công!\nLý do: ${reason}`);
-    }
-  };
+  // Pagination
+  const totalPages = Math.ceil(filteredWithdraws.length / pageSize);
+  const paginatedWithdraws = filteredWithdraws.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
-    <div className="pt-24 p-6 bg-gray-50 min-h-screen text-gray-900">
+    <div className="pt-30 p-6 bg-gray-50 min-h-screen text-gray-900">
       {/* Page Title */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Phê duyệt rút tiền</h2>
@@ -69,12 +151,32 @@ const WithdrawApprovalPage = () => {
       {/* Tổng tiền */}
       <div className="flex justify-center gap-12 mb-6">
         <p className="text-gray-700 font-semibold">
-          Chờ xử lý: <span className="text-red-600">2.850.000đ</span>
+          Chờ xử lý: <span className="text-red-600">{pendingAmount.toLocaleString("vi-VN")}đ</span>
         </p>
         <p className="text-gray-700 font-semibold">
-          Đã chi trả: <span className="text-green-600">4.200.000đ</span>
+          Đã chi trả: <span className="text-green-600">{completedAmount.toLocaleString("vi-VN")}đ</span>
         </p>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
+          <button
+            onClick={loadPaymentRequests}
+            className="ml-4 underline hover:no-underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {loading && (
+        <div className="text-center py-8 text-gray-600">
+          Đang tải dữ liệu...
+        </div>
+      )}
 
       {/* Filter */}
       <div className="flex flex-wrap gap-4 items-center mb-6">
@@ -100,7 +202,7 @@ const WithdrawApprovalPage = () => {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table className="min-w-full border border-gray-200 rounded-xl bg-white shadow-sm">
           <thead className="bg-gray-100 text-left text-gray-700">
             <tr>
@@ -115,7 +217,7 @@ const WithdrawApprovalPage = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredWithdraws.map((w) => (
+            {!loading && paginatedWithdraws.map((w) => (
               <tr
                 key={w.id}
                 className="border-b border-gray-200 hover:bg-gray-50"
@@ -146,21 +248,21 @@ const WithdrawApprovalPage = () => {
                 <td className="p-3">
                   <div className="flex gap-2">
                     <button
-                        onClick={() => setSelectedWithdraw(w)}
+                      onClick={() => setSelectedWithdraw(w)}
                       className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
                       title="Xem"
                     >
                       <i className="ri-eye-line text-lg"></i>
                     </button>
                     <button
-                      onClick={() => handleApprove(w.id)}
+                      onClick={() => setApproveWithdraw(w)}
                       className="p-2 hover:bg-green-50 rounded-lg text-green-600"
                       title="Duyệt"
                     >
                       <i className="ri-check-line text-lg"></i>
                     </button>
                     <button
-                      onClick={() => handleReject(w.id)}
+                      onClick={() => setRejectWithdraw(w)}
                       className="p-2 hover:bg-red-50 rounded-lg text-red-600"
                       title="Từ chối"
                     >
@@ -180,14 +282,55 @@ const WithdrawApprovalPage = () => {
             )}
           </tbody>
         </table>
-        
+        {/* Pagination */}
+        <div className="flex justify-between items-center px-6 py-4 border-t">
+          <p className="text-sm text-gray-600">
+            Trang {currentPage}/{totalPages}
+          </p>
+          <div className="space-x-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Modals */}
       {selectedWithdraw && (
         <WithdrawDetailModal
           withdraw={selectedWithdraw}
           onClose={() => setSelectedWithdraw(null)}
-          onApprove={handleApprove}
-          onReject={handleReject}
+        />
+      )}
+
+      {approveWithdraw && (
+        <WithdrawApproveModal
+          withdraw={approveWithdraw}
+          onClose={() => {
+            setApproveWithdraw(null);
+            loadPaymentRequests(); // Reload sau khi duyệt
+          }}
+        />
+      )}
+
+      {rejectWithdraw && (
+        <WithdrawRejectModal
+          withdraw={rejectWithdraw}
+          onClose={() => {
+            setRejectWithdraw(null);
+            loadPaymentRequests(); // Reload sau khi từ chối
+          }}
         />
       )}
     </div>

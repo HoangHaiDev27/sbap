@@ -1,0 +1,420 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Text.Json;
+using AutoMapper;
+using BusinessObject.Models;
+
+namespace BusinessObject.Dtos
+{
+    public class MappingDTO : Profile
+    {
+        public MappingDTO()
+        {
+            // Map từ User entity sang UserDTO
+            CreateMap<User, UserDTO>().ReverseMap();
+
+            // BookReview → BookReviewDTO
+            CreateMap<BookReview, BookReviewDTO>()
+                .ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src => src.User.UserProfile != null
+                        ? src.User.UserProfile.FullName
+                        : src.User.Email))
+                .ForMember(dest => dest.AvatarUrl,
+                    opt => opt.MapFrom(src => src.User.UserProfile != null
+                        ? src.User.UserProfile.AvatarUrl
+                        : null));
+
+            // Chapter → ChapterDTO
+            CreateMap<Chapter, ChapterDTO>()
+                .ForMember(dest => dest.PriceAudio,
+                    opt => opt.MapFrom(src => src.ChapterAudios != null && src.ChapterAudios.Any()
+                        ? src.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio
+                        : null));
+
+            // Book → BookDetailDTO
+            CreateMap<Book, BookDetailDTO>()
+                .ForMember(dest => dest.OwnerName,
+                    opt => opt.MapFrom(src => src.Owner.UserProfile != null
+                        ? src.Owner.UserProfile.FullName
+                        : src.Owner.Email))
+                .ForMember(dest => dest.Categories,
+                    opt => opt.MapFrom(src => src.Categories.Select(c => c.Name)))
+                .ForMember(dest => dest.Chapters,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(ch => ch.Status == "Active") // Chỉ lấy chapter đã phát hành
+                        .OrderBy(ch => ch.ChapterId))) // Sắp xếp theo thứ tự
+                .ForMember(dest => dest.Reviews,
+                    opt => opt.MapFrom(src => src.BookReviews))
+                .ForMember(dest => dest.Status,
+                    opt => opt.MapFrom(src => src.Status))
+                .ForMember(dest => dest.TotalPrice,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(ch => ch.Status == "Active")
+                        .Sum(ch => (ch.PriceSoft ?? 0) + 
+                                   (ch.ChapterAudios != null && ch.ChapterAudios.Any() 
+                                       ? ch.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                       : 0)))) // Tính cả giá Soft + Audio
+                .ForMember(dest => dest.TotalView,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(ch => ch.Status == "Active")
+                        .Sum(ch => (int?)ch.ChapterView) ?? 0)); // Tổng lượt xem từ ChapterView của các chapters
+            // Book → BookDTO
+            CreateMap<Book, BookDTO>()
+                .ForMember(dest => dest.OwnerName,
+                    opt => opt.MapFrom(src => src.Owner.UserProfile.FullName))
+                .ForMember(dest => dest.CategoryIds,
+                    opt => opt.MapFrom(src => src.Categories.Select(c => c.CategoryId).ToList()))
+                .ForMember(dest => dest.CategoryNames,
+                    opt => opt.MapFrom(src => src.Categories.Select(c => c.Name).ToList()))
+                .ForMember(dest => dest.TotalPrice,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(c => c.Status == "Active")
+                        .Sum(c => (c.PriceSoft ?? 0) + 
+                                  (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                      ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                      : 0)))) // Tính cả giá Soft + Audio
+                .ForMember(dest => dest.Rating,
+                    opt => opt.MapFrom(src => src.BookReviews.Any()
+                        ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
+                        : 0))
+                .ForMember(dest => dest.Sold,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(c => c.Status == "Active")
+                        .SelectMany(c => c.OrderItems)
+                        .Count()))
+                .ForMember(dest => dest.TotalRatings,
+                    opt => opt.MapFrom(src => src.BookReviews.Count()))
+                .ForMember(dest => dest.TotalView,
+                    opt => opt.MapFrom(src => src.Chapters
+                        .Where(c => c.Status == "Active")
+                        .Sum(c => (int?)c.ChapterView) ?? 0));
+
+
+
+            // Map từ RegisterRequestDto sang User
+            CreateMap<RegisterRequestDto, User>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
+                {
+                    FullName = src.FullName,
+                    AgreeTos = false,
+                    IsPhoneVerified = false
+                }))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Pending"))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
+                .ForMember(dest => dest.Roles, opt => opt.Ignore()) // sẽ gán ở Service
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // hash trong Service
+
+            CreateMap<BookDTO, Book>()
+                .ForMember(dest => dest.Categories, opt => opt.Ignore());
+
+            // UpdateBookDTO → Book mapping (chỉ map fields được phép update)
+            CreateMap<UpdateBookDTO, Book>()
+                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
+                .ForMember(dest => dest.TotalView, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Categories, opt => opt.Ignore())
+                .ForMember(dest => dest.BookApprovals, opt => opt.Ignore())
+                .ForMember(dest => dest.BookOffers, opt => opt.Ignore())
+                .ForMember(dest => dest.BookReviews, opt => opt.Ignore())
+                .ForMember(dest => dest.Bookmarks, opt => opt.Ignore())
+                .ForMember(dest => dest.Chapters, opt => opt.Ignore())
+                .ForMember(dest => dest.Owner, opt => opt.Ignore())
+                .ForMember(dest => dest.ReadingSchedules, opt => opt.Ignore())
+                .ForMember(dest => dest.Wishlists, opt => opt.Ignore())
+                .ForMember(dest => dest.Posts, opt => opt.Ignore())
+                .ForMember(dest => dest.Promotions, opt => opt.Ignore());
+
+            // Category → CategoryDTO
+            CreateMap<Category, CategoryDTO>()
+                .ForMember(dest => dest.BookCount, opt => opt.MapFrom(src => src.Books != null ? src.Books.Count : 0));
+            
+            // CategoryDTO → Category (reverse map, ignore BookCount)
+            CreateMap<CategoryDTO, Category>()
+                .ForMember(dest => dest.Books, opt => opt.Ignore());
+            // Book → BookResponseDTO
+            CreateMap<Book, BookResponseDTO>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BookId))
+            .ForMember(dest => dest.Author,
+                opt => opt.MapFrom(src => src.Author))
+            .ForMember(dest => dest.Categories,
+               opt => opt.MapFrom(src => src.Categories.Select(c => c.Name).ToList()))
+            .ForMember(dest => dest.Price,
+                opt => opt.MapFrom(src => src.Chapters
+                    .Where(c => c.Status == "Active")
+                    .Sum(c => (c.PriceSoft ?? 0) + 
+                              (c.ChapterAudios != null && c.ChapterAudios.Any() 
+                                  ? c.ChapterAudios.OrderByDescending(ca => ca.CreatedAt).FirstOrDefault()!.PriceAudio ?? 0 
+                                  : 0)))) // Tính cả giá Soft + Audio
+            .ForMember(dest => dest.Rating,
+                opt => opt.MapFrom(src => src.BookReviews.Any()
+                    ? Math.Round(src.BookReviews.Average(r => r.Rating), 1)
+                    : 0))
+            .ForMember(dest => dest.Reviews,
+                opt => opt.MapFrom(src => src.BookReviews.Count))
+            .ForMember(dest => dest.Duration,
+                opt => opt.MapFrom(src =>
+                    src.Chapters
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .Sum(ca => ca.DurationSec ?? 0) / 3600 + "h " +
+                    (src.Chapters
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .Sum(ca => ca.DurationSec ?? 0) % 3600) / 60 + "m"
+                ))
+            .ForMember(dest => dest.Chapters,
+                opt => opt.MapFrom(src => src.Chapters.Count(c => c.Status == "Active")))
+            .ForMember(dest => dest.Image,
+                opt => opt.MapFrom(src => src.CoverUrl))
+            .ForMember(dest => dest.Description,
+                opt => opt.MapFrom(src => src.Description))
+            .ForMember(dest => dest.Narrator,
+                opt => opt.MapFrom(src =>
+                    src.Chapters
+                        .Where(c => c.Status == "Active" && c.ChapterAudios.Any())
+                        .SelectMany(c => c.ChapterAudios)
+                        .OrderByDescending(ca => ca.CreatedAt)
+                        .Select(ca => ca.VoiceName)
+                        .FirstOrDefault()));
+
+            CreateMap<User, StaffDTO>()
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
+                .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address!= null ? src.UserProfile.Address : ""))
+                .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.DateOfBirth : null))
+                .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Where(r => r.RoleName == "Staff").Select(r => r.RoleName).FirstOrDefault() ?? ""));
+
+            // User → UserManagementDTO
+            CreateMap<User, UserManagementDTO>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.FullName : ""))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.AvatarUrl : ""))
+                .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.UserProfile != null ? src.UserProfile.PhoneNumber : ""))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => ""))
+                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Roles.Select(r => r.RoleName).FirstOrDefault() ?? "Unknown"))
+                .ForMember(dest => dest.BookCount, opt => opt.MapFrom(src => src.Books != null ? src.Books.Count : 0))
+                .ForMember(dest => dest.OrderCount, opt => opt.MapFrom(src => src.OrderItems != null ? src.OrderItems.Count : 0));
+
+            CreateMap<CreateStaffRequestDTO, User>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
+                {
+                    FullName = src.FullName,
+                    AvatarUrl = src.AvatarUrl,
+                    DateOfBirth = src.DateOfBirth,
+                    PhoneNumber = src.PhoneNumber,
+                    Address = src.Address
+
+                }))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Active"))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
+                .ForMember(dest => dest.Roles, opt => opt.Ignore())       // gán trong Service
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // hash trong Service
+                                                                            // Trong MappingProfile.cs
+            CreateMap<UpdateStaffRequestDTO, User>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.UserProfile, opt => opt.MapFrom(src => new UserProfile
+                {
+                    FullName = src.FullName,
+                    AvatarUrl = src.AvatarUrl,
+                    DateOfBirth = src.DateOfBirth,
+                    PhoneNumber = src.PhoneNumber,
+                    Address = src.Address
+                }))
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // nếu cập nhật mật khẩu, xử lý riêng
+                .ForMember(dest => dest.Roles, opt => opt.Ignore()); // giữ nguyên roles
+
+            CreateMap<User, AdminProfileDTO>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.UserProfile.FullName))
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.UserProfile.AvatarUrl))
+                .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.UserProfile.PhoneNumber))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserProfile.Address))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ReverseMap()
+                .ForPath(dest => dest.UserProfile.FullName, opt => opt.MapFrom(src => src.FullName))
+                .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl))
+                .ForPath(dest => dest.UserProfile.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+                .ForPath(dest => dest.UserProfile.Address, opt => opt.MapFrom(src => src.Address))
+                .ForPath(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+
+
+            // Map từ BookApproval -> BookApprovalDTO
+            CreateMap<BookApproval, BookApprovalDTO>()
+                .ForMember(dest => dest.StaffName,
+                           opt => opt.MapFrom(src => src.Staff.UserProfile.FullName));
+            CreateMap<User, UserNameDTO>()
+                .ForMember(dest => dest.UserId,
+                    opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.Email,
+                    opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.Name,
+                    opt => opt.MapFrom(src => src.UserProfile.FullName));
+            // Map giữa Chapter ↔ ChapterViewDTO (bao gồm ChapterSummarize)
+            CreateMap<Chapter, ChapterViewDTO>()
+                .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))
+                .ForMember(dest => dest.AudioPrice, opt => opt.MapFrom(src => 
+                    src.ChapterAudios.FirstOrDefault() != null 
+                        ? src.ChapterAudios.FirstOrDefault()!.PriceAudio 
+                        : null));
+
+            CreateMap<ChapterViewDTO, Chapter>()
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.ChapterAudios, opt => opt.Ignore());
+
+            // Bookmark mappings
+            CreateMap<Bookmark, BookmarkDTO>().ReverseMap();
+            CreateMap<CreateBookmarkDTO, Bookmark>();
+            // ReadingSchedule mappings
+            CreateMap<ReadingSchedule, ReadingScheduleDTO>()
+                .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))
+                .ForMember(dest => dest.BookCoverUrl, opt => opt.MapFrom(src => src.Book.CoverUrl));
+
+            CreateMap<CreateReadingScheduleDTO, ReadingSchedule>()
+                .ForMember(dest => dest.ScheduleId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            CreateMap<UpdateReadingScheduleDTO, ReadingSchedule>()
+                .ForMember(dest => dest.ScheduleId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.BookId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            // ReminderSettings mappings
+            CreateMap<ReminderSettings, ReminderSettingsDTO>().ReverseMap();
+            CreateMap<CreateReminderSettingsDTO, ReminderSettings>()
+                .ForMember(dest => dest.ReminderSettingsId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+            CreateMap<UpdateReminderSettingsDTO, ReminderSettings>()
+                .ForMember(dest => dest.ReminderSettingsId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            // BookOffer mappings
+            CreateMap<BookOffer, BookOfferDTO>()
+                .ForMember(dest => dest.Book, opt => opt.MapFrom(src => src.Book))
+                .ForMember(dest => dest.Chapter, opt => opt.MapFrom(src => src.Chapter))
+                .ForMember(dest => dest.ChapterAudio, opt => opt.MapFrom(src => src.ChapterAudio))
+                .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.Owner));
+            
+            CreateMap<CreateBookOfferDTO, BookOffer>()
+                .ForMember(dest => dest.BookOfferId, opt => opt.Ignore())
+                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
+                .ForMember(dest => dest.StartAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Book, opt => opt.Ignore())
+                .ForMember(dest => dest.Chapter, opt => opt.Ignore())
+                .ForMember(dest => dest.ChapterAudio, opt => opt.Ignore())
+                .ForMember(dest => dest.Owner, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.BookClaims, opt => opt.Ignore());
+
+            // BookClaim mappings
+            CreateMap<BookClaim, BookClaimDTO>()
+                .ForMember(dest => dest.BookOffer, opt => opt.MapFrom(src => src.BookOffer))
+                .ForMember(dest => dest.Chapter, opt => opt.MapFrom(src => src.Chapter))
+                .ForMember(dest => dest.ChapterAudio, opt => opt.MapFrom(src => src.ChapterAudio))
+                .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.Customer));
+
+            CreateMap<CreateBookClaimDTO, BookClaim>()
+                .ForMember(dest => dest.ClaimId, opt => opt.Ignore())
+                .ForMember(dest => dest.CustomerId, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessedBy, opt => opt.Ignore())
+                .ForMember(dest => dest.BookOffer, opt => opt.Ignore())
+                .ForMember(dest => dest.Chapter, opt => opt.Ignore())
+                .ForMember(dest => dest.ChapterAudio, opt => opt.Ignore())
+                .ForMember(dest => dest.Customer, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessedByNavigation, opt => opt.Ignore());
+
+            // ChapterAudio mapping
+            CreateMap<ChapterAudio, ChapterAudioDTO>();
+
+            // Post mappings
+            CreateMap<Post, PostDTO>()
+                .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author))
+                .ForMember(dest => dest.BookOffer, opt => opt.MapFrom(src => src.BookOffer))
+                .ForMember(dest => dest.Attachments, opt => opt.MapFrom(src => src.PostAttachments))
+                .ForMember(dest => dest.Tags, opt => opt.Ignore())
+                .AfterMap((src, dest) => {
+                    if (!string.IsNullOrEmpty(src.Tags))
+                    {
+                        try
+                        {
+                            dest.Tags = JsonSerializer.Deserialize<List<string>>(src.Tags);
+                        }
+                        catch
+                        {
+                            dest.Tags = null;
+                        }
+                    }
+                    else
+                    {
+                        dest.Tags = null;
+                    }
+                });
+
+            CreateMap<PostAttachment, PostAttachmentDTO>();
+
+            CreateMap<CreatePostDTO, Post>()
+                .ForMember(dest => dest.PostId, opt => opt.Ignore())
+                .ForMember(dest => dest.AuthorId, opt => opt.Ignore())
+                .ForMember(dest => dest.CommentCount, opt => opt.Ignore())
+                .ForMember(dest => dest.ReactionCount, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedBy, opt => opt.Ignore())
+                .ForMember(dest => dest.Author, opt => opt.Ignore())
+                .ForMember(dest => dest.BookOffer, opt => opt.Ignore())
+                .ForMember(dest => dest.PostAttachments, opt => opt.Ignore())
+                .ForMember(dest => dest.PostComments, opt => opt.Ignore())
+                .ForMember(dest => dest.PostReactions, opt => opt.Ignore())
+                .ForMember(dest => dest.Books, opt => opt.Ignore());
+
+            // PostReaction mappings
+            CreateMap<PostReaction, PostReactionDTO>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
+
+            CreateMap<CreatePostReactionDTO, PostReaction>()
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            // PostComment mappings
+            CreateMap<PostComment, PostCommentDTO>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User))
+                .ForMember(dest => dest.Replies, opt => opt.Ignore()); // Handled manually in service
+
+            CreateMap<CreatePostCommentDTO, PostComment>()
+                .ForMember(dest => dest.CommentId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedBy, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.ParentComment, opt => opt.Ignore())
+                .ForMember(dest => dest.InverseParentComment, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedByNavigation, opt => opt.Ignore());
+        }
+    }
+
+}

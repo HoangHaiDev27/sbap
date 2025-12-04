@@ -1,103 +1,92 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import CustomerDetailModal from "../../components/staff/customers/CustomerDetailModal";
+import ConfirmModal from "../../components/staff/customers/ConfirmModal";
+import { getCustomerAccounts, toggleAccountStatus } from "../../api/userManagementApi";
 
 export default function CustomersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [actionCustomer, setActionCustomer] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const customers = [
-    {
-      id: 1,
-      name: "Nguyễn Minh A",
-      email: "nguyen.minh.a@email.com",
-      avatar: "https://i.pravatar.cc/100?img=1",
-      totalListens: 1250,
-      feedbackCount: 8,
-      status: "active",
-      joinDate: "2024-01-20",
-      lastActive: "2024-01-22",
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      email: "tran.thi.b@email.com",
-      avatar: "https://i.pravatar.cc/100?img=2",
-      totalListens: 850,
-      feedbackCount: 12,
-      status: "active",
-      joinDate: "2024-01-18",
-      lastActive: "2024-01-22",
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      email: "le.van.c@email.com",
-      avatar: "https://i.pravatar.cc/100?img=3",
-      totalListens: 450,
-      feedbackCount: 3,
-      status: "blocked",
-      joinDate: "2024-01-15",
-      lastActive: "2024-01-19",
-    },
-    {
-      id: 4,
-      name: "Phạm Thị D",
-      email: "pham.thi.d@email.com",
-      avatar: "https://i.pravatar.cc/100?img=4",
-      totalListens: 2100,
-      feedbackCount: 15,
-      status: "active",
-      joinDate: "2023-12-10",
-      lastActive: "2024-01-22",
-    },
-    {
-      id: 5,
-      name: "Hoàng Văn E",
-      email: "hoang.van.e@email.com",
-      avatar: "https://i.pravatar.cc/100?img=5",
-      totalListens: 1800,
-      feedbackCount: 9,
-      status: "active",
-      joinDate: "2023-11-25",
-      lastActive: "2024-01-21",
-    },
-  ];
+  // Load data từ API
+  useEffect(() => {
+    loadCustomers();
+  }, []);
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch =
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || customer.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleViewDetails = (customer) => {
-    setSelectedCustomer(customer);
-    setShowModal(true);
-  };
-
-  const handleToggleStatus = (id, currentStatus) => {
-    const newStatus = currentStatus === "active" ? "blocked" : "active";
-    const action = newStatus === "blocked" ? "khóa" : "mở khóa";
-    if (window.confirm(`Bạn có chắc chắn muốn ${action} tài khoản này?`)) {
-      console.log("Toggling status for customer:", id, "to", newStatus);
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getCustomerAccounts();
+      setCustomers(data);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading customer accounts:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleViewTransactions = (id) => {
-    // TODO: bạn gắn điều hướng/logic thật tại đây
-    console.log("Xem lịch sử giao dịch cho customer:", id);
+  // Lọc theo search + trạng thái
+  const filteredCustomers = customers.filter((c) => {
+    const matchesSearch =
+      (c.fullName && c.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      c.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Pagination
+  const itemsPerPage = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCustomers = filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleViewDetails = (customer) => {
+    setSelectedCustomer(customer);
+    setShowDetailModal(true);
+  };
+
+  const handleConfirmToggle = (customer) => {
+    setActionCustomer(customer);
+    setShowConfirmModal(true);
+  };
+
+  const handleToggleStatus = async () => {
+    if (actionCustomer) {
+      try {
+        await toggleAccountStatus(actionCustomer.userId);
+        await loadCustomers(); // Reload data
+        setShowConfirmModal(false);
+        
+        // Hiển thị toast thành công
+        const newStatus = actionCustomer.status === "Active" ? "khóa" : "mở khóa";
+        toast.success(`Đã ${newStatus} tài khoản ${actionCustomer.fullName || actionCustomer.email} thành công!`);
+      } catch (err) {
+        setError(err.message);
+        toast.error(`Lỗi khi ${actionCustomer.status === "Active" ? "khóa" : "mở khóa"} tài khoản: ${err.message}`);
+        console.error('Error toggling account status:', err);
+      }
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pt-20">
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">
-        Quản lý khách hàng
-      </h2>
+    <div className="min-h-screen bg-gray-50 p-6 pt-30">
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Quản lý khách hàng</h2>
       <p className="text-gray-600 mb-6">Quản lý người dùng sử dụng nền tảng</p>
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Filter */}
@@ -115,8 +104,8 @@ export default function CustomersManagement() {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-800"
           >
             <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="blocked">Bị khóa</option>
+            <option value="Active">Hoạt động</option>
+            <option value="Locked">Bị khóa</option>
           </select>
         </div>
 
@@ -125,125 +114,130 @@ export default function CustomersManagement() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Khách hàng
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Tổng lượt nghe
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Đánh giá
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Ngày đăng ký
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Hành động
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Khách hàng</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Trạng thái</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ngày đăng ký</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Hành động</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        className="h-10 w-10 rounded-full object-cover"
-                        src={customer.avatar}
-                        alt={customer.name}
-                      />
-                      <div className="ml-4">
-                        <div className="font-medium text-gray-900">
-                          {customer.name}
-                        </div>
-                        <div className="text-gray-500 text-sm">
-                          {customer.email}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {customer.totalListens.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {customer.feedbackCount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        customer.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {customer.status === "active" ? "Hoạt động" : "Bị khóa"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {customer.joinDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex space-x-2">
-                      {/* Xem chi tiết */}
-                      <button
-                        onClick={() => handleViewDetails(customer)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg cursor-pointer"
-                        title="Xem chi tiết"
-                      >
-                        <i className="ri-eye-line"></i>
-                      </button>
-
-                      {/* Lịch sử giao dịch */}
-                      <button
-                        onClick={() => window.location.href = `/staff/transactions?userId=${customer.id}`}
-                        className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg cursor-pointer"
-                        title="Xem lịch sử giao dịch"
-                      >
-                        <i className="ri-history-line"></i>
-                      </button>
-
-                      {/* Khóa/Mở khóa */}
-                      <button
-                        onClick={() =>
-                          handleToggleStatus(customer.id, customer.status)
-                        }
-                        className={`p-2 rounded-lg cursor-pointer ${
-                          customer.status === "active"
-                            ? "text-red-600 hover:bg-red-100"
-                            : "text-green-600 hover:bg-green-100"
-                        }`}
-                        title={
-                          customer.status === "active"
-                            ? "Khóa tài khoản"
-                            : "Mở khóa tài khoản"
-                        }
-                      >
-                        <i
-                          className={`${
-                            customer.status === "active"
-                              ? "ri-lock-line"
-                              : "ri-lock-unlock-line"
-                          }`}
-                        ></i>
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-6 text-gray-500">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2">Đang tải...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedCustomers.map((customer) => (
+                  <tr key={customer.userId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap flex items-center">
+                      {customer.avatarUrl ? (
+                        <img className="h-10 w-10 rounded-full object-cover" src={customer.avatarUrl} alt={customer.fullName} />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                          <i className="ri-user-line text-gray-600"></i>
+                        </div>
+                      )}
+                      <div className="ml-4">
+                        <div className="font-medium text-gray-900">{customer.fullName || 'Chưa cập nhật'}</div>
+                        <div className="text-gray-500 text-sm">{customer.email}</div>
+                      </div>
+                    </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        customer.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {customer.status === "Active" ? "Hoạt động" : "Bị khóa"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500">
+                    {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 space-x-2 flex">
+                    <button
+                      onClick={() => handleViewDetails(customer)}
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
+                      title="Xem chi tiết"
+                    >
+                      <i className="ri-eye-line"></i>
+                    </button>
+                    <button
+                      onClick={() => (window.location.href = `/staff/transactions?userId=${customer.userId}`)}
+                      className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg"
+                      title="Xem lịch sử giao dịch"
+                    >
+                      <i className="ri-history-line"></i>
+                    </button>
+                    <button
+                      onClick={() => handleConfirmToggle(customer)}
+                      className={`p-2 rounded-lg ${
+                        customer.status === "Active" ? "text-red-600 hover:bg-red-100" : "text-green-600 hover:bg-green-100"
+                      }`}
+                      title={customer.status === "Active" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                    >
+                      <i className={customer.status === "Active" ? "ri-lock-line" : "ri-lock-unlock-line"}></i>
+                    </button>
+                  </td>
+                </tr>
+              ))
+              )}
+              {!loading && paginatedCustomers.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="text-center py-6 text-gray-500">
+                    Không có dữ liệu
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <div className="flex justify-between items-center px-6 py-4 border-t">
+          <p className="text-sm text-gray-600">
+            Trang {currentPage}/{totalPages}
+          </p>
+          <div className="space-x-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Trước
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 text-gray-800"
+            >
+              Sau
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Popup */}
-      {showModal && selectedCustomer && (
+      {/* Detail Modal */}
+      {showDetailModal && selectedCustomer && (
         <CustomerDetailModal
           customer={selectedCustomer}
-          onClose={() => setShowModal(false)}
-          onToggleStatus={handleToggleStatus}
+          onClose={() => setShowDetailModal(false)}
+        />
+      )}
+
+      {/* Confirm Toggle Modal */}
+      {showConfirmModal && actionCustomer && (
+        <ConfirmModal
+          title={actionCustomer.status === "Active" ? "Xác nhận khóa tài khoản" : "Xác nhận mở khóa tài khoản"}
+          message={`Bạn có chắc chắn muốn ${
+            actionCustomer.status === "Active" ? "khóa" : "mở khóa"
+          } tài khoản ${actionCustomer.fullName || actionCustomer.email}?`}
+          onConfirm={handleToggleStatus}
+          onCancel={() => setShowConfirmModal(false)}
         />
       )}
     </div>

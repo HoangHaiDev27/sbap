@@ -1,139 +1,381 @@
 'use client';
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   RiHeadphoneLine,
   RiTimeLine,
   RiListCheck,
   RiStarFill,
-  RiStarLine,
   RiPlayFill,
+  RiBookOpenLine,
+  RiCoinLine,
 } from "react-icons/ri";
+import { getAudioBooks } from "../../api/audioBookApi";
+import { getChapterAudioPrices } from "../../api/ownerBookApi";
 
-const stories = [
-  {
-    id: 1,
-    title: "Chuyện tình cô gái bán hoa",
-    author: "Nguyễn Nhật Ánh",
-    narrator: "Thanh Hương",
-    genre: "Tình cảm",
-    duration: "2h 30m",
-    chapters: 8,
-    rating: 4.8,
-    coverImage:
-      "https://readdy.ai/api/search-image?query=Beautiful%20Vietnamese%20girl%20selling%20flowers%20in%20the%20market%2C%20romantic%20love%20story%20book%20cover%20with%20soft%20lighting%20and%20floral%20background%2C%20gentle%20pastel%20colors%2C%20warm%20atmosphere&width=300&height=400&seq=story1&orientation=portrait",
-  },
-  {
-    id: 2,
-    title: "Kỳ án Sherlock Holmes - Chó săn vùng Baskerville",
-    author: "Arthur Conan Doyle",
-    narrator: "Minh Châu",
-    genre: "Trinh thám",
-    duration: "4h 15m",
-    chapters: 12,
-    rating: 4.9,
-    coverImage:
-      "https://readdy.ai/api/search-image?query=Mysterious%20detective%20story%20with%20Sherlock%20Holmes%20silhouette%2C%20dark%20Victorian%20London%20atmosphere%2C%20foggy%20streets%20and%20vintage%20detective%20elements%2C%20classic%20mystery%20book%20cover%20design&width=300&height=400&seq=story2&orientation=portrait",
-  },
-  {
-    id: 3,
-    title: "Ma Lai ở căn nhà số 13",
-    author: "Lý Hoàng Long",
-    narrator: "Hoàng Anh",
-    genre: "Kinh dị",
-    duration: "3h 45m",
-    chapters: 10,
-    rating: 4.6,
-    coverImage:
-      "https://readdy.ai/api/search-image?query=Scary%20haunted%20house%20number%2013%20in%20dark%20night%2C%20horror%20story%20atmosphere%20with%20mysterious%20shadows%20and%20eerie%20lighting%2C%20Vietnamese%20ghost%20story%20book%20cover%20with%20spooky%20elements&width=300&height=400&seq=story3&orientation=portrait",
-  },
-];
+export default function StoryGrid({
+  selectedCategory,
+  selectedDuration,
+  selectedNarrator,
+  sortBy,
+}) {
+  const [stories, setStories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const [audioTotalsByBook, setAudioTotalsByBook] = useState({});
 
-export default function StoryGrid() {
+  useEffect(() => {
+    async function fetchAudioBooks() {
+      try {
+        const data = await getAudioBooks();
+        setStories(data.filter((b) => b.categories && b.categories.length > 0));
+      } catch (err) {
+        console.error("Failed to fetch audio books", err);
+      }
+    }
+    fetchAudioBooks();
+  }, []);
+
+  // (sẽ chuyển xuống dưới, sau khi currentStories được định nghĩa)
+
+  // --- Filter ---
+  const filteredStories = stories.filter((story) => {
+    // Chuẩn hóa categories
+    const storyCategories = Array.isArray(story.categories)
+      ? story.categories.map((c) => c.trim())
+      : typeof story.categories === "string"
+      ? story.categories.split(",").map((c) => c.trim())
+      : [];
+
+    if (
+      selectedCategory &&
+      selectedCategory !== "Tất cả thể loại" &&
+      !storyCategories.includes(selectedCategory)
+    ) {
+      return false;
+    }
+
+    if (
+      selectedNarrator &&
+      selectedNarrator !== "Tất cả người kể" &&
+      story.narrator !== selectedNarrator
+    )
+      return false;
+
+    if (selectedDuration && selectedDuration !== "Tất cả thời lượng") {
+      const match = story.duration?.match(/(\d+)h/);
+      const hours = match ? parseInt(match[1], 10) : 0;
+
+      switch (selectedDuration) {
+        case "Dưới 1 giờ":
+          if (hours >= 1) return false;
+          break;
+        case "1-3 giờ":
+          if (hours < 1 || hours > 3) return false;
+          break;
+        case "3-6 giờ":
+          if (hours < 3 || hours > 6) return false;
+          break;
+        case "6-10 giờ":
+          if (hours < 6 || hours > 10) return false;
+          break;
+        case "Trên 10 giờ":
+          if (hours <= 10) return false;
+          break;
+      }
+    }
+
+    return true;
+  });
+
+  // --- Sort ---
+  const sortedStories = [...filteredStories];
+  switch (sortBy) {
+    case "Mới nhất":
+      sortedStories.sort((a, b) => b.id - a.id);
+      break;
+    case "Phổ biến nhất":
+      sortedStories.sort((a, b) => b.reviews - a.reviews);
+      break;
+    case "Đánh giá cao":
+      sortedStories.sort((a, b) => b.rating - a.rating);
+      break;
+    case "Thời lượng ngắn":
+      sortedStories.sort(
+        (a, b) => parseFloat(a.duration) - parseFloat(b.duration)
+      );
+      break;
+    case "Đang khuyến mãi":
+      // Ưu tiên sách có promotion, sau đó sort theo % giảm giá cao nhất
+      sortedStories.sort((a, b) => {
+        const aHasPromo = a.hasPromotion ? 1 : 0;
+        const bHasPromo = b.hasPromotion ? 1 : 0;
+        
+        if (aHasPromo !== bHasPromo) {
+          return bHasPromo - aHasPromo; // Sách có promotion lên trước
+        }
+        
+        // Nếu cả 2 đều có promotion, sort theo % giảm giá
+        if (aHasPromo && bHasPromo) {
+          return (b.discountValue || 0) - (a.discountValue || 0);
+        }
+        
+        return 0;
+      });
+      break;
+    default:
+      break;
+  }
+
+  // --- Pagination ---
+  const totalPages = Math.ceil(sortedStories.length / itemsPerPage);
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentStories = sortedStories.slice(indexOfFirst, indexOfLast);
+
+  // Tải tổng giá audio (raw) cho các sách đang hiển thị ở trang hiện tại
+  useEffect(() => {
+    const loadAudioTotals = async () => {
+      try {
+        const bookIds = currentStories.map((s) => s.id).filter(Boolean);
+        if (bookIds.length === 0) return;
+
+        const fetches = bookIds.map(async (bookId) => {
+          try {
+            const priceMap = await getChapterAudioPrices(bookId);
+            // priceMap có thể là object { chapterId: price } hoặc array
+            let total = 0;
+            if (Array.isArray(priceMap)) {
+              total = priceMap.reduce((sum, p) => sum + (p?.priceAudio || p?.price || 0), 0);
+            } else if (priceMap && typeof priceMap === "object") {
+              total = Object.values(priceMap).reduce((sum, v) => sum + (Number(v) || 0), 0);
+            }
+            return [bookId, total];
+          } catch {
+            return [bookId, 0];
+          }
+        });
+
+        const results = await Promise.all(fetches);
+        setAudioTotalsByBook((prev) => {
+          const next = { ...prev };
+          for (const [bookId, total] of results) next[bookId] = total;
+          return next;
+        });
+      } catch {
+        // ignore
+      }
+    };
+    loadAudioTotals();
+  }, [currentStories]);
+
+  const getPageNumbers = () => {
+    const maxVisiblePages = 5;
+    const pages = [];
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 2) {
+        for (let i = 1; i <= 3; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 1) {
+        pages.push(1);
+        pages.push("...");
+        for (let i = totalPages - 2; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {stories.map((story) => (
-        <div
-          key={story.id}
-          className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors"
-        >
-          {/* 👉 đổi book.id thành story.id */}
-          <Link to={`/player/${story.id}`}>
-            <div className="relative">
-              <img
-                src={story.coverImage}
-                alt={story.title}
-                className="w-full h-64 object-cover object-top"
-              />
-              {/* Genre Badge */}
-              <div className="absolute top-3 left-3">
-                <span className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                  {story.genre}
-                </span>
-              </div>
-              {/* Headphone Icon */}
-              <div className="absolute top-3 right-3">
-                <div className="bg-black/50 rounded-full p-2">
-                  <div className="w-5 h-5 flex items-center justify-center">
+    <div>
+      {/* Grid stories */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {currentStories.map((story) => {
+          const audioRaw = Math.round(audioTotalsByBook[story.id] || 0);
+          const hasPromo = !!story?.hasPromotion && (story?.discountValue || 0) > 0;
+          const audioDiscounted = hasPromo
+            ? Math.max(0, Math.round(audioRaw * (1 - (story.discountValue || 0) / 100)))
+            : null;
+
+          return (
+          <div
+            key={story.id}
+            className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors flex flex-col h-full"
+          >
+            <Link to={`/bookdetails/${story.id}`} className="flex flex-col h-full">
+              <div className="relative">
+                <img
+                  src={story.image}
+                  alt={story.title}
+                  className="w-full h-64 object-cover object-top"
+                />
+
+                {/* Thể loại & Giảm giá */}
+                <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[80%]">
+                  {/* Badge giảm giá */}
+                  {story.hasPromotion && story.discountValue && (
+                    <span className="bg-gradient-to-r from-red-600 to-orange-500 
+                                   text-white px-2 py-1 rounded-full text-xs 
+                                   font-bold shadow-lg backdrop-blur-sm animate-pulse">
+                      🔥 -{Math.round(story.discountValue)}%
+                    </span>
+                  )}
+                  {/* Categories */}
+                  {Array.isArray(story.categories)
+                    ? story.categories.slice(0, 2).map((cat, i) => (
+                        <span
+                          key={i}
+                          className="bg-gradient-to-r from-purple-600 to-purple-400 
+                                     text-white px-2 py-0.5 rounded-full text-[10px] 
+                                     font-medium shadow-sm backdrop-blur-sm truncate"
+                        >
+                          {cat}
+                        </span>
+                      ))
+                    : (
+                        <span className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          {story.categories}
+                        </span>
+                      )}
+                </div>
+
+                {/* Headphone Icon */}
+                <div className="absolute top-3 right-3">
+                  <div className="bg-black/50 rounded-full p-2">
                     <RiHeadphoneLine className="text-white text-sm" />
                   </div>
                 </div>
-              </div>
-              {/* Duration + Chapters */}
-              <div className="absolute bottom-3 left-3 right-3">
-                <div className="bg-black/70 rounded-lg px-3 py-2">
-                  <div className="flex items-center justify-between text-white text-sm">
-                    <span className="flex items-center">
-                      <RiTimeLine className="mr-1" /> {story.duration}
-                    </span>
-                    <span className="flex items-center">
-                      <RiListCheck className="mr-1" /> {story.chapters} chương
-                    </span>
+
+                {/* Duration + Chapters */}
+                <div className="absolute bottom-3 left-3 right-3">
+                  <div className="bg-black/70 rounded-lg px-3 py-2">
+                    <div className="flex items-center justify-between text-white text-sm">
+                      <span className="flex items-center">
+                        <RiTimeLine className="mr-1" /> {story.duration}
+                      </span>
+                      <span className="flex items-center">
+                        <RiListCheck className="mr-1" /> {story.chapters} chương
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-4">
-              <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2">
-                {story.title}
-              </h3>
-
-              <p className="text-gray-400 text-sm mb-2">
-                Tác giả: {story.author}
-              </p>
-
-              <p className="text-orange-400 text-sm mb-3">
-                Người kể: {story.narrator}
-              </p>
-
-              <div className="flex items-center justify-between">
-                {/* Rating */}
-                <div className="flex items-center">
-                  <div className="flex text-yellow-400 text-sm">
-                    {[...Array(5)].map((_, i) =>
-                      i < Math.floor(story.rating) ? (
-                        <RiStarFill key={i} />
-                      ) : (
-                        <RiStarLine key={i} />
-                      )
+              <div className="p-4 flex flex-col flex-grow">
+                <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 min-h-[3.5rem]">
+                  {story.title}
+                </h3>
+                <p className="text-gray-400 text-sm mb-2">Tác giả: {story.author}</p>
+                <p className="text-orange-400 text-sm mb-3">
+                  Người kể: {story.narrator || "Đang cập nhật"}
+                </p>
+                <div className="flex items-center justify-between mt-auto">
+                  {/* Rating */}
+                  <div className="flex items-center text-sm text-gray-400">
+                    <RiStarFill className="text-yellow-400 mr-1" />
+                    <span>{story.rating} ({story.reviews})</span>
+                  </div>
+                  {/* Audio-only Price (with promotion if any) */}
+                  <div className="flex flex-col items-end">
+                    {hasPromo && audioRaw > 0 ? (
+                      <>
+                        <div className="flex items-center gap-1 text-sm text-yellow-400 font-bold">
+                          {audioDiscounted?.toLocaleString()}
+                          <RiCoinLine className="w-5 h-5" />
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 line-through">
+                          {audioRaw.toLocaleString()}
+                          <RiCoinLine className="w-4 h-4" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-1 text-sm text-green-400 font-semibold">
+                        {audioRaw.toLocaleString()}
+                        <RiCoinLine className="w-5 h-5" />
+                      </div>
                     )}
                   </div>
-                  <span className="text-gray-400 text-sm ml-2">
-                    ({story.rating})
-                  </span>
+                  {/* Play Button */}
+                  <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap flex items-center">
+                    <RiPlayFill className="mr-1" /> Nghe
+                  </button>
                 </div>
-
-                {/* Play Button */}
-                <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap flex items-center">
-                  <RiPlayFill className="mr-1" /> Nghe
-                </button>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
+        );})}
+      </div>
+
+      {/* Empty */}
+      {filteredStories.length === 0 && (
+        <div className="text-center py-12">
+          <RiBookOpenLine className="text-6xl text-gray-600 mb-4 mx-auto" />
+          <h3 className="text-xl font-semibold text-gray-400 mb-2">
+            Không tìm thấy sách audio
+          </h3>
+          <p className="text-gray-500">Hãy thử thay đổi bộ lọc của bạn</p>
         </div>
-      ))}
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6 space-x-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 rounded ${
+              currentPage === 1
+                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                : "bg-gray-700 text-white hover:bg-gray-600"
+            }`}
+          >
+            Trang trước
+          </button>
+
+          {getPageNumbers().map((page, index) =>
+            page === "..." ? (
+              <span key={`ellipsis-${index}`} className="px-3 py-1 text-gray-400">
+                ...
+              </span>
+            ) : (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === page
+                    ? "bg-orange-600 text-white"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+              >
+                {page}
+              </button>
+            )
+          )}
+
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1 rounded ${
+              currentPage === totalPages
+                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                : "bg-gray-700 text-white hover:bg-gray-600"
+            }`}
+          >
+            Trang sau
+          </button>
+        </div>
+      )}
     </div>
   );
 }

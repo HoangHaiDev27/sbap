@@ -1,6 +1,7 @@
 import React from "react";
 
-const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
+const WithdrawDetailModal = ({ withdraw, onClose }) => {
+
   if (!withdraw) return null;
 
   return (
@@ -59,9 +60,6 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
             <span className="font-semibold">Số tiền yêu cầu:</span>{" "}
             {withdraw.amount}
           </p>
-          <p>
-            <span className="font-semibold">Số dư khả dụng:</span> 3.200.000đ
-          </p>
 
           <p>
             <span className="font-semibold">Ngân hàng:</span>{" "}
@@ -76,27 +74,6 @@ const WithdrawDetailModal = ({ withdraw, onClose, onApprove, onReject }) => {
             <span className="font-semibold">Ngày yêu cầu:</span>{" "}
             {withdraw.date}
           </p>
-
-          <p className="col-span-2">
-            <span className="font-semibold">Ghi chú:</span> Rút tiền từ doanh thu
-            bán sách tháng 1/2024
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={() => onApprove(withdraw.id)}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-          >
-            <i className="ri-check-line"></i> Phê duyệt
-          </button>
-          <button
-            onClick={() => onReject(withdraw.id)}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
-          >
-            <i className="ri-close-line"></i> Từ chối
-          </button>
         </div>
       </div>
     </div>

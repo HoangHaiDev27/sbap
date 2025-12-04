@@ -1,226 +1,578 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { isBookOwner, getUserId } from "../api/authApi";
+import { getOwnerPlans, purchaseOwnerPlan } from "../api/userApi";
+import { getSubscriptionStatus } from "../api/ownerBookApi";
+import { useCoinsStore } from "../hooks/stores/coinStore";
+import { useNotificationStore } from "../hooks/stores/notificationStore";
 
 export default function VipPackagesPage() {
-  const [selectedPackage, setSelectedPackage] = useState(null);
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [ownerPlans, setOwnerPlans] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isOwner, setIsOwner] = useState(isBookOwner());
+  const [subscription, setSubscription] = useState(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(true);
 
-  // Inline SVG Icons
-  const CheckIcon = () => (
-    <svg className="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-    </svg>
-  );
+  const coins = useCoinsStore((s) => s.coins || 0);
+  const fetchCoins = useCoinsStore((s) => s.fetchCoins);
+  const { fetchNotifications, fetchUnreadCount } = useNotificationStore();
 
-  const StarIcon = () => (
-    <svg className="w-4 h-4 mr-1 fill-current" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.782 
-      1.402 8.168L12 18.896l-7.336 3.864 
-      1.402-8.168L.132 9.21l8.2-1.192z"/>
-    </svg>
-  );
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmPlan, setConfirmPlan] = useState(null);
 
-  const icons = {
-    Download: (
-      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
-      </svg>
-    ),
-    Users: (
-      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-4-4h-1m-6 6H3v-2a4 4 0 014-4h1m6-6a4 4 0 11-8 0 4 4 0 018 0zm6 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-      </svg>
-    ),
-    Zap: (
-      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-      </svg>
-    ),
-    Shield: (
-      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    ),
-    Headphones: (
-      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M21 18a3 3 0 11-6 0v-6a3 3 0 016 0v6zM3 18a3 3 0 106 0v-6a3 3 0 00-6 0v6z"/>
-      </svg>
-    ),
-    Clock: (
-      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
-      </svg>
-    )
+  useEffect(() => {
+    const onAuthChanged = () => setIsOwner(isBookOwner());
+    window.addEventListener("auth:changed", onAuthChanged);
+    return () => window.removeEventListener("auth:changed", onAuthChanged);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const plans = await getOwnerPlans();
+        setOwnerPlans(plans);
+      } catch (e) {
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: { type: "error", message: e.message },
+          })
+        );
+      }
+    })();
+  }, []);
+
+  // Fetch subscription status khi là owner
+  useEffect(() => {
+    if (isOwner) {
+      (async () => {
+        try {
+          setLoadingSubscription(true);
+          const userId = getUserId();
+          if (userId) {
+            const response = await getSubscriptionStatus(userId);
+            if (response.success && response.hasSubscription) {
+              setSubscription(response.subscription);
+            } else {
+              setSubscription(null);
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching subscription status:", e);
+          setSubscription(null);
+        } finally {
+          setLoadingSubscription(false);
+        }
+      })();
+    } else {
+      setSubscription(null);
+      setLoadingSubscription(false);
+    }
+  }, [isOwner]);
+
+  // Hiển thị thông báo khi không có dữ liệu từ API
+  const displayPlans = Array.isArray(ownerPlans) && ownerPlans.length > 0 ? ownerPlans : [];
+  const hasPlans = displayPlans.length > 0;
+
+  // Kiểm tra xem có thể mua gói mới không và trạng thái subscription
+  // Chỉ cho phép mua khi: không có subscription active HOẶC subscription đã hết hạn HOẶC hết lượt
+  const subscriptionStatus = React.useMemo(() => {
+    if (!isOwner || !subscription) {
+      return { canPurchase: true, status: 'none' }; // Không có subscription thì có thể mua
+    }
+    
+    const now = new Date();
+    const endAt = new Date(subscription.endAt);
+    const isExpired = now >= endAt;
+    const isOutOfConversions = subscription.remainingConversions <= 0;
+    
+    // Tính số ngày còn lại
+    const daysRemaining = Math.ceil((endAt - now) / (1000 * 60 * 60 * 24));
+    
+    // Xác định màu dựa trên thời gian còn lại VÀ số lượt chuyển đổi còn lại
+    let colorStatus = 'green'; // Mặc định màu xanh
+    const remainingConversions = subscription.remainingConversions;
+    
+    // Đỏ: Hết hạn HOẶC hết lượt
+    if (isExpired || remainingConversions <= 0) {
+      colorStatus = 'red';
+    } 
+    // Vàng: Gần hết hạn (<= 3 ngày) HOẶC sắp hết lượt (<= 5 lượt)
+    else if (daysRemaining <= 3 || remainingConversions <= 5) {
+      colorStatus = 'yellow';
+    } 
+    // Xanh: Còn nhiều thời gian (> 3 ngày) VÀ còn nhiều lượt (> 5 lượt)
+    else {
+      colorStatus = 'green';
+    }
+    
+    if (isExpired && isOutOfConversions) {
+      return { canPurchase: true, status: 'expired_and_empty', subscription, colorStatus, daysRemaining };
+    } else if (isExpired) {
+      return { canPurchase: true, status: 'expired', subscription, colorStatus, daysRemaining };
+    } else if (isOutOfConversions) {
+      return { canPurchase: true, status: 'out_of_conversions', subscription, colorStatus, daysRemaining };
+    } else {
+      return { canPurchase: false, status: 'active', subscription, colorStatus, daysRemaining };
+    }
+  }, [isOwner, subscription]);
+
+  const canPurchasePlan = subscriptionStatus.canPurchase;
+
+  // Hàm chuyển đổi period từ tiếng Anh sang tiếng Việt
+  const getPeriodInVietnamese = (period) => {
+    if (!period) return '';
+    const periodLower = String(period).toLowerCase();
+    const periodMap = {
+      'weekly': 'tuần',
+      'monthly': 'tháng',
+      'yearly': 'năm'
+    };
+    return periodMap[periodLower] || periodLower;
   };
 
-  const packages = [
-    {
-      id: 'basic',
-      name: 'Gói cơ bản',
-      price: '29.000đ/tháng',
-      originalPrice: '39.000đ',
-      discount: '25% OFF',
-      features: ['Nghe không giới hạn','Chất lượng âm thanh cao','Tải xuống offline','Không quảng cáo','Hỗ trợ 24/7'],
-      popular: false
-    },
-    {
-      id: 'premium',
-      name: 'Gói tháng',
-      price: '59.000đ/tháng',
-      originalPrice: '79.000đ',
-      discount: '25% OFF',
-      features: ['Tất cả tính năng gói cơ bản','Chất lượng âm thanh lossless','Tải xuống không giới hạn','Nghe cùng lúc 3 thiết bị','Playlist cá nhân hóa','Ưu tiên hỗ trợ'],
-      popular: true
-    },
-    {
-      id: 'yearly',
-      name: 'Gói năm',
-      price: '499.000đ/năm',
-      originalPrice: '699.000đ',
-      discount: '29% OFF',
-      features: ['Tất cả tính năng gói tháng','Tiết kiệm 2 tháng','Ưu tiên cập nhật tính năng mới','Tặng kèm ebook miễn phí','Hỗ trợ VIP 24/7','Backup dữ liệu cloud'],
-      popular: false
-    }
-  ];
-
-  const benefits = [
-    { icon: icons.Download, title: 'Tải sách đang nghe', description: 'Tải xuống và nghe offline mọi lúc mọi nơi' },
-    { icon: icons.Users, title: 'Ít người sử dụng', description: 'Trải nghiệm mượt mà với ít người dùng đồng thời' },
-    { icon: icons.Zap, title: 'Tốc độ nhanh', description: 'Tốc độ tải và phát nhanh chóng' },
-    { icon: icons.Shield, title: 'Chất lượng tốt nhất', description: 'Âm thanh chất lượng cao, không mất dữ liệu' },
-    { icon: icons.Headphones, title: 'Cách âm thanh', description: 'Công nghệ khử tiếng ồn tiên tiến' },
-    { icon: icons.Clock, title: 'Có thể 24/7', description: 'Hỗ trợ và truy cập 24 giờ mỗi ngày' }
-  ];
-
-  const audioSamples = [
-    { title: 'Facebook', category: 'Kinh doanh' },
-    { title: 'Accounting Tutorial', category: 'Giáo dục' },
-    { title: 'Science', category: 'Khoa học' },
-    { title: 'BOOK', category: 'Sách nói' }
-  ];
-
   const faqs = [
-    { question: 'Gói có triết khấu cho sinh viên không?', answer: 'Có, chúng tôi cung cấp giảm giá 50% cho sinh viên có thẻ sinh viên hợp lệ.' },
-    { question: 'Cách nâng cấp lên Premium mới nhất?', answer: 'Bạn có thể nâng cấp bất cứ lúc nào thông qua trang cài đặt tài khoản hoặc liên hệ hỗ trợ.' },
-    { question: 'Có thể dùng trên tất cả thiết bị không?', answer: 'Có, gói Premium cho phép sử dụng trên tất cả thiết bị và đồng bộ dữ liệu.' },
-    { question: 'Làm thế nào để sử dụng nhiều tài khoản?', answer: 'Gói gia đình cho phép tạo tối đa 6 tài khoản con với các tính năng đầy đủ.' },
-    { question: 'Có thể tải về máy để nghe offline không?', answer: 'Có, tất cả các gói trả phí đều hỗ trợ tải xuống và nghe offline không giới hạn.' },
-    { question: 'Có bị giới hạn gì không?', answer: 'Gói Premium không có giới hạn về số lượng sách, thời gian nghe hay số lần tải xuống.' }
+    {
+      question: "Có thể dùng trên tất cả thiết bị không?",
+      answer:
+        "Có, gói Premium cho phép sử dụng trên tất cả thiết bị và đồng bộ dữ liệu.",
+    },
+    {
+      question: "Có thể tải về máy để nghe offline không?",
+      answer:
+        "Không, chỉ có thể nghe trực tiếp trên nền tảng và nghe online không giới hạn.",
+    },
+    {
+      question: "Có bị giới hạn gì không?",
+      answer:
+        "Gói Premium có giới hạn về số lượng sách, không giới hạn số lần nghe.",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-16">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">Gói chuyển file sang audio</h1>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-2">
+            Gói chuyển sách sang audio
+          </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Chọn gói phù hợp với nhu cầu của bạn và trải nghiệm những tính năng tuyệt vời
+            Thanh toán bằng xu trong ví. Mỗi gói có giới hạn số lượt chuyển
+            đổi.
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 bg-gray-800 border border-gray-700 px-4 py-2 rounded-full text-sm">
+            <i className="ri-wallet-3-line text-orange-400"></i>
+            <span>
+              Xu hiện có:{" "}
+              <span className="font-semibold text-white">
+                {Number(coins).toLocaleString("vi-VN")} xu
+              </span>
+            </span>
+          </div>
         </div>
 
-        {/* Pricing */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-          {packages.map((pkg) => (
-            <div key={pkg.id}
-              className={`relative bg-gray-800 rounded-2xl p-8 border-2 transition-all duration-300 hover:scale-105 ${
-                pkg.popular ? 'border-orange-500 ring-2 ring-orange-500 ring-opacity-50' : 'border-gray-700 hover:border-gray-600'
-              }`}
-            >
-              {pkg.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center">
-                    <StarIcon /> Phổ biến nhất
+        {/* Thông báo subscription hiện tại */}
+        {isOwner && subscriptionStatus.subscription && (
+          (() => {
+            const { subscription: sub, colorStatus, daysRemaining, status } = subscriptionStatus;
+            const isExpired = daysRemaining <= 0;
+            
+            // Xác định màu và class CSS dựa trên colorStatus
+            const colorConfig = {
+              green: {
+                bg: 'from-green-900/30 to-emerald-900/30',
+                border: 'border-green-500/50',
+                iconBg: 'bg-green-500/20',
+                iconColor: 'text-green-400',
+                titleColor: 'text-green-400',
+                textColor: 'text-green-300/80',
+                icon: 'ri-checkbox-circle-line'
+              },
+              yellow: {
+                bg: 'from-yellow-900/30 to-orange-900/30',
+                border: 'border-yellow-500/50',
+                iconBg: 'bg-yellow-500/20',
+                iconColor: 'text-yellow-400',
+                titleColor: 'text-yellow-400',
+                textColor: 'text-yellow-300/80',
+                icon: 'ri-time-line'
+              },
+              red: {
+                bg: 'from-red-900/30 to-orange-900/30',
+                border: 'border-red-500/50',
+                iconBg: 'bg-red-500/20',
+                iconColor: 'text-red-400',
+                titleColor: 'text-red-400',
+                textColor: 'text-red-300/80',
+                icon: 'ri-alert-line'
+              }
+            };
+            
+            const colors = colorConfig[colorStatus] || colorConfig.green;
+            
+            return (
+              <div className={`mb-8 bg-gradient-to-r ${colors.bg} border ${colors.border} rounded-2xl p-6`}>
+                <div className="flex items-start gap-4">
+                  <div className={`flex-shrink-0 w-12 h-12 rounded-full ${colors.iconBg} flex items-center justify-center`}>
+                    <i className={`${colors.icon} ${colors.iconColor} text-2xl`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className={`text-lg font-semibold ${colors.titleColor} mb-2`}>
+                      {status === 'active' 
+                        ? 'Bạn đang có gói đang hoạt động'
+                        : status === 'expired'
+                        ? 'Gói của bạn đã hết hạn'
+                        : status === 'out_of_conversions'
+                        ? 'Gói của bạn đã hết lượt chuyển đổi'
+                        : 'Gói của bạn đã hết hạn và hết lượt'
+                      }
+                    </h3>
+                    <div className="space-y-2 text-sm text-gray-300">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Gói hiện tại:</span>
+                        <span className="text-white font-medium">{sub.planName || "N/A"}</span>
+                      </div>
+                      {status !== 'expired_and_empty' && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400">Lượt chuyển đổi còn lại:</span>
+                            <span className={`font-semibold ${
+                              sub.remainingConversions <= 0 ? 'text-red-400' : 'text-white'
+                            }`}>
+                              {sub.remainingConversions} lượt
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400">
+                              {isExpired ? 'Đã hết hạn vào:' : 'Hết hạn vào:'}
+                            </span>
+                            <span className="text-white font-medium">
+                              {new Date(sub.endAt).toLocaleDateString("vi-VN", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          {!isExpired && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-400">Còn lại:</span>
+                              <span className={`font-semibold ${
+                                daysRemaining <= 3 ? colors.titleColor : 'text-white'
+                              }`}>
+                                {daysRemaining} ngày
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <p className={`mt-3 text-sm ${colors.textColor}`}>
+                      {status === 'active'
+                        ? 'Chỉ có thể mua gói mới khi gói hiện tại hết hạn hoặc hết lượt chuyển đổi.'
+                        : status === 'expired'
+                        ? 'Bạn có thể mua gói mới ngay bây giờ.'
+                        : status === 'out_of_conversions'
+                        ? 'Bạn có thể mua gói mới để tiếp tục sử dụng dịch vụ.'
+                        : 'Vui lòng mua gói mới để tiếp tục sử dụng dịch vụ chuyển đổi sách sang audio.'
+                      }
+                    </p>
+                    {status === 'active' && (
+                      <Link
+                        to="/owner/books"
+                        className="mt-4 inline-block px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors text-sm"
+                      >
+                        Thử tạo Audio ngay
+                      </Link>
+                    )}
                   </div>
                 </div>
-              )}
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">{pkg.name}</h3>
-                <div className="mb-4">
-                  <span className="text-gray-400 line-through text-lg">{pkg.originalPrice}</span>
-                  <div className="text-3xl font-bold text-orange-500">{pkg.price}</div>
-                  <span className="text-sm text-green-400 font-medium">{pkg.discount}</span>
-                </div>
               </div>
-              <ul className="space-y-4 mb-8">
-                {pkg.features.map((f, i) => (
-                  <li key={i} className="flex items-start"><CheckIcon /> <span className="text-gray-300">{f}</span></li>
-                ))}
-              </ul>
-              <button
-                className={`w-full py-3 rounded-lg font-medium transition-colors duration-200 ${
-                  pkg.popular ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600'
-                }`}
-                onClick={() => setSelectedPackage(pkg.id)}
-              >
-                Chọn gói này
-              </button>
+            );
+          })()
+        )}
+
+        {/* Owner Plans (hiển thị cho tất cả, chỉ owner mới mua được) */}
+        <div className="mb-16">
+          {hasPlans ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+              {displayPlans.map((p) => (
+                <div
+                  key={p.planId || p.name}
+                  className="group bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 hover:-translate-y-1"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-white">{p.name}</h3>
+                    <span className="text-xs px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 font-medium uppercase">
+                      {getPeriodInVietnamese(p.period)}
+                    </span>
+                  </div>
+                  <div className="mb-6 pb-4 border-b border-gray-700/50">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-orange-500">
+                        {p.price?.toLocaleString("vi-VN")}
+                      </span>
+                      <span className="text-base font-medium text-orange-400">Xu</span>
+                    </div>
+                  </div>
+                  <ul className="text-sm text-gray-300 space-y-3 mb-6">
+                    <li className="flex items-start">
+                      <i className="ri-sound-module-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Số lượt chuyển đổi:{" "}
+                        <span className="ml-1 text-white font-semibold">
+                          {p.conversionLimit} lần/{getPeriodInVietnamese(p.period)}
+                        </span>
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-time-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Chu kỳ:{" "}
+                        <span className="ml-1 capitalize text-white font-medium">
+                          {getPeriodInVietnamese(p.period)}
+                        </span>
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-recycle-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Tự gia hạn: <span className="ml-1 text-gray-400">Không</span>
+                      </span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-book-open-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>Chuyển đổi sách sang audio trực tuyến</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="ri-customer-service-2-line text-orange-400 mr-3 mt-0.5 text-lg flex-shrink-0"></i>
+                      <span>
+                        Hỗ trợ: <span className="ml-1 text-green-400 font-semibold">24/7</span>
+                      </span>
+                    </li>
+                  </ul>
+                  {isOwner && p.planId ? (
+                    canPurchasePlan ? (
+                      <button
+                        disabled={loading || loadingSubscription}
+                        onClick={async () => {
+                          setConfirmPlan(p);
+                          setConfirmOpen(true);
+                        }}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-semibold transition-all duration-200 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      >
+                        {loading || loadingSubscription ? "Đang xử lý..." : "Mua bằng Xu"}
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full py-3 rounded-xl bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600/50"
+                        title={
+                          subscriptionStatus.subscription
+                            ? `Bạn đang có gói "${subscriptionStatus.subscription.planName}" còn hiệu lực. Chỉ có thể mua gói mới khi gói hiện tại hết hạn hoặc hết lượt chuyển đổi.`
+                            : "Đang kiểm tra trạng thái gói..."
+                        }
+                      >
+                        Đang có gói hoạt động
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-3 rounded-xl bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600/50"
+                      title={isOwner ? "Gói minh họa - vui lòng đăng nhập để xem gói thực" : "Chỉ chủ sách (book owner) mới có thể mua"}
+                    >
+                      {isOwner ? "Gói minh họa" : "Chỉ dành cho chủ sách"}
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="text-center py-12">
+              <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 max-w-md mx-auto">
+                <div className="text-6xl mb-4">
+                  <i className="ri-error-warning-line text-orange-400"></i>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Không thể tải gói VIP</h3>
+                <p className="text-gray-400 mb-4">
+                  Hiện tại không thể tải danh sách gói VIP. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Thử lại
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Benefits */}
-        <div className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Tại sao chọn dịch vụ của chúng tôi?</h2>
-            <p className="text-gray-400">Những lợi ích tuyệt vời khi sử dụng gói VIP</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {benefits.map((b, i) => (
-              <div key={i} className="bg-gray-800 rounded-2xl p-6 text-center hover:bg-gray-750 transition-colors duration-200">
-                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  {b.icon}
+        {/* Modal xác nhận mua gói */}
+        {confirmOpen && confirmPlan && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => {
+              if (!loading) {
+                setConfirmOpen(false);
+                setConfirmPlan(null);
+              }
+            }}
+          >
+            <div 
+              className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl p-6 w-full max-w-md text-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                  <i className="ri-checkbox-circle-line text-orange-400 text-2xl"></i>
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{b.title}</h3>
-                <p className="text-gray-400">{b.description}</p>
+                <h3 className="text-2xl font-bold">Xác nhận mua gói</h3>
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="bg-gray-800/50 rounded-xl p-4 mb-6 space-y-3 border border-gray-700/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Gói:</span>
+                  <span className="text-white font-semibold">
+                    {confirmPlan.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Chu kỳ:</span>
+                  <span className="text-white font-medium capitalize">
+                    {getPeriodInVietnamese(confirmPlan.period)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-700">
+                  <span className="text-gray-400">Giá:</span>
+                  <span className="text-orange-400 font-bold text-lg">
+                    {confirmPlan.price?.toLocaleString("vi-VN")} xu
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Lượt chuyển đổi:</span>
+                  <span className="text-white font-semibold">
+                    {confirmPlan.conversionLimit} lần/kỳ
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 transition-colors font-medium"
+                  onClick={() => {
+                    setConfirmOpen(false);
+                    setConfirmPlan(null);
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-semibold transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      await purchaseOwnerPlan(confirmPlan.planId);
 
-        {/* Audio Samples */}
-        <div className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Mẫu Audio Demo</h2>
-            <p className="text-gray-400">Trải nghiệm chất lượng âm thanh tuyệt vời</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {audioSamples.map((s, i) => (
-              <div key={i} className="bg-gray-800 rounded-xl overflow-hidden group hover:scale-105 transition-transform duration-300">
-                <div className="aspect-video bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg relative">
-                  {s.title}
-                  <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300"/>
-                </div>
-                <div className="p-4">
-                  <h4 className="font-semibold mb-1">{s.title}</h4>
-                  <p className="text-sm text-gray-400">{s.category}</p>
-                </div>
+                      // 🔥 Reload xu ngay sau khi mua
+                      await fetchCoins();
+
+                      // 🔄 Refresh subscription status sau khi mua
+                      const userId = getUserId();
+                      if (userId) {
+                        try {
+                          const response = await getSubscriptionStatus(userId);
+                          if (response.success && response.hasSubscription) {
+                            setSubscription(response.subscription);
+                          } else {
+                            setSubscription(null);
+                          }
+                        } catch (subError) {
+                          console.error("Error refreshing subscription:", subError);
+                        }
+                      }
+
+                      // 🔔 Fetch notifications để hiển thị thông báo mua gói thành công
+                      if (userId) {
+                        try {
+                          await Promise.all([
+                            fetchNotifications(userId),
+                            fetchUnreadCount(userId)
+                          ]);
+                        } catch (notifError) {
+                          console.error("Error fetching notifications:", notifError);
+                          // Không làm gián đoạn flow nếu fetch notification lỗi
+                        }
+                      }
+
+                      setConfirmOpen(false);
+                      setConfirmPlan(null);
+                      window.dispatchEvent(
+                        new CustomEvent("app:toast", {
+                          detail: {
+                            type: "success",
+                            message: "Mua gói thành công",
+                          },
+                        })
+                      );
+                    } catch (e) {
+                      window.dispatchEvent(
+                        new CustomEvent("app:toast", {
+                          detail: { type: "error", message: e.message },
+                        })
+                      );
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  {loading ? "Đang xử lý..." : "Xác nhận mua"}
+                </button>
               </div>
-            ))}
+            </div>
           </div>
+        )}
+
+        {/* Divider */}
+        <div className="my-16 flex items-center gap-4">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+          <i className="ri-question-line text-gray-600 text-2xl"></i>
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
         </div>
 
         {/* FAQ */}
         <div>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Câu hỏi thường gặp</h2>
-            <p className="text-gray-400">Giải đáp những thắc mắc của bạn</p>
+            <h2 className="text-3xl font-bold mb-4 text-white">Câu hỏi thường gặp</h2>
+            <p className="text-gray-400 text-lg">Giải đáp những thắc mắc của bạn</p>
           </div>
           <div className="max-w-4xl mx-auto">
             {faqs.map((faq, i) => (
               <div key={i} className="mb-4">
                 <button
-                  className="w-full bg-gray-800 rounded-lg p-6 text-left hover:bg-gray-750 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-6 text-left hover:from-gray-700 hover:to-gray-700/50 transition-all duration-300 border border-gray-700 hover:border-orange-500/30 focus:outline-none focus:ring-2 focus:ring-orange-500/50 shadow-lg hover:shadow-xl"
                   onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold pr-4">{faq.question}</h3>
-                    <div className={`transform transition-transform duration-200 ${expandedFaq === i ? 'rotate-180' : ''}`}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
-                      </svg>
+                    <h3 className="text-lg font-semibold pr-4 text-white">
+                      {faq.question}
+                    </h3>
+                    <div
+                      className={`transform transition-transform duration-300 flex-shrink-0 ${
+                        expandedFaq === i ? "rotate-180" : ""
+                      }`}
+                    >
+                      <i className={`ri-arrow-down-s-line text-2xl text-orange-400 ${expandedFaq === i ? 'text-orange-500' : ''}`}></i>
                     </div>
                   </div>
-                  {expandedFaq === i && <div className="mt-4 text-gray-400">{faq.answer}</div>}
+                  {expandedFaq === i && (
+                    <div className="mt-4 pt-4 border-t border-gray-700 text-gray-300 leading-relaxed">
+                      {faq.answer}
+                    </div>
+                  )}
                 </button>
               </div>
             ))}

@@ -27,6 +27,8 @@ export default function CategoryModal({ editingCategory, formData, setFormData, 
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="Nhập tên thể loại"
+              required
+              maxLength={100}
             />
           </div>
           <div>
@@ -34,12 +36,12 @@ export default function CategoryModal({ editingCategory, formData, setFormData, 
               Trạng thái
             </label>
             <select
-              value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value})}
+              value={formData.isActive ? 'active' : 'inactive'}
+              onChange={(e) => setFormData({...formData, isActive: e.target.value === 'active'})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
-              <option value="active">Đang dùng</option>
-              <option value="inactive">Không dùng</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
             </select>
           </div>
         </div>

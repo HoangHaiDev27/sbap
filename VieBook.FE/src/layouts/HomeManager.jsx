@@ -1,114 +1,164 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import HeroSection from "../components/home/HeroSection";
 import BookCarousel from "../components/home/BookCarousel";
-import AuthorSection from "../components/home/AuthorSection";
+import { getAudioBooks } from "../api/audioBookApi";
+import {
+  getReadBooks,
+  getAllCategories,
+  getRecommendations,
+} from "../api/bookApi";
+import { getUserId } from "../api/authApi";
+import { useHomeStore } from "../hooks/stores/homeStore";
+import ChatbaseWidget from "../components/chat/ChatbaseWidget"
 
 export default function HomeManager() {
+  const {
+    audioBooks,
+    readBooks,
+    categories,
+    recommendBooks,
+    loaded,
+    setHomeData,
+  } = useHomeStore();
+  const [loading, setLoading] = useState(!loaded);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (loaded) return; // đã có data rồi, không fetch lại
+
+    let cancelled = false;
+
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError("");
+        const userId = getUserId();
+
+        const [audioRes, readRes, categoriesRes, recommendRes] =
+          await Promise.all([
+            getAudioBooks().catch(() => []),
+            getReadBooks().catch(() => []),
+            getAllCategories().catch(() => []),
+            getRecommendations(userId).catch(() => []),
+          ]);
+
+        if (cancelled) return;
+
+        // Extract data nếu có wrapper (response có thể là { data: [...] } hoặc { code: 0, data: [...] })
+        const extractData = (response) => {
+          if (Array.isArray(response)) return response;
+          if (response?.data && Array.isArray(response.data)) return response.data;
+          if (response?.Data && Array.isArray(response.Data)) return response.Data;
+          return [];
+        };
+
+        const audioBooksData = extractData(audioRes);
+        const readBooksData = extractData(readRes);
+        const recommendBooksData = extractData(recommendRes);
+
+        // Debug: Log một vài books để xem structure
+        if (audioBooksData.length > 0) {
+          console.log("Sample audio book:", audioBooksData[0]);
+        }
+        if (readBooksData.length > 0) {
+          console.log("Sample read book:", readBooksData[0]);
+        }
+
+        const mapToCarouselItem = (b) => {
+          // Extract promotion data - kiểm tra nhiều format
+          const hasPromotion = b.hasPromotion !== undefined ? b.hasPromotion : 
+                              (b.HasPromotion !== undefined ? b.HasPromotion : false);
+          const discountValue = b.discountValue !== undefined ? b.discountValue : 
+                               (b.DiscountValue !== undefined ? b.DiscountValue : null);
+          
+          // Debug: log để kiểm tra promotion
+          if (hasPromotion || discountValue !== null) {
+            console.log("Book with promotion (mapped):", { 
+              title: b.title || b.Title, 
+              hasPromotion, 
+              discountValue,
+              rawHasPromotion: b.hasPromotion,
+              rawHasPromotionCaps: b.HasPromotion,
+              rawDiscountValue: b.discountValue,
+              rawDiscountValueCaps: b.DiscountValue
+            });
+          }
+          
+          const mapped = {
+            id: b.bookId || b.id || b.Id || b.BookId,
+            title: b.title || b.Title,
+            image: b.coverUrl || b.image || b.Image || b.CoverUrl,
+            author: b.author || b.Author || b.narrator || b.Narrator || "",
+            category: b.category || b.Category || b.categoryIds?.join(", ") || b.Categories?.map(c => c.name || c.Name || c).join(", ") || "",
+            completionStatus: b.completionStatus || b.CompletionStatus || "Ongoing",
+            // Promotion data - giữ nguyên giá trị boolean và number
+            hasPromotion: Boolean(hasPromotion),
+            discountValue: discountValue !== null && discountValue !== undefined ? Number(discountValue) : null,
+          };
+          
+          return mapped;
+        };
+
+        const data = {
+          audioBooks: audioBooksData.map(mapToCarouselItem),
+          readBooks: readBooksData.map(mapToCarouselItem),
+          recommendBooks: recommendBooksData.map(mapToCarouselItem),
+          categories: [
+            "Tất cả",
+            ...(Array.isArray(categoriesRes)
+              ? categoriesRes.map((c) => c.name || c.Name).filter(Boolean)
+              : []),
+          ],
+        };
+
+        // Debug: Kiểm tra data sau khi map
+        const booksWithPromo = [
+          ...data.audioBooks.filter(b => b.hasPromotion),
+          ...data.readBooks.filter(b => b.hasPromotion),
+          ...data.recommendBooks.filter(b => b.hasPromotion)
+        ];
+        if (booksWithPromo.length > 0) {
+          console.log("Books with promotion in final data:", booksWithPromo);
+        }
+
+        setHomeData(data); // ✅ lưu vào store Zustand
+      } catch (e) {
+        if (!cancelled) setError("Không thể tải dữ liệu trang chủ.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [loaded, setHomeData]);
+
   return (
-    <div className="bg-gray-900 min-h-screen text-white">
-      {/* Hero Section */}
-      <HeroSection />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-        {/* Gợi ý cho người mới bắt đầu */}
-        <BookCarousel
-          title="Gợi ý cho người mới bắt đầu"
-          books={[
-            {
-              id: "1",
-              title: "Cặp Đôi Hoàn Cảnh",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/674/webp_4619250472f4de917b13d976c5f699daaa9f80b0.webp",
-              author: "Tác giả 1",
-              category: "Truyện nói",
-            },
-            {
-              id: "2",
-              title: "Sử Ký III - Thế Gia",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/427775/webp_2487324742bb2e88.webp",
-              author: "Tác giả 2",
-              category: "Lịch sử",
-            },
-          ]}
-        />
-
-        {/* Sách nói chất lượng */}
-        <BookCarousel
-          title="Sách nói chất lượng"
-          hasCategories
-          categories={["Tất cả", "Tâm linh", "Kinh tế", "Chính trị", "Lịch sử"]}
-          books={[
-            {
-              id: "6",
-              title: "Dám Dẫn Đầu",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/825/webp_3c2ed8637391e7d1.webp",
-              author: "Tác giả 6",
-              category: "Lãnh đạo",
-            },
-          ]}
-        />
-
-        {/* Truyện nói hấp dẫn */}
-        <BookCarousel
-          title="Truyện nói hấp dẫn"
-          hasCategories
-          categories={[
-            "Tất cả",
-            "Việt Nam Danh Tác",
-            "Kinh điển Quốc tế",
-            "Ngôn tình",
-            "Trinh thám",
-          ]}
-          books={[
-            {
-              id: "10",
-              title: "Tỉnh Mộng - Hồ Biểu Chánh",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/434781/webp_e21bef3677d9a3cc.webp",
-              author: "Hồ Biểu Chánh",
-              category: "Danh tác",
-            },
-          ]}
-        />
-
-        {/* Podcast đặc sắc */}
-        {/* <BookCarousel
-          title="Podcast đặc sắc"
-          hasCategories
-          categories={[
-            "Tất cả",
-            "Văn hóa",
-            "Giải trí",
-            "Kiến thức",
-            "Pháp thoại",
-          ]}
-          books={[
-            {
-              id: "13",
-              title: "English For Office",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/429154/webp_f268c4174fef177a.webp",
-              author: "Tác giả 13",
-              category: "Học ngoại ngữ",
-            },
-            {
-              id: "14",
-              title: "Thông Deep",
-              image:
-                "https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/432998/webp_a22041ed2d9c6de8.webp",
-              author: "Tác giả 14",
-              category: "Văn hóa",
-            },
-          ]}
-        /> */}
-
-        {/* Tác giả nổi bật */}
-        <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <AuthorSection />
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="flex-1">
+        <HeroSection />
+        <div className="px-6 py-8 space-y-12">
+          <BookCarousel
+            title="Gợi ý cho bạn"
+            books={loading ? [] : recommendBooks}
+          />
+          <BookCarousel
+            title="Sách nói chất lượng"
+            hasCategories={true}
+            categories={categories}
+            books={loading ? [] : audioBooks}
+          />
+          <BookCarousel
+            title="Sách đọc hấp dẫn"
+            hasCategories={true}
+            categories={categories}
+            books={loading ? [] : readBooks}
+          />
         </div>
       </div>
+      <ChatbaseWidget />
     </div>
   );
 }

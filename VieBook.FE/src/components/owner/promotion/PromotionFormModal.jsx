@@ -1,79 +1,194 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getUserId } from "../../../api/authApi";
+import { createPromotion, updatePromotion, getBooksByOwner } from "../../../api/promotionApi";
 
-export default function PromotionFormModal({ isOpen, onClose }) {
+export default function PromotionFormModal({ isOpen, onClose, onCreated, editingPromotion }) {
   const [form, setForm] = useState({
     name: "",
-    type: "percent",
     value: "",
-    limit: "",
     startDate: "",
     endDate: "",
-    target: "all",
     books: [],
     description: "",
   });
+  const [books, setBooks] = useState([]);
+  const [bookSearch, setBookSearch] = useState(""); // search state
+  const [isSubmitting, setIsSubmitting] = useState(false); // loading state
 
-  const books = [
-    { id: 1, title: "Đắc Nhân Tâm - Bản E-book Đặc Biệt", price: 150000, sold: 245, cover: "/book1.jpg" },
-    { id: 2, title: "Tư Duy Nhanh Và Chậm - Digital Edition", price: 200000, sold: 189, cover: "/book2.jpg" },
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      const ownerId = getUserId();
+      if (ownerId) {
+        getBooksByOwner(ownerId)
+          .then((data) => setBooks(data))
+          .catch((err) => console.error("Lỗi load sách:", err));
+      }
+      
+      // Reset submitting state khi mở modal
+      setIsSubmitting(false);
+
+      if (editingPromotion) {
+        // Convert UTC string từ backend về local datetime string cho datetime-local input
+        // datetime-local input cần format "YYYY-MM-DDTHH:mm" trong local timezone
+        const toLocalDatetimeString = (utcString) => {
+          const date = new Date(utcString);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+        
+        setForm({
+          name: editingPromotion.promotionName,
+          value: editingPromotion.discountValue,
+          startDate: toLocalDatetimeString(editingPromotion.startAt),
+          endDate: toLocalDatetimeString(editingPromotion.endAt),
+          books: Array.isArray(editingPromotion.books) ? editingPromotion.books.map(b => b.bookId) : [],
+          description: editingPromotion.description || "",
+        });
+      } else {
+        setForm({
+          name: "",
+          value: "",
+          startDate: "",
+          endDate: "",
+          books: [],
+          description: "",
+        });
+      }
+      setBookSearch("");
+    }
+  }, [isOpen, editingPromotion]);
 
   if (!isOpen) return null;
 
+  // Helper: Parse datetime-local string thành Date object một cách nhất quán
+  // Safari có thể parse "2025-01-15T10:00" khác với Chrome/Firefox
+  const parseDatetimeLocal = (datetimeStr) => {
+    if (!datetimeStr) return null;
+    // datetime-local format: "YYYY-MM-DDTHH:mm"
+    const [datePart, timePart] = datetimeStr.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+    // Tạo Date object từ components -> đảm bảo là LOCAL time
+    return new Date(year, month - 1, day, hours, minutes);
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent double submit
+    
+    try {
+      if (!form.name || !form.value || !form.startDate || !form.endDate || !form.books?.length) {
+        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Vui lòng điền đầy đủ thông tin" }}));
+        return;
+      }
+      
+      setIsSubmitting(true);
+
+      // Parse datetime-local một cách nhất quán (tránh bug Safari)
+      const startDate = parseDatetimeLocal(form.startDate);
+      const endDate = parseDatetimeLocal(form.endDate);
+      const now = new Date();
+      
+      if (startDate.getTime() <= now.getTime()) {
+        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Ngày bắt đầu phải sau thời điểm hiện tại" }}));
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (endDate.getTime() <= startDate.getTime()) {
+        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: "Ngày kết thúc phải sau ngày bắt đầu" }}));
+        setIsSubmitting(false);
+        return;
+      }
+
+      const ownerId = getUserId();
+      
+      // Convert local Date sang ISO UTC string
+      const startAtUTC = startDate.toISOString();
+      const endAtUTC = endDate.toISOString();
+      
+      const payload = {
+        ownerId,
+        promotionName: form.name,
+        description: form.description,
+        discountPercent: parseFloat(form.value),
+        startAt: startAtUTC,
+        endAt: endAtUTC,
+        bookIds: form.books,
+      };
+
+      if (editingPromotion) {
+        await updatePromotion(editingPromotion.promotionId, payload);
+        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Cập nhật promotion thành công" }}));
+      } else {
+        await createPromotion(payload);
+        window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: "Tạo promotion thành công" }}));
+      }
+
+      // Reload data trước khi đóng modal
+      if (onCreated) await onCreated();
+      onClose();
+    } catch (err) {
+      console.error("Lỗi thao tác promotion:", err);
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Thao tác thất bại" }}));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // filter theo từ khóa search và chỉ lấy sách đã được duyệt (Approved)
+  const filteredBooks = books.filter(b => 
+    b.status === "Approved" && b.title.toLowerCase().includes(bookSearch.toLowerCase())
+  );
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-slate-900 w-full max-w-2xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh] text-white">
+      <div className="bg-slate-900 w-full max-w-2xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh] text-white custom-scrollbar">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Tạo Promotion Mới</h2>
+          <h2 className="text-xl font-bold">{editingPromotion ? "Cập nhật Khuyến mãi" : "Tạo Khuyến mãi Mới"}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
+        </div>
+
+        {/* Thông báo cảnh báo */}
+        <div className="bg-amber-900/50 border border-amber-600 rounded-lg p-3 mb-4 flex items-start gap-3">
+          <span className="text-amber-400 text-xl">⚠️</span>
+          <div className="text-sm">
+            <p className="font-semibold text-amber-400">Lưu ý quan trọng</p>
+            <p className="text-amber-200/90 mt-1">
+              Khi khuyến mãi đã bắt đầu diễn ra, bạn sẽ <span className="font-semibold text-amber-400">không thể chỉnh sửa hoặc xóa</span> được nữa. 
+              Vui lòng kiểm tra kỹ thông tin trước khi tạo.
+            </p>
+          </div>
         </div>
 
         {/* Form */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm">Tên Promotion *</label>
+            <label className="text-sm">Tên Khuyến mãi *</label>
             <input
               type="text"
-              placeholder="Ví dụ: Flash Sale Cuối Tuần"
               className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
           <div>
-            <label className="text-sm">Loại giảm giá *</label>
-            <select
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-            >
-              <option value="percent">Giảm theo phần trăm (%)</option>
-              <option value="amount">Giảm theo số tiền (VND)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm">Giá trị giảm giá *</label>
+            <label className="text-sm">Giá trị giảm (%) *</label>
             <input
               type="number"
-              placeholder="30"
               className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
             />
           </div>
-          <div>
-            <label className="text-sm">Số lượt sử dụng tối đa *</label>
-            <input
-              type="number"
-              placeholder="100"
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
-              value={form.limit}
-              onChange={(e) => setForm({ ...form, limit: e.target.value })}
-            />
-          </div>
+        </div>
 
+        {/* Thời gian ngang hàng */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="text-sm">Ngày bắt đầu *</label>
             <input
@@ -92,53 +207,49 @@ export default function PromotionFormModal({ isOpen, onClose }) {
               onChange={(e) => setForm({ ...form, endDate: e.target.value })}
             />
           </div>
-
-          <div className="col-span-2">
-            <label className="text-sm">Đối tượng áp dụng</label>
-            <select
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
-              value={form.target}
-              onChange={(e) => setForm({ ...form, target: e.target.value })}
-            >
-              <option value="all">Tất cả khách hàng</option>
-              <option value="vip">Chỉ khách VIP</option>
-            </select>
-          </div>
         </div>
 
-        {/* Books select */}
+        {/* Search sách */}
         <div className="mt-4">
-          <label className="text-sm">Chọn sách áp dụng promotion *</label>
+          <label className="text-sm">Chọn sách áp dụng *</label>
+          <input
+            type="text"
+            placeholder="Tìm kiếm sách..."
+            className="w-full mt-2 px-3 py-2 rounded bg-slate-800"
+            value={bookSearch}
+            onChange={(e) => setBookSearch(e.target.value)}
+          />
           <div className="mt-2 space-y-2 bg-slate-800 p-3 rounded max-h-40 overflow-y-auto">
-            {books.map((b) => (
-              <label key={b.id} className="flex items-center space-x-3">
+            {filteredBooks.map((b) => (
+              <label key={b.bookId} className="flex items-center space-x-3">
                 <input
                   type="checkbox"
-                  checked={form.books.includes(b.id)}
+                  checked={form.books.includes(b.bookId)}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setForm({ ...form, books: [...form.books, b.id] });
+                      setForm({ ...form, books: [...form.books, b.bookId] });
                     } else {
-                      setForm({ ...form, books: form.books.filter((id) => id !== b.id) });
+                      setForm({ ...form, books: form.books.filter(id => id !== b.bookId) });
                     }
                   }}
                 />
-                <img src={b.cover} alt={b.title} className="w-10 h-14 object-cover rounded" />
+                <img src={b.coverUrl} alt={b.title} className="w-10 h-14 object-cover rounded" />
                 <div>
                   <p className="font-medium">{b.title}</p>
-                  <p className="text-xs opacity-70">{b.price.toLocaleString()} đ • {b.sold} đã bán</p>
+                  <p className="text-xs opacity-70">
+                    {b.totalPrice?.toLocaleString()} đ • {b.sold} đã bán
+                  </p>
                 </div>
               </label>
             ))}
           </div>
         </div>
 
-        {/* Description */}
+        {/* Mô tả */}
         <div className="mt-4">
-          <label className="text-sm">Mô tả promotion</label>
+          <label className="text-sm">Mô tả khuyến mãi</label>
           <textarea
-            rows="3"
-            placeholder="Mô tả chi tiết về promotion này..."
+            rows="6"
             className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -147,14 +258,26 @@ export default function PromotionFormModal({ isOpen, onClose }) {
 
         {/* Actions */}
         <div className="flex justify-end gap-3 mt-6">
-          <button
-            className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
+          <button 
+            className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500" 
             onClick={onClose}
+            disabled={isSubmitting}
           >
             Hủy
           </button>
-          <button className="px-4 py-2 rounded bg-orange-500 hover:bg-orange-600">
-            Tạo Promotion
+          <button 
+            className={`px-4 py-2 rounded ${
+              isSubmitting 
+                ? "bg-orange-400 cursor-not-allowed" 
+                : "bg-orange-500 hover:bg-orange-600"
+            }`}
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting 
+              ? "Đang xử lý..." 
+              : (editingPromotion ? "Cập nhật" : "Tạo Khuyến mãi")
+            }
           </button>
         </div>
       </div>

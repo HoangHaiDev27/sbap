@@ -1,11 +1,31 @@
 import React, { useState, useRef, useEffect } from "react";
-import { RiUserLine } from "react-icons/ri";
+import { RiUserLine, RiAddLine, RiCoinLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
+import { useCoinsStore } from "../../hooks/stores/coinStore";
+import { useUserStore } from "../../hooks/stores/userStore";
+import { logout, getCurrentRole } from "../../api/authApi";
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(true);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  
+  // Get user data from store
+  const { user, fetchUser } = useUserStore();
+  const coins = useCoinsStore((state) => state.coins);
+  
+  // Extract avatar URL from user data
+  const userAvatar = user?.userProfile?.avatarUrl || null;
+  
+  // Debug logging
+  console.log("UserMenu - Current user:", user);
+  console.log("UserMenu - User avatar:", userAvatar);
+  console.log("UserMenu - Show avatar:", showAvatar);
+  
+  // Lấy role hiện tại
+  const userRole = getCurrentRole();
+  const isOwner = userRole && userRole.toLowerCase() === 'owner';
 
   // Đóng menu khi click ra ngoài
   useEffect(() => {
@@ -19,19 +39,69 @@ export default function UserMenu() {
   }, []);
 
   // Xử lý đăng xuất
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/auth/login");
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth");
   };
+  
+  // Debug logging
+  console.log("UserMenu - Current coins:", coins);
+  
+  // Theo dõi thay đổi coins
+  useEffect(() => {
+    console.log("UserMenu - Coins changed to:", coins);
+  }, [coins]);
+
+  // Load user data on component mount
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleProfileUpdate = (event) => {
+      console.log("UserMenu - Profile updated:", event.detail);
+      // Reset showAvatar to show new avatar
+      setShowAvatar(true);
+    };
+
+    window.addEventListener("user:profile:updated", handleProfileUpdate);
+    return () => window.removeEventListener("user:profile:updated", handleProfileUpdate);
+  }, []);
+
+  // Reset showAvatar khi user thay đổi
+  useEffect(() => {
+    setShowAvatar(true);
+  }, [user]);
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Icon user */}
+      {/* Avatar hoặc Icon user */}
       <button
         onClick={() => setOpen(!open)}
         className="w-8 h-8 flex items-center justify-center hover:text-blue-400 transition-colors cursor-pointer"
       >
-        <RiUserLine className="text-xl text-white" />
+        {userAvatar && showAvatar ? (
+          <img
+            src={userAvatar}
+            alt="User Avatar"
+            className="w-8 h-8 rounded-full object-cover border border-gray-600 hover:border-blue-400 transition-colors"
+            onError={(e) => {
+              // Nếu ảnh lỗi, chuyển sang hiển thị icon
+              console.log("UserMenu - Avatar image failed to load, switching to icon");
+              setShowAvatar(false);
+              // Ẩn ảnh lỗi ngay lập tức
+              e.target.style.display = 'none';
+            }}
+            onLoad={() => {
+              console.log("UserMenu - Avatar image loaded successfully");
+            }}
+          />
+        ) : null}
+        {/* Icon luôn hiển thị khi không có avatar hoặc avatar lỗi */}
+        {(!userAvatar || !showAvatar) && (
+          <RiUserLine className="text-xl text-white" />
+        )}
       </button>
 
       {/* Dropdown menu */}
@@ -40,6 +110,27 @@ export default function UserMenu() {
           className="absolute right-0 mt-2 w-48 bg-slate-800 text-white shadow-lg rounded-md border border-slate-700 z-50
                      transform transition-all duration-200 scale-95 opacity-0 animate-fadeIn"
         >
+          {/* Đồng xu */}
+          <div className="px-4 py-3 border-b border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <RiCoinLine className="text-yellow-400 w-5 h-5" />
+                <span className="text-sm font-medium text-yellow-400">
+                  {coins ? parseFloat(coins.toFixed(1)).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0} xu
+                </span>
+              </div>
+              <button 
+                onClick={() => {
+                  navigate("/recharge");
+                  setOpen(false);
+                }}
+                className="text-green-400 hover:text-green-300 transition-colors"
+              >
+                <RiAddLine className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          
           <Link
             to="/customer"
             className="block px-4 py-2 hover:bg-slate-700 transition-colors"
@@ -47,13 +138,39 @@ export default function UserMenu() {
           >
             Thông tin tài khoản
           </Link>
-          <Link
-            to="/change-password"
-            className="block px-4 py-2 hover:bg-slate-700 transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            Đổi mật khẩu
-          </Link>
+          {/* Chỉ hiển thị các link owner khi user có role owner */}
+          {isOwner && (
+            <>
+              <Link
+                to="/owner/dashboard"
+                className="block px-4 py-2 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Cửa hàng của tôi
+              </Link>
+              {/* <Link
+                to="/owner/profile/overview"
+                className="block px-4 py-2 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Hồ sơ của tôi
+              </Link> */}
+              {/* <Link
+                to="/owner/profile/settings/personal"
+                className="block px-4 py-2 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                Cài đặt
+              </Link> */}
+              <Link
+                to="/owner/withdraw"
+                className="block px-4 py-2 text-green-400 hover:bg-slate-700 transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                💵 Yêu cầu rút tiền
+              </Link>
+            </>
+          )}
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white transition-colors"

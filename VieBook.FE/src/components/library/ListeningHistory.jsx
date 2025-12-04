@@ -1,316 +1,332 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { getReadingHistory } from "../../api/readingHistoryApi";
+import { Link } from "react-router-dom";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 export default function ListeningHistory() {
-  const [filter, setFilter] = useState("all");
+  const { isAuthenticated, isLoading: authLoading } = useCurrentUser();
+  const [sortBy, setSortBy] = useState("recent");
+  const [timeFilter, setTimeFilter] = useState("all"); // "all", "today", "week", "month"
+  const [listeningHistory, setListeningHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // 🔹 Data mẫu
-  const listeningHistory = [
-    {
-      id: 1,
-      title: "Atomic Habits",
-      author: "James Clear",
-      cover:
-        "https://readdy.ai/api/search-image?query=Atomic%20habits%20book%20cover&width=200&height=280",
-      category: "Phát triển bản thân",
-      duration: "5h 35m",
-      listened: "4h 20m",
-      progress: 78,
-      lastListened: "2024-01-19",
-      narrator: "Trần Minh Anh",
-      playbackSpeed: "1.5x",
-      currentPosition: "4:20:15",
-      rating: 4.8,
-      status: "listening",
-    },
-    {
-      id: 2,
-      title: "The 7 Habits of Highly Effective People",
-      author: "Stephen Covey",
-      cover:
-        "https://readdy.ai/api/search-image?query=Seven%20habits%20book%20cover&width=200&height=280",
-      category: "Lãnh đạo",
-      duration: "13h 4m",
-      listened: "13h 4m",
-      progress: 100,
-      lastListened: "2024-01-16",
-      narrator: "Lê Văn Nam",
-      playbackSpeed: "1.25x",
-      currentPosition: "13:04:00",
-      rating: 4.9,
-      status: "completed",
-    },
-    {
-      id: 3,
-      title: "Think and Grow Rich",
-      author: "Napoleon Hill",
-      cover:
-        "https://readdy.ai/api/search-image?query=Think%20and%20grow%20rich%20book%20cover&width=200&height=280",
-      category: "Tài chính",
-      duration: "8h 42m",
-      listened: "2h 15m",
-      progress: 26,
-      lastListened: "2024-01-14",
-      narrator: "Nguyễn Thị Lan",
-      playbackSpeed: "1.0x",
-      currentPosition: "2:15:30",
-      rating: 4.6,
-      status: "listening",
-    },
-    {
-      id: 4,
-      title: "The Lean Startup",
-      author: "Eric Ries",
-      cover:
-        "https://readdy.ai/api/search-image?query=Lean%20startup%20book%20cover&width=200&height=280",
-      category: "Kinh doanh",
-      duration: "8h 58m",
-      listened: "8h 58m",
-      progress: 100,
-      lastListened: "2024-01-12",
-      narrator: "Phạm Quang Minh",
-      playbackSpeed: "1.75x",
-      currentPosition: "8:58:00",
-      rating: 4.7,
-      status: "completed",
-    },
-    {
-      id: 5,
-      title: "Mindset",
-      author: "Carol Dweck",
-      cover:
-        "https://readdy.ai/api/search-image?query=Mindset%20book%20cover&width=200&height=280",
-      category: "Tâm lý học",
-      duration: "7h 20m",
-      listened: "5h 45m",
-      progress: 78,
-      lastListened: "2024-01-11",
-      narrator: "Vũ Thu Hà",
-      playbackSpeed: "1.25x",
-      currentPosition: "5:45:20",
-      rating: 4.5,
-      status: "listening",
-    },
-    {
-      id: 6,
-      title: "The Power of Now",
-      author: "Eckhart Tolle",
-      cover:
-        "https://readdy.ai/api/search-image?query=The%20power%20of%20now%20book%20cover&width=200&height=280",
-      category: "Tâm linh",
-      duration: "7h 37m",
-      listened: "1h 30m",
-      progress: 20,
-      lastListened: "2024-01-09",
-      narrator: "Hoàng Minh Tú",
-      playbackSpeed: "1.0x",
-      currentPosition: "1:30:45",
-      rating: 4.4,
-      status: "listening",
-    },
-  ];
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadListeningHistory();
+    } else {
+      setLoading(false);
+    }
+  }, [sortBy, timeFilter, isAuthenticated]);
 
-  // 🔹 Helper: convert "xh ym" → giờ (float)
-  const parseTimeToHours = (timeStr) => {
-    if (!timeStr) return 0;
-    const match = timeStr.match(/(\d+)h\s*(\d+)?m?/);
-    const hours = match ? parseInt(match[1]) : 0;
-    const minutes = match && match[2] ? parseInt(match[2]) : 0;
-    return hours + minutes / 60;
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortBy, timeFilter]);
 
-  // 🔹 Stats
-  const listeningCount = listeningHistory.filter(
-    (b) => b.status === "listening"
-  ).length;
-  const completedCount = listeningHistory.filter(
-    (b) => b.status === "completed"
-  ).length;
-  const totalHours = listeningHistory.reduce(
-    (sum, b) => sum + parseTimeToHours(b.listened),
-    0
-  );
-
-  // 🔹 Filter
-  const getFilteredBooks = () => {
-    switch (filter) {
-      case "listening":
-        return listeningHistory.filter((book) => book.status === "listening");
-      case "completed":
-        return listeningHistory.filter((book) => book.status === "completed");
-      default:
-        return listeningHistory;
+  const loadListeningHistory = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      setLoading(true);
+      // Chỉ lấy lịch sử nghe (Listening type)
+      const data = await getReadingHistory({ readingType: 'Listening' });
+      setListeningHistory(data || []);
+    } catch (error) {
+      console.error('Error loading listening history:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔹 Pagination
+  const getFilteredBooks = () => {
+    let filtered = [...listeningHistory];
+    
+    // Filter by time
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    
+    if (timeFilter === "today") {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.lastReadAt);
+        return itemDate >= today;
+      });
+    } else if (timeFilter === "week") {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.lastReadAt);
+        return itemDate >= weekAgo;
+      });
+    } else if (timeFilter === "month") {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.lastReadAt);
+        return itemDate >= monthAgo;
+      });
+    }
+    // "all" = không filter theo thời gian
+    
+    // Sort by selected option
+    switch (sortBy) {
+      case "recent":
+        filtered.sort((a, b) => new Date(b.lastReadAt) - new Date(a.lastReadAt));
+        break;
+      case "oldest":
+        filtered.sort((a, b) => new Date(a.lastReadAt) - new Date(b.lastReadAt));
+        break;
+      case "title":
+        filtered.sort((a, b) => a.bookTitle.localeCompare(b.bookTitle));
+        break;
+      case "author":
+        filtered.sort((a, b) => (a.author || "").localeCompare(b.author || ""));
+        break;
+      default:
+        break;
+    }
+    
+    return filtered;
+  };
+
   const filteredBooks = getFilteredBooks();
   const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
-
   const currentBooks = filteredBooks.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const getProgressColor = (progress) => {
-    if (progress === 100) return "bg-green-500";
-    if (progress >= 70) return "bg-blue-500";
-    if (progress >= 40) return "bg-orange-500";
-    return "bg-gray-500";
+  const buildPageNumbers = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = [];
+    const add = (p) => pages.push(p);
+    add(1);
+    if (currentPage > 4) add("...");
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let p = start; p <= end; p++) add(p);
+    if (currentPage < totalPages - 3) add("...");
+    add(totalPages);
+    return pages;
   };
 
-  const getStatusBadge = (status) => {
-    if (status === "completed")
-      return (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
-          Đã nghe xong
-        </span>
-      );
-    if (status === "listening")
-      return (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
-          Đang nghe
-        </span>
-      );
-    return null;
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
+
+  const formatTime = (seconds) => {
+    if (!seconds) return "0:00";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <i className="ri-user-line text-6xl text-gray-600 mb-4"></i>
+        <h3 className="text-lg font-medium text-gray-400 mb-2">
+          Vui lòng đăng nhập để xem lịch sử nghe
+        </h3>
+        <p className="text-gray-500 mb-4">
+          Đăng nhập để xem lịch sử nghe sách của bạn
+        </p>
+        <button 
+          onClick={() => window.location.href = '/auth'}
+          className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header + Filter */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-xl font-semibold">Lịch sử nghe sách</h2>
-        <div className="w-full sm:w-auto flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <select
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto"
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           >
-            <option value="all">Tất cả</option>
-            <option value="listening">Đang nghe</option>
-            <option value="completed">Đã nghe xong</option>
+            <option value="all">Tất cả thời gian</option>
+            <option value="today">Hôm nay</option>
+            <option value="week">7 ngày qua</option>
+            <option value="month">30 ngày qua</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white pr-8 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="recent">Mới nhất</option>
+            <option value="oldest">Cũ nhất</option>
+            <option value="title">Tên sách A-Z</option>
+            <option value="author">Tác giả A-Z</option>
           </select>
         </div>
       </div>
-      {/* 🔹 Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-        <div>
-          <p className="text-2xl font-bold text-blue-400">{listeningCount}</p>
-          <p className="text-gray-300">Đang nghe</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-green-400">{completedCount}</p>
-          <p className="text-gray-300">Đã hoàn thành</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-purple-400">
-            {Math.round(totalHours)}h
-          </p>
-          <p className="text-gray-300">Đã nghe</p>
-        </div>
-      </div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {currentBooks.map((book) => (
-          <div
-            key={book.id}
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <span className="ml-3">Đang tải lịch sử nghe...</span>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="text-center py-12">
+          <div className="text-red-400 mb-4">
+            <i className="ri-error-warning-line text-4xl"></i>
+          </div>
+          <p className="text-gray-400">Có lỗi xảy ra: {error}</p>
+          <button 
+            onClick={loadListeningHistory}
+            className="mt-4 bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
+      {/* Results count */}
+      {!loading && !error && filteredBooks.length > 0 && (
+        <div className="text-sm text-gray-400">
+          Hiển thị {filteredBooks.length} kết quả
+        </div>
+      )}
+
+      {/* Book grid */}
+      {!loading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {currentBooks.map((item) => (
+            <div
+              key={item.readingHistoryId}
             className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors"
           >
             <div className="flex space-x-4">
               <img
-                src={book.cover}
-                alt={book.title}
+                  src={item.coverUrl || "https://via.placeholder.com/80x112?text=No+Image"}
+                  alt={item.bookTitle}
                 className="w-20 h-28 object-cover rounded-lg"
               />
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-white truncate">
-                  {book.title}
+                    {item.bookTitle}
                 </h3>
-                <p className="text-sm text-gray-400">{book.author}</p>
-
-                <div className="flex items-center space-x-2 mt-2">
-                  <span className="px-2 py-1 rounded-full text-xs bg-gray-600 text-gray-300">
-                    {book.category}
-                  </span>
-                  {getStatusBadge(book.status)}
-                </div>
+                  <p className="text-sm text-gray-400">{item.author || "Tác giả không xác định"}</p>
 
                 <div className="mt-2">
                   <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>Vị trí {book.currentPosition}</span>
-                    <span>{book.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-600 rounded-full h-2 mt-1">
-                    <div
-                      className={`h-2 rounded-full ${getProgressColor(
-                        book.progress
-                      )}`}
-                      style={{ width: `${book.progress}%` }}
-                    ></div>
+                      <span className="flex items-center gap-2">
+                        <i className="ri-headphone-line text-orange-400"></i>
+                        <span>{item.chapterTitle || "Không có chương"}</span>
+                      </span>
+                      {item.audioPosition && (
+                        <span className="flex items-center gap-1">
+                          <i className="ri-time-line"></i>
+                          {formatTime(item.audioPosition)}
+                        </span>
+                      )}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
                   <div className="flex items-center space-x-3">
-                    <span>
-                      <i className="ri-time-line mr-1"></i>
-                      {book.listened}
+                      <span className="flex items-center gap-1">
+                        <i className="ri-time-line"></i>
+                        {formatDate(item.lastReadAt)}
                     </span>
-                    <span>
-                      <i className="ri-star-fill text-yellow-400 mr-1"></i>
-                      {book.rating}
+                      <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded text-xs">
+                        Audio
                     </span>
+                    </div>
                   </div>
-                  <span>
-                    {new Date(book.lastListened).toLocaleDateString("vi-VN")}
-                  </span>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-700">
-              <button className="flex-1 bg-orange-500 hover:bg-orange-600 py-2 rounded-lg text-white text-sm font-medium">
-                Tiếp tục nghe
-              </button>
+              <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-700">
+                <Link
+                  to={`/listen/${item.bookId}/chapter/${item.chapterId}`}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 py-2 rounded-lg text-white text-sm font-medium text-center flex items-center justify-center gap-2"
+                >
+                  <i className="ri-headphone-line"></i>
+                  Tiếp tục nghe
+                </Link>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {!loading && !error && totalPages > 1 && (
         <div className="flex justify-center items-center space-x-2 mt-4">
           <button
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded-lg bg-gray-700 text-white font-medium disabled:opacity-50"
+            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
           >
             Trước
           </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                currentPage === i + 1
-                  ? "bg-orange-500 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
-            >
-              {i + 1}
-            </button>
+          {buildPageNumbers().map((p, idx) => (
+            typeof p === "number" ? (
+              <button
+                key={`p-${p}`}
+                onClick={() => setCurrentPage(p)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === p ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
+                }`}
+              >
+                {p}
+              </button>
+            ) : (
+              <span key={`e-${idx}`} className="px-2 text-gray-400">{p}</span>
+            )
           ))}
           <button
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-lg bg-gray-700 text-white font-medium disabled:opacity-50"
+            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
           >
             Sau
+          </button>
+      </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && !error && filteredBooks.length === 0 && (
+        <div className="text-center py-12">
+          <i className="ri-headphone-line text-6xl text-gray-600 mb-4"></i>
+          <h3 className="text-lg font-medium text-gray-400 mb-2">
+            Chưa có lịch sử nghe nào
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Hãy bắt đầu nghe audio để xây dựng lịch sử nghe của bạn
+          </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-medium"
+          >
+            Khám phá sách hay
           </button>
         </div>
       )}
