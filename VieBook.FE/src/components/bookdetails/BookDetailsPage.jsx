@@ -581,7 +581,7 @@ export default function BookDetailPage() {
             </div>
 
             {/* Content */}
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-80px)] sm:max-h-[calc(80vh-80px)] scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-gray-700">
               {/* Danh sách chương */}
               <div className="space-y-2">
                 {chapters?.map((chapter, index) => {

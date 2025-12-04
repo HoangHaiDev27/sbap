@@ -158,8 +158,8 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                     window.location.href = `/reader/${bookId}/chapter/${chapter.chapterId}`;
                   }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
                       {/* Số thứ tự chương */}
                       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
                         isDisabled 
@@ -169,8 +169,8 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                         {chapterNumber}
                       </div>
                       
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-white mb-1 truncate">
+                      <div className="flex-1 min-w-0 max-w-[300px] lg:max-w-[400px]">
+                        <h4 className="font-semibold text-white mb-1 truncate" title={chapter.chapterTitle}>
                           {chapter.chapterTitle}
                         </h4>
                         {isOwner && (
@@ -259,7 +259,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
             <div className="bg-gray-700/50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-400">Chương:</span>
-                <span className="text-white font-medium max-w-[60%] text-right truncate">
+                <span className="text-white font-medium max-w-[60%] text-right truncate" title={purchaseModal.chapter.chapterTitle}>
                   {purchaseModal.chapter.chapterTitle}
                 </span>
               </div>
@@ -408,7 +408,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
           <div className="px-4 py-3 border-b border-gray-700 bg-gray-800">
             <h3 className="text-lg font-bold flex items-center gap-2">
               <RiBookOpenLine />
-              <span className="truncate">Mục lục</span>
+              <span className="truncate" title="Mục lục">Mục lục</span>
             </h3>
           </div>
           <div className="p-4 overflow-y-auto flex-1">
@@ -432,7 +432,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
         <div className="bg-gray-700 px-6 py-4 border-b border-gray-600">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold flex items-center gap-2">
-              <RiBookOpenLine /> Mục lục - {book?.title}
+              <RiBookOpenLine /> <span className="truncate" title={`Mục lục - ${book?.title}`}>Mục lục - {book?.title}</span>
             </h3>
             <button
               onClick={onClose}

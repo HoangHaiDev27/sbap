@@ -53,8 +53,8 @@ export default function HeroSection() {
         </p>
 
         <p className="text-lg text-gray-200 mb-8">
-          Hơn <span className="font-bold text-white">15,000</span> nội dung kiến
-          thức đa dạng: Sách nói, Truyện nói.
+          Với  Nhiều nội dung kiến
+          thức đa dạng: <span className="font-bold text-white">Sách nói, Truyện nói.</span>
         </p>
 
         <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-full text-lg transition-colors whitespace-nowrap">
