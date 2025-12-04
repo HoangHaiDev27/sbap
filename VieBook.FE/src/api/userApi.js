@@ -21,7 +21,9 @@ export async function getMe() {
   return data;
 }
 export async function getCurrentUser() {
-  const res = await authFetch(`${API_ENDPOINTS.USERS}/me`);
+  // Add cache-busting parameter to ensure fresh data
+  const timestamp = new Date().getTime();
+  const res = await authFetch(`${API_ENDPOINTS.USERS}/me?t=${timestamp}`);
   return res.json();
 }
 

@@ -232,10 +232,10 @@ export default function CustomersManagement() {
       {/* Confirm Toggle Modal */}
       {showConfirmModal && actionCustomer && (
         <ConfirmModal
-          title="Xác nhận"
+          title={actionCustomer.status === "Active" ? "Xác nhận khóa tài khoản" : "Xác nhận mở khóa tài khoản"}
           message={`Bạn có chắc chắn muốn ${
-            actionCustomer.status === "active" ? "khóa" : "mở khóa"
-          } tài khoản ${actionCustomer.name}?`}
+            actionCustomer.status === "Active" ? "khóa" : "mở khóa"
+          } tài khoản ${actionCustomer.fullName || actionCustomer.email}?`}
           onConfirm={handleToggleStatus}
           onCancel={() => setShowConfirmModal(false)}
         />

@@ -156,12 +156,22 @@ namespace VieBook.BE.Controllers
             if (!userId.HasValue)
                 return Unauthorized(new { message = "Not authenticated" });
 
+            // Check if user is staff or admin
+            var isStaffOrAdmin = HttpContext.User.Claims
+                .Any(c => c.Type == ClaimTypes.Role && 
+                         (c.Value.Equals("Staff", StringComparison.OrdinalIgnoreCase) || 
+                          c.Value.Equals("Admin", StringComparison.OrdinalIgnoreCase)));
+
             try
             {
-                var result = await _postService.DeleteAsync(id, userId.Value);
+                var result = await _postService.DeleteAsync(id, userId.Value, isStaffOrAdmin);
                 if (result)
                     return Ok(new { message = "Post deleted" });
                 return NotFound(new { message = "Post not found" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid();
             }
             catch (Exception ex)
             {

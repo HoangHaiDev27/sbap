@@ -201,9 +201,9 @@ namespace Services.Implementations
             return _mapper.Map<PostDTO>(updated);
         }
 
-        public async Task<bool> DeleteAsync(long postId, int? deletedBy)
+        public async Task<bool> DeleteAsync(long postId, int? deletedBy, bool isStaffOrAdmin = false)
         {
-            return await _postRepository.DeleteAsync(postId, deletedBy);
+            return await _postRepository.DeleteAsync(postId, deletedBy, isStaffOrAdmin);
         }
 
         public async Task<PostDTO> UpdateVisibilityAsync(long postId, string visibility, int userId, bool isStaff = false)

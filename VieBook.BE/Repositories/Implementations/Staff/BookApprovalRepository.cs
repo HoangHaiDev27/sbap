@@ -45,5 +45,8 @@ namespace Repositories.Implementations.Staff
 
         public Task<Book?> GetBookByIdAsync(int bookId)
             => _dao.GetBookByIdAsync(bookId);
+
+        public Task<Book?> GetBookWithOwnerAsync(int bookId)
+            => _dao.GetBookWithOwnerAsync(bookId);
     }
 }

@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function ConfirmStatusModal({ owner, onClose, onConfirm }) {
-  const newStatus = owner.status === "active" ? "bị khóa" : "được mở khóa";
+  const newStatus = owner.status === "Active" ? "khóa" : "mở khóa";
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -12,7 +12,7 @@ export default function ConfirmStatusModal({ owner, onClose, onConfirm }) {
           <span className="font-bold">
             {owner.name}
           </span>{" "}
-          sẽ {newStatus}?
+          {newStatus} tài khoản này?
         </p>
         <div className="flex justify-end space-x-2">
           <button
