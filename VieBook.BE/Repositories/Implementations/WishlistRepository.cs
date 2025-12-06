@@ -35,6 +35,11 @@ namespace Repositories.Implementations
         {
             return await _wishlistDao.GetUserWishlistBooksAsync(userId);
         }
+
+        public async Task<List<Wishlist>> GetWishlistsByBookIdsAsync(List<int> bookIds)
+        {
+            return await _wishlistDao.GetWishlistsByBookIdsAsync(bookIds);
+        }
     }
 }
 

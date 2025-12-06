@@ -44,5 +44,8 @@ namespace Repositories.Implementations
 
         public Task<BusinessObject.Dtos.PromotionStatsDTO> GetStatsByOwnerAsync(int ownerId)
             => _promotionDAO.GetStatsByOwnerAsync(ownerId);
+
+        public Task<List<Promotion>> GetPromotionsStartingTodayAsync()
+            => _promotionDAO.GetPromotionsStartingTodayAsync();
     }
 }

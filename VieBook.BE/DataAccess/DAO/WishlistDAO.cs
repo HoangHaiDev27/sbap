@@ -129,6 +129,20 @@ namespace DataAccess.DAO
 
             return wishlistBooks;
         }
+
+        /// <summary>
+        /// Lấy danh sách wishlists theo danh sách BookIds (dùng cho notification promotion)
+        /// </summary>
+        public async Task<List<Wishlist>> GetWishlistsByBookIdsAsync(List<int> bookIds)
+        {
+            return await _context.Wishlists
+                .Include(w => w.User)
+                    .ThenInclude(u => u.UserProfile)
+                .Include(w => w.Book)
+                    .ThenInclude(b => b.Chapters)
+                .Where(w => bookIds.Contains(w.BookId))
+                .ToListAsync();
+        }
     }
 }
 

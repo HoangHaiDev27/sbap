@@ -202,6 +202,13 @@ builder.Services.AddScoped<IPostReactionService, Services.Implementations.PostRe
 builder.Services.AddScoped<IPostCommentService, Services.Implementations.PostCommentService>();
 builder.Services.AddScoped<IPaymentRequestService, PaymentRequestService>();
 builder.Services.AddHostedService<Services.BackgroundServices.ReminderBackgroundService>();
+
+// Configure FrontendOptions với URL từ ApiConfiguration
+builder.Services.Configure<Services.Options.FrontendOptions>(options =>
+{
+    options.BaseUrl = VieBook.BE.Configuration.ApiConfiguration.FRONTEND_URL;
+});
+builder.Services.AddHostedService<Services.BackgroundServices.WishlistPromotionBackgroundService>();
 builder.Services.AddHttpClient<IChatbaseService, ChatbaseService>();
 builder.Services.AddHttpClient<ChatbaseService>();
 builder.Services.AddHttpClient<IVietQrService, VietQrService>();
