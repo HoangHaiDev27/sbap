@@ -48,29 +48,39 @@ export default function TTSQueue({ queue, loading = false }) {
                   }`}
               >
                 {/* Header */}
-                <div className="flex justify-between items-center">
-                  <p className="font-medium text-white truncate">{item.chapter}</p>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-white truncate">{item.chapter}</p>
+                    {item.voiceName && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        🎤 {item.voiceName}
+                        {item.speed && item.speed !== 1 && ` • ${item.speed}x`}
+                      </p>
+                    )}
+                  </div>
 
-                  {isDone && (
-                    <span className="flex items-center gap-1 text-green-400 text-sm">
-                      <RiCheckLine /> {item.status}
-                    </span>
-                  )}
-                  {isProcessing && (
-                    <span className="flex items-center gap-1 text-blue-400 text-sm">
-                      <RiLoader4Line className="animate-spin" /> {item.status}
-                    </span>
-                  )}
-                  {isPending && (
-                    <span className="flex items-center gap-1 text-yellow-400 text-sm">
-                      <RiTimeLine /> {item.status}
-                    </span>
-                  )}
-                  {isError && (
-                    <span className="flex items-center gap-1 text-red-400 text-sm">
-                      <RiErrorWarningLine /> {item.status}
-                    </span>
-                  )}
+                  <div className="flex-shrink-0">
+                    {isDone && (
+                      <span className="flex items-center gap-1 text-green-400 text-sm">
+                        <RiCheckLine /> {item.status}
+                      </span>
+                    )}
+                    {isProcessing && (
+                      <span className="flex items-center gap-1 text-blue-400 text-sm">
+                        <RiLoader4Line className="animate-spin" /> {item.status}
+                      </span>
+                    )}
+                    {isPending && (
+                      <span className="flex items-center gap-1 text-yellow-400 text-sm">
+                        <RiTimeLine /> {item.status}
+                      </span>
+                    )}
+                    {isError && (
+                      <span className="flex items-center gap-1 text-red-400 text-sm">
+                        <RiErrorWarningLine /> {item.status}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Progress bar */}

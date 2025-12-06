@@ -162,6 +162,7 @@ builder.Services.AddScoped<IPaymentRequestRepository, PaymentRequestRepository>(
 //Add Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWalletTransactionService, WalletTransactionService>();
+builder.Services.AddScoped<Services.Interfaces.INotificationHubService, VieBook.BE.Services.NotificationHubService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IChapterPurchaseService, ChapterPurchaseService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
