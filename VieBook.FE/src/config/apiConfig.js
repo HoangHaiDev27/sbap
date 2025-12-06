@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = "http://localhost:5757";
+export const API_BASE_URL = "http://40.81.17.177:5757";
 
 // API Endpoints
 export const API_ENDPOINTS = {

@@ -431,7 +431,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       setBookmarks(dedupeBookmarks(updatedBookmarks));
       console.log("BookReader - Added bookmark for book:", book.bookId, "chapter:", chapterId);
       
-      toast.success("Đã thêm bookmark tại vị trí chữ đã chọn");
+      toast.success("Đã thêm dấu chương tại vị trí chữ đã chọn");
       
     } catch (error) {
       console.error("Error saving bookmark:", error);

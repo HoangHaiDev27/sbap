@@ -183,6 +183,7 @@ export default function BookDetailPage() {
     createdAt,
     ownerId,
     ownerName,
+    author,
     categories,
     chapters,
     reviews,
@@ -346,7 +347,8 @@ export default function BookDetailPage() {
         {/* Cột phải */}
         <div className="lg:col-span-2">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">{title}</h1>
-          <p className="text-gray-300 mb-3">Tác giả: {ownerName}</p>
+          <p className="text-gray-300 mb-1">Tác giả: {author || "Chưa cập nhật"}</p>
+          <p className="text-gray-300 mb-3">Chủ sách: {ownerName}</p>
           
           {/* Badge trạng thái sách */}
           {completionStatus && (
@@ -581,7 +583,7 @@ export default function BookDetailPage() {
             </div>
 
             {/* Content */}
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-80px)] sm:max-h-[calc(80vh-80px)] scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-gray-700">
               {/* Danh sách chương */}
               <div className="space-y-2">
                 {chapters?.map((chapter, index) => {
