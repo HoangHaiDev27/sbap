@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = "http://54.254.170.170:5757";
+export const API_BASE_URL = "http://13.212.12.130:5757";
 
 // API Endpoints
 export const API_ENDPOINTS = {
