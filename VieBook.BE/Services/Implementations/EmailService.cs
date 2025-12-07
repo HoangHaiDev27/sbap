@@ -11,6 +11,7 @@ using BusinessObject.Models;
 using Microsoft.EntityFrameworkCore;
 using DataAccess;
 using Microsoft.Extensions.Logging;
+using Repositories.Interfaces;
 
 namespace Services.Implementations
 {
@@ -19,12 +20,21 @@ namespace Services.Implementations
         private readonly IConfiguration _config;
         private readonly VieBookContext _context;
         private readonly ILogger<EmailService> _logger;
+        private readonly IPromotionRepository _promotionRepository;
+        private readonly IWishlistRepository _wishlistRepository;
 
-        public EmailService(IConfiguration config, VieBookContext context, ILogger<EmailService> logger)
+        public EmailService(
+            IConfiguration config, 
+            VieBookContext context, 
+            ILogger<EmailService> logger,
+            IPromotionRepository promotionRepository,
+            IWishlistRepository wishlistRepository)
         {
             _config = config;
             _context = context;
             _logger = logger;
+            _promotionRepository = promotionRepository;
+            _wishlistRepository = wishlistRepository;
         }
 
         public async Task SendEmailAsync(string to, string subject, string body)
@@ -274,6 +284,236 @@ namespace Services.Implementations
             {
                 _logger.LogError(ex, $"Error processing reminders for user {settings.UserId}");
             }
+        }
+
+        /// <summary>
+        /// Xử lý gửi email cho users có sách trong wishlist khi promotion bắt đầu hôm nay
+        /// </summary>
+        /// <param name="frontendBaseUrl">URL base của frontend</param>
+        public async Task ProcessWishlistPromotionsAsync(string frontendBaseUrl)
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                
+                _logger.LogInformation("🎁 Processing wishlist promotions at UTC: {utcTime}", now);
+                _logger.LogInformation("🌐 Frontend URL: {frontendUrl}", frontendBaseUrl);
+
+                // 1. Lấy các promotions BẮT ĐẦU HÔM NAY qua Repository
+                var todayPromotions = await _promotionRepository.GetPromotionsStartingTodayAsync();
+
+                _logger.LogInformation("📢 Found {count} promotions starting today", todayPromotions.Count);
+
+                if (!todayPromotions.Any())
+                {
+                    _logger.LogInformation("✅ No promotions starting today. Job completed.");
+                    return;
+                }
+
+                // 2. Lấy tất cả BookIds từ các promotions
+                var promotionBookIds = todayPromotions
+                    .SelectMany(p => p.Books.Select(b => b.BookId))
+                    .Distinct()
+                    .ToList();
+
+                _logger.LogInformation("📚 Total unique books in promotions: {count}", promotionBookIds.Count);
+
+                // 3. Tìm users có sách trong Wishlist qua Repository
+                var wishlistData = await _wishlistRepository.GetWishlistsByBookIdsAsync(promotionBookIds);
+
+                _logger.LogInformation("💝 Found {count} wishlist entries matching promotion books", wishlistData.Count);
+
+                if (!wishlistData.Any())
+                {
+                    _logger.LogInformation("✅ No users have promotion books in wishlist. Job completed.");
+                    return;
+                }
+
+                // 4. Group theo user để gửi 1 email tổng hợp cho mỗi user
+                var userWishlists = wishlistData
+                    .GroupBy(w => w.UserId)
+                    .ToList();
+
+                _logger.LogInformation("👥 Sending emails to {count} users", userWishlists.Count);
+
+                foreach (var userGroup in userWishlists)
+                {
+                    try
+                    {
+                        var user = userGroup.First().User;
+                        if (user == null || string.IsNullOrEmpty(user.Email))
+                        {
+                            _logger.LogWarning("⚠️ User {userId} has no email, skipping", userGroup.Key);
+                            continue;
+                        }
+
+                        // Lấy thông tin sách + promotion tương ứng
+                        var booksWithPromotions = new List<(Book Book, Promotion Promotion)>();
+                        
+                        foreach (var wishlist in userGroup)
+                        {
+                            var book = wishlist.Book;
+                            var promotion = todayPromotions.FirstOrDefault(p => 
+                                p.Books.Any(b => b.BookId == book.BookId));
+                            
+                            if (promotion != null)
+                            {
+                                booksWithPromotions.Add((book, promotion));
+                            }
+                        }
+
+                        if (booksWithPromotions.Any())
+                        {
+                            await SendWishlistPromotionEmailAsync(user, booksWithPromotions, frontendBaseUrl);
+                            _logger.LogInformation("📧 Email sent to {email} for {count} books", 
+                                user.Email, booksWithPromotions.Count);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "❌ Error sending email to user {userId}", userGroup.Key);
+                    }
+                }
+
+                _logger.LogInformation("✅ Wishlist promotion job completed. Sent emails to {count} users", userWishlists.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error in ProcessWishlistPromotionsAsync");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gửi email thông báo promotion cho user với danh sách sách trong wishlist
+        /// </summary>
+        private async Task SendWishlistPromotionEmailAsync(User user, List<(Book Book, Promotion Promotion)> booksWithPromotions, string frontendBaseUrl)
+        {
+            var userName = user.UserProfile?.FullName ?? user.Email.Split('@')[0];
+            
+            // Build danh sách sách HTML
+            var booksHtml = new StringBuilder();
+            foreach (var (book, promotion) in booksWithPromotions)
+            {
+                // Tính giá gốc và giá sau giảm
+                var originalPrice = book.Chapters?
+                    .Where(c => c.Status == "Active")
+                    .Sum(c => c.PriceSoft ?? 0) ?? 0;
+                
+                var discountedPrice = promotion.DiscountType == "Percent"
+                    ? originalPrice * (1 - promotion.DiscountValue / 100)
+                    : originalPrice - promotion.DiscountValue;
+                
+                // Convert EndAt sang Vietnam time để hiển thị
+                var endDateVietnam = promotion.EndAt.AddHours(7).ToString("dd/MM/yyyy HH:mm");
+                
+                // URL chi tiết sách
+                var bookUrl = $"{frontendBaseUrl}/bookdetails/{book.BookId}";
+                
+                booksHtml.AppendLine($@"
+                <tr>
+                    <td style='padding: 15px; border-bottom: 1px solid #eee;'>
+                        <table cellpadding='0' cellspacing='0' border='0' width='100%'>
+                            <tr>
+                                <td width='80' style='vertical-align: top;'>
+                                    <img src='{book.CoverUrl ?? "https://via.placeholder.com/80x120"}' 
+                                         alt='{book.Title}' 
+                                         style='width: 80px; height: 120px; object-fit: cover; border-radius: 8px;'>
+                                </td>
+                                <td style='padding-left: 15px; vertical-align: top;'>
+                                    <h3 style='margin: 0 0 8px 0; color: #333; font-size: 16px;'>{book.Title}</h3>
+                                    <p style='margin: 0 0 5px 0; color: #666; font-size: 14px;'>Tác giả: {book.Author ?? "Không rõ"}</p>
+                                    <p style='margin: 0 0 8px 0;'>
+                                        <span style='text-decoration: line-through; color: #999; font-size: 14px;'>{originalPrice:N0} xu</span>
+                                        <span style='color: #e74c3c; font-weight: bold; font-size: 18px; margin-left: 10px;'>{discountedPrice:N0} xu</span>
+                                        <span style='background: #e74c3c; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px;'>-{promotion.DiscountValue}%</span>
+                                    </p>
+                                    <p style='margin: 0 0 10px 0; color: #f39c12; font-size: 13px;'>⏰ Khuyến mãi đến: {endDateVietnam}</p>
+                                    <a href='{bookUrl}' 
+                                       style='display: inline-block; background: #3498db; color: white; padding: 8px 20px; text-decoration: none; border-radius: 5px; font-size: 14px;'>
+                                        Xem chi tiết →
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>");
+            }
+
+            var wishlistUrl = $"{frontendBaseUrl}/library?tab=favorites";
+            var homeUrl = frontendBaseUrl;
+
+            var subject = $"🎉 {booksWithPromotions.Count} sách yêu thích của bạn đang được giảm giá!";
+            var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+</head>
+<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;'>
+    <table cellpadding='0' cellspacing='0' border='0' width='100%' style='background-color: #f4f4f4; padding: 20px;'>
+        <tr>
+            <td align='center'>
+                <table cellpadding='0' cellspacing='0' border='0' width='600' style='background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>
+                    <!-- Header -->
+                    <tr>
+                        <td style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;'>
+                            <h1 style='margin: 0; color: white; font-size: 28px;'>🎁 Tin vui cho bạn!</h1>
+                            <p style='margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px;'>Sách trong danh sách yêu thích đang được giảm giá</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Greeting -->
+                    <tr>
+                        <td style='padding: 25px 30px 15px 30px;'>
+                            <p style='margin: 0; font-size: 16px; color: #333;'>Xin chào <strong>{userName}</strong>,</p>
+                            <p style='margin: 15px 0 0 0; font-size: 15px; color: #555; line-height: 1.6;'>
+                                Chúng tôi vui mừng thông báo rằng <strong style='color: #e74c3c;'>{booksWithPromotions.Count} cuốn sách</strong> 
+                                trong danh sách yêu thích của bạn hiện đang có chương trình khuyến mãi đặc biệt!
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Books List -->
+                    <tr>
+                        <td style='padding: 0 30px;'>
+                            <table cellpadding='0' cellspacing='0' border='0' width='100%' style='background: #fafafa; border-radius: 8px;'>
+                                {booksHtml}
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style='padding: 30px; text-align: center;'>
+                            <a href='{wishlistUrl}' 
+                               style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 30px; font-size: 16px; font-weight: bold;'>
+                                Xem danh sách yêu thích
+                            </a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style='background: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #eee;'>
+                            <p style='margin: 0 0 10px 0; color: #666; font-size: 14px;'>
+                                Đừng bỏ lỡ cơ hội sở hữu những cuốn sách yêu thích với giá ưu đãi!
+                            </p>
+                            <p style='margin: 0; color: #999; font-size: 12px;'>
+                                © 2025 VieBook. Mọi quyền được bảo lưu.<br>
+                                <a href='{homeUrl}' style='color: #667eea; text-decoration: none;'>Truy cập VieBook</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+
+            await SendEmailAsync(user.Email, subject, body);
         }
     }
 }

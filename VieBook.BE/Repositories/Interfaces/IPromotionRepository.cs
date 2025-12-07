@@ -16,6 +16,10 @@ namespace Repositories.Interfaces
         Task<Promotion> UpdatePromotionAsync(Promotion promotion, List<int> bookIds);
         Task<bool> DeletePromotionAsync(int promotionId, int ownerId);
         Task<BusinessObject.Dtos.PromotionStatsDTO> GetStatsByOwnerAsync(int ownerId);
-
+        
+        /// <summary>
+        /// Lấy các promotions bắt đầu trong ngày hôm nay
+        /// </summary>
+        Task<List<Promotion>> GetPromotionsStartingTodayAsync();
     }
 }
