@@ -65,6 +65,18 @@ export function clearAuth() {
   localStorage.removeItem(ROLE_KEY);
   localStorage.removeItem(ROLES_KEY);
   localStorage.removeItem(CURRENT_ROLE_KEY);
+  
+  // Clear TTS queue on logout
+  try {
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      if (key.startsWith("tts_queue")) {
+        localStorage.removeItem(key);
+      }
+    });
+  } catch (error) {
+    console.error("Error clearing TTS queue on logout:", error);
+  }
 }
 
 export function getCurrentUser() {

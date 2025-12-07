@@ -163,5 +163,24 @@ public class ChatHub : Hub
         await hubContext.Clients.All.SendAsync(eventName, data);
         Console.WriteLine($"📢 Broadcast {eventName} to all connected clients");
     }
+
+    /// <summary>
+    /// Gửi notification đến một user cụ thể
+    /// </summary>
+    public static async Task SendNotificationToUser(IHubContext<ChatHub> hubContext, int userId, object notificationData)
+    {
+        if (_userConnections.TryGetValue(userId, out var connections))
+        {
+            foreach (var connectionId in connections)
+            {
+                await hubContext.Clients.Client(connectionId).SendAsync("ReceiveNotification", notificationData);
+            }
+            Console.WriteLine($"🔔 Notification sent to user {userId}");
+        }
+        else
+        {
+            Console.WriteLine($"⚠️ User {userId} is not connected, notification will not be sent in real-time");
+        }
+    }
 }
 

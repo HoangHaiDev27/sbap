@@ -10,11 +10,16 @@ namespace Services.Implementations
     {
         private readonly INotificationRepository _notificationRepository;
         private readonly IMapper _mapper;
+        private readonly INotificationHubService? _notificationHubService;
 
-        public NotificationService(INotificationRepository notificationRepository, IMapper mapper)
+        public NotificationService(
+            INotificationRepository notificationRepository, 
+            IMapper mapper, 
+            INotificationHubService? notificationHubService = null)
         {
             _notificationRepository = notificationRepository;
             _mapper = mapper;
+            _notificationHubService = notificationHubService; // Optional để tránh lỗi khi chưa register
         }
 
         public async Task<NotificationResponseDTO?> GetByIdAsync(long notificationId)
@@ -54,7 +59,23 @@ namespace Services.Implementations
             };
 
             var createdNotification = await _notificationRepository.CreateAsync(notification);
-            return MapToResponseDTO(createdNotification);
+            var notificationResponse = MapToResponseDTO(createdNotification);
+            
+            // Gửi notification real-time qua SignalR
+            if (_notificationHubService != null)
+            {
+                try
+                {
+                    await _notificationHubService.SendNotificationToUserAsync(createDto.UserId, notificationResponse);
+                }
+                catch (Exception ex)
+                {
+                    // Log lỗi nhưng không throw để không ảnh hưởng đến flow chính
+                    Console.WriteLine($"⚠️ Failed to send real-time notification: {ex.Message}");
+                }
+            }
+            
+            return notificationResponse;
         }
 
         public async Task<NotificationResponseDTO?> UpdateAsync(UpdateNotificationDTO updateDto)
@@ -217,7 +238,21 @@ namespace Services.Implementations
             foreach (var notification in notifications)
             {
                 var created = await _notificationRepository.CreateAsync(notification);
-                results.Add(MapToResponseDTO(created));
+                var notificationResponse = MapToResponseDTO(created);
+                results.Add(notificationResponse);
+                
+                // Gửi notification real-time qua SignalR cho mỗi notification
+                if (_notificationHubService != null)
+                {
+                    try
+                    {
+                        await _notificationHubService.SendNotificationToUserAsync(notification.UserId, notificationResponse);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Failed to send real-time notification to user {notification.UserId}: {ex.Message}");
+                    }
+                }
             }
 
             return results;
