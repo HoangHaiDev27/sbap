@@ -18,6 +18,7 @@ import {
 } from "react-icons/ri";
 import { useNotificationStore } from "../../hooks/stores/notificationStore";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
+import chatWebSocket from "../../services/chatWebSocket";
 
 function UserNotificationMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +36,8 @@ function UserNotificationMenu() {
     fetchUnreadCount,
     markAsRead,
     markAllAsRead,
-    initializeNotifications
+    initializeNotifications,
+    addNotification
   } = useNotificationStore();
 
   // Initialize notifications for current user
@@ -52,7 +54,7 @@ function UserNotificationMenu() {
       initializeNotifications(userId);
     }, 100);
     
-    // Set up polling for unread count every 30 seconds
+    // Set up polling for unread count every 30 seconds (backup, but real-time is preferred)
     const interval = setInterval(() => {
       console.log("Polling unread count...");
       fetchUnreadCount(userId);
@@ -63,6 +65,60 @@ function UserNotificationMenu() {
       clearInterval(interval);
     };
   }, [userId, isAuthenticated, initializeNotifications, fetchUnreadCount]);
+
+  // Listen for real-time notifications via SignalR
+  useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      return;
+    }
+
+    // Connect to SignalR if not already connected
+    chatWebSocket.connect();
+
+    // Subscribe to notification events
+    const unsubscribe = chatWebSocket.onNotification((notification) => {
+      console.log("🔔 Real-time notification received:", notification);
+      
+      // Check if notification is for current user
+      if (notification.userId === userId || notification.UserId === userId) {
+        // Normalize notification format (handle both PascalCase and camelCase)
+        const normalizedNotification = {
+          notificationId: notification.notificationId || notification.NotificationId,
+          userId: notification.userId || notification.UserId,
+          type: notification.type || notification.Type,
+          title: notification.title || notification.Title,
+          body: notification.body || notification.Body,
+          isRead: notification.isRead !== undefined ? notification.isRead : (notification.IsRead !== undefined ? notification.IsRead : false),
+          createdAt: notification.createdAt || notification.CreatedAt,
+          userName: notification.userName || notification.UserName,
+          userEmail: notification.userEmail || notification.UserEmail
+        };
+        
+        // Ensure new notifications are always unread
+        normalizedNotification.isRead = false;
+        
+        // Add notification to store (this will update unreadCount automatically)
+        addNotification(normalizedNotification);
+        
+        // Refresh unread count from server after a short delay to ensure consistency
+        setTimeout(() => {
+          fetchUnreadCount(userId);
+        }, 500);
+        
+        // Optional: Show browser notification
+        if (Notification.permission === "granted") {
+          new Notification(normalizedNotification.title, {
+            body: normalizedNotification.body,
+            icon: "/logo.png"
+          });
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [userId, isAuthenticated, addNotification, fetchUnreadCount]);
 
   // Debug unreadCount changes
   useEffect(() => {

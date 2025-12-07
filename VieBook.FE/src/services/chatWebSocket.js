@@ -7,12 +7,13 @@ class ChatWebSocketService {
     this.connection = null;
     this.isConnecting = false;
     this.isConnected = false;
-    this.messageHandlers = [];
-    this.typingHandlers = [];
-    this.conversationHandlers = [];
-    this.joinedConversations = new Map(); // conversationId -> participantIds
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
+      this.messageHandlers = [];
+      this.typingHandlers = [];
+      this.conversationHandlers = [];
+      this.notificationHandlers = [];
+      this.joinedConversations = new Map(); // conversationId -> participantIds
+      this.reconnectAttempts = 0;
+      this.maxReconnectAttempts = 5;
   }
 
   /**
@@ -104,6 +105,12 @@ class ChatWebSocketService {
       this.connection.on("NewConversation", (data) => {
         console.log("🆕 New conversation created:", data);
         this.conversationHandlers.forEach((handler) => handler(data));
+      });
+
+      // Listen for real-time notifications
+      this.connection.on("ReceiveNotification", (notification) => {
+        console.log("🔔 Received notification via WebSocket:", notification);
+        this.notificationHandlers.forEach((handler) => handler(notification));
       });
 
       // Start connection
@@ -230,6 +237,16 @@ class ChatWebSocketService {
     this.conversationHandlers.push(handler);
     return () => {
       this.conversationHandlers = this.conversationHandlers.filter((h) => h !== handler);
+    };
+  }
+
+  /**
+   * Đăng ký handler cho notification events
+   */
+  onNotification(handler) {
+    this.notificationHandlers.push(handler);
+    return () => {
+      this.notificationHandlers = this.notificationHandlers.filter((h) => h !== handler);
     };
   }
 
