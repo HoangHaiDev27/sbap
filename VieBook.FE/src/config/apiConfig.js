@@ -45,7 +45,7 @@ export const API_ENDPOINTS = {
 
   // Payment endpoints
   PAYMENT: {
-    CREATE_LINK: `${API_BASE_URL}/create-payment-link`,
+    CREATE_LINK: `${API_BASE_URL}/api/webhook/create-payment-link`,
     VERIFY: `${API_BASE_URL}/api/webhook/verify-payment`,
   },
 
