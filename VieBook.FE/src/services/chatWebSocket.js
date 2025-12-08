@@ -35,7 +35,7 @@ class ChatWebSocketService {
 
     try {
       // Xác định URL backend cho WebSocket Hub
-      const hubUrl = `${API_BASE_URL}/chathub`;
+      const hubUrl = `${API_BASE_URL}/hub/chathub`;
 
       // Tạo SignalR connection
       this.connection = new signalR.HubConnectionBuilder()
