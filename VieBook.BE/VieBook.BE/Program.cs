@@ -316,7 +316,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map SignalR Hub
-app.MapHub<VieBook.BE.Hubs.ChatHub>("/chathub");
+app.MapHub<VieBook.BE.Hubs.ChatHub>("/hub/chathub");
 
 app.Run();
 
