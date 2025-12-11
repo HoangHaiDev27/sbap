@@ -54,8 +54,9 @@ export default function OwnerDashboard() {
       return;
     }
 
-    // Set default date range (6 tháng trước đến hiện tại)
+    // Set default date range (6 tháng trước đến hiện tại 
     const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 1); 
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 6);
     
@@ -145,11 +146,13 @@ export default function OwnerDashboard() {
           return;
         }
         
-        // Kiểm tra ngày kết thúc không được sau hôm nay
-        if (end > today) {
+        // Kiểm tra ngày kết thúc không được sau hôm nay + 1 ngày (để đảm bảo có dữ liệu khi mới mua)
+        const maxAllowedDate = new Date(today);
+        maxAllowedDate.setDate(maxAllowedDate.getDate() + 1);
+        if (end > maxAllowedDate) {
           setError('Ngày kết thúc không được sau hôm nay');
-          // Tự động sửa về hôm nay
-          const correctedEndDate = today.toISOString().split('T')[0];
+          // Tự động sửa về hôm nay + 1 ngày
+          const correctedEndDate = maxAllowedDate.toISOString().split('T')[0];
           setDateRange({ startDate, endDate: correctedEndDate });
           // Load dữ liệu với date đã sửa
           setTimeout(() => {
@@ -316,7 +319,7 @@ export default function OwnerDashboard() {
     <div className="p-6 text-white">
       
       {/* Title */}
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6">Thống kê</h1>
       
 
       {/* Stats */}
@@ -410,7 +413,11 @@ export default function OwnerDashboard() {
                   type="date"
                   value={dateRange.endDate || ''}
                   min={dateRange.startDate || ''}
-                  max={new Date().toISOString().split('T')[0]}
+                  max={(() => {
+                    const maxDate = new Date();
+                    maxDate.setDate(maxDate.getDate() + 1);
+                    return maxDate.toISOString().split('T')[0];
+                  })()}
                   onChange={(e) => {
                     setDateRange(prev => ({ ...prev, endDate: e.target.value }));
                     // Không auto load, chỉ cập nhật state
