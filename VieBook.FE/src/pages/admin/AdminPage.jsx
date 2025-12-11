@@ -134,20 +134,21 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="pt-20">
-        <div className="p-6">
+      <main className="pt-20 sm:pt-24">
+        <div className="px-4 sm:px-6 py-4 sm:py-6">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="mb-6 sm:mb-8">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
                 Tổng quan thống kê
               </h2>
-              <p className="text-gray-600">Bảng điều khiển quản trị hệ thống</p>
+              <p className="text-sm sm:text-base text-gray-600">Bảng điều khiển quản trị hệ thống</p>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label htmlFor="from" className="text-sm text-gray-600 whitespace-nowrap">
+            {/* Date Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
+                <label htmlFor="from" className="text-sm text-gray-700 font-medium whitespace-nowrap">
                   Từ ngày:
                 </label>
                 <input
@@ -155,12 +156,12 @@ export default function AdminPage() {
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 sm:px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base min-h-[44px]"
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
-                <label htmlFor="to" className="text-sm text-gray-600 whitespace-nowrap">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
+                <label htmlFor="to" className="text-sm text-gray-700 font-medium whitespace-nowrap">
                   Đến ngày:
                 </label>
                 <input
@@ -168,33 +169,33 @@ export default function AdminPage() {
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 sm:px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base min-h-[44px]"
                 />
               </div>
             </div>
           </div>
 
           {/* Loading & Error */}
-          {loading && <div className="p-10 text-center text-gray-600">Đang tải dữ liệu...</div>}
-          {error && <div className="p-10 text-center text-red-500">{error}</div>}
+          {loading && <div className="p-8 sm:p-10 text-center text-gray-600 text-sm sm:text-base">Đang tải dữ liệu...</div>}
+          {error && <div className="p-8 sm:p-10 text-center text-red-500 text-sm sm:text-base">{error}</div>}
 
           {/* Nếu có error thì không hiển thị phần dữ liệu */}
           {!loading && !error && (
             <>
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {statsData.map((stat, index) => (
                 <a
                   key={index}
-                  href={stat.link ?? "#"} // nếu không có link thì không chuyển trang
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200"
+                  href={stat.link ?? "#"}
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{stat.title}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 break-words">{stat.value}</p>
                       <p
-                        className={`text-sm mt-1 ${
+                        className={`text-xs sm:text-sm mt-1 ${
                           parseFloat(stat.change) >= 0 ? "text-green-600" : "text-red-600"
                         }`}
                       >
@@ -203,7 +204,7 @@ export default function AdminPage() {
                       </p>
                     </div>
                     <div
-                      className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}
+                      className={`w-10 h-10 sm:w-12 sm:h-12 ${stat.color} rounded-lg flex items-center justify-center flex-shrink-0 ml-3`}
                     >
                       {stat.icon}
                     </div>
@@ -213,38 +214,54 @@ export default function AdminPage() {
             </div>
 
               {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {/* Books by Day */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Sách mới theo ngày</h3>
-                  <div className="h-64 flex items-center justify-center">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Sách mới theo ngày</h3>
+                  <div className="h-64 sm:h-72 flex items-center justify-center overflow-x-auto">
                     {booksByDayData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={booksByDayData}>
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="books" name="Tổng số sách" fill="#3B82F6" />
+                          <XAxis 
+                            dataKey="date" 
+                            tick={{ fontSize: 12 }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                          />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip 
+                            contentStyle={{ fontSize: '12px', borderRadius: '8px' }}
+                            wrapperStyle={{ outline: 'none' }}
+                          />
+                          <Bar dataKey="books" name="Tổng số sách" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
-                      <p className="text-gray-500">Không có dữ liệu</p>
+                      <p className="text-sm sm:text-base text-gray-500">Không có dữ liệu</p>
                     )}
                   </div>
                 </div>
 
                 {/* Revenue Chart */}
-               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Doanh thu theo tháng</h3>
-                <div className="h-64 flex items-center justify-center">
+               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Doanh thu theo tháng</h3>
+                <div className="h-64 sm:h-72 flex items-center justify-center overflow-x-auto">
                   {revenueData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={revenueData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
+                        <XAxis 
+                          dataKey="month" 
+                          tick={{ fontSize: 12 }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                        />
                         <YAxis
-                          width={70}
+                          width={60}
+                          tick={{ fontSize: 12 }}
                           tickFormatter={(value) => {
                             if (value >= 1_000_000) return Math.round(value / 1_000_000) + " triệu";
                             if (value >= 1_000) return Math.round(value / 1_000) + "k";
@@ -255,43 +272,45 @@ export default function AdminPage() {
                         <Tooltip
                           formatter={(value) => `${value.toLocaleString()} vnđ`}
                           labelFormatter={(label) => `Tháng ${label}`}
+                          contentStyle={{ fontSize: '12px', borderRadius: '8px' }}
+                          wrapperStyle={{ outline: 'none' }}
                         />
-                        <Bar dataKey="revenue" name="Tổng" fill="#10B981" />
+                        <Bar dataKey="revenue" name="Tổng" fill="#10B981" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <p className="text-gray-500">Không có dữ liệu</p>
+                    <p className="text-sm sm:text-base text-gray-500">Không có dữ liệu</p>
                   )}
                 </div>
               </div>
               </div>
 
               {/* Category & Feedback */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {/* Category Distribution */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Phân loại sách</h3>
-                    <span className="text-sm text-gray-500">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">Phân loại sách</h3>
+                    <span className="text-xs sm:text-sm text-gray-500">
                       Tổng: {categoryDistribution.length} loại
                     </span>
                   </div>
 
                   {categoryDistribution.length > 0 ? (
                     <>
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         {displayedCategories.map((category, index) => (
-                          <div key={index} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
+                          <div key={index} className="flex items-center justify-between gap-2 sm:gap-4">
+                            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                               <div
-                                className="w-4 h-4 rounded-full"
+                                className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: `hsl(${index * 72}, 70%, 50%)` }}
                               ></div>
-                              <span className="text-gray-900">{category.name}</span>
+                              <span className="text-sm sm:text-base text-gray-900 truncate">{category.name}</span>
                             </div>
-                            <div className="text-right">
-                              <div className="text-gray-900 font-medium">{category.count}</div>
-                              <div className="text-sm text-gray-500">{category.percentage}%</div>
+                            <div className="text-right flex-shrink-0">
+                              <div className="text-sm sm:text-base text-gray-900 font-medium">{category.count}</div>
+                              <div className="text-xs sm:text-sm text-gray-500">{category.percentage}%</div>
                             </div>
                           </div>
                         ))}
@@ -300,20 +319,20 @@ export default function AdminPage() {
                       {categoryDistribution.length > 5 && (
                         <button
                           onClick={() => setShowAllCategories(!showAllCategories)}
-                          className="mt-4 text-blue-600 text-sm font-medium hover:underline"
+                          className="mt-4 w-full sm:w-auto px-4 py-2 text-blue-600 text-sm font-medium hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors min-h-[44px]"
                         >
                           {showAllCategories ? "Thu gọn ▲" : "Xem thêm ▼"}
                         </button>
                       )}
                     </>
                   ) : (
-                    <p className="text-gray-500">Không có dữ liệu</p>
+                    <p className="text-sm sm:text-base text-gray-500">Không có dữ liệu</p>
                   )}
                 </div>
 
                 {/* Feedback */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Phản hồi người dùng</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Phản hồi người dùng</h3>
                   <div className="space-y-4">
                     {stats ? (
                       (() => {
@@ -325,38 +344,38 @@ export default function AdminPage() {
                         return (
                           <>
                             <div className="flex items-center justify-between">
-                              <span className="text-gray-600">Phản hồi tích cực</span>
-                              <span className="text-green-600 font-semibold">{positive}%</span>
+                              <span className="text-sm sm:text-base text-gray-600">Phản hồi tích cực</span>
+                              <span className="text-sm sm:text-base text-green-600 font-semibold">{positive}%</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3">
                               <div
-                                className="bg-green-500 h-3 rounded-full"
+                                className="bg-green-500 h-2.5 sm:h-3 rounded-full transition-all duration-300"
                                 style={{ width: `${positive}%` }}
                               ></div>
                             </div>
 
                             <div className="flex items-center justify-between">
-                              <span className="text-gray-600">Phản hồi tiêu cực</span>
-                              <span className="text-red-600 font-semibold">{negative}%</span>
+                              <span className="text-sm sm:text-base text-gray-600">Phản hồi tiêu cực</span>
+                              <span className="text-sm sm:text-base text-red-600 font-semibold">{negative}%</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3">
                               <div
-                                className="bg-red-500 h-3 rounded-full"
+                                className="bg-red-500 h-2.5 sm:h-3 rounded-full transition-all duration-300"
                                 style={{ width: `${negative}%` }}
                               ></div>
                             </div>
 
-                            <div className="mt-4 p-4 bg-green-50 rounded-lg text-center">
-                              <div className="text-2xl font-bold text-green-700">
+                            <div className="mt-4 p-4 sm:p-5 bg-green-50 rounded-lg text-center">
+                              <div className="text-xl sm:text-2xl font-bold text-green-700">
                                 {stats?.averageRating ?? 0}/5.0
                               </div>
-                              <div className="text-sm text-gray-600">Đánh giá trung bình</div>
+                              <div className="text-xs sm:text-sm text-gray-600 mt-1">Đánh giá trung bình</div>
                             </div>
                           </>
                         );
                       })()
                     ) : (
-                      <p className="text-gray-500 text-center">Chưa có dữ liệu phản hồi</p>
+                      <p className="text-sm sm:text-base text-gray-500 text-center">Chưa có dữ liệu phản hồi</p>
                     )}
                   </div>
                 </div>
