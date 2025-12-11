@@ -18,6 +18,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
   const [showSpeed, setShowSpeed] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [showChapters, setShowChapters] = useState(false);
+  const [showChaptersMobile, setShowChaptersMobile] = useState(false);
   const [currentChapter, setCurrentChapter] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
@@ -663,10 +664,21 @@ export default function AudioPlayer({ bookId, chapterId }) {
         isFullscreen={isFullscreen}
         toggleFullscreen={toggleFullscreen}
         toggleTranscript={() => setShowTranscript(!showTranscript)}
+        showChaptersMobile={showChaptersMobile}
+        setShowChaptersMobile={setShowChaptersMobile}
       />
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-r border-gray-700 bg-gray-800 overflow-y-auto flex-shrink-0 max-h-[50vh] lg:max-h-none" style={{ zIndex: 20 }}>
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        {/* Overlay để đóng sidebar trên mobile */}
+        {showChaptersMobile && (
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+            onClick={() => setShowChaptersMobile(false)}
+          />
+        )}
+        
+        {/* Sidebar - Ẩn/hiện trên mobile, luôn hiển thị trên desktop */}
+        <div className={`${showChaptersMobile ? 'flex' : 'hidden'} lg:!flex w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-r border-gray-700 bg-gray-800 overflow-y-auto overflow-x-hidden flex-shrink-0 max-h-[50vh] lg:max-h-none fixed lg:relative top-0 left-0 h-[50vh] lg:h-auto z-50 lg:z-auto`}>
           <AudioChapterList
             chapters={chapters}
             currentChapter={currentChapter}
@@ -681,6 +693,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
             isOwner={isOwner}
             bookId={bookId}
             bookTitle={book?.title}
+            setShowChaptersMobile={setShowChaptersMobile}
             onPurchaseSuccess={(chapterIds) => {
               // Refresh purchased chapters
               const currentUserId = getUserId();
@@ -700,7 +713,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
           />
         </div>
 
-        <div className="flex-1 flex items-center justify-center min-w-0" style={{ zIndex: 1 }}>
+        <div className="flex-1 flex items-center justify-center min-w-0 lg:z-auto" style={{ zIndex: showChaptersMobile ? 1 : 'auto' }}>
           <AudioPlayerContent
             book={book}
             chapters={chapters}
@@ -732,6 +745,8 @@ export default function AudioPlayer({ bookId, chapterId }) {
             showSleepTimer={showSleepTimer}
             setShowSleepTimer={setShowSleepTimer}
             setShowChapters={setShowChapters}
+            showChaptersMobile={showChaptersMobile}
+            setShowChaptersMobile={setShowChaptersMobile}
             purchasedAudioChapters={purchasedAudioChapters}
             isOwner={isOwner}
           />

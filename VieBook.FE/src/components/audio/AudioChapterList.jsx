@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { RiVoiceprintLine, RiCheckboxCircleLine, RiPlayCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiShoppingCartLine, RiCloseLine } from "react-icons/ri";
+import { RiVoiceprintLine, RiCheckboxCircleLine, RiPlayCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiShoppingCartLine, RiCloseLine, RiArrowLeftLine } from "react-icons/ri";
 import { API_ENDPOINTS } from "../../config/apiConfig";
 import { getUserId } from "../../api/authApi";
 import { getVoiceDisplayName } from "../../utils/voiceMapping";
@@ -23,6 +23,7 @@ export default function AudioChapterList({
   bookId,
   bookTitle,
   onPurchaseSuccess,
+  setShowChaptersMobile,
 }) {
   const [chapterAudios, setChapterAudios] = useState({}); // { chapterId: [audios] }
   const [expandedChapters, setExpandedChapters] = useState(new Set([currentChapter]));
@@ -239,15 +240,27 @@ export default function AudioChapterList({
   };
   
   return (
-    <div className="h-full flex flex-col bg-gray-800/50" style={{ pointerEvents: 'auto' }}>
+    <div className="h-full flex flex-col bg-gray-800/50 overflow-hidden" style={{ pointerEvents: 'auto' }}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800" style={{ pointerEvents: 'auto' }}>
-        <h3 className="text-lg font-semibold text-white">Danh sách chương</h3>
-        <span className="text-xs text-gray-400">{chapters.length} chương</span>
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0" style={{ pointerEvents: 'auto' }}>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-white truncate">Danh sách chương</h3>
+          <span className="text-xs text-gray-400 flex-shrink-0">{chapters.length} chương</span>
+        </div>
+        {/* Nút ẩn danh sách chương trên mobile */}
+        {setShowChaptersMobile && (
+          <button
+            onClick={() => setShowChaptersMobile(false)}
+            className="lg:hidden p-1.5 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white flex-shrink-0 ml-2"
+            title="Ẩn danh sách chương"
+          >
+            <RiArrowLeftLine className="text-xl" />
+          </button>
+        )}
       </div>
 
       {/* List chapters */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar" style={{ pointerEvents: 'auto' }}>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3 space-y-1.5 sm:space-y-2 custom-scrollbar min-w-0" style={{ pointerEvents: 'auto' }}>
           {chapters.map((chapter, index) => {
             const audios = chapterAudios[chapter.chapterId] || [];
             const isExpanded = expandedChapters.has(index);
@@ -319,7 +332,7 @@ export default function AudioChapterList({
                     
                     jumpToChapter(index);
                   }}
-                  className={`group flex items-center gap-3 p-3 rounded-xl transition-all ${
+                  className={`group flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all min-w-0 w-full ${
                     isCurrentChapter
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30 cursor-pointer"
                       : !isLoggedIn || (!hasAudioAccess && !isChapterOwner)
@@ -328,7 +341,7 @@ export default function AudioChapterList({
                   }`}
                 >
                   {/* Chapter Number Badge */}
-                  <div className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
+                  <div className={`flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm transition-all ${
                     isCurrentChapter 
                       ? "bg-blue-800/50 text-white shadow-inner" 
                       : "bg-gray-600/50 text-gray-300 group-hover:bg-gray-600"
@@ -337,25 +350,25 @@ export default function AudioChapterList({
                   </div>
                   
                   {/* Chapter Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <RiPlayCircleLine className={`text-lg flex-shrink-0 transition-colors ${
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-1 min-w-0">
+                      <RiPlayCircleLine className={`text-base sm:text-lg flex-shrink-0 transition-colors ${
                         hasAudioAccess 
                           ? isCurrentChapter ? "text-white" : "text-green-400" 
                           : "text-gray-500"
                       }`} />
-                      <div className={`font-semibold truncate ${
+                      <div className={`font-semibold truncate text-sm sm:text-base min-w-0 flex-1 ${
                         isCurrentChapter ? "text-white" : "text-gray-200"
                       }`}>
                         {chapter.title}
                       </div>
                       {isChapterOwner && (
-                        <span className="text-green-300 text-xs font-medium bg-green-500/20 px-2 py-0.5 rounded-full border border-green-500/30">
+                        <span className="text-green-300 text-xs font-medium bg-green-500/20 px-1.5 sm:px-2 py-0.5 rounded-full border border-green-500/30 flex-shrink-0 whitespace-nowrap">
                           {isChapterAudioOwner ? "Audio của bạn" : "Sách của bạn"}
                         </span>
                       )}
                       {!isChapterOwner && isOwned && (
-                        <RiCheckboxCircleLine className="text-green-400 text-lg flex-shrink-0" />
+                        <RiCheckboxCircleLine className="text-green-400 text-base sm:text-lg flex-shrink-0" />
                       )}
                     </div>
                     <div className={`text-xs flex items-center gap-3 ${
@@ -381,11 +394,11 @@ export default function AudioChapterList({
                         e.stopPropagation();
                         setPurchaseModal({ open: true, chapter });
                       }}
-                      className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 flex items-center gap-1.5 transform hover:scale-105 !opacity-100"
+                      className="flex-shrink-0 px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 flex items-center gap-1 sm:gap-1.5 transform hover:scale-105 !opacity-100"
                       style={{ opacity: 1 }}
                     >
-                      <RiShoppingCartLine className="text-sm" />
-                      Mua ngay
+                      <RiShoppingCartLine className="text-xs sm:text-sm" />
+                      <span className="hidden sm:inline">Mua ngay</span>
                     </button>
                   )}
                   
@@ -416,7 +429,7 @@ export default function AudioChapterList({
                 
                 {/* Voice list - expanded */}
                 {isExpanded && audios.length > 0 && (
-                  <div className="ml-4 space-y-1.5 border-l-2 border-blue-500/50 pl-4 pt-1">
+                  <div className="ml-4 space-y-1.5 border-l-2 border-blue-500/50 pl-4 pt-1 min-w-0">
                     {audios.map((audio) => (
                       <button
                         key={audio.audioId}
@@ -437,19 +450,19 @@ export default function AudioChapterList({
                           setSelectedVoice(audio.voiceName);
                           jumpToChapter(index);
                         }}
-                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all flex items-center justify-between ${
+                        className={`w-full text-left px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-all flex items-center justify-between min-w-0 ${
                           isCurrentChapter && selectedVoice === audio.voiceName
                             ? "bg-blue-600/80 text-white font-medium shadow-md border border-blue-400/50"
                             : "bg-gray-700/50 hover:bg-gray-700 text-gray-300 border border-gray-600/30 hover:border-gray-500"
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <RiVoiceprintLine className={`text-base ${
+                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                          <RiVoiceprintLine className={`text-sm sm:text-base flex-shrink-0 ${
                             isCurrentChapter && selectedVoice === audio.voiceName 
                               ? "text-white" 
                               : "text-blue-400"
                           }`} />
-                          <span className="font-medium">{getVoiceDisplayName(audio.voiceName)}</span>
+                          <span className="font-medium truncate">{getVoiceDisplayName(audio.voiceName)}</span>
                         </div>
                         <div className={`text-xs flex items-center gap-2 ${
                           isCurrentChapter && selectedVoice === audio.voiceName 
