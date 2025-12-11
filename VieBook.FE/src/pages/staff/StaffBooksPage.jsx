@@ -289,7 +289,7 @@ const StaffBooksPage = () => {
             </div>
 
             {/* Bộ lọc */}
-            <div className="flex flex-wrap gap-4 items-center mb-6">
+            <div className="flex flex-wrap gap-3 sm:gap-4 items-center mb-6">
                 <input
                     type="text"
                     placeholder="Tìm kiếm sách, tác giả, chủ sách..."
@@ -301,7 +301,7 @@ const StaffBooksPage = () => {
                 <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 shadow-sm"
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 shadow-sm w-full sm:w-auto min-w-[150px]"
                 >
                     <option value="all">Tất cả thể loại</option>
                     {categories.map((cat) => (
@@ -314,7 +314,7 @@ const StaffBooksPage = () => {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 shadow-sm"
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 shadow-sm w-full sm:w-auto min-w-[150px]"
                 >
                     <option value="all">Tất cả trạng thái</option>
                     <option value="Phát hành">Phát hành</option>

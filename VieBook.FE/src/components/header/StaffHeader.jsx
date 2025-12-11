@@ -70,7 +70,7 @@ export default function StaffHeader({ onToggleSidebar }) {
 
       {/* Logo + Title */}
       <div className="flex items-center space-x-3">
-        <h1 className="text-2xl font-semibold text-white">
+        <h1 className="hidden lg:block text-2xl font-semibold text-white">
           Trang quản lí của nhân viên
         </h1>
       </div>
