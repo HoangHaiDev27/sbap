@@ -485,10 +485,10 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       />
 
       {/* Layout tổng: dùng full width, chỉ padding ngang để mục lục sát lề trái */}
-      <div className="w-full px-4 py-8">
-        <div className="bg-gray-900/70 border border-gray-800 rounded-2xl shadow-xl px-4 py-5 lg:px-6 lg:py-6 flex gap-4 lg:gap-10 items-start">
+      <div className="w-full px-2 sm:px-4 py-4 sm:py-8">
+        <div className="bg-gray-900/70 border border-gray-800 rounded-2xl shadow-xl px-3 py-4 sm:px-4 sm:py-5 lg:px-6 lg:py-6 flex flex-col lg:flex-row gap-4 lg:gap-10 items-start">
           {/* Sidebar danh sách chương */}
-          <div className="w-80 hidden lg:block flex-shrink-0">
+          <div className="w-full lg:w-80 hidden lg:block flex-shrink-0">
             <ReaderContents
               book={book}
               purchasedChapters={purchasedChapters}
@@ -497,9 +497,9 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
           </div>
 
           {/* Nội dung chính */}
-          <main className="flex-1 relative">
-          <div className="flex justify-between items-start mb-6">
-            <h2 className="text-2xl font-bold">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
+          <main className="flex-1 relative w-full min-w-0">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold break-words">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
             
             {/* AI Summary Button - Top right of content area */}
             <button
@@ -507,11 +507,11 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                 console.log("AI Summary button clicked");
                 setShowSummary(true);
               }}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 transition-colors flex items-center gap-2 shadow-lg"
+              className="px-3 py-2 sm:px-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 transition-colors flex items-center gap-2 shadow-lg flex-shrink-0 self-start sm:self-auto"
               title="Tóm tắt bằng AI"
             >
-              <RiRobotLine size={18} />
-              <span className="font-medium text-sm">Tóm tắt AI</span>
+              <RiRobotLine size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="font-medium text-xs sm:text-sm">Tóm tắt AI</span>
             </button>
           </div>
           
@@ -523,7 +523,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
           ) : (
             <>
               <div
-                className={`${currentTheme.contentBg} rounded-lg p-6`}
+                className={`${currentTheme.contentBg} rounded-lg p-3 sm:p-4 md:p-6`}
                 style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
                 ref={contentRef}
               >

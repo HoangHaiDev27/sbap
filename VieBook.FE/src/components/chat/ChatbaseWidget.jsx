@@ -177,53 +177,53 @@ export default function ChatbaseWidget() {
   const quickOptions = ["Giới thiệu", "Vấn đề"];
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 font-sans">
+    <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 font-sans">
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-orange-600 text-white p-4 rounded-full shadow-xl hover:bg-orange-700 transition"
+          className="bg-orange-600 text-white p-3 sm:p-4 rounded-full shadow-xl hover:bg-orange-700 transition"
           title="Mở Chatbase"
         >
-          💬
+          <span className="text-lg sm:text-xl">💬</span>
         </button>
       ) : (
-        <div className="w-[400px] h-[500px] bg-[#0f172a] text-gray-100 rounded-xl shadow-2xl flex flex-col border border-gray-700">
+        <div className="fixed inset-4 sm:inset-auto sm:bottom-5 sm:right-5 sm:w-[400px] sm:h-[600px] h-[calc(100vh-2rem)] bg-[#0f172a] text-gray-100 rounded-xl shadow-2xl flex flex-col border border-gray-700">
           {/* Header */}
-          <div className="bg-[#0f172a] text-gray-100 px-4 py-3 flex items-center justify-between rounded-t-xl border-b border-gray-700">
+          <div className="bg-[#0f172a] text-gray-100 px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between rounded-t-xl border-b border-gray-700 flex-shrink-0">
             <div className="flex items-center gap-2">
               <img
                 src={logo}
                 alt="VieBook Logo"
-                className="h-6 w-6 rounded-full border border-gray-600 shadow-sm"
+                className="h-5 w-5 sm:h-6 sm:w-6 rounded-full border border-gray-600 shadow-sm"
               />
-              <span className="font-semibold text-sm tracking-wide">Trợ lý VieBook</span>
+              <span className="font-semibold text-xs sm:text-sm tracking-wide">Trợ lý VieBook</span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-full p-1.5 transition duration-200"
+              className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-full p-1 sm:p-1.5 transition duration-200 flex-shrink-0"
               title="Đóng chat"
             >
-              ✖
+              <span className="text-base sm:text-lg">✖</span>
             </button>
           </div>
 
           {/* Nội dung chat */}
           <div
-            className="flex-1 p-3 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent"
+            className="flex-1 p-2 sm:p-3 overflow-y-auto space-y-2 sm:space-y-3 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent min-h-0"
             style={{ scrollbarWidth: "thin" }}
           >
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`p-3 rounded-2xl max-w-[80%] whitespace-pre-wrap leading-relaxed break-words ${
+                className={`p-2 sm:p-3 rounded-2xl max-w-[85%] sm:max-w-[80%] whitespace-pre-wrap leading-relaxed break-words text-sm sm:text-base ${
                   msg.sender === "user"
                     ? "bg-orange-500 text-white ml-auto text-start rounded-br-none"
                     : "bg-gray-800 border border-gray-700 text-gray-100 mr-auto text-start rounded-bl-none"
                 }`}
                 style={{
-                    maxWidth: '80%',        // không dài quá khung chat
-                    width: 'fit-content',   // co giãn theo nội dung
-                    minWidth: '40px',       // tránh quá nhỏ
+                    maxWidth: '85%',
+                    width: 'fit-content',
+                    minWidth: '40px',
                     wordBreak: 'break-word',
                     textAlign: 'left'
                 }}
@@ -231,17 +231,17 @@ export default function ChatbaseWidget() {
                  {renderTextWithLinks(msg.text)}
               </div>
             ))}
-            {loading && <div className="italic text-gray-400 text-sm">VieBook đang lọc thông tin...</div>}
+            {loading && <div className="italic text-gray-400 text-xs sm:text-sm">VieBook đang lọc thông tin...</div>}
             <div ref={chatEndRef}></div>
           </div>
 
           {/* Nút gợi ý nhanh */}
-          <div className="flex flex-wrap gap-2 px-3 pb-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 px-2 sm:px-3 pb-2 flex-shrink-0">
             {quickOptions.map((option, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSend(option)}
-                className="bg-gray-100 text-gray-800 rounded-full px-3 py-1 text-xs font-medium hover:bg-gray-200 transition"
+                className="bg-gray-100 text-gray-800 rounded-full px-2.5 sm:px-3 py-1 text-xs font-medium hover:bg-gray-200 transition"
               >
                 {option}
               </button>
@@ -249,19 +249,19 @@ export default function ChatbaseWidget() {
           </div>
 
           {/* Ô nhập */}
-          <div className="p-2 border-t border-gray-700 flex gap-2 bg-[#1e293b]">
+          <div className="p-2 sm:p-2 border-t border-gray-700 flex gap-2 bg-[#1e293b] flex-shrink-0">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder="Nhập tin nhắn..."
-              className="flex-1 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-400"
+              className="flex-1 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-400"
             />
             <button
               onClick={() => handleSend()}
               disabled={loading}
-              className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition disabled:opacity-50"
+              className="bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-orange-700 transition disabled:opacity-50 text-xs sm:text-sm font-medium whitespace-nowrap"
             >
               Gửi
             </button>
