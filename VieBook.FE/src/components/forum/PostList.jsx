@@ -3,6 +3,7 @@ import {
   RiHeartLine,
   RiHeartFill,
   RiMessage3Line,
+  RiChat3Line,
   RiEyeLine,
   RiBookLine,
   RiGiftLine,
@@ -567,12 +568,26 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                   <RiUserLine className="text-slate-400" size={20} />
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-white">{post.author?.fullName || post.author?.email || "Người dùng"}</h3>
-                  <span className="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">
+              <div className="flex-grow min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-medium text-white truncate">{post.author?.fullName || post.author?.email || "Người dùng"}</h3>
+                  <button className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded transition-colors flex-shrink-0">
                     {post.author?.role || "Thành viên"}
-                  </span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      // Scroll to comment section or focus comment input
+                      const commentInput = document.querySelector(`[data-post-id="${post.postId}"] input[placeholder*="bình luận"]`);
+                      if (commentInput) {
+                        commentInput.focus();
+                        commentInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded transition-colors flex items-center gap-1 flex-shrink-0"
+                  >
+                    <RiChat3Line size={12} />
+                    <span>Hỏi đáp</span>
+                  </button>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
                   <RiTimeLine size={14} />
@@ -582,10 +597,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
             </div>
 
             <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-              <div className="flex items-center gap-1 text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">
-                {getPostTypeIcon(post.postType)}
-                <span>{getPostTypeLabel(post.postType)}</span>
-              </div>
+
               
               {/* Unhide button in my-posts/hidden subTab - displayed in header */}
               {activeTab === "my-posts" && subTab === "hidden" && (
