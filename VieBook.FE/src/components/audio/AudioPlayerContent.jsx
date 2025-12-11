@@ -41,6 +41,8 @@ export default function AudioPlayerContent({
   showSleepTimer,
   setShowSleepTimer,
   setShowChapters,
+  showChaptersMobile,
+  setShowChaptersMobile,
   purchasedAudioChapters,
   isOwner,
 }) {
