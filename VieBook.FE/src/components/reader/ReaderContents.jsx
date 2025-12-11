@@ -87,7 +87,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
 
   // Phần nội dung danh sách chương tái sử dụng cho cả modal và sidebar
   const renderChapterList = () => (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
             {chapters.map((chapter, index) => {
               const hasSoftUrl = chapter.chapterSoftUrl && chapter.chapterSoftUrl.trim() !== "";
               const isLoggedIn = getUserId() !== null;
@@ -127,7 +127,7 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
               return (
                 <div
                   key={chapter.chapterId || index}
-                  className={`p-4 rounded-lg border transition-all duration-200 ${
+                  className={`p-2 sm:p-3 md:p-4 rounded-lg border transition-all duration-200 ${
                     isDisabled
                       ? "bg-gray-700 border-gray-600 opacity-60 cursor-not-allowed"
                       : "bg-gray-700 border-gray-600 hover:bg-gray-600 hover:border-orange-500 cursor-pointer"
@@ -158,10 +158,10 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                     window.location.href = `/reader/${bookId}/chapter/${chapter.chapterId}`;
                   }}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
                       {/* Số thứ tự chương */}
-                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                      <div className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold ${
                         isDisabled 
                           ? "bg-gray-600 text-gray-400" 
                           : "bg-orange-600 text-white"
@@ -169,8 +169,8 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                         {chapterNumber}
                       </div>
                       
-                      <div className="flex-1 min-w-0 max-w-[300px] lg:max-w-[400px]">
-                        <h4 className="font-semibold text-white mb-1 truncate" title={chapter.chapterTitle}>
+                      <div className="flex-1 min-w-0 max-w-[200px] sm:max-w-[250px] md:max-w-[300px] lg:max-w-[400px]">
+                        <h4 className="font-semibold text-white mb-1 truncate text-sm sm:text-base" title={chapter.chapterTitle}>
                           {chapter.chapterTitle}
                         </h4>
                         {isOwner && (
@@ -193,13 +193,13 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                             Chương không có bản mềm
                           </p>
                         )}
-                        <div className="flex items-center gap-4 text-sm text-gray-300">
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-300 flex-wrap">
                           {isFree ? (
                             <span className="text-green-400 font-medium">
                               Miễn phí
                             </span>
                           ) : basePriceSoft > 0 && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2">
                               {hasBookPromotion && discountPercent > 0 ? (
                                 <>
                                   <span className="text-gray-400 line-through text-xs">
@@ -207,13 +207,13 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                                   </span>
                                   <span className="text-orange-400 flex items-center gap-1 font-semibold">
                                     {effectivePriceSoft.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu
-                                    <RiCoinLine className="w-4 h-4" />
+                                    <RiCoinLine className="w-3 h-3 sm:w-4 sm:h-4" />
                                   </span>
                                 </>
                               ) : (
                                 <span className="text-orange-400 flex items-center gap-1">
                                   {basePriceSoft.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} xu
-                                  <RiCoinLine className="w-4 h-4" />
+                                  <RiCoinLine className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </span>
                               )}
                             </div>
@@ -405,13 +405,13 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
     return (
       <>
         <div className="h-full flex flex-col bg-gray-900 border-r border-gray-800">
-          <div className="px-4 py-3 border-b border-gray-700 bg-gray-800">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <RiBookOpenLine />
+          <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-700 bg-gray-800">
+            <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
+              <RiBookOpenLine className="text-base sm:text-lg" />
               <span className="truncate" title="Mục lục">Mục lục</span>
             </h3>
           </div>
-          <div className="p-4 overflow-y-auto flex-1">
+          <div className="p-2 sm:p-3 md:p-4 overflow-y-auto flex-1 overflow-x-hidden">
             {renderChapterList()}
           </div>
         </div>
@@ -427,25 +427,25 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
       <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
 
       {/* Popup */}
-      <div className="relative bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] shadow-2xl z-10 overflow-hidden">
+      <div className="relative bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] shadow-2xl z-10 overflow-hidden m-4">
         {/* Header */}
-        <div className="bg-gray-700 px-6 py-4 border-b border-gray-600">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <RiBookOpenLine /> <span className="truncate" title={`Mục lục - ${book?.title}`}>Mục lục - {book?.title}</span>
+        <div className="bg-gray-700 px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-600">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold flex items-center gap-2 min-w-0">
+              <RiBookOpenLine className="flex-shrink-0" /> <span className="truncate" title={`Mục lục - ${book?.title}`}>Mục lục - {book?.title}</span>
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-gray-300 hover:text-white transition-colors flex-shrink-0"
             >
-              <RiCloseLine size={24} />
+              <RiCloseLine size={20} className="sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <div className="max-h-[400px] overflow-y-auto">
+        <div className="p-3 sm:p-4 md:p-6">
+          <div className="max-h-[400px] overflow-y-auto overflow-x-hidden">
             {renderChapterList()}
           </div>
         </div>
