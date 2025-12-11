@@ -92,19 +92,24 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
   };
 
 
-  if (!promotions.length) return <p className="text-white">Chưa có khuyến mãi nào</p>;
+  if (!promotions.length) return (
+    <div className="bg-slate-900 text-white rounded-xl sm:rounded-2xl shadow-lg p-6 text-center">
+      <p className="text-sm sm:text-base">Chưa có khuyến mãi nào</p>
+    </div>
+  );
 
   return (
     <div>
-      <div className="bg-slate-900 text-white rounded-2xl shadow-lg">
+      {/* Desktop Table View */}
+      <div className="hidden lg:block bg-slate-900 text-white rounded-xl sm:rounded-2xl shadow-lg overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-700 text-white">
-              <th className="p-3">Khuyến mãi & Sách</th>
-              <th className="p-3">Loại & Giá trị</th>
-              <th className="p-3">Thời gian</th>
-              <th className="p-3">Trạng thái</th>
-              <th className="p-3 text-center w-28">Hành động</th>
+              <th className="p-3 whitespace-nowrap">Khuyến mãi & Sách</th>
+              <th className="p-3 whitespace-nowrap">Loại & Giá trị</th>
+              <th className="p-3 whitespace-nowrap">Thời gian</th>
+              <th className="p-3 whitespace-nowrap">Trạng thái</th>
+              <th className="p-3 text-center w-28 whitespace-nowrap">Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -158,7 +163,7 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
                       </p>
                     )}
                   </td>
-                  <td className="p-3 align-top whitespace-nowrap">
+                  <td className="p-3 align-top whitespace-nowrap text-sm">
                     {new Date(promo.startAt).toLocaleDateString("vi-VN")} -{" "}
                     {new Date(promo.endAt).toLocaleDateString("vi-VN")}
                   </td>
@@ -240,60 +245,204 @@ export default function PromotionTable({ promotions, onEdit, onDeleted }) {
             })}
           </tbody>
         </table>
-        {/* Pagination */}
-{totalPages > 1 && (
-  <div className="flex justify-center items-center gap-2 mt-4">
-    <button
-      disabled={page === 1}
-      onClick={() => setPage((p) => Math.max(p - 1, 1))}
-      className={`px-3 py-1 rounded ${page === 1 ? "bg-gray-600 cursor-not-allowed" : "bg-slate-700 hover:bg-slate-600"}`}
-    >
-      Trước
-    </button>
-
-    {/* Hiển thị số trang */}
-    {Array.from({ length: totalPages }, (_, i) => (
-      <button
-        key={i + 1}
-        onClick={() => setPage(i + 1)}
-        className={`px-3 py-1 rounded ${
-          page === i + 1 ? "bg-orange-500 text-white" : "bg-slate-700 hover:bg-slate-600"
-        }`}
-      >
-        {i + 1}
-      </button>
-    ))}
-
-    <button
-      disabled={page === totalPages}
-      onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-      className={`px-3 py-1 rounded ${page === totalPages ? "bg-gray-600 cursor-not-allowed" : "bg-slate-700 hover:bg-slate-600"}`}
-    >
-      Sau
-    </button>
-  </div>
-)}
-
       </div>
+
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-3">
+        {currentData.map((promo) => {
+          const status = getPromotionStatus(promo);
+          const isInactive = !promo.isActive;
+          const now = new Date().getTime();
+          const start = new Date(promo.startAt).getTime();
+          const isUpcoming = now < start;
+
+          return (
+            <div
+              key={promo.promotionId}
+              className={`bg-slate-900 rounded-xl shadow-lg p-4 border border-slate-700 ${isInactive ? 'opacity-75' : ''}`}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className={`font-semibold text-white truncate ${isInactive ? 'line-through text-slate-400' : ''}`}>
+                      {promo.promotionName}
+                    </h3>
+                    {isInactive && (
+                      <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded flex-shrink-0">Đã vô hiệu hóa</span>
+                    )}
+                  </div>
+                  <span className={`inline-block ${status.className} text-white px-2 py-1 rounded-lg text-xs whitespace-nowrap`}>
+                    {status.label}
+                  </span>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    className="p-2 bg-blue-500 rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                    onClick={() => navigate(`/owner/promotions/${promo.promotionId}`)}
+                    title="Xem chi tiết"
+                  >
+                    <RiEyeLine className="text-white" />
+                  </button>
+                  {!isInactive && isUpcoming && (
+                    <>
+                      <button
+                        className="p-2 bg-green-500 rounded-lg hover:bg-green-600 active:bg-green-700 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        onClick={() => onEdit && onEdit(promo)}
+                        title="Chỉnh sửa"
+                      >
+                        <RiEdit2Line className="text-white" />
+                      </button>
+                      <button
+                        className="p-2 bg-red-500 rounded-lg hover:bg-red-600 active:bg-red-700 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        onClick={() => setConfirmDelete(promo)}
+                        title="Xóa"
+                      >
+                        <RiDeleteBin6Line className="text-white" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Books */}
+              <div className="mb-3">
+                <div className="text-xs text-slate-400 mb-1">Sách áp dụng:</div>
+                {Array.isArray(promo.books) && promo.books.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {promo.books.slice(0, 2).map((b) => (
+                      <span key={b.bookId} className="bg-slate-700 px-2 py-1 rounded text-xs text-white">
+                        {b.title}
+                      </span>
+                    ))}
+                    {promo.books.length > 2 && (
+                      <span className="text-xs text-slate-400 px-2 py-1">+{promo.books.length - 2} nữa</span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-500">Chưa có sách</span>
+                )}
+              </div>
+
+              {/* Discount & Price */}
+              <div className="mb-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Giá trị giảm:</span>
+                  <span className="font-medium text-orange-400 text-sm">
+                    {promo.discountType === "Percent"
+                      ? `${promo.discountValue}%`
+                      : `${promo.discountValue.toLocaleString()} đ`}
+                  </span>
+                </div>
+                {Array.isArray(promo.books) && promo.books.length > 0 && (
+                  <div className="flex items-center justify-between text-xs text-slate-300">
+                    <span className="text-slate-400">Tổng giá:</span>
+                    <span className="flex items-center gap-1">
+                      {promo.books.reduce((sum, b) => sum + (b.totalPrice || 0), 0).toLocaleString()}{' '}
+                      <RiCoinLine className="inline text-yellow-400" /> →{' '}
+                      {promo.books.reduce((sum, b) => sum + (b.discountedPrice || 0), 0).toLocaleString()}{' '}
+                      <RiCoinLine className="inline text-yellow-400" />
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Time */}
+              <div className="text-xs text-slate-400 border-t border-slate-700 pt-2">
+                {new Date(promo.startAt).toLocaleDateString("vi-VN")} -{' '}
+                {new Date(promo.endAt).toLocaleDateString("vi-VN")}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 sm:mt-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3">
+            <div className="text-xs sm:text-sm text-white/70">
+              Trang {page} / {totalPages}
+            </div>
+          </div>
+          <div className="flex justify-center items-center gap-2 flex-wrap">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors ${
+                page === 1 
+                  ? "bg-gray-600 cursor-not-allowed opacity-50" 
+                  : "bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white"
+              }`}
+            >
+              Trước
+            </button>
+
+            {/* Hiển thị số trang */}
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (page <= 3) {
+                pageNum = i + 1;
+              } else if (page >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = page - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setPage(pageNum)}
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors ${
+                    page === pageNum 
+                      ? "bg-orange-500 text-white" 
+                      : "bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors ${
+                page === totalPages 
+                  ? "bg-gray-600 cursor-not-allowed opacity-50" 
+                  : "bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white"
+              }`}
+            >
+              Sau
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Confirm delete modal */}
       {confirmDelete && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-slate-800 p-6 rounded-xl shadow-lg text-white w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Xác nhận xoá</h2>
-            <p>
-              Bạn có chắc chắn muốn xoá khuyến mãi {" "}
-              <span className="text-orange-400">{confirmDelete.promotionName}</span> không?
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setConfirmDelete(null);
+          }}
+        >
+          <div className="bg-slate-800 p-4 sm:p-6 rounded-xl shadow-lg text-white w-full max-w-md">
+            <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">Xác nhận xoá</h2>
+            <p className="text-sm sm:text-base">
+              Bạn có chắc chắn muốn xoá khuyến mãi{" "}
+              <span className="text-orange-400 font-semibold">{confirmDelete.promotionName}</span> không?
             </p>
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-6">
               <button
-                className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-sm sm:text-base font-medium min-h-[44px] transition-colors"
                 onClick={() => setConfirmDelete(null)}
               >
                 Hủy
               </button>
               <button
-                className="px-4 py-2 rounded bg-red-600 hover:bg-red-700"
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm sm:text-base font-medium min-h-[44px] transition-colors"
                 onClick={handleDelete}
               >
                 Xoá
