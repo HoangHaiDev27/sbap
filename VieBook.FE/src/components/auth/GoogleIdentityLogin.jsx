@@ -65,10 +65,11 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <button
+        type="button"
         onClick={handleCustomGoogleLogin}
-        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 flex items-center justify-center space-x-2"
+        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 flex items-center justify-center space-x-2 z-10 relative"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -91,7 +92,19 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
         <span>Đăng nhập với Google</span>
       </button>
       {/* Hidden Google button - will be rendered by Google Identity API */}
-      <div ref={buttonRef} className="w-full" style={{ opacity: 0, position: 'absolute', pointerEvents: 'none' }}></div>
+      <div 
+        ref={buttonRef} 
+        className="w-full" 
+        style={{ 
+          opacity: 0, 
+          position: 'absolute', 
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          zIndex: -1,
+          height: '100%'
+        }}
+      ></div>
     </div>
   );
 };
