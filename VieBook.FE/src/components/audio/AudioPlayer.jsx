@@ -666,7 +666,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
       />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-r border-gray-700 bg-gray-800 overflow-y-auto flex-shrink-0" style={{ zIndex: 20 }}>
+        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-r border-gray-700 bg-gray-800 overflow-y-auto flex-shrink-0 max-h-[50vh] lg:max-h-none" style={{ zIndex: 20 }}>
           <AudioChapterList
             chapters={chapters}
             currentChapter={currentChapter}
