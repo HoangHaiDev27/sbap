@@ -445,7 +445,13 @@ export async function getWordCountFromUrl(url) {
 ////////////////////////////
 // Gọi API chuyển văn bản thành audio (TTS)
 export async function generateChapterAudio(chapterId, voiceName = "banmai", speed = 1.0, userId) {
-  const url = new URL(API_ENDPOINTS.AUDIO_CONVERSION.GENERATE(chapterId, voiceName, speed));
+  let baseUrl = API_ENDPOINTS.AUDIO_CONVERSION.GENERATE(chapterId, voiceName, speed);
+  
+  if (baseUrl.startsWith('/')) {
+    baseUrl = window.location.origin + baseUrl;
+  }
+  
+  const url = new URL(baseUrl);
   if (userId) {
     url.searchParams.append('userId', userId);
   }
