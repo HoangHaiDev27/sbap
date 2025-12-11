@@ -213,9 +213,9 @@ export default function ChapterAudioList({ chapterId, onRefreshChapters }) {
                     <span className="text-sm font-medium text-gray-300">
                       {voices.find(v => v.id === audio.voiceName)?.name || audio.voiceName}
                     </span>
-                    <span className="text-xs text-gray-400">
+                    {/* <span className="text-xs text-gray-400">
                       ({Math.floor((audio.durationSec || 0) / 60)}:{(audio.durationSec || 0) % 60 < 10 ? '0' : ''}{(audio.durationSec || 0) % 60})
-                    </span>
+                    </span> */}
                   </div>
                   <div className="flex items-center gap-1">
                     {playingAudioId === audio.audioId ? (

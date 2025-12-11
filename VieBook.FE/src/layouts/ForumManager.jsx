@@ -170,9 +170,9 @@ export default function ForumManager() {
 
             {/* Navigation Tabs */}
             <div className="sticky top-0 bg-slate-800 border-b border-slate-700 z-10">
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <div className="flex flex-col">
-                        <div className="flex space-x-8">
+                        <div className="flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
@@ -185,14 +185,14 @@ export default function ForumManager() {
                                             setMyPostsSubTab("all"); // Reset to "all" when switching to my-posts
                                         }
                                     }}
-                                    className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                                    className={`flex items-center gap-2 px-3 sm:px-4 py-4 border-b-2 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                                         activeTab === tab.id
                                             ? "border-orange-500 text-orange-500"
                                             : "border-transparent text-slate-400 hover:text-white"
                                     }`}
                                 >
-                                    <span>{tab.icon}</span>
-                                    <span>{tab.label}</span>
+                                    <span className="text-base sm:text-lg">{tab.icon}</span>
+                                    <span className="text-sm sm:text-base">{tab.label}</span>
                                 </button>
                             ))}
                         </div>

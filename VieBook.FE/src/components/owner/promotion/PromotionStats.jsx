@@ -20,9 +20,9 @@ export default function PromotionStats({ refreshTrigger }) {
 
   if (!stats) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[1,2,3,4].map((i) => (
-          <div key={i} className="bg-slate-800 text-white p-4 rounded-2xl shadow animate-pulse h-20" />
+          <div key={i} className="bg-slate-800 text-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow animate-pulse h-20 sm:h-24" />
         ))}
       </div>
     );
@@ -36,15 +36,15 @@ export default function PromotionStats({ refreshTrigger }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {cards.map((stat, i) => (
         <div
           key={i}
-          className="bg-slate-800 text-white p-4 rounded-2xl shadow"
+          className={`bg-slate-800 text-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow ${i === 3 ? 'col-span-2 lg:col-span-1' : ''}`}
         >
-          <h3 className="text-sm opacity-80">{stat.title}</h3>
-          <p className="text-2xl font-bold">{stat.value}</p>
-          <p className="text-xs text-orange-400">{stat.sub}</p>
+          <h3 className="text-xs sm:text-sm opacity-80 mb-1 sm:mb-2 line-clamp-2">{stat.title}</h3>
+          <p className="text-lg sm:text-2xl font-bold truncate">{stat.value}</p>
+          <p className="text-xs text-orange-400 mt-1 truncate">{stat.sub}</p>
         </div>
       ))}
     </div>

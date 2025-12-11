@@ -6,9 +6,12 @@ import {
   RiDraftLine,
   RiEyeLine,
   RiVoiceprintLine,
+  RiMoreFill,
+  RiEdit2Line,
+  RiDeleteBin6Line,
 } from "react-icons/ri";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   getChaptersByBookId,
   deleteChapter,
@@ -40,6 +43,8 @@ export default function OwnerChapters() {
   const [showSellerThankModal, setShowSellerThankModal] = useState(false);
   const [showDraftWarningModal, setShowDraftWarningModal] = useState(false);
   const [chapterAudios, setChapterAudios] = useState([]); // Danh sách audio từ bảng ChapterAudio
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRefs = useRef({});
   const pageSize = 5;
   const totalPages = Math.max(1, Math.ceil(chapters.length / pageSize));
   const paginatedChapters = chapters.slice(
@@ -106,6 +111,26 @@ export default function OwnerChapters() {
       setCurrentPage(tp);
     }
   }, [chapters, pageSize, currentPage]);
+
+  // Đóng menu khi click bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuId && menuRefs.current[openMenuId]) {
+        if (!menuRefs.current[openMenuId].contains(event.target)) {
+          setOpenMenuId(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openMenuId]);
+
+  const toggleMenu = (chapterId) => {
+    setOpenMenuId(openMenuId === chapterId ? null : chapterId);
+  };
 
   function getPaginationRange(currentPage, totalPages, delta = 1) {
     const range = [];
@@ -379,9 +404,9 @@ export default function OwnerChapters() {
   if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-3 sm:p-6 text-white">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <div className="mb-4">
             <button
@@ -390,12 +415,12 @@ export default function OwnerChapters() {
             >
               ← Quay lại
             </button>
-            <h1 className="text-2xl font-bold">Quản lý Chương</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Quản lý Chương</h1>
           </div>
-          <p className="text-gray-400 text-xl">{bookTitle}</p>
+          <p className="text-gray-400 text-base sm:text-xl">{bookTitle}</p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-3">
           {/* Nút đánh dấu hoàn thành - hiển thị trừ khi đã hoàn thành hoàn toàn */}
           {bookInfo &&
             !(
@@ -404,9 +429,9 @@ export default function OwnerChapters() {
             ) && (
               <button
                 onClick={() => setShowCompletionModal(true)}
-                className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                className="flex items-center justify-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm sm:text-base"
               >
-                <RiCheckLine className="mr-2" /> Đã hoàn thành
+                <RiCheckLine className="mr-2" /> <span className="hidden sm:inline">Đã hoàn thành</span><span className="sm:hidden">Hoàn thành</span>
               </button>
             )}
 
@@ -419,9 +444,9 @@ export default function OwnerChapters() {
               <Link
                 to={`/owner/books/${bookId}/chapters/new`}
                 state={{ bookTitle }}
-                className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                className="flex items-center justify-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm sm:text-base"
               >
-                <RiAddLine className="mr-2" /> Thêm chương mới
+                <RiAddLine className="mr-2" /> <span className="hidden sm:inline">Thêm chương mới</span><span className="sm:hidden">Thêm mới</span>
               </Link>
             )}
         </div>
@@ -465,10 +490,10 @@ export default function OwnerChapters() {
       </div>
 
       {/* Chapter list */}
-      <div className="bg-slate-800 rounded-lg shadow-lg p-4">
-        <h2 className="text-lg font-semibold mb-4">Danh sách chương</h2>
+      <div className="bg-slate-800 rounded-lg shadow-lg p-2 sm:p-4">
+        <h2 className="text-base sm:text-lg font-semibold mb-4">Danh sách chương</h2>
         {chapters.length === 0 ? (
-          <p className="text-center text-gray-400 py-10">
+          <p className="text-center text-gray-400 py-10 text-sm sm:text-base">
             Sách này chưa có chương nào.
           </p>
         ) : (
@@ -516,134 +541,237 @@ export default function OwnerChapters() {
               }
 
               return (
-                <div
-                  key={ch.chapterId}
-                  className="flex items-start justify-between bg-slate-700 p-3 rounded-lg gap-4"
-                >
-                  <div className="flex items-start space-x-3 flex-1 min-w-0">
-                    <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white flex-shrink-0">
-                      Chương {globalIndex}
-                    </span>
+                <>
+                  {/* Desktop View */}
+                  <div
+                    key={ch.chapterId}
+                    className="hidden md:flex items-start justify-between bg-slate-700 p-3 rounded-lg gap-4"
+                  >
+                    <div className="flex items-start space-x-3 flex-1 min-w-0">
+                      <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white flex-shrink-0">
+                        Chương {globalIndex}
+                      </span>
 
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold break-words">
-                        {ch.chapterTitle}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold break-words">
+                          {ch.chapterTitle}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 flex-shrink-0">
+                      {/* Giá chương và giá audio */}
+                      <div className="flex items-start gap-3 min-w-[280px]">
+                        <div className="flex-1 text-right">
+                          {isFree ? (
+                            <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">
+                              Miễn phí
+                            </span>
+                          ) : (
+                            <span className="text-orange-400 font-semibold text-sm whitespace-nowrap">
+                              Giá bản đọc: {ch.priceSoft.toLocaleString()} xu
+                            </span>
+                          )}
+                          <div className="mt-1 flex justify-end">
+                            {statusBadge}
+                          </div>
+                        </div>
+                        <div className="flex-1 text-right">
+                          {ch.audioPrice !== undefined &&
+                          ch.audioPrice !== null ? (
+                            <span className="text-blue-400 text-sm whitespace-nowrap">
+                              Giá bản nghe:{" "}
+                              {ch.audioPrice === 0
+                                ? "Miễn phí"
+                                : `${ch.audioPrice.toLocaleString()} xu`}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 text-xs">
+                              Chưa có audio
+                            </span>
+                          )}
+                          {hasAudio && (
+                            <div className="mt-1 flex justify-end items-center gap-1">
+                              <span className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs">
+                                Audio
+                              </span>
+                              {/* <span className="text-xs text-gray-300">
+                                {formatDuration(audioDuration)}
+                              </span> */}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <span className="text-sm text-gray-400 whitespace-nowrap">
+                        {formatDateSafe(ch.uploadedAt)}
+                      </span>
+
+                      {/* CHỨC NĂNG: Audio / Sửa / Xem / Xóa */}
+                      <div className="flex space-x-2">
+                        <Link
+                          to={`/owner/books/${bookId}/audio`}
+                          state={{ bookTitle }}
+                          className="px-2 py-1 min-w-[50px] text-center bg-blue-500 rounded text-xs text-white hover:bg-blue-600 flex items-center justify-center gap-1"
+                          aria-label="Quản lý Audio"
+                        >
+                          <RiVoiceprintLine className="text-sm" />
+                          Audio
+                        </Link>
+
+                        <Link
+                          to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
+                          state={{ bookTitle }}
+                          className="px-2 py-1 min-w-[50px] text-center bg-green-500 rounded text-xs text-white hover:bg-green-600"
+                          aria-label={`Sửa chương của sách ${ch.chapterTitle}`}
+                        >
+                          Sửa
+                        </Link>
+
+                        <Link
+                          to={`/owner/books/${bookId}/chapters/view/${ch.chapterId}`}
+                          state={{ bookTitle }}
+                          className="px-2 py-1 min-w-[50px] text-center bg-purple-500 rounded text-xs text-white hover:bg-purple-600"
+                          aria-label={`Xem chương ${ch.chapterTitle}`}
+                        >
+                          Xem
+                        </Link>
+
+                        <button
+                          onClick={() => setChapterToDelete(ch.chapterId)}
+                          className="px-2 py-1 min-w-[50px] text-center bg-red-500 rounded text-xs text-white hover:bg-red-600"
+                          aria-label={`Xóa chương ${ch.chapterTitle}`}
+                        >
+                          Xóa
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4 flex-shrink-0">
-                    {/* Giá chương và giá audio */}
-                    <div className="flex items-start gap-3 min-w-[280px]">
-                      <div className="flex-1 text-right">
-                        {isFree ? (
-                          <span className="px-2 py-1 bg-yellow-400 text-black rounded text-xs font-semibold">
-                            Miễn phí
+                  {/* Mobile View */}
+                  <div
+                    key={`mobile-${ch.chapterId}`}
+                    className="md:hidden bg-slate-700 p-3 rounded-lg border border-gray-600"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <span className="px-2 py-1 bg-orange-500 rounded-full text-xs font-bold text-white flex-shrink-0">
+                          Chương {globalIndex}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm break-words mb-2">
+                            {ch.chapterTitle}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {statusBadge}
+                            {isFree ? (
+                              <span className="px-2 py-0.5 bg-yellow-400 text-black rounded text-xs font-semibold">
+                                Miễn phí
+                              </span>
+                            ) : (
+                              <span className="text-orange-400 font-semibold text-xs">
+                                {ch.priceSoft.toLocaleString()} xu
+                              </span>
+                            )}
+                            {ch.audioPrice !== undefined && ch.audioPrice !== null && (
+                              <span className="text-blue-400 text-xs">
+                                Audio: {ch.audioPrice === 0 ? "Miễn phí" : `${ch.audioPrice.toLocaleString()} xu`}
+                              </span>
+                            )}
+                            {hasAudio && (
+                              <span className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs">
+                                Audio
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-400">
+                            {formatDateSafe(ch.uploadedAt)}
                           </span>
-                        ) : (
-                          <span className="text-orange-400 font-semibold text-sm whitespace-nowrap">
-                            Giá bản đọc: {ch.priceSoft.toLocaleString()} xu
-                          </span>
-                        )}
-                        <div className="mt-1 flex justify-end">
-                          {statusBadge}
                         </div>
                       </div>
-                      <div className="flex-1 text-right">
-                        {ch.audioPrice !== undefined &&
-                        ch.audioPrice !== null ? (
-                          <span className="text-blue-400 text-sm whitespace-nowrap">
-                            Giá bản nghe:{" "}
-                            {ch.audioPrice === 0
-                              ? "Miễn phí"
-                              : `${ch.audioPrice.toLocaleString()} xu`}
-                          </span>
-                        ) : (
-                          <span className="text-gray-500 text-xs">
-                            Chưa có audio
-                          </span>
-                        )}
-                        {hasAudio && (
-                          <div className="mt-1 flex justify-end items-center gap-1">
-                            <span className="px-2 py-0.5 bg-blue-500 text-white rounded text-xs">
-                              Audio
-                            </span>
-                            <span className="text-xs text-gray-300">
-                              {formatDuration(audioDuration)}
-                            </span>
+
+                      {/* Menu 3 chấm */}
+                      <div className="relative flex-shrink-0" ref={(el) => (menuRefs.current[ch.chapterId] = el)}>
+                        <button
+                          onClick={() => toggleMenu(ch.chapterId)}
+                          className="p-2 text-gray-300 hover:text-white hover:bg-gray-600 rounded-lg transition"
+                          aria-label="Menu"
+                        >
+                          <RiMoreFill className="text-xl" />
+                        </button>
+                        
+                        {openMenuId === ch.chapterId && (
+                          <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-gray-600 rounded-lg shadow-xl z-50 w-40 max-w-[calc(100vw-1rem)]">
+                            <Link
+                              to={`/owner/books/${bookId}/audio`}
+                              state={{ bookTitle }}
+                              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 rounded-t-lg transition"
+                              onClick={() => setOpenMenuId(null)}
+                            >
+                              <RiVoiceprintLine className="text-blue-400 text-sm flex-shrink-0" />
+                              <span className="truncate">Audio</span>
+                            </Link>
+                            
+                            <Link
+                              to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
+                              state={{ bookTitle }}
+                              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 transition"
+                              onClick={() => setOpenMenuId(null)}
+                            >
+                              <RiEdit2Line className="text-green-400 text-sm flex-shrink-0" />
+                              <span className="truncate">Sửa</span>
+                            </Link>
+                            
+                            <Link
+                              to={`/owner/books/${bookId}/chapters/view/${ch.chapterId}`}
+                              state={{ bookTitle }}
+                              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 transition"
+                              onClick={() => setOpenMenuId(null)}
+                            >
+                              <RiEyeLine className="text-purple-400 text-sm flex-shrink-0" />
+                              <span className="truncate">Xem</span>
+                            </Link>
+                            
+                            <button
+                              onClick={() => {
+                                setChapterToDelete(ch.chapterId);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-b-lg transition text-red-400 hover:bg-gray-700"
+                            >
+                              <RiDeleteBin6Line className="text-sm flex-shrink-0" />
+                              <span className="truncate">Xóa</span>
+                            </button>
                           </div>
                         )}
                       </div>
                     </div>
-
-                    <span className="text-sm text-gray-400 whitespace-nowrap">
-                      {formatDateSafe(ch.uploadedAt)}
-                    </span>
-
-                    {/* CHỨC NĂNG: Audio / Sửa / Xem / Xóa */}
-                    <div className="flex space-x-2">
-                      <Link
-                        to={`/owner/books/${bookId}/audio`}
-                        state={{ bookTitle }}
-                        className="px-2 py-1 min-w-[50px] text-center bg-blue-500 rounded text-xs text-white hover:bg-blue-600 flex items-center justify-center gap-1"
-                        aria-label="Quản lý Audio"
-                      >
-                        <RiVoiceprintLine className="text-sm" />
-                        Audio
-                      </Link>
-
-                      <Link
-                        to={`/owner/books/${bookId}/chapters/edit/${ch.chapterId}`}
-                        state={{ bookTitle }}
-                        className="px-2 py-1 min-w-[50px] text-center bg-green-500 rounded text-xs text-white hover:bg-green-600"
-                        aria-label={`Sửa chương của sách ${ch.chapterTitle}`}
-                      >
-                        Sửa
-                      </Link>
-
-                      <Link
-                        to={`/owner/books/${bookId}/chapters/view/${ch.chapterId}`}
-                        state={{ bookTitle }}
-                        className="px-2 py-1 min-w-[50px] text-center bg-purple-500 rounded text-xs text-white hover:bg-purple-600"
-                        aria-label={`Xem chương ${ch.chapterTitle}`}
-                      >
-                        Xem
-                      </Link>
-
-                      <button
-                        onClick={() => setChapterToDelete(ch.chapterId)}
-                        className="px-2 py-1 min-w-[50px] text-center bg-red-500 rounded text-xs text-white hover:bg-red-600"
-                        aria-label={`Xóa chương ${ch.chapterTitle}`}
-                      >
-                        Xóa
-                      </button>
-                    </div>
                   </div>
-                </div>
+                </>
               );
             })}
           </div>
         )}
         {totalPages > 1 && (
-          <div className="flex justify-center mt-4 space-x-2">
+          <div className="flex justify-center mt-4 space-x-1 sm:space-x-2 flex-wrap gap-2">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
+              className="px-2 sm:px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-xs sm:text-sm"
             >
               Trước
             </button>
 
             {getPaginationRange(currentPage, totalPages).map((p, idx) =>
               p === "..." ? (
-                <span key={idx} className="px-2">
+                <span key={idx} className="px-2 text-xs sm:text-sm text-gray-400">
                   …
                 </span>
               ) : (
                 <button
                   key={idx}
                   onClick={() => setCurrentPage(p)}
-                  className={`px-3 py-1 rounded ${
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${
                     currentPage === p
                       ? "bg-orange-500 text-white"
                       : "bg-gray-700 hover:bg-gray-600"
@@ -657,7 +785,7 @@ export default function OwnerChapters() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
+              className="px-2 sm:px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-xs sm:text-sm"
             >
               Sau
             </button>
