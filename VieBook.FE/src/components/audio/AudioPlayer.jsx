@@ -406,6 +406,21 @@ export default function AudioPlayer({ bookId, chapterId }) {
             }
             
             setHasLoadedSavedPosition(true);
+            
+            // Lưu ngay sau khi load saved position xong
+            setTimeout(async () => {
+              try {
+                const progressData = {
+                  bookId: parseInt(bookId),
+                  chapterId: currentChapterId,
+                  readingType: 'Listening',
+                  audioPosition: Math.floor(audio.currentTime)
+                };
+                await saveReadingProgress(progressData);
+              } catch (error) {
+                console.error("Error saving progress after loading saved position:", error);
+              }
+            }, 100);
           } catch (error) {
             console.error("Error loading saved position from metadata:", error);
             setHasLoadedSavedPosition(true);
@@ -489,54 +504,15 @@ export default function AudioPlayer({ bookId, chapterId }) {
     setHasLoadedSavedPosition(false);
   }, [currentChapter]);
 
+  // Lưu lịch sử nghe ngay khi vào và tự động lưu định kỳ
   useEffect(() => {
-    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
+    if (!bookId || chapters.length === 0) return;
     
-    if (saveProgressTimeoutRef.current) {
-      clearTimeout(saveProgressTimeoutRef.current);
-    }
-
-    const saveListeningHistory = async () => {
-      try {
-        const currentChapterId = chapters[currentChapter]?.chapterId;
-        if (!currentChapterId) return;
-
-        const listeningData = {
-          bookId: parseInt(bookId),
-          chapterId: currentChapterId,
-          readingType: 'Listening',
-          audioPosition: Math.floor(currentTime)
-        };
-        
-        await saveReadingProgress(listeningData);
-      } catch (error) {
-        console.error("Error saving listening history:", error);
-      }
-    };
-
-    saveProgressTimeoutRef.current = setTimeout(saveListeningHistory, 1000);
-
-    return () => {
-      if (saveProgressTimeoutRef.current) {
-        clearTimeout(saveProgressTimeoutRef.current);
-      }
-    };
-  }, [bookId, currentChapter, chapters, hasLoadedSavedPosition, currentTime]);
-
-  useEffect(() => {
-    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
-    
-    if (saveProgressTimeoutRef.current) {
-      clearTimeout(saveProgressTimeoutRef.current);
-    }
-
-    if (currentTime < 5) return;
+    const currentChapterId = chapters[currentChapter]?.chapterId;
+    if (!currentChapterId) return;
 
     const saveProgress = async () => {
       try {
-        const currentChapterId = chapters[currentChapter]?.chapterId;
-        if (!currentChapterId) return;
-
         const progressData = {
           bookId: parseInt(bookId),
           chapterId: currentChapterId,
@@ -546,18 +522,59 @@ export default function AudioPlayer({ bookId, chapterId }) {
         
         await saveReadingProgress(progressData);
       } catch (error) {
-        console.error("Error saving progress:", error);
+        console.error("Error saving listening progress:", error);
       }
     };
 
-    saveProgressTimeoutRef.current = setTimeout(saveProgress, 3000);
-    
+    // Lưu ngay khi đã load saved position xong (khi vào trang)
+    if (hasLoadedSavedPosition) {
+      saveProgress();
+    }
+
+    // Clear timeout cũ nếu có
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+    }
+
+    // Tự động lưu sau 500ms khi có thay đổi (nhanh hơn để không mất lịch sử khi thao tác nhanh)
+    saveProgressTimeoutRef.current = setTimeout(() => {
+      if (hasLoadedSavedPosition) {
+        saveProgress();
+      }
+    }, 500);
+
     return () => {
       if (saveProgressTimeoutRef.current) {
         clearTimeout(saveProgressTimeoutRef.current);
       }
     };
-  }, [currentTime, bookId, currentChapter, chapters, hasLoadedSavedPosition]);
+  }, [bookId, currentChapter, chapters, hasLoadedSavedPosition, currentTime]);
+
+  // Lưu ngay khi bắt đầu play
+  useEffect(() => {
+    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition || !isPlaying) return;
+    
+    const currentChapterId = chapters[currentChapter]?.chapterId;
+    if (!currentChapterId) return;
+
+    const saveProgress = async () => {
+      try {
+        const progressData = {
+          bookId: parseInt(bookId),
+          chapterId: currentChapterId,
+          readingType: 'Listening',
+          audioPosition: Math.floor(currentTime)
+        };
+        
+        await saveReadingProgress(progressData);
+      } catch (error) {
+        console.error("Error saving listening progress on play:", error);
+      }
+    };
+
+    // Lưu ngay khi bắt đầu play
+    saveProgress();
+  }, [isPlaying, bookId, currentChapter, chapters, hasLoadedSavedPosition]);
 
   if (loading) {
     return (
