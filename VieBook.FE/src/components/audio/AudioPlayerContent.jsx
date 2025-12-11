@@ -47,15 +47,15 @@ export default function AudioPlayerContent({
   const [showVoice, setShowVoice] = React.useState(false);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative">
-      <div className="max-w-2xl w-full text-center space-y-6 md:space-y-8">
+    <div className="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 relative overflow-y-auto">
+      <div className="max-w-2xl w-full text-center space-y-4 sm:space-y-6 md:space-y-8">
         {/* Book Cover - Always visible */}
-        <div className="relative mx-auto w-64 md:w-80 mb-6 md:mb-8">
+        <div className="relative mx-auto w-48 sm:w-64 md:w-80 mb-4 sm:mb-6 md:mb-8">
           {!book ? (
-            <div className="w-full h-64 md:h-80 rounded-lg shadow-2xl bg-gray-800 flex items-center justify-center">
+            <div className="w-full h-48 sm:h-64 md:h-80 rounded-lg shadow-2xl bg-gray-800 flex items-center justify-center">
               <div className="text-gray-500">
-                <div className="text-5xl mb-2">📖</div>
-                <div className="text-sm">Đang tải...</div>
+                <div className="text-4xl sm:text-5xl mb-2">📖</div>
+                <div className="text-xs sm:text-sm">Đang tải...</div>
               </div>
             </div>
           ) : (
@@ -79,19 +79,19 @@ export default function AudioPlayerContent({
         </div>
 
         {/* Current Chapter Info */}
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-400">Đang phát</p>
+        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700">
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <p className="text-xs sm:text-sm text-gray-400">Đang phát</p>
             {selectedVoice && (
-              <span className="text-xs bg-blue-600 px-2 py-1 rounded">🎤 {getVoiceDisplayName(selectedVoice)}</span>
+              <span className="text-xs bg-blue-600 px-2 py-1 rounded whitespace-nowrap">🎤 {getVoiceDisplayName(selectedVoice)}</span>
             )}
           </div>
           {chapters[currentChapter] && (
-            <p className="text-sm text-blue-400 mb-1">
+            <p className="text-xs sm:text-sm text-blue-400 mb-1">
               Chương {chapters[currentChapter]?.chapterNumber || currentChapter + 1} / {chapters[chapters.length - 1]?.chapterNumber || chapters.length}
             </p>
           )}
-          <p className="font-medium text-lg">{chapters[currentChapter]?.title || "Không có chương"}</p>
+          <p className="font-medium text-base sm:text-lg break-words">{chapters[currentChapter]?.title || "Không có chương"}</p>
         </div>
 
         {/* Progress Bar */}
@@ -117,13 +117,13 @@ export default function AudioPlayerContent({
         </div>
 
         {/* Main Controls */}
-        <div className="flex items-center justify-center space-x-4 md:space-x-6">
+        <div className="flex items-center justify-center space-x-2 sm:space-x-4 md:space-x-6 flex-wrap gap-2">
           <button 
             onClick={skipBackward} 
-            className="p-2 md:p-3 rounded-full hover:bg-gray-700 transition-colors"
+            className="p-2 sm:p-2 md:p-3 rounded-full hover:bg-gray-700 transition-colors"
             title="Tua lùi 10 giây"
           >
-            <RiReplay10Line className="text-xl md:text-2xl" />
+            <RiReplay10Line className="text-lg sm:text-xl md:text-2xl" />
           </button>
           <button
             onClick={() => {
@@ -135,17 +135,17 @@ export default function AudioPlayerContent({
             className="p-2 rounded-full hover:bg-gray-700 transition-colors"
             title="Chương trước"
           >
-            <RiSkipBackLine className="text-lg md:text-xl" />
+            <RiSkipBackLine className="text-base sm:text-lg md:text-xl" />
           </button>
           <button
             onClick={togglePlay}
-            className="p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors shadow-lg"
+            className="p-2.5 sm:p-3 md:p-4 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors shadow-lg"
             title={isPlaying ? "Tạm dừng" : "Phát"}
           >
             {isPlaying ? (
-              <RiPauseLine className="text-2xl md:text-3xl" />
+              <RiPauseLine className="text-xl sm:text-2xl md:text-3xl" />
             ) : (
-              <RiPlayLine className="text-2xl md:text-3xl" />
+              <RiPlayLine className="text-xl sm:text-2xl md:text-3xl" />
             )}
           </button>
           <button
@@ -158,27 +158,27 @@ export default function AudioPlayerContent({
             className="p-2 rounded-full hover:bg-gray-700 transition-colors"
             title="Chương tiếp theo"
           >
-            <RiSkipForwardLine className="text-lg md:text-xl" />
+            <RiSkipForwardLine className="text-base sm:text-lg md:text-xl" />
           </button>
           <button 
             onClick={skipForward} 
-            className="p-2 md:p-3 rounded-full hover:bg-gray-700 transition-colors"
+            className="p-2 sm:p-2 md:p-3 rounded-full hover:bg-gray-700 transition-colors"
             title="Tua tới 10 giây"
           >
-            <RiForward10Line className="text-xl md:text-2xl" />
+            <RiForward10Line className="text-lg sm:text-xl md:text-2xl" />
           </button>
         </div>
 
         {/* Secondary Controls */}
-        <div className="flex items-center justify-center flex-wrap gap-3 md:gap-6 px-4">
+        <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-3 md:gap-6 px-2 sm:px-4">
           {/* Speed */}
           <div className="relative">
             <button
               onClick={() => setShowSpeed(!showSpeed)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors shadow-sm"
+              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs sm:text-sm transition-colors shadow-sm"
               title="Tốc độ phát"
             >
-              <RiSpeedLine className="text-base" /> 
+              <RiSpeedLine className="text-sm sm:text-base" /> 
               <span className="font-medium">{playbackSpeed}x</span>
             </button>
             {showSpeed && (
@@ -207,11 +207,11 @@ export default function AudioPlayerContent({
           <div className="relative">
             <button
               onClick={() => setShowVoice(!showVoice)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors shadow-sm"
+              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs sm:text-sm transition-colors shadow-sm"
               title="Chọn giọng đọc cho chương này"
             >
-              <RiVoiceprintLine className="text-base" /> 
-              <span className="font-medium">{selectedVoice ? getVoiceDisplayName(selectedVoice) : "Giọng đọc"}</span>
+              <RiVoiceprintLine className="text-sm sm:text-base" /> 
+              <span className="font-medium truncate max-w-[100px] sm:max-w-none">{selectedVoice ? getVoiceDisplayName(selectedVoice) : "Giọng đọc"}</span>
             </button>
             {showVoice && availableVoices && availableVoices.length > 0 && (
               <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 border border-gray-700 rounded-lg p-2 shadow-xl z-10 w-48">
