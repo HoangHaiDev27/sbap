@@ -828,81 +828,13 @@ Qua lăng kính này, ta có thể hình thành một ý thức mới về giá 
 “Chữa Lành Những Sang Chấn Tuổi Thơ” là cuốn sách giúp bạn khám phá những tác động của mất mát đau thương, ngược đãi, lạm dụng tình dục, phân biệt chủng tộc, kỳ thị nữ giới, bạo lực gia đình, bạo lực cộng đồng, các vấn đề bản dạng giới và tình dục, án oan... để từ đó giúp ta hiểu thêm về sức khỏe, quá trình chữa lành cũng như khả năng phục hồi và trưởng thành sau sang chấn.
 
 Và câu hỏi cơ bản "Điều gì đã xảy ra?" có thể giúp mỗi chúng ta hiểu thêm một chút về cách mà những trải nghiệm – cả tốt lẫn xấu – định hình con người mình. Khi chia sẻ những câu chuyện và khái niệm khoa học này, tác giả hy vọng mỗi người đọc, theo từng cách riêng, sẽ có được những chiêm nghiệm riêng để từ đó có thể sống tốt hơn, trọn vẹn hơn.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935278607137.jpg', '9780000000061', 'VIE', 'Approved', 85, N'Bruce D. Perry'),
-  (@OwnerId, N'Mày Vẫn Ổn, Đừng Lo Lắng! - Một Cuốn Sách Về OCD Bằng Chữ Và Tranh',   N'Mày Vẫn Ổn, Đừng Lo Lắng! - Một Cuốn Sách Về OCD Bằng Chữ Và Tranh
-
-Jason Adam Katzenstein – họa sĩ vẽ tranh cho Tạp chí New Yorker cố gắng sống một cuộc đời bình thường nhưng lại liên tục bị bộ não hay lo lắng thái quá quấy nhiễu. Những việc đơn giản như bắt tay hay dùng chung một ly nước với anh cũng trở thành thảm họa. Jason mắc chứng rối loạn ám ảnh cưỡng chế (OCD) – một căn bệnh tinh thần buộc anh liên tục thực hiện các “nghi thức” như kiểm tra, rửa tay và rửa sạch đồ vật để bảo vệ mình khỏi những nguy hiểm không tồn tại.
-
-Anh cố hết sức che giấu chứng ám ảnh đáng xấu hổ này, đôi lúc cũng hiệu quả. Rồi anh bắt đầu lo lắng về nụ hôn đầu đời, say mê công việc vẽ tranh hoạt hình. Suốt thời gian đó, một nửa năng lượng trong anh dành để sống cuộc sống bình thường, nửa còn lại “tận hiến” với những “nghi thức” ngày càng lố bịch mà chính anh đã duy trì để giữ bản thân an ổn.
-
-Thế rồi, an ổn cũng mất.
-
-Rơi vào tình trạng tồi tề nhất, Jason quyết định làm điều anh luôn được khuyên nhủ: tham vấn trị liệu và dùng thuốc. Chúng từng khiến anh hoảng sợ, và vẫn tiếp tục làm anh phát khiếp, nhưng chính chúng cũng lại giúp anh hồi phục.
-
-Mày Vẫn Ổn, Đừng Lo Lắng! là cuốn tiểu thuyết hình ảnh về những câu chuyện tự hại Jason kể với chính mình, lặp đi lặp lại, cho tới khi chúng bắt đầu trở thành sự thật. Trong những bức tranh siêu thực, dí dỏm và đầy tính giãi bày này, Jason đã chứng minh OCD vẫn rất hài hước dù nhìn bề ngoài nó đang dần dần hủy hoại cuộc đời anh.
-
-Mày Vẫn Ổn, Đừng Lo Lắng! chân thành, cần thiết, đã hé lộ sự phức tạp trong não bộ con người, đồng thời cho thấy cách mà sức sáng tạo và tình bạn đã neo giữ chúng ta. Bạn không cần phải mắc OCD mới yêu thích cuốn sách này đâu. Bạn có thể tận hưởng niềm vui, sự u tối và sự thật trong đó. Đây là một cuốn sách phải-đọc dành cho những ai đang phân vân liệu mình có nhìn thế giới hơi khác mọi người không.',       'https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-1-m_y-v_n-_n-_ng-lo-l_ng-600.jpg', '9780000000064', 'EN', 'Approved', 85, N'Jason Adam Katzenstein'),
-  (@OwnerId, N'No Bad Parts - Không Có Phần Nào Xấu',   N'Có phải chỉ có một “bạn”?
-
-Chúng ta vẫn tin rằng mình chỉ có một bản dạng duy nhất và cảm thấy sợ hãi hoặc xấu hổ khi không thể kiểm soát được những tiếng nói bên trong không phù hợp với hình mẫu lý tưởng mà ta nghĩ mình nên trở thành.
-
-Tuy nhiên, nghiên cứu của Tiến sĩ Richard Schwartz đang thách thức lý thuyết “tâm trí đơn nguyên” này. Ông cho rằng: “Tất cả chúng ta đều được sinh ra với nhiều phần tâm trí phụ. Những phần này không phải là tưởng tượng hay mang tính biểu tượng. Chúng là những cá nhân tồn tại như một gia đình nội tâm trong chúng ta, và chìa khóa để khỏe mạnh và hạnh phúc là tôn trọng, thấu hiểu và yêu thương mọi phần trong con người bạn.”
-
-Với No Bad Parts, tác giả Richard Schwartz giới thiệu liệu pháp Hệ thống gia đình nội tâm (IFS) và lý giải tại sao nó lại có hiệu quả đến vậy trong các lĩnh vực như phục hồi sau sang chấn, trị liệu chứng nghiện và điều trị trầm cảm – và những hiểu biết mới mẻ về ý thức này có thể sẽ thay đổi hoàn toàn cuộc sống của chúng ta.
-
-Trong cuốn sách này, bạn sẽ khám phá:
-
-- Cuộc cách mạng IFS - việc tôn trọng và giao tiếp với các phần thay đổi cách tiếp cận sức khỏe tinh thần của chúng ta như thế nào
-
-- Đảo ngược các giả định về văn hóa, khoa học và tinh thần vốn củng cố mô hình tâm trí đơn nguyên lỗi thời
-
-- Cái tôi, kẻ chỉ trích nội tâm, kẻ phá hoại - biến những phần ác ý này thành những đồng minh hùng mạnh
-
-- Gánh nặng - tại sao các phần của chúng ta trở nên méo mó và mắc kẹt trong những tổn thương thời thơ ấu và niềm tin văn hóa
-
-- Cách IFS thể hiện tính nhân văn của con người bằng cách tiết lộ rằng không có phần nào xấu
-
-- Bản ngã - khám phá bản chất tốt đẹp, giàu lòng trắc ẩn, khôn ngoan của bạn, đó là nguồn gốc của sự chữa lành và hòa hợp
-
-- Các bài tập để lập bản đồ các phần của bạn, tiếp cận Bản ngã, làm việc với nhà bảo vệ đầy thách thức, xác định các yếu tố kích hoạt của từng phần, v.v..',       'https://cdn1.fahasa.com/media/catalog/product/n/o/no-bad-parts_khong-co-phan-nao-xau--bia-1.jpg', '9780000000059', 'VIE', 'Approved', 85, N'Richard Schwartz'),
-  (@OwnerId, N'Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt?',   N'Trên con đường trưởng thành, ta hay tự kìm nén cảm xúc trong lòng và cho rằng đó là một hành động khôn ngoan. Nhưng, thực tế là bạn đã bắt đầu trượt dài vào “vũng lầy” phủ định bản thân, luôn chỉ sợ mất lòng người khác mà sau cùng lại đánh mất bản ngã của mình. 
-
-Từ quan điểm tâm lý học, chúng ta luôn cảm thấy mình không đủ tốt không phải vì chúng ta thực sự xấu, mà là do sự thiên lệch trong nhận thức về bản thân, khiến ta luôn thấy mình không xứng đáng.
-
-Với 9 câu chuyện có thật được kể lại qua giọng văn ấm áp của tác giả, từng khía cạnh tâm lý bất-thường-một-cách-bình-thường được hé mở, những cảm xúc chân thật không còn cần phải giấu giếm, những áp lực vô hình được phơi bày… Sự rắc rối trong tâm lý không chỉ được phản ánh qua các nhân vật chính, mà ngay cả những nhân vật khác khi xuất hiện, có lẽ bạn cũng sẽ nhìn thấy hình bóng bản thân trong đó.
-
-Từng phân tích tuần tự, phương pháp hợp lý và sự chân thành của tác giả muốn gửi gắm đến chúng ta rằng: Thay vì chỉ biết dựa vào những so sánh khập khiễng, hãy học cách đối diện với cảm xúc tiêu cực, dám BỊ GHÉT, dám phá vỡ khuôn khổ do người khác đặt ra, dám làm trái những quy tắc khiến chúng ta đau khổ và dám TRÂN TRỌNG BẢN THÂN MÌNH TRƯỚC NHẤT.
-
-Chỉ cần đừng buông bỏ chính mình, trong màn sương mù giăng lối, ta vẫn sẽ tìm được đường hướng tới Mặt trời. ',       'hhttps://cdn1.fahasa.com/media/catalog/product/b/_/b_a1_t_i-sao-ch_ng-ta-lu_n-c_m-th_y-m_nh-kh_ng-_-t_t.jpg', '9780000000080', 'VIE', 'Approved', 85, N'Lý Tuyết'),
-  (@OwnerId, N'Học Thương Mình Giữa Muôn Vàn Vụn Vỡ - 1/5 Giây Để Rung Động Với Chính Mình',   N'Dành tặng bạn, người tự ti với nỗi lo không đủ tốt
-
-Cuốn sách tổng hợp 60 bài học chăm sóc sức khỏe tinh thần, giúp bạn thêm tin yêu bản thân
-
-Cùng bạn đi qua những vụn vỡ để tìm thấy dáng vẻ rực rỡ nhất của chính mình
-
-—
-
-NẾU CẦN 1/5 GIÂY ĐỂ RUNG ĐỘNG VỚI MỘT NGƯỜI, TÔI SẼ CHỌN CHÍNH MÌNH!
-
-“Chúng ta chỉ mất 1/5 giây để phải lòng 1 người. Người ta thường gọi đó là tình yêu sét đánh. Vậy tại sao chúng ta không thể dễ dàng yêu thương bản thân như cách chúng ta dễ dàng yêu một ai khác? Tại sao yêu thương bản thân lại cần nhiều điều kiện đến vậy? Sao ta không thể dành 1/5 giây để rung động với chính mình?”
-
-Bởi thế giới của người lớn là thế giới của định kiến, của quy chuẩn về đạo đức, giới tính, của những “nhãn mác” về thành công, hạnh phúc, của những tình yêu thương có điều kiện... Chúng ta đã lớn lên trong thế giới ấy với một trái tim đầy sợ hãi và nghi hoặc về chính mình. Những “vết thương”, những va vấp trên hành trình học cách trưởng thành khiến chúng ta dần tự ti, sợ rằng mình không đủ tốt, dần khép mình và chối bỏ những cảm xúc sâu thẳm bên trong. Thật ra, dù chúng ta có phớt lờ những gì mình cảm thấy mỗi khi tan vỡ, “đứa trẻ bên trong” ta vẫn luôn “thắt” lại, nhắc nhở rằng “đứa trẻ” ấy cũng cần được yêu thương và chữa lành.
-
-Thông qua 60 câu chuyện và bài tập thực hành nâng cao sức khỏe tinh thần trong cuốn sách “1/5 giây để rung động với chính mình?” - tác giả, thạc sĩ giáo dục Thanh Alice muốn nhắn nhủ tới bạn rằng:
-
-- Nếu bạn quá bận tâm đến sự đánh giá, ghi nhận, yêu thương của người khác… thì bạn không hề đơn độc đâu. Bởi nỗi sợ “không đủ tốt” là bản năng của loài người, nhưng không phải không thể vượt qua!
-
-- Chạm vào những tổn thương từ lâu không dám đối diện là điều ai cũng phải trải qua để sống thật với chính mình, để biết cách ôm lấy bản thân và có một nội tâm vững vàng.
-
-Cuốn sách "1/5 giây để rung động với chính mình - Học thương mình giữa muôn vàn vụn vỡ" sẽ cổ vũ bạn yêu thương bản thân để trở thành phiên bản rực rỡ và trọn vẹn.',       'https://cdn1.fahasa.com/media/catalog/product/b/_/b_a_45.jpg', '9780000000040', 'VIE', 'Approved', 85, N'Thanh Alice'),
   (@OwnerId, N'Khi Mọi Điều Không Như Ý',   N'KHI MỌI ĐIỀU KHÔNG NHƯ Ý - LIỆU BÌNH YÊN CÓ TỒN TẠI GIỮA GIÔNG BÃO?
 
-Có những ngày, mọi thứ đều chống lại ta - công việc bế tắc, các mối quan hệ rạn nứt, lòng trống rỗng đến nghẹt thở. Ta tự hỏi: "Bao giờ mọi thứ mới ổn?" Nhưng liệu bình yên có đến từ việc thay đổi hoàn cảnh, hay từ cách ta nhìn nhận nó? Hae Min không cho ta một lối thoát thần kỳ, mà là những lời thì thầm ấm áp, giúp ta chậm lại, thấu hiểu chính mình và tìm thấy sự nhẹ nhõm ngay cả khi mọi điều không như ý.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935235243163.jpg', '9780000000081', 'VIE', 'Approved', 85, N'Hae Min'),
-  (@OwnerId, N'C# for Beginners',   N'Introductory C# programming.',       'https://m.media-amazon.com/images/I/71KX3DYaCiL._UF894,1000_QL80_.jpg', '97800000000113', 'VIE', 'Approved', 85, N'Microsoft');
+Có những ngày, mọi thứ đều chống lại ta - công việc bế tắc, các mối quan hệ rạn nứt, lòng trống rỗng đến nghẹt thở. Ta tự hỏi: "Bao giờ mọi thứ mới ổn?" Nhưng liệu bình yên có đến từ việc thay đổi hoàn cảnh, hay từ cách ta nhìn nhận nó? Hae Min không cho ta một lối thoát thần kỳ, mà là những lời thì thầm ấm áp, giúp ta chậm lại, thấu hiểu chính mình và tìm thấy sự nhẹ nhõm ngay cả khi mọi điều không như ý.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935235243163.jpg', '9780000000081', 'VIE', 'Approved', 85, N'Hae Min');
 END
 
 
 DECLARE @Book1Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'The Art of Reading');
-DECLARE @Book2Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'C# for Beginners');
 
 -- Declare thêm id cho các sách đã insert ở trên (phục vụ tham chiếu về sau)
 DECLARE @Book_MienBac INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Miền Bắc - Một Thời Chiến Tranh Một Thời Hòa Bình');
@@ -924,11 +856,12 @@ DECLARE @Book_BanDuCaCuoiCung INT = (SELECT BookId FROM dbo.Books WHERE Title=N'
 DECLARE @Book_HuyDongVon INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Huy Động Vốn: Khó Mà Dễ! (Tái Bản 2018)');
 DECLARE @Book_TuDuyLogic INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tư Duy Logic (Tái Bản 2021)');
 DECLARE @Book_ChuaLanhSangChan INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Chữa Lành Những Sang Chấn Tuổi Thơ');
-DECLARE @Book_MayVanOn INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Mày Vẫn Ổn, Đừng Lo Lắng! - Một Cuốn Sách Về OCD Bằng Chữ Và Tranh');
-DECLARE @Book_NoBadParts INT = (SELECT BookId FROM dbo.Books WHERE Title=N'No Bad Parts - Không Có Phần Nào Xấu');
-DECLARE @Book_KhongDuTot INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt?');
-DECLARE @Book_HocThuongMinh INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Học Thương Mình Giữa Muôn Vàn Vụn Vỡ - 1/5 Giây Để Rung Động Với Chính Mình');
-DECLARE @Book_KhiMoiDieuKhongNhuY INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Khi Mọi Điều Không Như Ý');
+-- ĐÃ XÓA: 5 sách cuối cùng trong INSERT đầu tiên (sách thứ 21-25):
+-- DECLARE @Book_MayVanOn INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Mày Vẫn Ổn, Đừng Lo Lắng! - Một Cuốn Sách Về OCD Bằng Chữ Và Tranh');
+-- DECLARE @Book_NoBadParts INT = (SELECT BookId FROM dbo.Books WHERE Title=N'No Bad Parts - Không Có Phần Nào Xấu');
+-- DECLARE @Book_KhongDuTot INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt?');
+-- DECLARE @Book_HocThuongMinh INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Học Thương Mình Giữa Muôn Vàn Vụn Vỡ - 1/5 Giây Để Rung Động Với Chính Mình');
+-- DECLARE @Book_KhiMoiDieuKhongNhuY INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Khi Mọi Điều Không Như Ý');
 
 -- Chapters (guard null)
 IF @Book1Id IS NOT NULL
@@ -939,24 +872,12 @@ BEGIN
     (@Book1Id, N'HOW I- LEARNED TO READ', 40, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764733975/bookChapters/mwcgogvqgepukcqgbxnk.txt', 10, '', 0, 12, 'Active'),
     (@Book1Id, N'THE FIRST AWAKENING OF THE VOICE',  30, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764734058/bookChapters/rhukhyn1dxynged6bv6c.txt', 11, '', 0, 12, 'Active');
 END
-IF @Book2Id IS NOT NULL
-BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-  VALUES
-    (@Book2Id, N'Hello C#',             45, 'https://cdn/vb/b2/ch1.pdf', 14, 'https://cdn/vb/b2/ch1.mp3', 660, 15, 'Active'),
-    (@Book2Id, N'Variables & Types',    40, 'https://cdn/vb/b2/ch2.pdf', 16, 'https://cdn/vb/b2/ch2.mp3', 780, 15, 'Active');
-END
-
 DECLARE @B1C1 INT = (SELECT TOP 1 ChapterId FROM dbo.Chapters WHERE BookId=@Book1Id ORDER BY ChapterId);
-DECLARE @B2C1 INT = (SELECT TOP 1 ChapterId FROM dbo.Chapters WHERE BookId=@Book2Id ORDER BY ChapterId);
 
 -- Staff approves (guard null)
 IF @Book1Id IS NOT NULL
   INSERT INTO dbo.BookApprovals(BookId, StaffId, Action, Reason)
   VALUES (@Book1Id, @StaffId, 'Approve', NULL);
-IF @Book2Id IS NOT NULL
-  INSERT INTO dbo.BookApprovals(BookId, StaffId, Action, Reason)
-  VALUES (@Book2Id, @StaffId, 'Approve', NULL);
 
 
 
@@ -967,9 +888,6 @@ INSERT INTO dbo.Promotions(OwnerId, PromotionName, Description, DiscountType, Di
 VALUES (@OwnerId, N'Back to School', N'20% off selected programming chapters', 'Percent', 20.00,
         DATEADD(DAY,-3,SYSUTCDATETIME()), DATEADD(DAY,30,SYSUTCDATETIME()), 1);
 
-IF @Book2Id IS NOT NULL
-  INSERT INTO dbo.PromotionApplications(PromotionId, BookId)
-  SELECT TOP 1 PromotionId, @Book2Id FROM dbo.Promotions ORDER BY PromotionId DESC;
 
 
 
@@ -983,12 +901,6 @@ VALUES
   (@AliceId, 'VNPay', 'TXN-A-0001', 20000, 20000, 'Succeeded', SYSUTCDATETIME());
 
 -- 2. Alice dùng xu để mua 2 chương (guard null)
-IF @B1C1 IS NOT NULL
-  INSERT INTO dbo.OrderItems(CustomerId, ChapterId, UnitPrice, CashSpent, PaidAt, OrderType)
-  VALUES (@AliceId, @B1C1, 12000, 12000, SYSUTCDATETIME(), 'BuyChapter');
-IF @B2C1 IS NOT NULL
-  INSERT INTO dbo.OrderItems(CustomerId, ChapterId, UnitPrice, CashSpent, PaidAt, OrderType)
-  VALUES (@AliceId, @B2C1, 15000, 15000, SYSUTCDATETIME(), 'BuyChapter');
 
 -- 3. Chủ sách (Owner) yêu cầu rút xu
 INSERT INTO dbo.PaymentRequests(UserId, RequestedCoin, Status, RequestDate, AcceptDate)
@@ -1005,8 +917,7 @@ VALUES
 -- Wishlists (guard null)
 IF @Book1Id IS NOT NULL
   INSERT INTO dbo.Wishlists(UserId, BookId) VALUES (@AliceId, @Book1Id);
-IF @Book2Id IS NOT NULL
-  INSERT INTO dbo.Wishlists(UserId, BookId) VALUES (@BobId, @Book2Id);
+-- ĐÃ XÓA: @Book2Id (C# for Beginners) đã bị xóa
 
 -- Bookmarks (guard null)
 IF @Book1Id IS NOT NULL AND @B1C1 IS NOT NULL
@@ -1019,14 +930,7 @@ IF @Book1Id IS NOT NULL
   VALUES (@Book1Id, @AliceId, 5, N'Rất hữu ích để xây thói quen đọc!');
 
 -- Seed a demo book with multiple reviews for pagination/filter demo
-DECLARE @DemoBookId INT;
-IF NOT EXISTS (SELECT 1 FROM dbo.Books WHERE Title=N'Demo Feedback Book')
-BEGIN
-  INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView, Author)
-  VALUES (@OwnerId, N'Demo Feedback Book', N'Cuốn sách dùng để demo phân trang và lọc đánh giá.',
-    'https://picsum.photos/seed/demo-book/400/600', '9780000000999', 'VIE', 'Approved', 10, N'Demo Author');
-END
-SET @DemoBookId = (SELECT BookId FROM dbo.Books WHERE Title=N'Demo Feedback Book');
+-- ĐÃ XÓA: Demo Feedback Book (sách thứ 22)
 
 
 
@@ -1058,48 +962,11 @@ VALUES
 /* =========================================================
    Thêm sách & chapters demo (có audio và không audio)
    ========================================================= */
-
--- Thêm 4 sách mới
-INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView, Author)
-VALUES
-  (@OwnerId, N'Learning SQL', N'Practical guide to SQL database queries.', 
-   'https://m.media-amazon.com/images/I/81xkjj+FAfL._UF1000,1000_QL80_.jpg', '9780000000035', 'EN', 'Approved', 60, N'Alan Beaulieu'),
-  (@OwnerId, N'Tiếng Việt Thực Hành', N'Bài tập và ví dụ tiếng Việt.', 
-   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpPc3nRmkLl5drpPIsG0j48orbJooj8ZpfrA&s', '97800000000422', 'VN', 'Approved', 40, N'Nguyễn Minh Thuyết'),
-  (@OwnerId, N'The Power of Habit', N'Classic guide to building good habits.', 
-   'https://0.academia-photos.com/attachment_thumbnails/42458634/mini_magick20190217-29727-3ejvf5.png?1550449652', '97800000000590', 'EN', 'Approved', 150, N'Charles Duhigg'),
-  (@OwnerId, N'Mindfulness Everyday', N'Practical exercises for daily mindfulness.', 
-   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkLK8veL1SrE-55ozEKV3659bhvFze7nt0Gw&s', '9780000000066', 'EN', 'Approved', 95, N'Thich Nhat Hanh');
-
-DECLARE @Book3Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Learning SQL');
-DECLARE @Book4Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tiếng Việt Thực Hành');
-DECLARE @Book5Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'The Power of Habit');
-DECLARE @Book6Id INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Mindfulness Everyday');
-
-
--- Chapters cho "Learning SQL" (có audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-VALUES
-  (@Book3Id, N'Introduction to SQL', 20, 'https://cdn/vb/b3/ch1.pdf', 18, 'https://cdn/vb/b3/ch1.mp3', 800, 20, 'Active'),
-  (@Book3Id, N'Joins and Queries',   15, 'https://cdn/vb/b3/ch2.pdf', 22, 'https://cdn/vb/b3/ch2.mp3', 900, 22, 'Active');
-
--- Chapters cho "Tiếng Việt Thực Hành" (không audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-VALUES
-  (@Book4Id, N'Chính tả và Ngữ pháp', 25, 'https://cdn/vb/b4/ch1.pdf', 30, NULL, NULL, NULL, 'Active'),
-  (@Book4Id, N'Từ vựng nâng cao',     18, 'https://cdn/vb/b4/ch2.pdf', 28, NULL, NULL, NULL, 'Active');
-
--- Chapters cho "The Power of Habit" (có audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-VALUES
-  (@Book5Id, N'Keystone Habits', 60, 'https://cdn/vb/b5/ch1.pdf', 20, 'https://cdn/vb/b5/ch1.mp3', 1000, 25, 'Active'),
-  (@Book5Id, N'Small Wins',      45, 'https://cdn/vb/b5/ch2.pdf', 18, 'https://cdn/vb/b5/ch2.mp3', 880, 22, 'Active');
-
--- Chapters cho "Mindfulness Everyday" (không audio)
-INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-VALUES
-  (@Book6Id, N'Breathing Awareness', 40, 'https://cdn/vb/b6/ch1.pdf', 15, NULL, NULL, NULL, 'Active'),
-  (@Book6Id, N'Walking Meditation',  35, 'https://cdn/vb/b6/ch2.pdf', 16, NULL, NULL, NULL, 'Active');
+-- ĐÃ XÓA: 4 sách sau (sách thứ 23-26):
+-- - Learning SQL
+-- - Tiếng Việt Thực Hành
+-- - The Power of Habit
+-- - Mindfulness Everyday
 
 
 -- Notifications
@@ -1303,12 +1170,13 @@ BEGIN
 END
 
 -- Nhóm Self-Help
+-- ĐÃ XÓA: Các sách Self-Help từ thứ 21 trở đi đã bị xóa
 DECLARE @BooksSelfHelp TABLE(BookId INT);
-INSERT INTO @BooksSelfHelp(BookId)
-SELECT v FROM (VALUES
-  (@Book_MayVanOn),(@Book_NoBadParts),(@Book_KhongDuTot),(@Book_HocThuongMinh),(@Book_KhiMoiDieuKhongNhuY)
-) AS s(v)
-WHERE v IS NOT NULL;
+-- INSERT INTO @BooksSelfHelp(BookId)
+-- SELECT v FROM (VALUES
+--   (@Book_MayVanOn),(@Book_NoBadParts),(@Book_KhongDuTot),(@Book_HocThuongMinh),(@Book_KhiMoiDieuKhongNhuY)
+-- ) AS s(v)
+-- WHERE v IS NOT NULL;
 
 -- Map Self-Help
 IF @CatSelfHelp IS NOT NULL
@@ -1573,68 +1441,10 @@ DECLARE @CatAudio INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Khoa
 DECLARE @CatHistory INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Lịch sử' AND Type='Genre');
 DECLARE @CatLiterature INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Văn học' AND Type='Genre');
 
--- Thêm 3 sách minh họa từ HomeManager (nếu chưa tồn tại)
-IF NOT EXISTS (SELECT 1 FROM dbo.Books WHERE Title=N'Cặp Đôi Hoàn Cảnh')
-BEGIN
-  INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView, Author)
-  VALUES
-    (@OwnerId, N'Cặp Đôi Hoàn Cảnh', N'Sách nói minh họa hiển thị trên trang chủ.',
-     'https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/674/webp_4619250472f4de917b13d976c5f699daaa9f80b0.webp',
-     '9780000099001', 'VIE', 'Approved', 10, N'Tác giả 1');
-END
-IF NOT EXISTS (SELECT 1 FROM dbo.Books WHERE Title=N'Sử Ký III - Thế Gia')
-BEGIN
-  INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView, Author)
-  VALUES
-    (@OwnerId, N'Sử Ký III - Thế Gia', N'Sách lịch sử hiển thị trên trang chủ.',
-     'https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/427775/webp_2487324742bb2e88.webp',
-     '9780000099002', 'VIE', 'Approved', 10, N'Tác giả 2');
-END
-IF NOT EXISTS (SELECT 1 FROM dbo.Books WHERE Title=N'Truyện Ngắn Thạch Lam 1')
-BEGIN
-  INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView, Author)
-  VALUES
-    (@OwnerId, N'Truyện Ngắn Thạch Lam 1', N'Tuyển tập truyện ngắn văn học Việt Nam.',
-     'https://voiz-prod.s3-wewe.cloud.cmctelecom.vn/uploads/avatar/filename/1935/webp_791488618ba8b70aa2082505031c3e1f922eba1d.webp',
-     '9780000099003', 'VIE', 'Approved', 10, N'Thạch Lam');
-END
-
-DECLARE @BHS1 INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Cặp Đôi Hoàn Cảnh');
-DECLARE @BHS2 INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Sử Ký III - Thế Gia');
-DECLARE @BHS3 INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Truyện Ngắn Thạch Lam 1');
-
--- Map categories (idempotent)
-IF NOT EXISTS (SELECT 1 FROM dbo.BookCategories WHERE BookId=@BHS1 AND CategoryId=@CatAudio)
-  INSERT INTO dbo.BookCategories(BookId, CategoryId) VALUES (@BHS1, @CatAudio);
-IF NOT EXISTS (SELECT 1 FROM dbo.BookCategories WHERE BookId=@BHS2 AND CategoryId=@CatHistory)
-  INSERT INTO dbo.BookCategories(BookId, CategoryId) VALUES (@BHS2, @CatHistory);
-IF NOT EXISTS (SELECT 1 FROM dbo.BookCategories WHERE BookId=@BHS3 AND CategoryId=@CatLiterature)
-  INSERT INTO dbo.BookCategories(BookId, CategoryId) VALUES (@BHS3, @CatLiterature);
-
--- Thêm chapters mẫu cho mỗi sách nếu chưa có
-IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@BHS1)
-BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-  VALUES
-    (@BHS1, N'Chương 1: Gặp gỡ', 5, 'https://cdn/vb/hm1/ch1.pdf', 12, 'https://cdn/vb/hm1/ch1.mp3', 600, 10, 'Active'),
-    (@BHS1, N'Chương 2: Hoàn cảnh', 3, 'https://cdn/vb/hm1/ch2.pdf', 10, 'https://cdn/vb/hm1/ch2.mp3', 540, 10, 'Active');
-END
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@BHS2)
-BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-  VALUES
-    (@BHS2, N'Chương 1: Thế gia mở đầu', 5, 'https://cdn/vb/hm2/ch1.pdf', 18, 'https://cdn/vb/hm2/ch1.mp3', 900, 12, 'Active'),
-    (@BHS2, N'Chương 2: Sự kiện tiêu biểu', 4, 'https://cdn/vb/hm2/ch2.pdf', 16, 'https://cdn/vb/hm2/ch2.mp3', 840, 12, 'Active');
-END
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Chapters WHERE BookId=@BHS3)
-BEGIN
-  INSERT INTO dbo.Chapters(BookId, ChapterTitle, ChapterView, ChapterSoftUrl, TotalPage, ChapterAudioUrl, DurationSec, PriceSoft, Status)
-  VALUES
-    (@BHS3, N'Chương 1: Hai đứa trẻ', 6, 'https://cdn/vb/hm3/ch1.pdf', 14, NULL, NULL, NULL, 'Active'),
-    (@BHS3, N'Chương 2: Dưới bóng hoàng lan', 4, 'https://cdn/vb/hm3/ch2.pdf', 12, NULL, NULL, NULL, 'Active');
-END
+-- ĐÃ XÓA: 3 sách minh họa từ HomeManager (sách thứ 27-29):
+-- - Cặp Đôi Hoàn Cảnh
+-- - Sử Ký III - Thế Gia
+-- - Truyện Ngắn Thạch Lam 1
 
 -- Thêm Users
 INSERT INTO Users (Email, PasswordHash, Status, CreatedAt, LastLoginAt, Wallet)
@@ -1818,63 +1628,6 @@ INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
 SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Chữa Lành Những Sang Chấn%');
 INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
 
--- 21. Mày Vẫn Ổn, Đừng Lo Lắng! → Tâm lý học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Mày Vẫn Ổn%');
-INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
-
--- 22. No Bad Parts - Không Có Phần Nào Xấu → Tâm lý học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%No Bad Parts%');
-INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
-
--- 23. Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt? → Tâm lý học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
-
--- 24. Học Thương Mình Giữa Muôn Vàn Vụn Vỡ - 1/5 Giây Để Rung Động Với Chính Mình → Tâm lý học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Học Thương Mình Giữa Muôn Vàn Vụn Vỡ%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
-
--- 25. Khi Mọi Điều Không Như Ý → Tâm lý học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Khi Mọi Điều Không Như Ý%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
-
--- 26. C# for Beginners → Công nghệ
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%C# for Beginners%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
-
--- 27. Demo Feedback Book → Giáo dục
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Demo Feedback Book%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
-
--- 28. Learning SQL → Công nghệ
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Learning SQL%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 5);
-
--- 29. Tiếng Việt Thực Hành → Giáo dục
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Tiếng Việt Thực Hành%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 8);
-
--- 30. The Power of Habit → Tâm lý học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%The Power of Habit%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
-
--- 31. Mindfulness Everyday → Tâm lý học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Mindfulness Everyday%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 7);
-
--- 32. Cặp Đôi Hoàn Cảnh → Tình cảm
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Cặp Đôi Hoàn Cảnh%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 9);
-
--- 33. Sử Ký III - Thế Gia → Lịch sử
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Sử Ký III - Thế Gia%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 6);
-
--- 34. Truyện Ngắn Thạch Lam 1 → Văn học
-SET @BookId = (SELECT BookId FROM dbo.Books WHERE Title LIKE N'%Truyện Ngắn Thạch Lam 1%');
-IF @BookId IS NOT NULL INSERT INTO dbo.BookCategories VALUES (@BookId, 10);
-
-
 -- Thêm status cho sách để check 
 ALTER TABLE dbo.Books
 ADD UploaderType VARCHAR(20) NOT NULL DEFAULT('Owner'),
@@ -1892,7 +1645,7 @@ CREATE TABLE ChatbaseHistories (
     Sender NVARCHAR(20) NOT NULL, -- "user" hoặc "bot"
     CreatedAt DATETIME DEFAULT GETDATE()
 );
-DECLARE @Book99Id INT = 32;
+DECLARE @Book99Id INT = 12;
 -- thêm promotion
 INSERT INTO dbo.Promotions(OwnerId, PromotionName, Description, DiscountType, DiscountValue, StartAt, EndAt, IsActive)
 VALUES (3, N'Review lần 3', N'50% cho sách đợt review 3', 'Percent', 50.00,
@@ -1905,36 +1658,36 @@ IF @Book99Id IS NOT NULL
 --INSERT mẫu cho bảng ChapterAudios
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (64, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743862/chapterAudios/fyf3ekncbb13eua1etzc.mp3', 600, 2, N'giahuy', '2025-12-03');
+  (44, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743862/chapterAudios/fyf3ekncbb13eua1etzc.mp3', 600, 2, N'giahuy', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (65, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743971/chapterAudios/ugdm07w17bcywpsbo6sg.mp3', 600, 3, N'thuminh', '2025-12-03');
+  (45, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743971/chapterAudios/ugdm07w17bcywpsbo6sg.mp3', 600, 3, N'thuminh', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (66, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764744083/chapterAudios/f5yexqsaj8pvvwacyc0h.mp3', 600, 4, N'banmai', '2025-12-03');
+  (46, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764744083/chapterAudios/f5yexqsaj8pvvwacyc0h.mp3', 600, 4, N'banmai', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (51, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743090/chapterAudios/jr8bcl1me3bnah7esbkv.mp3', 600, 2, N'myan', '2025-12-03');
+  (31, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743090/chapterAudios/jr8bcl1me3bnah7esbkv.mp3', 600, 2, N'myan', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (54, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743354/chapterAudios/aqfp32utovexuhy777sh.mp3', 47, 1, N'banmai', '2025-12-03');
+  (34, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743354/chapterAudios/aqfp32utovexuhy777sh.mp3', 47, 1, N'banmai', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (56, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743554/chapterAudios/d1hztdvgpiexodaljqof.mp3', 30, 1, N'banmai', '2025-12-03');
+  (36, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743554/chapterAudios/d1hztdvgpiexodaljqof.mp3', 30, 1, N'banmai', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (61, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743691/chapterAudios/ss0ynso3cft5zygiinqi.mp3', 60, 1, N'banmai', '2025-12-03');
+  (41, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764743691/chapterAudios/ss0ynso3cft5zygiinqi.mp3', 60, 1, N'banmai', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (70, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764741966/chapterAudios/s3ay7iyzdgywakiy8tec.mp3', 30, 1, N'minhquang', '2025-12-03');
+  (50, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764741966/chapterAudios/s3ay7iyzdgywakiy8tec.mp3', 30, 1, N'minhquang', '2025-12-03');
 
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
-  (70, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764744191/chapterAudios/hjz13yqk4ru7e4lyf49v.mp3', 30, 1, N'linhsan', '2025-12-03');
+  (50, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764744191/chapterAudios/hjz13yqk4ru7e4lyf49v.mp3', 30, 1, N'linhsan', '2025-12-03');
