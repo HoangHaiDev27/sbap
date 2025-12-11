@@ -80,19 +80,19 @@ export default function OwnerBooks() {
 
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-3 sm:p-6 text-white">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Quản lý Sách</h1>
-          <p className="text-gray-400">Quản lý toàn bộ sách của bạn</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Quản lý Sách</h1>
+          <p className="text-sm sm:text-base text-gray-400">Quản lý toàn bộ sách của bạn</p>
         </div>
 
         <Link
           to="/owner/books/new"
-          className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+          className="flex items-center justify-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm sm:text-base"
         >
-          <RiAddLine className="mr-2" /> Thêm sách mới
+          <RiAddLine className="mr-2" /> <span className="hidden sm:inline">Thêm sách mới</span><span className="sm:hidden">Thêm mới</span>
         </Link>
       </div>
 
@@ -109,7 +109,7 @@ export default function OwnerBooks() {
       />
 
       {/* Table */}
-      <div className="bg-slate-800 p-4 rounded-lg shadow-lg">
+      <div className="bg-slate-800 p-2 sm:p-4 rounded-lg shadow-lg">
         {loading ? (
           <p className="text-gray-400">Đang tải sách...</p>
         ) : filteredBooks.length === 0 ? (

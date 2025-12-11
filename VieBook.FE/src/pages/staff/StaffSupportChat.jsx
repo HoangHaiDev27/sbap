@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { RiSendPlane2Line, RiSearchLine } from "react-icons/ri";
+import { RiSendPlane2Line, RiSearchLine, RiArrowLeftLine } from "react-icons/ri";
 import { getUserName, getUserId } from "../../api/authApi";
 import { getOwnerListForStaff, getChatWithOwner, sendStaffMessage, searchOwnersForStaff, startConversationWithOwnerForStaff } from "../../api/chatApi";
 import { toast } from "react-toastify";
@@ -24,6 +24,7 @@ export default function StaffSupportChat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [conversationId, setConversationId] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
+  const [showSidebar, setShowSidebar] = useState(true);
   const searchTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const joinedConversationsRef = useRef(new Set());
@@ -503,21 +504,30 @@ export default function StaffSupportChat() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white overflow-hidden mt-20">
+    <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white overflow-hidden mt-16 sm:mt-20">
       {/* Sidebar - Danh sách Owners */}
-      <div className="w-80 lg:w-96 border-r border-slate-700 flex flex-col bg-slate-900 flex-shrink-0 h-full">
-        <div className="p-4 font-bold text-lg border-b border-slate-700 flex-shrink-0">Danh sách Book Owners</div>
+      <div className={`${showSidebar ? 'flex' : 'hidden'} md:flex w-full md:w-80 lg:w-96 border-r border-slate-700 flex-col bg-slate-900 flex-shrink-0 h-full absolute md:relative z-40`}>
+        <div className="p-3 sm:p-4 font-bold text-base sm:text-lg border-b border-slate-700 flex-shrink-0 flex items-center justify-between">
+          <span>Danh sách Book Owners</span>
+          <button
+            onClick={() => setShowSidebar(false)}
+            className="md:hidden p-1 hover:bg-slate-800 rounded"
+            aria-label="Đóng sidebar"
+          >
+            <RiArrowLeftLine className="text-xl" />
+          </button>
+        </div>
         
         {/* Search box */}
-        <div className="p-3 border-b border-slate-800 flex-shrink-0">
+        <div className="p-2 sm:p-3 border-b border-slate-800 flex-shrink-0">
           <div className="relative">
-            <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
             <input
               type="text"
               placeholder="Tìm kiếm owner..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+              className="w-full pl-9 sm:pl-10 pr-3 py-2 bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs sm:text-sm"
             />
           </div>
         </div>
@@ -532,8 +542,11 @@ export default function StaffSupportChat() {
             filteredOwners.map((owner) => (
               <div
                 key={owner.ownerId}
-                onClick={() => startConversationIfNeeded(owner)}
-                className={`flex items-start p-4 cursor-pointer hover:bg-slate-800 border-b border-slate-800 transition-colors flex-shrink-0 ${
+                onClick={() => {
+                  startConversationIfNeeded(owner);
+                  setShowSidebar(false); // Đóng sidebar trên mobile khi chọn owner
+                }}
+                className={`flex items-start p-3 sm:p-4 cursor-pointer hover:bg-slate-800 border-b border-slate-800 transition-colors flex-shrink-0 ${
                   selectedOwner?.ownerId === owner.ownerId ? "bg-slate-800" : ""
                 }`}
               >
@@ -542,22 +555,22 @@ export default function StaffSupportChat() {
                     <img 
                       src={owner.ownerAvatar} 
                       alt={owner.ownerName} 
-                      className="w-12 h-12 rounded-full border-2 border-slate-700" 
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-700" 
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-base sm:text-lg">
                       {owner.ownerName?.charAt(0).toUpperCase() || "O"}
                     </div>
                   )}
                   {owner.conversationId && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900"></div>
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-slate-900"></div>
                   )}
                 </div>
-                <div className="ml-3 flex-1 min-w-0">
+                <div className="ml-2 sm:ml-3 flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold truncate">{owner.ownerName || owner.ownerEmail}</div>
+                    <div className="font-semibold truncate text-sm sm:text-base">{owner.ownerName || owner.ownerEmail}</div>
                     {owner.lastMessageTime && (
-                      <div className="text-xs text-gray-400 ml-2">
+                      <div className="text-xs text-gray-400 ml-2 flex-shrink-0">
                         {new Date(owner.lastMessageTime).toLocaleDateString('vi-VN', { 
                           day: '2-digit', 
                           month: '2-digit' 
@@ -568,17 +581,17 @@ export default function StaffSupportChat() {
                   <div className="text-xs text-gray-400 truncate">{owner.ownerEmail}</div>
                   {owner.lastMessageText ? (
                     <>
-                      <div className="text-sm text-gray-400 truncate mt-1">
+                      <div className="text-xs sm:text-sm text-gray-400 truncate mt-1">
                         {owner.lastMessageText}
                       </div>
                       {owner.lastRepliedByStaffName && (
-                        <div className="text-xs text-blue-400 mt-1">
+                        <div className="text-xs text-blue-400 mt-1 truncate">
                           Trả lời bởi: {owner.lastRepliedByStaffName}
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="text-sm mt-1">
+                    <div className="text-xs sm:text-sm mt-1">
                       {owner.conversationId ? (
                         <span className="text-gray-500 italic">Chưa có tin nhắn nào</span>
                       ) : (
@@ -593,13 +606,13 @@ export default function StaffSupportChat() {
         </div>
 
         {/* Staff info */}
-        <div className="p-4 border-t border-slate-700 bg-slate-800 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-semibold">
+        <div className="p-3 sm:p-4 border-t border-slate-700 bg-slate-800 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
               {staffName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div className="font-semibold text-sm">{staffName}</div>
+              <div className="font-semibold text-xs sm:text-sm truncate">{staffName}</div>
               <div className="text-xs text-green-400">Staff - Online</div>
             </div>
           </div>
@@ -608,32 +621,39 @@ export default function StaffSupportChat() {
 
       {/* Chat window */}
       {selectedOwner ? (
-        <div className="flex-1 flex flex-col overflow-hidden h-full">
+        <div className="flex-1 flex flex-col overflow-hidden h-full w-full">
           {/* Header */}
-          <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-shrink-0 bg-slate-900">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="p-3 sm:p-4 border-b border-slate-700 flex items-center justify-between flex-shrink-0 bg-slate-900">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <button
+                onClick={() => setShowSidebar(true)}
+                className="md:hidden p-1.5 hover:bg-slate-800 rounded mr-1 flex-shrink-0"
+                aria-label="Mở danh sách"
+              >
+                <RiArrowLeftLine className="text-xl" />
+              </button>
               {selectedOwner.ownerAvatar ? (
                 <img 
                   src={selectedOwner.ownerAvatar} 
                   alt={selectedOwner.ownerName} 
-                  className="w-10 h-10 rounded-full" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
                   {selectedOwner.ownerName?.charAt(0).toUpperCase() || "O"}
                 </div>
               )}
-              <div>
-                <h2 className="font-semibold">{selectedOwner.ownerName || selectedOwner.ownerEmail}</h2>
+              <div className="min-w-0 flex-1">
+                <h2 className="font-semibold text-sm sm:text-base truncate">{selectedOwner.ownerName || selectedOwner.ownerEmail}</h2>
                 <p className="text-xs text-gray-400">Book Owner</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <button 
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
                 title="Thông tin"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </button>
@@ -641,7 +661,7 @@ export default function StaffSupportChat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950 scrollbar-hide scroll-smooth min-h-0">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-slate-950 scrollbar-hide scroll-smooth min-h-0">
             {loadingChatHistory ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-gray-400">
@@ -667,23 +687,23 @@ export default function StaffSupportChat() {
             ) : (
               messages.map((m, i) => (
                 <div key={`msg-${i}`} className={`flex ${m.senderType === "staff" ? "justify-end" : "justify-start"}`}>
-                  <div className="flex items-end gap-2 max-w-[70%]">
+                  <div className="flex items-end gap-1.5 sm:gap-2 max-w-[85%] sm:max-w-[70%]">
                     {m.senderType === "owner" && (
                       selectedOwner.ownerAvatar ? (
                         <img 
                           src={selectedOwner.ownerAvatar} 
                           alt={selectedOwner.ownerName} 
-                          className="w-8 h-8 rounded-full flex-shrink-0" 
+                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0" 
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
                           {selectedOwner.ownerName?.charAt(0).toUpperCase() || "O"}
                         </div>
                       )
                     )}
                     <div>
                       <div
-                        className={`px-4 py-2 rounded-2xl break-words border ${
+                        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl break-words border text-sm sm:text-base ${
                           m.senderType === "staff"
                             ? "bg-orange-500 text-white rounded-br-sm border-orange-400"
                             : "bg-slate-800 text-gray-200 rounded-bl-sm border-slate-600"
@@ -691,15 +711,15 @@ export default function StaffSupportChat() {
                       >
                         {m.text}
                       </div>
-                      <div className="text-[10px] text-gray-400 mt-1 px-2 flex justify-between">
+                      <div className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1 px-2 flex justify-between">
                         <span>{m.time}</span>
                         {m.senderType === "staff" && m.senderName && (
-                          <span className="opacity-60">{m.senderName}</span>
+                          <span className="opacity-60 ml-2 truncate">{m.senderName}</span>
                         )}
                       </div>
                     </div>
                     {m.senderType === "staff" && (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
                         {m.senderName?.charAt(0).toUpperCase() || "S"}
                       </div>
                     )}
@@ -711,7 +731,7 @@ export default function StaffSupportChat() {
           </div>
 
           {/* Quick replies */}
-          <div className="px-4 py-2 flex gap-2 justify-center border-t border-slate-700 bg-slate-900 flex-shrink-0 overflow-x-auto">
+          <div className="px-2 sm:px-4 py-2 flex gap-1.5 sm:gap-2 justify-start border-t border-slate-700 bg-slate-900 flex-shrink-0 overflow-x-auto scrollbar-hide">
             {quickReplies.map((qr, i) => (
             <button
               key={i}
@@ -720,7 +740,7 @@ export default function StaffSupportChat() {
                 sendMessage(qr);
               }}
               disabled={sending}
-              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-xs whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-xs whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
             >
               {qr}
             </button>
@@ -728,7 +748,7 @@ export default function StaffSupportChat() {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-slate-700 flex items-center gap-3 bg-slate-900 flex-shrink-0">
+          <div className="p-2 sm:p-4 border-t border-slate-700 flex items-center gap-2 sm:gap-3 bg-slate-900 flex-shrink-0">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -740,30 +760,38 @@ export default function StaffSupportChat() {
               }}
               placeholder="Nhập tin nhắn..."
               disabled={sending}
-              className="flex-1 px-4 py-3 bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white placeholder-gray-400"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white placeholder-gray-400 text-sm sm:text-base"
             />
             <button 
               onClick={() => sendMessage()} 
-              className="p-3 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+              className="p-2.5 sm:p-3 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
               disabled={!input.trim() || sending}
               title="Gửi tin nhắn"
             >
               {sending ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
               ) : (
-                <RiSendPlane2Line size={20} />
+                <RiSendPlane2Line size={18} className="sm:w-5 sm:h-5" />
               )}
             </button>
           </div>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center bg-slate-900">
-          <div className="text-center text-gray-400">
-            <svg className="w-20 h-20 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center text-gray-400 p-4">
+            <svg className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
             </svg>
-            <h3 className="text-xl font-semibold mb-2">Chọn một Owner để bắt đầu chat</h3>
-            <p className="text-sm">Danh sách owner hiển thị bên trái</p>
+            <h3 className="text-lg sm:text-xl font-semibold mb-2">Chọn một Owner để bắt đầu chat</h3>
+            <p className="text-xs sm:text-sm">
+              <button
+                onClick={() => setShowSidebar(true)}
+                className="md:hidden text-orange-400 underline"
+              >
+                Mở danh sách owner
+              </button>
+              <span className="hidden md:inline">Danh sách owner hiển thị bên trái</span>
+            </p>
           </div>
         </div>
       )}

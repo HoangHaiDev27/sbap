@@ -361,10 +361,10 @@ export default function AudioChapterList({
                     <div className={`text-xs flex items-center gap-3 ${
                       isCurrentChapter ? "text-blue-100" : "text-gray-400"
                     }`}>
-                      <span className="flex items-center gap-1">
+                      {/* <span className="flex items-center gap-1">
                         <span>⏱</span>
                         <span>{formatTime(chapter.duration)}</span>
-                      </span>
+                      </span> */}
                       {audios.length > 0 && (
                         <span className="flex items-center gap-1">
                           <RiVoiceprintLine className="text-xs" />
@@ -456,9 +456,9 @@ export default function AudioChapterList({
                             ? "text-blue-100" 
                             : "text-gray-400"
                         }`}>
-                          <span>
+                          {/* <span>
                             {Math.floor((audio.durationSec || 0) / 60)}:{((audio.durationSec || 0) % 60).toString().padStart(2, '0')}
-                          </span>
+                          </span> */}
                           {isCurrentChapter && selectedVoice === audio.voiceName && (
                             <span className="text-white bg-blue-500 rounded-full w-5 h-5 flex items-center justify-center text-xs">✓</span>
                           )}

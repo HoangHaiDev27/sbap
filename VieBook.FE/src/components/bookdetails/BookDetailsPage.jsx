@@ -852,11 +852,11 @@ export default function BookDetailPage() {
                                   <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
                                 )}
                               </div>
-                              {audioChapter.durationSec && (
+                              {/* {audioChapter.durationSec && (
                                 <p className="text-xs sm:text-sm text-gray-400">
                                   Thời lượng: {Math.floor(audioChapter.durationSec / 60)} phút {audioChapter.durationSec % 60} giây
                                 </p>
-                              )}
+                              )} */}
                               {/* Hiển thị trạng thái */}
                               {!isLoggedIn && (
                                 <span className="text-red-400 text-xs font-medium">
