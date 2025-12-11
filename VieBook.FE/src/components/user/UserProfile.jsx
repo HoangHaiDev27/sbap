@@ -269,7 +269,7 @@ export default function UserProfile() {
   const handleBecomeOwner = async () => {
     try {
       const res = await becomeOwner();
-      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: res?.message || "Đăng ký Book Owner thành công" } }));
+      window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "success", message: res?.message || "Đăng ký Chủ sách thành công" } }));
       setIsOwner(true);
     } catch (err) {
       // Nếu lỗi do hồ sơ chưa hoàn chỉnh, mở Stepper đăng ký Owner
@@ -414,13 +414,13 @@ export default function UserProfile() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h2 className="text-xl font-semibold">Thông tin cá nhân</h2>
         {!isEditing ? (
-          <div className="flex gap-2 flex-wrap">
+          <div className="grid grid-cols-1 sm:flex sm:gap-2 gap-2 w-full sm:w-auto">
             <button
               onClick={() => {
                 setIsEditing(true);
                 setValidationErrors({});
               }}
-              className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+              className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
             >
               <i className="ri-edit-line mr-2"></i>
               Chỉnh sửa
@@ -428,10 +428,10 @@ export default function UserProfile() {
             {!isOwner && (
               <button
                 onClick={handleBecomeOwner}
-                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors"
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white font-medium whitespace-nowrap transition-colors w-full sm:w-auto"
               >
                 <i className="ri-vip-crown-2-line mr-2"></i>
-                Trở thành Book Owner
+                Trở thành Chủ sách
               </button>
             )}
           </div>
