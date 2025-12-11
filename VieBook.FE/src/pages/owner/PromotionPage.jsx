@@ -76,22 +76,22 @@ export default function PromotionPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Quản lý Khuyến mãi</h1>
+    <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 min-h-screen">
+      <h1 className="text-xl sm:text-2xl font-bold text-white">Quản lý Khuyến mãi</h1>
 
       <PromotionStats refreshTrigger={promotions.length} />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <input
             type="text"
             placeholder="Tìm kiếm khuyến mãi hoặc sách..."
-            className="px-4 py-2 border border-slate-600 rounded-lg w-full sm:w-64 bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="px-3 sm:px-4 py-2.5 sm:py-2 border border-slate-600 rounded-lg w-full sm:flex-1 sm:max-w-md bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div className="relative">
+          <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full sm:w-auto">
+            <div className="relative flex-shrink-0">
               <input
                 type="checkbox"
                 checked={showInactive}
@@ -111,14 +111,14 @@ export default function PromotionPage() {
                 } mt-0.5`}></div>
               </div>
             </div>
-            <span className="text-white font-medium group-hover:text-orange-400 transition-colors">
+            <span className="text-white text-sm sm:text-base font-medium group-hover:text-orange-400 transition-colors">
               {showInactive ? 'Đã vô hiệu hóa' : 'Hiển thị đã vô hiệu hóa'}
             </span>
           </label>
         </div>
         {!showInactive && (
           <button
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl w-full sm:w-auto"
+            className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl w-full sm:w-auto text-sm sm:text-base min-h-[44px]"
             onClick={() => setOpen(true)}
           >
             + Tạo Khuyến mãi
