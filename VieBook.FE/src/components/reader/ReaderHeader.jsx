@@ -32,53 +32,55 @@ export default function ReaderHeader({
   const chapterNumber = book?.chapters?.findIndex(ch => ch.chapterId === currentChapter?.chapterId) + 1;
   console.log("ReaderHeader - chapterNumber:", chapterNumber);
   return (
-    <header className="flex justify-between items-center p-4 bg-gray-800 sticky top-0 z-50">
+    <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 p-2 sm:p-4 bg-gray-800 sticky top-0 z-50">
       {/* Left: Back + Title */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 flex-1 min-w-0">
         <Link to={`/bookdetails/${book.id || book.bookId}`} onClick={() => {
           const bookId = book.id || book.bookId;
           console.log("ReaderHeader - Navigating back to book details:", { bookId });
-        }}>
-            <RiArrowLeftLine size={22} className="text-orange-500 hover:text-orange-600" />
+        }} className="flex-shrink-0">
+            <RiArrowLeftLine size={20} className="sm:w-[22px] sm:h-[22px] text-orange-500 hover:text-orange-600" />
         </Link>
-        <div>
-            <h1 className="font-semibold text-white">{book.title}</h1>
-            <p className="text-sm opacity-70">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</p>
+        <div className="min-w-0 flex-1">
+            <h1 className="font-semibold text-white text-sm sm:text-base truncate">{book.title}</h1>
+            <p className="text-xs sm:text-sm opacity-70 truncate">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</p>
         </div>
         </div>
 
       {/* Right: Controls */}
-      <div className="flex items-center space-x-4">
-        <span className="text-sm opacity-70">
+      <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-wrap sm:flex-nowrap">
+        <span className="text-xs sm:text-sm opacity-70 flex-shrink-0">
           Chương {chapterNumber || "N/A"}
         </span>
 
         <button
           onClick={() => setShowContents(true)}
-          className="hover:text-orange-500 flex items-center gap-1"
+          className="hover:text-orange-500 flex items-center gap-1 p-1.5 sm:p-0"
+          title="Mục lục"
         >
-          <RiFileList3Line size={20} />
-          <span className="hidden sm:inline">Mục lục</span>
+          <RiFileList3Line size={18} className="sm:w-5 sm:h-5" />
+          <span className="hidden lg:inline">Mục lục</span>
         </button>
-
 
         <button
           onClick={() => setShowBookmarks(true)}
-          className="hover:text-orange-500 flex items-center gap-1"
+          className="hover:text-orange-500 flex items-center gap-1 p-1.5 sm:p-0"
+          title={`Dấu chương (${bookmarks.length})`}
         >
-          <RiBookmarkLine size={20} />
-          <span className="hidden sm:inline">
+          <RiBookmarkLine size={18} className="sm:w-5 sm:h-5" />
+          <span className="hidden lg:inline">
             Dấu chương ({bookmarks.length})
           </span>
         </button>
 
         <button
           onClick={addBookmark}
-          className="hover:text-orange-500 flex items-center gap-1"
+          className="hover:text-orange-500 flex items-center gap-1 p-1.5 sm:p-0"
+          title="Thêm dấu chương"
         >
-          <RiBookmarkLine size={20} />
-          <AiOutlinePlus size={14} />
-          <span className="hidden sm:inline">Thêm dấu chương</span>
+          <RiBookmarkLine size={18} className="sm:w-5 sm:h-5" />
+          <AiOutlinePlus size={12} className="sm:w-3.5 sm:h-3.5" />
+          <span className="hidden lg:inline">Thêm dấu chương</span>
         </button>
 
         <button
@@ -86,20 +88,22 @@ export default function ReaderHeader({
             console.log("ReaderHeader - Settings button clicked");
             setShowSettings(true);
           }}
-          className="hover:text-orange-500 flex items-center gap-1"
+          className="hover:text-orange-500 flex items-center gap-1 p-1.5 sm:p-0"
+          title="Cài đặt"
         >
-          <RiSettings3Line size={20} />
-          <span className="hidden sm:inline">Cài đặt</span>
+          <RiSettings3Line size={18} className="sm:w-5 sm:h-5" />
+          <span className="hidden lg:inline">Cài đặt</span>
         </button>
 
         <button
           onClick={toggleFullscreen}
-          className="hover:text-orange-500 flex items-center gap-1"
+          className="hover:text-orange-500 flex items-center gap-1 p-1.5 sm:p-0"
+          title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
         >
           {isFullscreen ? (
-            <RiFullscreenExitLine size={20} />
+            <RiFullscreenExitLine size={18} className="sm:w-5 sm:h-5" />
           ) : (
-            <RiFullscreenLine size={20} />
+            <RiFullscreenLine size={18} className="sm:w-5 sm:h-5" />
           )}
         </button>
       </div>
