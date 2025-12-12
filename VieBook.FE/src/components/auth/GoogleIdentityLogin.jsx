@@ -1,12 +1,30 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const GoogleIdentityLogin = ({ onSuccess, onError }) => {
   const buttonRef = useRef(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const retryCountRef = useRef(0);
+  const maxRetries = 50; // 50 * 200ms = 10 seconds max wait time
 
   useEffect(() => {
+    // Cleanup function to prevent memory leaks
+    let retryTimeout = null;
+    let isMounted = true;
+
     const initializeGoogle = () => {
-      if (window.google && window.google.accounts) {
+      // Check if component is still mounted
+      if (!isMounted) return;
+
+      if (window.google && window.google.accounts && window.google.accounts.id) {
         try {
+          // Prevent multiple initializations
+          if (isInitialized) {
+            console.log('[Google Login] Already initialized, skipping...');
+            return;
+          }
+
+          console.log('[Google Login] Initializing Google Identity...');
+          
           window.google.accounts.id.initialize({
             client_id: "889743573215-vso9piikv2olur00ttq8kactvm10jtss.apps.googleusercontent.com",
             callback: handleGoogleResponse,
@@ -14,53 +32,128 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
             cancel_on_tap_outside: true,
           });
 
-          // Render the button
-          if (buttonRef.current) {
-            window.google.accounts.id.renderButton(buttonRef.current, {
-              theme: 'outline',
-              size: 'large',
-              text: 'signin_with',
-              shape: 'rectangular',
-              width: 300, // Use number instead of percentage
-            });
+          // Render the button only if ref is available
+          if (buttonRef.current && !buttonRef.current.hasChildNodes()) {
+            try {
+              window.google.accounts.id.renderButton(buttonRef.current, {
+                theme: 'outline',
+                size: 'large',
+                text: 'signin_with',
+                shape: 'rectangular',
+                width: 300,
+              });
+              console.log('[Google Login] Button rendered successfully');
+              setIsInitialized(true);
+            } catch (renderError) {
+              console.error('[Google Login] Button render error:', renderError);
+              if (onError) onError('Lỗi render nút Google');
+            }
+          } else if (buttonRef.current && buttonRef.current.hasChildNodes()) {
+            // Button already rendered
+            console.log('[Google Login] Button already rendered');
+            setIsInitialized(true);
           }
         } catch (error) {
-          console.error('Google Identity initialization error:', error);
-          if (onError) onError('Lỗi khởi tạo Google Identity');
+          console.error('[Google Login] Initialization error:', error);
+          if (onError && isMounted) {
+            onError('Lỗi khởi tạo Google Identity: ' + error.message);
+          }
         }
       } else {
-        // Retry after a short delay if Google script hasn't loaded yet
-        setTimeout(initializeGoogle, 100);
+        // Retry with exponential backoff
+        retryCountRef.current += 1;
+        if (retryCountRef.current < maxRetries) {
+          const delay = Math.min(200 * retryCountRef.current, 1000); // Max 1 second delay
+          console.log(`[Google Login] Script not loaded yet, retrying in ${delay}ms (attempt ${retryCountRef.current}/${maxRetries})...`);
+          retryTimeout = setTimeout(initializeGoogle, delay);
+        } else {
+          console.error('[Google Login] Max retries reached. Google script may not be loaded.');
+          if (onError && isMounted) {
+            onError('Không thể tải Google Identity. Vui lòng kiểm tra kết nối mạng.');
+          }
+        }
       }
     };
 
+    // Start initialization
     initializeGoogle();
-  }, [onError]);
+
+    // Cleanup on unmount
+    return () => {
+      isMounted = false;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
+  }, [onError]); // Removed isInitialized from dependencies to prevent infinite loop
 
   const handleGoogleResponse = (response) => {
-    console.log('Google Identity response received');
+    console.log('[Google Login] Response received');
+    if (!response || !response.credential) {
+      console.error('[Google Login] Invalid response:', response);
+      if (onError) {
+        onError('Phản hồi từ Google không hợp lệ');
+      }
+      return;
+    }
+    
     if (onSuccess) {
       onSuccess(response.credential);
     }
   };
 
   const handleCustomGoogleLogin = () => {
+    console.log('[Google Login] Custom button clicked');
+    
+    // Check if Google script is loaded
+    if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+      console.error('[Google Login] Google script not loaded');
+      if (onError) {
+        onError('Google Identity chưa được tải. Vui lòng tải lại trang.');
+      }
+      return;
+    }
+
+    // Check if initialized
+    if (!isInitialized) {
+      console.warn('[Google Login] Not initialized yet, waiting...');
+      // Wait a bit and retry
+      setTimeout(() => {
+        if (isInitialized) {
+          handleCustomGoogleLogin();
+        } else {
+          if (onError) {
+            onError('Google Identity chưa sẵn sàng. Vui lòng thử lại.');
+          }
+        }
+      }, 500);
+      return;
+    }
+
     // Trigger click on the hidden Google button
     if (buttonRef.current) {
       const googleButton = buttonRef.current.querySelector('div[role="button"]');
       if (googleButton) {
+        console.log('[Google Login] Triggering Google button click');
         googleButton.click();
       } else {
         // Fallback: try to find any clickable element
         const clickableElement = buttonRef.current.querySelector('*');
         if (clickableElement) {
+          console.log('[Google Login] Using fallback click');
           clickableElement.click();
         } else {
-          if (onError) onError('Không thể tìm thấy nút Google');
+          console.error('[Google Login] Google button not found in DOM');
+          if (onError) {
+            onError('Không thể tìm thấy nút Google. Vui lòng tải lại trang.');
+          }
         }
       }
     } else {
-      if (onError) onError('Google Identity chưa được tải');
+      console.error('[Google Login] Button ref not available');
+      if (onError) {
+        onError('Google Identity chưa được tải');
+      }
     }
   };
 

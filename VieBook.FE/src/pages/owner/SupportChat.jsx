@@ -214,28 +214,28 @@ export default function SupportChat() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white items-center justify-center mt-16 sm:mt-20">
+      <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-400 text-sm sm:text-base">Đang tải...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Đang tải...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white overflow-hidden mt-16 sm:mt-20">
+    <div className="flex h-[calc(100vh-80px)] bg-slate-900 text-white overflow-hidden">
       {/* Chat window - Full width */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-3 sm:p-4 border-b border-slate-700 flex items-center gap-2 sm:gap-3 flex-shrink-0 bg-slate-900">
+        <div className="p-4 border-b border-slate-700 flex items-center gap-3 flex-shrink-0 bg-slate-900">
           <img 
             src="/logo.png" 
             alt="VieBook Support" 
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
+            className="w-10 h-10 rounded-full" 
           />
-          <div className="min-w-0 flex-1">
-            <h2 className="font-semibold text-sm sm:text-base truncate">{customerSupport.name}</h2>
+          <div>
+            <h2 className="font-semibold">{customerSupport.name}</h2>
             <p className="text-xs text-green-400">
               {customerSupport.role} • {customerSupport.isOnline ? "Đang online" : "Offline"}
             </p>
@@ -243,20 +243,20 @@ export default function SupportChat() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-slate-950 scrollbar-hide scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950 scrollbar-hide scroll-smooth">
           {messages.map((m, i) => (
             <div key={`msg-${i}`} className={`flex ${m.sender === "me" ? "justify-end" : "justify-start"}`}>
-              <div className="flex items-end gap-1.5 sm:gap-2 max-w-[85%] sm:max-w-[70%]">
+              <div className="flex items-end gap-2 max-w-[70%]">
                 {m.sender === "staff" && (
                   <img 
                     src="/logo.png" 
                     alt="VieBook Support" 
-                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0" 
+                    className="w-8 h-8 rounded-full flex-shrink-0" 
                   />
                 )}
                 <div>
                   <div
-                    className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl break-words border text-sm sm:text-base ${
+                    className={`px-4 py-2 rounded-2xl break-words border ${
                       m.sender === "me" 
                         ? "bg-orange-500 text-white rounded-br-sm border-orange-400" 
                         : "bg-slate-800 text-gray-200 rounded-bl-sm border-slate-600"
@@ -264,12 +264,12 @@ export default function SupportChat() {
                   >
                     {m.text}
                   </div>
-                  <div className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1 px-2">
+                  <div className="text-[10px] text-gray-400 mt-1 px-2">
                     {m.time}
                   </div>
                 </div>
                 {m.sender === "me" && (
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                     {ownerName.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -280,7 +280,7 @@ export default function SupportChat() {
         </div>
 
         {/* Quick replies */}
-        <div className="px-2 sm:px-4 py-2 flex gap-1.5 sm:gap-2 justify-start border-t border-slate-700 bg-slate-900 flex-shrink-0 overflow-x-auto scrollbar-hide">
+        <div className="px-4 py-2 flex gap-2 justify-center border-t border-slate-700 bg-slate-900 flex-shrink-0 overflow-x-auto">
           {quickReplies.map((qr, i) => (
             <button
               key={i}
@@ -289,7 +289,7 @@ export default function SupportChat() {
                 sendMessage(qr);
               }}
               disabled={sending || !conversationId}
-              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-xs whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-xs whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
             >
               {qr}
             </button>
@@ -297,7 +297,7 @@ export default function SupportChat() {
         </div>
 
         {/* Input */}
-        <div className="p-2 sm:p-4 border-t border-slate-700 flex items-center gap-2 sm:gap-3 bg-slate-900 flex-shrink-0">
+        <div className="p-4 border-t border-slate-700 flex items-center gap-3 bg-slate-900 flex-shrink-0">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -309,18 +309,18 @@ export default function SupportChat() {
             }}
             placeholder="Nhập tin nhắn..."
             disabled={sending || !conversationId}
-            className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white placeholder-gray-400 text-sm sm:text-base"
+            className="flex-1 px-4 py-3 bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white placeholder-gray-400"
           />
           <button 
             onClick={() => sendMessage()} 
-            className="p-2.5 sm:p-3 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+            className="p-3 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
             disabled={!input.trim() || sending || !conversationId}
             title={!conversationId ? "Đang khởi tạo chat..." : "Gửi tin nhắn"}
           >
             {sending ? (
-              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             ) : (
-              <RiSendPlane2Line size={18} className="sm:w-5 sm:h-5" />
+              <RiSendPlane2Line size={20} />
             )}
           </button>
         </div>
