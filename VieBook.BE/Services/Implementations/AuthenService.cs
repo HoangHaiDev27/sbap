@@ -196,6 +196,11 @@ namespace Services.Implementations
 
         public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, string frontendUrl)
         {
+            var passwordRegex =
+                    new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[^\s]{6,}$");
+
+            if (!passwordRegex.IsMatch(request.Password))
+                throw new Exception("Password không hợp lệ");
             var existing = await _authRepo.GetByEmailAsync(request.Email);
             if (existing != null)
                 throw new Exception("Email đã được sử dụng!");
