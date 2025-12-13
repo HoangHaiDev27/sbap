@@ -181,5 +181,22 @@ namespace DataAccess.DAO
             await _context.SaveChangesAsync();
             return true;
         }
+
+        /// <summary>
+        /// Lấy các promotions bắt đầu trong ngày hôm nay (UTC)
+        /// </summary>
+        public async Task<List<Promotion>> GetPromotionsStartingTodayAsync()
+        {
+            var today = DateTime.UtcNow.Date;
+            var now = DateTime.UtcNow;
+
+            return await _context.Promotions
+                .Include(p => p.Books)
+                    .ThenInclude(b => b.Chapters)
+                .Where(p => p.IsActive 
+                    && p.StartAt.Date == today
+                    && p.EndAt > now) // Chưa hết hạn
+                .ToListAsync();
+        }
     }
 }

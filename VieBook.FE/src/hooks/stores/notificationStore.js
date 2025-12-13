@@ -65,8 +65,12 @@ export const useNotificationStore = create((set, get) => ({
       const response = await getUnreadCount(targetUserId);
       console.log("Unread count response:", response);
       if (response.error === 0) {
-        console.log(`Setting unread count to: ${response.data.unreadCount}`);
-        set({ unreadCount: response.data.unreadCount });
+        const serverCount = response.data.unreadCount || 0;
+        const currentCount = get().unreadCount || 0;
+        // Use the larger value to avoid overwriting with stale data
+        const newCount = Math.max(serverCount, currentCount);
+        console.log(`Setting unread count to: ${newCount} (server: ${serverCount}, current: ${currentCount})`);
+        set({ unreadCount: newCount });
       } else {
         console.error("Error in unread count response:", response.message);
       }
@@ -156,11 +160,52 @@ export const useNotificationStore = create((set, get) => ({
   // Add new notification (for real-time updates)
   addNotification: (notification) => {
     console.log("NotificationStore - Adding notification:", notification);
-    set((state) => ({
-      notifications: [notification, ...state.notifications],
-      unreadNotifications: [notification, ...state.unreadNotifications],
-      unreadCount: state.unreadCount + 1
-    }));
+    set((state) => {
+      // Ensure notification has required fields
+      const notificationId = notification.notificationId || notification.NotificationId;
+      if (!notificationId) {
+        console.warn("Notification missing notificationId, skipping add");
+        return state;
+      }
+      
+      // Check if notification already exists to avoid duplicates
+      const exists = state.notifications.some(
+        n => (n.notificationId || n.NotificationId) === notificationId
+      );
+      
+      if (exists) {
+        console.log("Notification already exists, skipping add");
+        return state;
+      }
+      
+      // Ensure isRead is false for new notifications
+      const isRead = notification.isRead === false ? false : (notification.IsRead === false ? false : false);
+      
+      // Normalize notification format
+      const normalizedNotification = {
+        notificationId: notificationId,
+        userId: notification.userId || notification.UserId,
+        type: notification.type || notification.Type,
+        title: notification.title || notification.Title,
+        body: notification.body || notification.Body,
+        isRead: isRead,
+        createdAt: notification.createdAt || notification.CreatedAt,
+        userName: notification.userName || notification.UserName,
+        userEmail: notification.userEmail || notification.UserEmail
+      };
+      
+      console.log("Adding notification with isRead:", normalizedNotification.isRead, "Current unreadCount:", state.unreadCount);
+      
+      return {
+        notifications: [normalizedNotification, ...state.notifications],
+        unreadNotifications: isRead 
+          ? state.unreadNotifications 
+          : [normalizedNotification, ...state.unreadNotifications],
+        unreadCount: isRead 
+          ? state.unreadCount 
+          : (state.unreadCount || 0) + 1
+      };
+    });
   },
 
   // Clear error

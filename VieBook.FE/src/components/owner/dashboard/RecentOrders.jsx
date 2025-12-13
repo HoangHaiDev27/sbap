@@ -33,7 +33,7 @@ export default function RecentOrders({ orders = [] }) {
     <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Đơn hàng gần nhất</h2>
-        <Link to="/owner/orders" className="text-sm text-orange-400 hover:underline">
+        <Link to="/owner/sales-history" className="text-sm text-orange-400 hover:underline">
           Xem tất cả
         </Link>
       </div>

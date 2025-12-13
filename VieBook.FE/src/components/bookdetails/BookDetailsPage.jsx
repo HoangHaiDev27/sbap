@@ -583,7 +583,7 @@ export default function BookDetailPage() {
             </div>
 
             {/* Content */}
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-80px)] sm:max-h-[calc(80vh-80px)] scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-gray-700">
               {/* Danh sách chương */}
               <div className="space-y-2">
                 {chapters?.map((chapter, index) => {
@@ -852,11 +852,11 @@ export default function BookDetailPage() {
                                   <RiCheckboxCircleLine className="text-green-500 text-lg flex-shrink-0" />
                                 )}
                               </div>
-                              {audioChapter.durationSec && (
+                              {/* {audioChapter.durationSec && (
                                 <p className="text-xs sm:text-sm text-gray-400">
                                   Thời lượng: {Math.floor(audioChapter.durationSec / 60)} phút {audioChapter.durationSec % 60} giây
                                 </p>
-                              )}
+                              )} */}
                               {/* Hiển thị trạng thái */}
                               {!isLoggedIn && (
                                 <span className="text-red-400 text-xs font-medium">

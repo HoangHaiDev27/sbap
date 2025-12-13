@@ -29,7 +29,7 @@ export default function BookOwnerSidebar({ isOpen, onClose }) {
   const getSwitchButtonIcon = () => <RiUserLine className="w-4 h-4" />;
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: RiDashboardLine, href: "/owner/dashboard" },
+    { id: "dashboard", label: "Thống kê", icon: RiDashboardLine, href: "/owner/dashboard" },
     { id: "books", label: "Quản lý Sách", icon: RiBook2Line, href: "/owner/books" },
     { id: "sales", label: "Lịch sử bán hàng", icon: RiFileListLine, href: "/owner/sales-history" },
     { id: "promotion", label: "Quản lý Khuyến mãi", icon: RiCoupon2Line, href: "/owner/promotions" },

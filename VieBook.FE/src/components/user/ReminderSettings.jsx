@@ -26,14 +26,20 @@ export default function ReminderSettings() {
       const data = await getMyReminderSettings();
       setSettings(data);
       setFormData({
-        dailyGoalMinutes: data.dailyGoalMinutes,
-        weeklyGoalHours: data.weeklyGoalHours,
-        reminderMinutesBefore: data.reminderMinutesBefore,
-        isActive: data.isActive
+        dailyGoalMinutes: data.dailyGoalMinutes || 30,
+        weeklyGoalHours: data.weeklyGoalHours || 5,
+        reminderMinutesBefore: data.reminderMinutesBefore || 15,
+        isActive: data.isActive !== undefined ? data.isActive : true // Mặc định bật reminder
       });
     } catch (error) {
       console.error("Error loading settings:", error);
-      // Nếu không có settings, sử dụng default values
+      // Nếu không có settings, sử dụng default values với isActive = true
+      setFormData({
+        dailyGoalMinutes: 30,
+        weeklyGoalHours: 5,
+        reminderMinutesBefore: 15,
+        isActive: true // Mặc định bật reminder để email có thể được gửi
+      });
     } finally {
       setLoading(false);
     }

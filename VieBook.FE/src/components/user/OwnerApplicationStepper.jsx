@@ -286,16 +286,16 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
   };
 
   return (
-    <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl text-white">
+    <div className="bg-gray-800 rounded-xl p-4 md:p-6 w-full max-w-2xl text-white">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Đăng ký trở thành chủ sách</h3>
-        <button onClick={onClose} className="text-gray-300 hover:text-white"><i className="ri-close-line text-xl"></i></button>
+        <h3 className="text-base md:text-lg font-semibold pr-2">Đăng ký trở thành chủ sách</h3>
+        <button onClick={onClose} className="text-gray-300 hover:text-white flex-shrink-0"><i className="ri-close-line text-xl"></i></button>
       </div>
 
       <StepperHeader steps={steps} current={step} />
 
       {!!error && (
-        <div className="mt-3 p-3 rounded bg-red-500/20 border border-red-500/40 text-red-200 text-sm">{error}</div>
+        <div className="mt-3 p-3 rounded bg-red-500/20 border border-red-500/40 text-red-200 text-xs md:text-sm break-words">{error}</div>
       )}
 
       <div className="mt-4">
@@ -336,8 +336,8 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
 
         {step === 2 && (
           <div>
-            <div id={recaptchaId} />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div id={recaptchaId} className="mb-3" />
+            <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-3 md:gap-3">
               <div className="md:col-span-2">
                 <Field label="Số điện thoại (E.164 nếu quốc tế) *">
                   <input 
@@ -351,7 +351,7 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
                   />
                 </Field>
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end md:items-end">
                 <button 
                   onClick={sendOtp} 
                   disabled={loading || !form.phoneNumber?.trim()} 
@@ -362,7 +362,7 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
               </div>
             </div>
             {confirmationResult && (
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="mt-3 space-y-3 md:space-y-0 md:grid md:grid-cols-3 md:gap-3">
                 <div className="md:col-span-2">
                   <Field label="Nhập OTP *">
                     <input 
@@ -372,14 +372,14 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
                         const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
                         setField('otp', value.slice(0, 6)); // Giới hạn 6 số
                       }} 
-                      className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white" 
+                      className="mt-1 w-full px-3 py-2 rounded-lg bg-gray-700 text-white text-center md:text-left text-lg md:text-base tracking-widest md:tracking-normal" 
                       placeholder="Nhập 6 chữ số"
                       maxLength={6}
                       required
                     />
                   </Field>
                 </div>
-                <div className="flex items-end">
+                <div className="flex items-end md:items-end">
                   <button 
                     onClick={next} 
                     disabled={loading || !form.otp || form.otp.length !== 6} 
@@ -459,7 +459,7 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
               </p>
             </Field>
             <div>
-              <label className={`flex items-center gap-2 text-sm ${
+              <label className={`flex items-start md:items-center gap-2 text-xs md:text-sm ${
                 triedSubmit && !form.agreeTos 
                   ? 'text-red-300' 
                   : 'text-gray-300'
@@ -474,18 +474,18 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
                       setError(""); // Clear error message
                     }
                   }} 
-                  className={`w-4 h-4 rounded ${
+                  className={`w-4 h-4 rounded mt-0.5 md:mt-0 flex-shrink-0 ${
                     triedSubmit && !form.agreeTos 
                       ? 'border-red-500' 
                       : 'border-gray-600'
                   }`}
                   required
                 />
-                <span>Tôi cam kết tuân thủ quy định và điều khoản của VieBook. *</span>
+                <span className="leading-relaxed">Tôi cam kết tuân thủ quy định và điều khoản của VieBook. *</span>
               </label>
               {triedSubmit && !form.agreeTos && (
-                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
-                  <i className="ri-error-warning-line"></i>
+                <p className="mt-2 text-xs md:text-sm text-red-400 flex items-start md:items-center gap-1">
+                  <i className="ri-error-warning-line mt-0.5 md:mt-0 flex-shrink-0"></i>
                   <span>Bạn cần đồng ý điều khoản để tiếp tục đăng ký</span>
                 </p>
               )}
@@ -494,27 +494,27 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
         )}
 
         {step === 5 && (
-          <div className="text-center py-6">
-            <i className="ri-checkbox-circle-line text-5xl text-green-500"></i>
-            <p className="mt-2 text-lg font-semibold">Bạn đã đăng ký chủ sách thành công!</p>
-            <p className="mt-3 text-sm text-gray-300">
+          <div className="text-center py-4 md:py-6">
+            <i className="ri-checkbox-circle-line text-4xl md:text-5xl text-green-500"></i>
+            <p className="mt-2 text-base md:text-lg font-semibold px-2">Bạn đã đăng ký chủ sách thành công!</p>
+            <p className="mt-3 text-xs md:text-sm text-gray-300 px-2">
               Vui lòng đăng nhập lại để sử dụng quyền chủ sách.
             </p>
-            <p className="mt-2 text-xs text-gray-400">
+            <p className="mt-2 text-xs text-gray-400 px-2">
               Bạn sẽ được chuyển đến trang đăng nhập sau vài giây...
             </p>
           </div>
         )}
       </div>
 
-      <div className="mt-6 flex justify-between">
-        <button onClick={back} disabled={step===1 || step===5} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg disabled:opacity-50">Quay lại</button>
-        {step < 4 && <button onClick={next} disabled={step===2 && !confirmationResult} className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg">Tiếp tục</button>}
+      <div className="mt-6 flex flex-col md:flex-row justify-between gap-3 md:gap-0">
+        <button onClick={back} disabled={step===1 || step===5} className="w-full md:w-auto bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg disabled:opacity-50 order-2 md:order-1">Quay lại</button>
+        {step < 4 && <button onClick={next} disabled={step===2 && !confirmationResult} className="w-full md:w-auto bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded-lg order-1 md:order-2">Tiếp tục</button>}
         {step === 4 && (
           <button 
             onClick={submitAll} 
             disabled={loading} 
-            className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full md:w-auto bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed order-1 md:order-2"
             title={!form.agreeTos ? "Vui lòng đồng ý điều khoản để tiếp tục" : ""}
           >
             Gửi đăng ký
@@ -530,7 +530,7 @@ export default function OwnerApplicationStepper({ initialProfile, onClose, onSuc
                 navigate("/auth");
               }
             }} 
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
+            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg order-1 md:order-2"
           >
             Đăng nhập ngay
           </button>
@@ -551,19 +551,50 @@ function Field({ label, children }) {
 
 function StepperHeader({ steps, current }) {
   return (
-    <div className="flex items-center gap-2">
-      {steps.map((s, idx) => {
-        const active = s.id === current;
-        const done = s.id < current;
-        return (
-          <div key={s.id} className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${done ? 'bg-green-600' : active ? 'bg-orange-500' : 'bg-gray-600'}`}>{s.id}</div>
-            <span className={`text-sm ${active ? 'text-white' : 'text-gray-300'}`}>{s.title}</span>
-            {idx < steps.length - 1 && <div className="w-8 h-[2px] bg-gray-600 mx-2" />}
-          </div>
-        );
-      })}
-    </div>
+    <>
+      {/* Mobile version với scroll */}
+      <div className="md:hidden overflow-x-auto -mx-4 px-4 pb-2">
+        <div className="flex items-center gap-1 min-w-max">
+          {steps.map((s, idx) => {
+            const active = s.id === current;
+            const done = s.id < current;
+            return (
+              <div key={s.id} className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${done ? 'bg-green-600' : active ? 'bg-orange-500' : 'bg-gray-600'}`}>
+                    {s.id}
+                  </div>
+                </div>
+                {idx < steps.length - 1 && (
+                  <div className="w-4 h-[2px] bg-gray-600 mx-1 flex-shrink-0" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {/* Hiển thị tên bước hiện tại trên mobile */}
+        <div className="mt-2 text-center">
+          <span className="text-sm text-white font-medium">
+            {steps.find(s => s.id === current)?.title}
+          </span>
+        </div>
+      </div>
+      
+      {/* Desktop version giữ nguyên như cũ */}
+      <div className="hidden md:flex items-center gap-2">
+        {steps.map((s, idx) => {
+          const active = s.id === current;
+          const done = s.id < current;
+          return (
+            <div key={s.id} className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${done ? 'bg-green-600' : active ? 'bg-orange-500' : 'bg-gray-600'}`}>{s.id}</div>
+              <span className={`text-sm ${active ? 'text-white' : 'text-gray-300'}`}>{s.title}</span>
+              {idx < steps.length - 1 && <div className="w-8 h-[2px] bg-gray-600 mx-2" />}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 

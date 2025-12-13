@@ -19,15 +19,20 @@ export default function AudiobookGrid({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [audiobooks, setAudiobooks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Fetch sách đọc
   useEffect(() => {
     async function fetchBooks() {
       try {
+        setLoading(true);
         const data = await getReadBooks();
         setAudiobooks(data || []);
       } catch (err) {
         console.error("Failed to fetch books", err);
+        setAudiobooks([]);
+      } finally {
+        setLoading(false);
       }
     }
     fetchBooks();
@@ -107,17 +112,26 @@ export default function AudiobookGrid({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentBooks = sortedBooks.slice(startIndex, startIndex + itemsPerPage);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <span className="ml-3 text-gray-400">Đang tải sách...</span>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Grid/List */}
       {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {currentBooks.map((book) => (
             <AudiobookCard key={book.id} book={book} />
           ))}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {currentBooks.map((book) => (
             <AudiobookRow key={book.id} book={book} />
           ))}
@@ -151,10 +165,10 @@ function AudiobookCard({ book }) {
   return (
     <Link
       to={`/bookdetails/${book.id}`}
-      className="block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group h-full"
+      className="block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group h-full w-full"
     >
       {/* Hình ảnh */}
-      <div className="relative h-64">
+      <div className="relative h-48 sm:h-56 md:h-64">
         <img
           src={book.image}
           alt={book.title}
@@ -194,17 +208,17 @@ function AudiobookCard({ book }) {
       </div>
 
       {/* Nội dung */}
-      <div className="p-4 flex flex-col h-[260px]">
-        <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors h-[56px] overflow-hidden line-clamp-2">
+      <div className="p-3 sm:p-4 flex flex-col min-h-[200px] sm:min-h-[260px]">
+        <h3 className="font-semibold text-base sm:text-lg mb-1 group-hover:text-orange-400 transition-colors min-h-[3rem] sm:min-h-[3.5rem] overflow-hidden line-clamp-2">
           {book.title}
         </h3>
-        <p className="text-gray-400 text-sm mb-1 h-5 truncate">
+        <p className="text-gray-400 text-xs sm:text-sm mb-1 h-5 truncate">
           Tác giả: {book.author}
         </p>
         <div className="h-5 mb-2">
           <Rating rating={book.rating || 0} reviews={book.reviews || 0} />
         </div>
-        <p className="text-gray-300 text-sm mb-3 line-clamp-2 overflow-hidden">
+        <p className="text-gray-300 text-xs sm:text-sm mb-3 line-clamp-2 overflow-hidden flex-grow">
           {book.description}
         </p>
         <div className="mt-auto">
@@ -220,20 +234,20 @@ function AudiobookRow({ book }) {
   return (
     <Link
       to={`/bookdetails/${book.id}`}
-      className="flex items-center bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
+      className="flex flex-col sm:flex-row items-start sm:items-center bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group w-full"
     >
       <img
         src={book.image}
         alt={book.title}
-        className="w-32 h-32 object-cover object-center"
+        className="w-full sm:w-32 h-48 sm:h-32 object-cover object-center"
       />
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-1">
+      <div className="p-3 sm:p-4 flex flex-col flex-1 w-full min-w-0">
+        <h3 className="font-semibold text-base sm:text-lg mb-1 group-hover:text-orange-400 transition-colors line-clamp-2 sm:line-clamp-1">
           {book.title}
         </h3>
-        <p className="text-gray-400 text-sm mb-1">Tác giả: {book.author}</p>
+        <p className="text-gray-400 text-xs sm:text-sm mb-1 truncate">Tác giả: {book.author}</p>
         <Rating rating={book.rating || 0} reviews={book.reviews || 0} />
-        <div className="mt-auto">
+        <div className="mt-auto pt-2">
           <BookFooter book={book} />
         </div>
       </div>
@@ -293,8 +307,8 @@ function BookFooter({ book }) {
         <span className="text-xs text-gray-400">{book.chapters} chương</span>
       </div>
 
-      <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-full shadow-md transition-all duration-200 hover:scale-105">
-        <RiBookOpenLine className="w-5 h-5" />
+      <button className="flex items-center gap-1.5 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-md transition-all duration-200 hover:scale-105 text-sm sm:text-base">
+        <RiBookOpenLine className="w-4 h-4 sm:w-5 sm:h-5" />
         <span>Đọc</span>
       </button>
     </div>
