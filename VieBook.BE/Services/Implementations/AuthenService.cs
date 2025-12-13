@@ -118,6 +118,8 @@ namespace Services.Implementations
             var user = await _authRepo.GetByEmailAsync(request.Email);
             if (user == null)
                 return "Email không tồn tại";
+            if (user.Status != "Active") 
+            return "Tài khoản chưa được kích hoạt hoặc đã bị khóa";
 
 			// Không cho phép dùng quên mật khẩu cho tài khoản có role Staff
 			if (user.Roles != null && user.Roles.Any(r => 
@@ -154,7 +156,7 @@ namespace Services.Implementations
             if (user == null) return "Email không tồn tại";
 
             // Regex check password (>=6 ký tự, có ít nhất 1 chữ và 1 số)
-            var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$");
+            var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[^\s]{6,}$");
             if (!passwordRegex.IsMatch(request.NewPassword))
                 return "Mật khẩu phải có ít nhất 6 ký tự, gồm chữ và số";
 

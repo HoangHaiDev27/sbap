@@ -47,7 +47,7 @@ public class AuthController : ControllerBase
 
 		// Các trường hợp không được phép tiếp tục Step 2
 		if (result == "Tài khoản không được phép sử dụng chức năng quên mật khẩu"
-			|| result == "Tài khoản chưa được kích hoạt")
+			|| result == "Tài khoản chưa được kích hoạt hoặc đã bị khóa")
 		{
 			return BadRequest(new { message = result });
 		}
