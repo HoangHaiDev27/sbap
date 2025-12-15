@@ -484,6 +484,13 @@ export async function generateChapterAudio(chapterId, voiceName = "banmai", spee
     }
     if (res.status === 400) {
       const error = await res.json();
+      // Xử lý riêng trường hợp giọng đã tồn tại
+      if (error.message && error.message.includes("đã có audio với giọng")) {
+        const errorObj = new Error(error.message);
+        errorObj.isVoiceExists = true;
+        errorObj.voiceName = error.voiceName;
+        throw errorObj;
+      }
       throw new Error(error.message || "Tạo audio thất bại");
     }
     throw new Error("Tạo audio thất bại");
