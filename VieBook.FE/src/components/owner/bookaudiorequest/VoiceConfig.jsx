@@ -71,7 +71,17 @@ export default function VoiceConfig({ chapterId, onStartQueue, onCompleteQueue, 
     } catch (err) {
       console.error("❌ Lỗi khi tạo audio:", err);
       if (onCompleteQueue) onCompleteQueue(chapterId, false);
-      toast.error(err.message || "Không thể tạo audio");
+      
+      // Xử lý riêng trường hợp giọng đã tồn tại
+      if (err.isVoiceExists) {
+        const voiceInfo = voices.find(v => v.id === err.voiceName || v.name.includes(err.voiceName));
+        const voiceDisplayName = voiceInfo?.name || err.voiceName;
+        toast.error(`Chương này đã có audio với giọng "${voiceDisplayName}". Vui lòng chọn giọng khác.`, {
+          duration: 5000,
+        });
+      } else {
+        toast.error(err.message || "Không thể tạo audio");
+      }
     } finally {
       setLoading(false);
     }

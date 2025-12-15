@@ -269,9 +269,26 @@ export async function uploadCertificate(formData) {
     body: formData,
   });
   if (!res.ok) {
-    const errorText = await res.text();
-    console.error("❌ Certificate upload failed:", res.status, errorText);
-    throw new Error(`Upload giấy chứng nhận thất bại: ${errorText}`);
+    // Xử lý lỗi 413 Request Entity Too Large từ nginx
+    if (res.status === 413) {
+      throw new Error("Dung lượng ảnh quá lớn");
+    }
+    
+    // Thử parse JSON error message từ backend
+    let errorMessage = "Upload giấy chứng nhận thất bại";
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorMessage;
+    } catch {
+      // Nếu không parse được JSON, đọc text nhưng không hiển thị HTML error
+      const errorText = await res.text();
+      console.error("❌ Certificate upload failed:", res.status, errorText);
+      // Chỉ hiển thị thông báo chung nếu không phải lỗi 413
+      if (res.status !== 413) {
+        errorMessage = "Upload giấy chứng nhận thất bại";
+      }
+    }
+    throw new Error(errorMessage);
   }
   const data = await res.json();
   return data.fileUrl || data.imageUrl; // Support both field names
@@ -467,6 +484,13 @@ export async function generateChapterAudio(chapterId, voiceName = "banmai", spee
     }
     if (res.status === 400) {
       const error = await res.json();
+      // Xử lý riêng trường hợp giọng đã tồn tại
+      if (error.message && error.message.includes("đã có audio với giọng")) {
+        const errorObj = new Error(error.message);
+        errorObj.isVoiceExists = true;
+        errorObj.voiceName = error.voiceName;
+        throw errorObj;
+      }
       throw new Error(error.message || "Tạo audio thất bại");
     }
     throw new Error("Tạo audio thất bại");
