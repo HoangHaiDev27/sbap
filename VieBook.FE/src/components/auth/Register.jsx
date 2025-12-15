@@ -3,6 +3,7 @@ import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { RiHomeLine } from "react-icons/ri";
 import { register, checkEmailExists } from "../../api/authApi";
+import { Link } from "react-router-dom";
 
 export default function Register({ setActiveTab }) {
   const [formData, setFormData] = useState({
@@ -167,7 +168,7 @@ export default function Register({ setActiveTab }) {
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
     if (!passwordRegex.test(formData.password)) {
       showToast(
         "error",
@@ -423,13 +424,13 @@ export default function Register({ setActiveTab }) {
           />
           <span className="ml-2 text-gray-400">
             Tôi đồng ý với{" "}
-            <button type="button" className="text-orange-500 hover:underline">
-              Điều khoản sử dụng
-            </button>{" "}
-            và{" "}
-            <button type="button" className="text-orange-500 hover:underline">
-              Chính sách bảo mật
-            </button>
+            <Link to="/terms" className="text-orange-500 hover:underline">
+                Điều khoản sử dụng
+              </Link>
+            và
+            <Link to="/privacy" className="text-orange-500 hover:underline">
+                Chính sách bảo mật
+            </Link>
           </span>
         </div>
 
