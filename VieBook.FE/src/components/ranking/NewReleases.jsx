@@ -140,43 +140,53 @@ export default function NewReleases() {
 
       {/* --- giữ nguyên UI gốc --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {visibleBooks.slice(0, 3).map((book) => (
-          <div
-            key={book.id}
-            className="bg-gradient-to-b from-gray-700 to-gray-800 rounded-xl p-4 relative"
-          >
-            {book.isNew && (
-              <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs flex items-center">
-                <NewIcon className="w-4 h-4 mr-1" />
-                MỚI
-              </div>
-            )}
-
-            <div className="text-center">
-              <img
-                src={book.coverUrl}
-                alt={book.title}
-                className="w-24 h-32 object-cover rounded-lg mx-auto mb-3"
-              />
-              <h3 className="font-semibold text-white mb-2 line-clamp-2">
-                {book.title}
-              </h3>
-              <p className="text-gray-400 text-sm mb-2">{book.author}</p>
-              <div className="flex items-center justify-center text-xs text-gray-400 mb-3">
-                <CalendarIcon className="w-4 h-4 mr-1" />
-                <span>{formatDate(book.createdAt)}</span>
-              </div>
-              <button
-                onClick={() => navigate(`/bookdetails/${book.id}`)}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
-              >
-                <PlayIcon className="w-5 h-5 mr-2" />
-                Xem chi tiết
-              </button>
+      {visibleBooks.slice(0, 3).map((book) => (
+        <div
+          key={book.id}
+          className="bg-gradient-to-b from-gray-700 to-gray-800 rounded-xl p-4 relative h-full flex flex-col"
+        >
+          {book.isNew && (
+            <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs flex items-center">
+              <NewIcon className="w-4 h-4 mr-1" />
+              MỚI
             </div>
+          )}
+
+          {/* CONTENT */}
+          <div className="flex flex-col text-center h-full">
+            <img
+              src={book.coverUrl}
+              alt={book.title}
+              className="w-24 h-32 object-cover rounded-lg mx-auto mb-3"
+            />
+
+            {/* FIX title */}
+            <h3 className="font-semibold text-white mb-2 line-clamp-2 max-h-[3rem]">
+              {book.title}
+            </h3>
+
+            <p className="text-gray-400 text-sm mb-2">
+              {book.author}
+            </p>
+
+            <div className="flex items-center justify-center text-xs text-gray-400 mb-3">
+              <CalendarIcon className="w-4 h-4 mr-1" />
+              <span>{formatDate(book.createdAt)}</span>
+            </div>
+
+            {/* Button luôn nằm đáy */}
+            <button
+              onClick={() => navigate(`/bookdetails/${book.id}`)}
+              className="mt-auto w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+            >
+              <PlayIcon className="w-5 h-5 mr-2" />
+              Xem chi tiết
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+    </div>
+
 
       {/* --- danh sách đầy đủ --- */}
       <div className="space-y-4">
