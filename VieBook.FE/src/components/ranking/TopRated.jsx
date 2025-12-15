@@ -89,49 +89,66 @@ export default function TopRated() {
       </div>
 
       {/* Top 3 Books */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        {visibleBooks.slice(0, 3).map((book, index) => (
-          <div
-            key={book.id}
-            className={`relative rounded-xl p-4 ${
-              index === 0
-                ? "bg-gradient-to-br from-yellow-600 to-yellow-800"
-                : index === 1
-                ? "bg-gradient-to-br from-gray-500 to-gray-700"
-                : "bg-gradient-to-br from-orange-600 to-orange-800"
-            }`}
-          >
-            <div className="absolute top-2 left-2 text-2xl">
-              {index === 0 ? "👑" : index === 1 ? "🥈" : "🥉"}
+     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+      {visibleBooks.slice(0, 3).map((book, index) => (
+        <div
+          key={book.id}
+          className={`relative rounded-xl p-4 h-full flex flex-col ${
+            index === 0
+              ? "bg-gradient-to-br from-yellow-600 to-yellow-800"
+              : index === 1
+              ? "bg-gradient-to-br from-gray-500 to-gray-700"
+              : "bg-gradient-to-br from-orange-600 to-orange-800"
+          }`}
+        >
+          {/* Rank icon */}
+          <div className="absolute top-2 left-2 text-2xl">
+            {index === 0 ? "👑" : index === 1 ? "🥈" : "🥉"}
+          </div>
+
+          {/* CONTENT */}
+          <div className="flex flex-col text-center pt-6 h-full">
+            <img
+              src={book.image}
+              alt={book.title}
+              className="w-20 h-28 object-cover rounded-lg mx-auto mb-3"
+            />
+
+            {/* FIX title */}
+            <h3 className="font-semibold text-white mb-2 line-clamp-2 max-h-[3rem]">
+              {book.title}
+            </h3>
+
+            <p className="text-gray-200 text-sm mb-2">
+              {book.author}
+            </p>
+
+            <div className="flex items-center justify-center mb-2">
+              <div className="flex items-center space-x-1 mr-2">
+                {renderStars(book.rating)}
+              </div>
+              <span className={`font-bold ${getRatingColor(book.rating)}`}>
+                {book.rating}
+              </span>
             </div>
 
-            <div className="text-center pt-6">
-              <img
-                src={book.image}
-                alt={book.title}
-                className="w-20 h-28 object-cover rounded-lg mx-auto mb-3"
-              />
-              <h3 className="font-semibold text-white mb-2 line-clamp-2">{book.title}</h3>
-              <p className="text-gray-200 text-sm mb-2">{book.author}</p>
-              <div className="flex items-center justify-center mb-2">
-                <div className="flex items-center space-x-1 mr-2">
-                  {renderStars(book.rating)}
-                </div>
-                <span className={`font-bold ${getRatingColor(book.rating)}`}>{book.rating}</span>
-              </div>
-              <p className="text-xs text-gray-200 mb-3">
-                {(book.totalRatings ?? book.ratingCount ?? 0).toLocaleString()} đánh giá
-              </p>
-              <button
-                onClick={() => navigate(`/bookdetails/${book.id}`)}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
-              >
-                <RiEyeLine className="mr-2" /> Xem chi tiết
-              </button>
-            </div>
+            <p className="text-xs text-gray-200 mb-3">
+              {(book.totalRatings ?? book.ratingCount ?? 0).toLocaleString()} đánh giá
+            </p>
+
+            {/* Button luôn ở đáy */}
+            <button
+              onClick={() => navigate(`/bookdetails/${book.id}`)}
+              className="mt-auto w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors flex items-center justify-center"
+            >
+              <RiEyeLine className="mr-2" />
+              Xem chi tiết
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+    </div>
+
 
       {/* Các sách còn lại */}
       <div className="space-y-4">
