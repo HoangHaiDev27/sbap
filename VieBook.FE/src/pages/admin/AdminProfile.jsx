@@ -242,7 +242,7 @@ export default function AdminProfile() {
         </p>
         <ul className="list-disc list-inside text-gray-700 space-y-2">
           <li>Quản lý và phân quyền người dùng trong hệ thống.</li>
-          <li>Theo dõi hoạt động của Staff, BookOwner và Customer.</li>
+          <li>Theo dõi hoạt động của nhân viên, chủ shop và khách hàng.</li>
           <li>Quản lý tin tức, bài viết và các thông báo quan trọng.</li>
           <li>Đảm bảo tính bảo mật và an toàn dữ liệu.</li>
           <li>Thiết lập và duy trì các cài đặt hệ thống.</li>
