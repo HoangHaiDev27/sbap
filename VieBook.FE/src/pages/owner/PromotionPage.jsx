@@ -82,48 +82,51 @@ export default function PromotionPage() {
       <PromotionStats refreshTrigger={promotions.length} />
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <input
-            type="text"
-            placeholder="Tìm kiếm khuyến mãi hoặc sách..."
-            className="px-3 sm:px-4 py-2.5 sm:py-2 border border-slate-600 rounded-lg w-full sm:flex-1 sm:max-w-md bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full sm:w-auto">
-            <div className="relative flex-shrink-0">
-              <input
-                type="checkbox"
-                checked={showInactive}
-                onChange={(e) => {
-                  setShowInactive(e.target.checked);
-                  if (e.target.checked) {
-                    fetchInactivePromotions();
-                  }
-                }}
-                className="sr-only"
-              />
-              <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${
-                showInactive ? 'bg-orange-500' : 'bg-slate-600'
-              }`}>
-                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${
-                  showInactive ? 'translate-x-5' : 'translate-x-0.5'
-                } mt-0.5`}></div>
+        <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-1">
+            <input
+              type="text"
+              placeholder="Tìm kiếm khuyến mãi hoặc sách..."
+              className="px-3 sm:px-4 py-2.5 sm:py-2 border border-slate-600 rounded-lg w-full sm:flex-1 sm:max-w-md bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group w-full sm:w-auto">
+              <div className="relative flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={showInactive}
+                  onChange={(e) => {
+                    setShowInactive(e.target.checked);
+                    if (e.target.checked) {
+                      fetchInactivePromotions();
+                    }
+                  }}
+                  className="sr-only"
+                />
+                <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${
+                  showInactive ? 'bg-orange-500' : 'bg-slate-600'
+                }`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${
+                    showInactive ? 'translate-x-5' : 'translate-x-0.5'
+                  } mt-0.5`}></div>
+                </div>
               </div>
-            </div>
-            <span className="text-white text-sm sm:text-base font-medium group-hover:text-orange-400 transition-colors">
-              {showInactive ? 'Đã vô hiệu hóa' : 'Hiển thị đã vô hiệu hóa'}
-            </span>
-          </label>
+              <span className="text-white text-sm sm:text-base font-medium group-hover:text-orange-400 transition-colors">
+                {showInactive ? 'Đã vô hiệu hóa' : 'Hiển thị đã vô hiệu hóa'}
+              </span>
+            </label>
+          </div>
+
+          {!showInactive && (
+            <button
+              className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl w-full sm:w-auto text-sm sm:text-base min-h-[44px]"
+              onClick={() => setOpen(true)}
+            >
+              + Tạo Khuyến mãi
+            </button>
+          )}
         </div>
-        {!showInactive && (
-          <button
-            className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl w-full sm:w-auto text-sm sm:text-base min-h-[44px]"
-            onClick={() => setOpen(true)}
-          >
-            + Tạo Khuyến mãi
-          </button>
-        )}
       </div>
 
       <PromotionTable 
