@@ -14,18 +14,40 @@ export default function AdminPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [showAllCategories, setShowAllCategories] = useState(false);
+  
 
   const RiDongIcon = () => (
     <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white font-bold text-lg">
       đ
     </div>
   );
+const diffInMonths = (from, to) => {
+  if (!from || !to) return 0;
 
+  const start = new Date(from);
+  const end = new Date(to);
+
+  return (
+    (end.getFullYear() - start.getFullYear()) * 12 +
+    (end.getMonth() - start.getMonth())
+  );
+};
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      const maxRangeMonths = 12;
 
+    if (fromDate && toDate && diffInMonths(fromDate, toDate) > maxRangeMonths) {
+      setError("Vui lòng chọn khoảng thời gian không quá 12 tháng");
+      setStats(null);
+      setStatsData([]);
+      setBooksByMonthData([]);
+      setRevenueData([]);
+      setCategoryDistribution([]);
+      setLoading(false);
+      return; // ⛔ DỪNG, KHÔNG GỌI API
+    }
       try {
         const res = await getStatistic(fromDate, toDate);
         const data = res.data ?? res;
