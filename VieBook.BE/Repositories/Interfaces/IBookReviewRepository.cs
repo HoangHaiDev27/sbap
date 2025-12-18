@@ -19,6 +19,7 @@ namespace Repositories.Interfaces
         Task<(List<BookReviewDTO> Reviews, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, int? bookId = null);
         Task<int> GetTotalCountForStaffAsync(string? searchTerm = null, int? bookId = null);
         Task<bool> DeleteAsync(int reviewId);
+        Task<List<BookReview>> GetReviewsByUserIdAsync(int userId);
     }
 }
 

@@ -100,6 +100,11 @@ namespace Repositories.Implementations
             return await _bookDao.GetRecommendedBooksAsync(userId);
         }
 
+        public async Task<List<Book>> GetCollaborativeFilteringRecommendationsAsync(int userId, int topCount = 10)
+        {
+            return await _bookDao.GetCollaborativeFilteringRecommendationsAsync(userId, topCount);
+        }
+
         public async Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId)
         {
             return await _bookDao.GetChapterAudioPricesAsync(bookId);
@@ -138,6 +143,16 @@ namespace Repositories.Implementations
         public async Task<Dictionary<string, int>> GetStatsForStaffAsync(string? searchTerm = null, string? statusFilter = null, int? categoryId = null)
         {
             return await _bookDao.GetStatsForStaffAsync(searchTerm, statusFilter, categoryId);
+        }
+
+        public async Task<List<Book>> GetBooksByIdsAsync(List<int> bookIds)
+        {
+            return await _bookDao.GetBooksByIdsAsync(bookIds);
+        }
+
+        public async Task<List<Book>> GetTopBooksByCategoriesAsync(List<int> categoryIds, int topCount)
+        {
+            return await _bookDao.GetTopBooksByCategoriesAsync(categoryIds, topCount);
         }
     }
 }

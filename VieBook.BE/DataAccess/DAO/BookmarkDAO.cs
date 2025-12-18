@@ -80,6 +80,14 @@ namespace DataAccess.DAO
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<List<Bookmark>> GetBookmarksByUserIdAsync(int userId)
+        {
+            return await _context.Bookmarks
+                .Where(b => b.UserId == userId)
+                .Include(b => b.Book)
+                .ToListAsync();
+        }
     }
 }
 

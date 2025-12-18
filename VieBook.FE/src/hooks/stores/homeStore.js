@@ -5,6 +5,7 @@ export const useHomeStore = create((set) => ({
   readBooks: [],
   categories: [],
   recommendBooks: [],
+  collaborativeRecommendBooks: [],
   loaded: false, // đã fetch chưa?
 
   setHomeData: (data) =>
@@ -13,6 +14,7 @@ export const useHomeStore = create((set) => ({
       readBooks: data.readBooks,
       categories: data.categories,
       recommendBooks: data.recommendBooks,
+      collaborativeRecommendBooks: data.collaborativeRecommendBooks,
       loaded: true,
     }),
 }));

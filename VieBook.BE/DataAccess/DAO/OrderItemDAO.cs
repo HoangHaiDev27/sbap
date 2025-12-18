@@ -216,5 +216,14 @@ namespace DataAccess.DAO
                 })
                 .ToListAsync();
         }
+
+        public async Task<List<int>> GetActiveUserIdsSinceAsync(DateTime cutoffDate)
+        {
+            return await _context.OrderItems
+                .Where(oi => oi.PaidAt != null && oi.PaidAt >= cutoffDate)
+                .Select(oi => oi.CustomerId)
+                .Distinct()
+                .ToListAsync();
+        }
     }
 }

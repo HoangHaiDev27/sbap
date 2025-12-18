@@ -361,6 +361,88 @@ namespace DataAccess.DAO
             }
         }
 
+        // Collaborative Filtering recommendations
+        public async Task<List<Book>> GetCollaborativeFilteringRecommendationsAsync(int userId, int topCount = 10)
+        {
+            // Get books read by similar users (collaborative filtering)
+            var similarUsersQuery = @"
+                WITH UserBooks AS (
+                    SELECT DISTINCT oi.CustomerId, oi.Chapter_BookId as BookId
+                    FROM OrderItems oi
+                    WHERE oi.CustomerId != @userId
+                ),
+                SimilarityScores AS (
+                    SELECT u1.CustomerId as SimilarUserId,
+                           COUNT(CASE WHEN u2.BookId = u1.BookId THEN 1 END) as CommonBooks,
+                           COUNT(DISTINCT u1.BookId) as User1Books,
+                           COUNT(DISTINCT u2.BookId) as User2Books
+                    FROM UserBooks u1
+                    JOIN UserBooks u2 ON u1.BookId = u2.BookId AND u1.CustomerId != u2.CustomerId
+                    WHERE u1.CustomerId = @userId
+                    GROUP BY u1.CustomerId
+                    HAVING COUNT(CASE WHEN u2.BookId = u1.BookId THEN 1 END) >= 2
+                ),
+                CandidateBooks AS (
+                    SELECT ss.SimilarUserId,
+                           oi.Chapter_BookId as BookId,
+                           (CAST(ss.CommonBooks AS FLOAT) / NULLIF(ss.User1Books + ss.User2Books - ss.CommonBooks, 0)) as JaccardSimilarity
+                    FROM SimilarityScores ss
+                    JOIN OrderItems oi ON oi.CustomerId = ss.SimilarUserId
+                    WHERE oi.Chapter_BookId NOT IN (
+                        SELECT DISTINCT oi2.Chapter_BookId 
+                        FROM OrderItems oi2 
+                        WHERE oi2.CustomerId = @userId
+                    )
+                )
+                SELECT cb.BookId, SUM(cb.JaccardSimilarity) as TotalSimilarity
+                FROM CandidateBooks cb
+                GROUP BY cb.BookId
+                ORDER BY TotalSimilarity DESC
+                LIMIT @topCount";
+
+            var candidateBookIds = await _context.Database
+                .SqlQueryRaw<int>(similarUsersQuery, 
+                    new Microsoft.Data.SqlClient.SqlParameter("@userId", userId),
+                    new Microsoft.Data.SqlClient.SqlParameter("@topCount", topCount))
+                .ToListAsync();
+
+            if (!candidateBookIds.Any())
+            {
+                // Fallback to category-based recommendations
+                return await GetFallbackRecommendations(userId, topCount);
+            }
+
+            // Get the actual books
+            return await _context.Books
+                .Where(b => candidateBookIds.Contains(b.BookId) && b.Status == "Approved")
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .OrderByDescending(b => candidateBookIds.IndexOf(b.BookId))
+                .ToListAsync();
+        }
+
+        private async Task<List<Book>> GetFallbackRecommendations(int userId, int topCount)
+        {
+            var purchasedCategoryIds = await _context.OrderItems
+                .Where(o => o.CustomerId == userId)
+                .SelectMany(o => o.Chapter.Book.Categories.Select(c => c.CategoryId))
+                .Distinct()
+                .ToListAsync();
+
+            return await _context.Books
+                .Where(b => b.Status == "Approved" && 
+                           b.Categories.Any(c => purchasedCategoryIds.Contains(c.CategoryId)))
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .OrderByDescending(b => b.CreatedAt)
+                .Take(topCount)
+                .ToListAsync();
+        }
+
         // Lấy giá audio từ ChapterAudios cho từng chapter
         public async Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId)
         {
@@ -544,5 +626,33 @@ namespace DataAccess.DAO
             return stats;
         }
 
+        public async Task<List<Book>> GetBooksByIdsAsync(List<int> bookIds)
+        {
+            if (!bookIds.Any()) return new List<Book>();
+            
+            return await _context.Books
+                .Where(b => bookIds.Contains(b.BookId))
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .ToListAsync();
+        }
+
+        public async Task<List<Book>> GetTopBooksByCategoriesAsync(List<int> categoryIds, int topCount)
+        {
+            if (!categoryIds.Any()) return new List<Book>();
+            
+            return await _context.Books
+                .Where(b => b.Status == "Approved" && 
+                           b.Categories.Any(c => categoryIds.Contains(c.CategoryId)))
+                .Include(b => b.Owner).ThenInclude(u => u.UserProfile)
+                .Include(b => b.Categories)
+                .Include(b => b.Chapters)
+                .Include(b => b.BookReviews)
+                .OrderByDescending(b => b.CreatedAt)
+                .Take(topCount)
+                .ToListAsync();
+        }
     }
 }

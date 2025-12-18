@@ -47,5 +47,10 @@ namespace Repositories.Implementations
         {
             return await _dao.DeleteBookmarkByUserAndChapterAsync(userId, chapterId);
         }
+
+        public async Task<List<Bookmark>> GetBookmarksByUserIdAsync(int userId)
+        {
+            return await _dao.GetBookmarksByUserIdAsync(userId);
+        }
     }
 }

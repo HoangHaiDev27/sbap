@@ -66,26 +66,26 @@ namespace Services.Implementations
             // Danh sách các ngân hàng phổ biến ở Việt Nam với AcqId tương ứng
             return new List<SupportedBankDTO>
             {
-                new SupportedBankDTO { AcqId = "970415", Name = "Vietcombank", ShortName = "VCB" },
-                new SupportedBankDTO { AcqId = "970422", Name = "Techcombank", ShortName = "TCB" },
-                new SupportedBankDTO { AcqId = "970423", Name = "VPBank", ShortName = "VPB" },
-                new SupportedBankDTO { AcqId = "970436", Name = "TPBank", ShortName = "TPB" },
+                new SupportedBankDTO { AcqId = "970436", Name = "Vietcombank", ShortName = "VCB" },
+                new SupportedBankDTO { AcqId = "970407", Name = "Techcombank", ShortName = "TCB" },
+                new SupportedBankDTO { AcqId = "970432", Name = "VPBank", ShortName = "VPB" },
+                new SupportedBankDTO { AcqId = "970423", Name = "TPBank", ShortName = "TPB" },
                 new SupportedBankDTO { AcqId = "970416", Name = "ACB", ShortName = "ACB" },
-                new SupportedBankDTO { AcqId = "970427", Name = "Sacombank", ShortName = "STB" },
                 new SupportedBankDTO { AcqId = "970437", Name = "HDBank", ShortName = "HDB" },
-                new SupportedBankDTO { AcqId = "970414", Name = "Vietinbank", ShortName = "CTG" },
+                new SupportedBankDTO { AcqId = "970415", Name = "Vietinbank", ShortName = "CTG" },
                 new SupportedBankDTO { AcqId = "970418", Name = "BIDV", ShortName = "BID" },
-                new SupportedBankDTO { AcqId = "970431", Name = "MBBank", ShortName = "MBB" },
-                new SupportedBankDTO { AcqId = "970424", Name = "SHB", ShortName = "SHB" },
-                new SupportedBankDTO { AcqId = "970428", Name = "VietABank", ShortName = "VAB" },
-                new SupportedBankDTO { AcqId = "970403", Name = "Agribank", ShortName = "VBA" },
-                new SupportedBankDTO { AcqId = "970429", Name = "Nam A Bank", ShortName = "NAB" },
-                new SupportedBankDTO { AcqId = "970441", Name = "VietBank", ShortName = "VCCB" },
+                // MBBank official BIN/AcqId is 970422 (not 970431)
+                new SupportedBankDTO { AcqId = "970422", Name = "MBBank", ShortName = "MBB" },
+                new SupportedBankDTO { AcqId = "970443", Name = "SHB", ShortName = "SHB" },
+                new SupportedBankDTO { AcqId = "970427", Name = "VietABank", ShortName = "VAB" },
+                new SupportedBankDTO { AcqId = "970405", Name = "Agribank", ShortName = "VBA" },
+                new SupportedBankDTO { AcqId = "970428", Name = "Nam A Bank", ShortName = "NAB" },
+                new SupportedBankDTO { AcqId = "970433", Name = "VietBank", ShortName = "VCCB" },
                 new SupportedBankDTO { AcqId = "970448", Name = "OCB", ShortName = "OCB" },
-                new SupportedBankDTO { AcqId = "970449", Name = "PVcomBank", ShortName = "PVCB" },
-                new SupportedBankDTO { AcqId = "970452", Name = "Eximbank", ShortName = "EIB" },
-                new SupportedBankDTO { AcqId = "970454", Name = "MSB", ShortName = "MSB" },
-                new SupportedBankDTO { AcqId = "970455", Name = "VIB", ShortName = "VIB" }
+                new SupportedBankDTO { AcqId = "970412", Name = "PVcomBank", ShortName = "PVCB" },
+                new SupportedBankDTO { AcqId = "970431", Name = "Eximbank", ShortName = "EIB" },
+                new SupportedBankDTO { AcqId = "970426", Name = "MSB", ShortName = "MSB" },
+                new SupportedBankDTO { AcqId = "970441", Name = "VIB", ShortName = "VIB" }
             };
         }
 
@@ -176,16 +176,17 @@ namespace Services.Implementations
                         };
                     }
 
-                    // Fallback: tạo QR từ string
-                    var qrString = $"0002010102123857{request.AcqId}|{request.AccountNo}|{request.AccountName}|{request.Amount}|{request.AddInfo}5204000053037045802VN6304";
+                    // Fallback: tạo QR từ string khi VietQR không trả về qrDataURL
+                    var qrStringFallback = $"0002010102123857{request.AcqId}|{request.AccountNo}|{request.AccountName}|{request.Amount}|{request.AddInfo}5204000053037045802VN6304";
                     return new VietQrResponseDTO
                     {
                         Success = true,
-                        QrDataURL = $"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={Uri.EscapeDataString(qrString)}",
+                        QrDataURL = $"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={Uri.EscapeDataString(qrStringFallback)}",
                         Message = "Tạo mã QR thành công (fallback)"
                     };
                 }
 
+                // Trường hợp thành công: sử dụng trực tiếp ảnh QR do VietQR trả về
                 return new VietQrResponseDTO
                 {
                     Success = true,

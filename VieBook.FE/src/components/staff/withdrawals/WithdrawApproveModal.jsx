@@ -134,7 +134,6 @@ export default function WithdrawApproveModal({ withdraw, onClose }) {
         return;
       }
       
-      // Load banks nếu chưa có
       let bankList = banks;
       if (bankList.length === 0) {
         bankList = await loadBanks();
@@ -143,22 +142,34 @@ export default function WithdrawApproveModal({ withdraw, onClose }) {
           return;
         }
       }
-      
-      // Tự động tìm bank dựa trên bankName của user
-      const matchedBank = bankList.find(
-        b => {
-          const bankNameLower = b.name?.toLowerCase() || "";
-          const shortNameLower = b.shortName?.toLowerCase() || "";
-          const withdrawBankLower = withdraw.bankName?.toLowerCase() || "";
-          
-          return bankNameLower === withdrawBankLower ||
-                 shortNameLower === withdrawBankLower ||
-                 bankNameLower.includes(withdrawBankLower) ||
-                 withdrawBankLower.includes(bankNameLower) ||
-                 shortNameLower.includes(withdrawBankLower) ||
-                 withdrawBankLower.includes(shortNameLower);
-        }
-      );
+
+      const normalize = (str) =>
+        (str || "")
+          .toLowerCase()
+          .replace(/ngan hang|ngân hàng|tmcp|thuong mai co phan|thương mại cổ phần|bank/g, "")
+          .replace(/[^a-z0-9]/g, "")
+          .trim();
+
+      const userBankNorm = normalize(withdraw.bankName);
+
+      let matchedBank = bankList.find((b) => {
+        const nameNorm = normalize(b.name);
+        const shortNorm = normalize(b.shortName);
+        return userBankNorm === nameNorm || userBankNorm === shortNorm;
+      });
+
+      if (!matchedBank) {
+        matchedBank = bankList.find((b) => {
+          const nameNorm = normalize(b.name);
+          const shortNorm = normalize(b.shortName);
+          return (
+            nameNorm.startsWith(userBankNorm) ||
+            userBankNorm.startsWith(nameNorm) ||
+            shortNorm.startsWith(userBankNorm) ||
+            userBankNorm.startsWith(shortNorm)
+          );
+        });
+      }
       
       if (!matchedBank) {
         toast.error(`Ngân hàng "${withdraw.bankName}" không được hỗ trợ. Vui lòng yêu cầu người dùng cập nhật thông tin ngân hàng.`);
@@ -166,6 +177,13 @@ export default function WithdrawApproveModal({ withdraw, onClose }) {
         return;
       }
       
+      console.log("[WithdrawApproveModal] Matched bank for VietQR", {
+        userBankName: withdraw.bankName,
+        matchedBankName: matchedBank.name,
+        matchedBankShortName: matchedBank.shortName,
+        acqId: matchedBank.acqId,
+      });
+
       // Set selectedBankId và tạo QR ngay
       setSelectedBankId(matchedBank.acqId);
       setStep("qr");

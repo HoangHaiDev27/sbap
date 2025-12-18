@@ -19,6 +19,11 @@ namespace Repositories.Implementations
             return await _orderItemDAO.GetPurchasedBooksByUserIdAsync(userId);
         }
 
+        public async Task<List<int>> GetActiveUserIdsSinceAsync(DateTime cutoffDate)
+        {
+            return await _orderItemDAO.GetActiveUserIdsSinceAsync(cutoffDate);
+        }
+
         public async Task<OrderItem?> GetOrderItemByIdAsync(long orderItemId)
         {
             return await _orderItemDAO.GetByIdAsync(orderItemId);

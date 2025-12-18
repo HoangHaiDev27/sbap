@@ -31,6 +31,7 @@ namespace Services.Interfaces
         Task<List<Book>> GetTopPurchasedAudioBooksAsync();
         Task<List<Book>> GetTopPurchasedReadBooksAsync();
         Task<List<Book>> GetRecommendedBooksAsync(int? userId = null);
+        Task<List<Book>> GetCollaborativeFilteringRecommendationsAsync(int userId, int topCount = 10);
         Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId);
         Task<bool> CheckBookHasActiveChaptersAsync(int bookId);
         Task<bool> CheckAllChaptersActiveAsync(int bookId);

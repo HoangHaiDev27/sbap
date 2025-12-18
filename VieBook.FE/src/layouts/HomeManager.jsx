@@ -6,6 +6,7 @@ import {
   getReadBooks,
   getAllCategories,
   getRecommendations,
+  getCollaborativeRecommendations,
 } from "../api/bookApi";
 import { getUserId } from "../api/authApi";
 import { useHomeStore } from "../hooks/stores/homeStore";
@@ -17,6 +18,7 @@ export default function HomeManager() {
     readBooks,
     categories,
     recommendBooks,
+    collaborativeRecommendBooks,
     loaded,
     setHomeData,
   } = useHomeStore();
@@ -34,12 +36,13 @@ export default function HomeManager() {
         setError("");
         const userId = getUserId();
 
-        const [audioRes, readRes, categoriesRes, recommendRes] =
+        const [audioRes, readRes, categoriesRes, recommendRes, collaborativeRes] =
           await Promise.all([
             getAudioBooks().catch(() => []),
             getReadBooks().catch(() => []),
             getAllCategories().catch(() => []),
             getRecommendations(userId).catch(() => []),
+            userId ? getCollaborativeRecommendations(userId, 10).catch(() => []) : Promise.resolve([]),
           ]);
 
         if (cancelled) return;
@@ -103,6 +106,7 @@ export default function HomeManager() {
           audioBooks: audioBooksData.map(mapToCarouselItem),
           readBooks: readBooksData.map(mapToCarouselItem),
           recommendBooks: recommendBooksData.map(mapToCarouselItem),
+          collaborativeRecommendBooks: extractData(collaborativeRes).map(mapToCarouselItem),
           categories: [
             "Tất cả",
             ...(Array.isArray(categoriesRes)
@@ -144,6 +148,12 @@ export default function HomeManager() {
             title="Gợi ý cho bạn"
             books={loading ? [] : recommendBooks}
           />
+          {collaborativeRecommendBooks && collaborativeRecommendBooks.length > 0 && (
+            <BookCarousel
+              title="Gợi ý từ cộng đồng"
+              books={loading ? [] : collaborativeRecommendBooks}
+            />
+          )}
           <BookCarousel
             title="Sách nói chất lượng"
             hasCategories={true}
