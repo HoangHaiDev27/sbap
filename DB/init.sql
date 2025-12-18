@@ -1459,7 +1459,7 @@ INSERT INTO UserProfiles (UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl,
 VALUES
 (7, N'VieBookSupport', '0909000001', '2003-01-01', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729089/avatarImages/usawtquonrcofnowvtcu.jpg', 0, '111111', 'Vietcombank', N'Quảng Bình'),
 (8, N'Tấn Trần', '0909000002', '1992-02-02', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729154/avatarImages/zhdcwjo3qsaebz6ywfbv.jpg', 0, '222222', 'Techcombank', N'Quảng Trị'),
-(9, N'Văn Anh', '0909000003', '1995-03-03', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729408/avatarImages/lqlyga2avgux8hqdsklf.jpg', 0, '333333', 'ACB', N'Quảng Nam'),
+(9, N'Văn Anh', '0382979693', '1995-03-03', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729408/avatarImages/lqlyga2avgux8hqdsklf.jpg', 0, '0382979693', 'MBBank', N'Quảng Nam'),
 (10, N'Trương Nhân', '0909000004', '1988-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729284/avatarImages/fnhbdcuien4vq5bjre9g.jpg', 5000, '444444', 'Sacombank', N'Quảng Nam'),
 (11, N'Nguyễn Đình Hoàng Hải', '0909000004', '1988-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729457/avatarImages/fimepkkzo6nqymkc1yk5.jpg', 0, '444444', 'Sacombank', N'Đà Nẵng');
 
