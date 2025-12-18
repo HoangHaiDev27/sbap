@@ -158,7 +158,7 @@ export default function AdminHeader({ onToggleSidebar }) {
 
       {/* Tiêu đề */}
       <div className="flex items-center space-x-4">
-        <h1 className="text-xl lg:text-2xl font-semibold text-white">
+        <h1 className="hidden lg:block text-xl lg:text-2xl font-semibold text-white">
           Trang quản lý của quản trị viên
         </h1>
       </div>
@@ -194,7 +194,7 @@ export default function AdminHeader({ onToggleSidebar }) {
                 <RiUserLine className="text-white text-sm" />
               </div>
             )}
-            <span className="font-medium">
+            <span className="font-medium hidden sm:inline">
               {currentAdmin?.fullName || 'Admin'}
             </span>
             <i className="ri-arrow-down-s-line w-4 h-4 text-white"></i>

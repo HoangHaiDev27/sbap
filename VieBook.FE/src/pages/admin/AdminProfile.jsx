@@ -175,16 +175,20 @@ export default function AdminProfile() {
           <h3 className="text-lg font-semibold text-gray-800">Thông tin cơ bản</h3>
           <div className="flex gap-2">
             <button
-              className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm"
+              className="text-white bg-blue-600 hover:bg-blue-700 px-3 sm:px-4 py-2 rounded text-sm flex items-center gap-1 sm:gap-2"
               onClick={() => setShowEditModal(true)}
+              title="Chỉnh sửa"
             >
-              ✏️ Chỉnh sửa
+              <span className="text-base sm:text-lg">✏️</span>
+              <span className="hidden sm:inline">Chỉnh sửa</span>
             </button>
             <button
-              className="text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm"
+              className="text-white bg-green-600 hover:bg-green-700 px-3 sm:px-4 py-2 rounded text-sm flex items-center gap-1 sm:gap-2"
               onClick={() => setShowChangePassModal(true)}
+              title="Đổi mật khẩu"
             >
-              🔒 Đổi mật khẩu
+              <span className="text-base sm:text-lg">🔒</span>
+              <span className="hidden sm:inline">Đổi mật khẩu</span>
             </button>
           </div>
         </div>

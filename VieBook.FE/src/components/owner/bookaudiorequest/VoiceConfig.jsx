@@ -46,25 +46,42 @@ export default function VoiceConfig({ chapterId, onStartQueue, onCompleteQueue, 
     
     setLoading(true);
 
-    // Thông báo bắt đầu xử lý cho hàng đợi
-    if (onStartQueue) onStartQueue(chapterId);
+    // Thông báo bắt đầu xử lý cho hàng đợi (truyền thêm thông tin giọng)
+    const voiceInfo = voices.find(v => v.id === selectedVoice);
+    if (onStartQueue) {
+      onStartQueue(chapterId, {
+        voiceName: voiceInfo?.name || selectedVoice,
+        voiceId: selectedVoice,
+        speed: speed
+      });
+    }
 
     try {
       const result = await generateChapterAudio(chapterId, selectedVoice, speed, userId);
       console.log("✅ Audio tạo xong:", result);
 
       // Thông báo hoàn tất
-      if (onCompleteQueue) onCompleteQueue(chapterId);
+      if (onCompleteQueue) onCompleteQueue(chapterId, true);
 
       // Làm mới danh sách chương (để hiện "Đã có audio")
       if (onRefreshChapters) onRefreshChapters();
       
-      toast.success(`Đã tạo audio thành công với giọng ${voices.find(v => v.id === selectedVoice)?.name}. Đã trừ ${result.conversionsDeducted || 1} lượt chuyển đổi.`);
+      toast.success(`Đã tạo audio thành công với giọng ${voiceInfo?.name}. Đã trừ ${result.conversionsDeducted || 1} lượt chuyển đổi.`);
 
     } catch (err) {
       console.error("❌ Lỗi khi tạo audio:", err);
       if (onCompleteQueue) onCompleteQueue(chapterId, false);
-      toast.error(err.message || "Không thể tạo audio");
+      
+      // Xử lý riêng trường hợp giọng đã tồn tại
+      if (err.isVoiceExists) {
+        const voiceInfo = voices.find(v => v.id === err.voiceName || v.name.includes(err.voiceName));
+        const voiceDisplayName = voiceInfo?.name || err.voiceName;
+        toast.error(`Chương này đã có audio với giọng "${voiceDisplayName}". Vui lòng chọn giọng khác.`, {
+          duration: 5000,
+        });
+      } else {
+        toast.error(err.message || "Không thể tạo audio");
+      }
     } finally {
       setLoading(false);
     }

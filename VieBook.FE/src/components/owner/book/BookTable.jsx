@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   RiBookOpenLine,
@@ -7,8 +7,10 @@ import {
   RiDeleteBinLine,
   RiSoundModuleLine,
   RiMessage2Line,
+  RiMoreFill,
+  RiPlayCircleLine,
 } from "react-icons/ri";
-import { getCategories, deleteBook } from "../../../api/ownerBookApi";
+import { getCategories, deleteBook, updateBookStatus } from "../../../api/ownerBookApi";
 import { getLatestBookApprovalByBookId } from "../../../api/staffApi";
 
 const BOOK_API_URL = getCategories();
@@ -64,9 +66,29 @@ export default function BookTable({ books, categories, onBookDeleted }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBook, setSelectedBook] = useState(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
+  const [loadingReactivate, setLoadingReactivate] = useState(false);
+  const [reactivatingBookId, setReactivatingBookId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRefs = useRef({});
 
   // popup từ chối
   const [approvalInfo, setApprovalInfo] = useState(null);
+
+  // Đóng menu khi click bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuId && menuRefs.current[openMenuId]) {
+        if (!menuRefs.current[openMenuId].contains(event.target)) {
+          setOpenMenuId(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openMenuId]);
 
   const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE);
 
@@ -176,6 +198,38 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     }
   };
 
+  const handleReactivateBook = async (book) => {
+    try {
+      setLoadingReactivate(true);
+      setReactivatingBookId(book.bookId);
+      await updateBookStatus(book.bookId, "Active");
+      if (onBookDeleted) {
+        onBookDeleted(book.bookId);
+      }
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "success",
+            message: `Đã phát hành lại sách "${book.title}"!`,
+          },
+        })
+      );
+    } catch (err) {
+      console.error(err);
+      window.dispatchEvent(
+        new CustomEvent("app:toast", {
+          detail: {
+            type: "error",
+            message: err.message || "Có lỗi khi phát hành lại sách!",
+          },
+        })
+      );
+    } finally {
+      setLoadingReactivate(false);
+      setReactivatingBookId(null);
+    }
+  };
+
   const handleShowRefused = async (bookId) => {
     try {
       const approval = await getLatestBookApprovalByBookId(bookId);
@@ -243,110 +297,250 @@ export default function BookTable({ books, categories, onBookDeleted }) {
     }
   };
 
+  const toggleMenu = (bookId) => {
+    setOpenMenuId(openMenuId === bookId ? null : bookId);
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm border-collapse">
-        <thead>
-          <tr className="bg-slate-700 text-gray-300">
-            <th className="p-3">Sách</th>
-            <th className="p-3">Thể loại</th>
-            <th className="p-3">Giá</th>
-            <th className="p-3">Đã bán</th>
-            <th className="p-3">Trạng thái</th>
-            <th className="p-3">Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedBooks.map((book) => (
-            <tr
-              key={book.bookId}
-              className="border-b border-gray-700 hover:bg-gray-800"
-            >
-              <td className="p-3 flex items-center space-x-3">
+    <div>
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr className="bg-slate-700 text-gray-300">
+              <th className="p-3">Sách</th>
+              <th className="p-3">Thể loại</th>
+              <th className="p-3">Giá</th>
+              <th className="p-3">Đã bán</th>
+              <th className="p-3">Trạng thái</th>
+              <th className="p-3">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedBooks.map((book) => (
+              <tr
+                key={book.bookId}
+                className="border-b border-gray-700 hover:bg-gray-800"
+              >
+                <td className="p-3 flex items-center space-x-3">
+                  <img
+                    src={book.coverUrl}
+                    alt={book.title}
+                    className="w-12 h-16 object-cover rounded"
+                  />
+                  <div>
+                    <p className="font-semibold">{book.title}</p>
+                    <p className="text-xs text-gray-400">{book.author}</p>
+                  </div>
+                </td>
+                <td className="p-3">{getCategoryTags(book.categoryIds)}</td>
+                <td className="p-3">{book.totalPrice || 0}</td>
+                <td className="p-3">{book.sold || 0}</td>
+                <td className="p-3">{getStatusBadge(book.status)}</td>
+                <td className="p-3 align-middle">
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      to={`/owner/books/${book.bookId}`}
+                      className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition"
+                      title="Xem"
+                    >
+                      <RiEyeLine className="text-white text-lg" />
+                    </Link>
+
+                    <Link
+                      to={`/owner/books/${book.bookId}/edit`}
+                      className="p-2 bg-green-500 rounded hover:bg-green-600 transition"
+                      title="Sửa"
+                    >
+                      <RiEdit2Line className="text-white text-lg" />
+                    </Link>
+
+                    <button
+                      onClick={() => handleNavigateToChapters(book)}
+                      className="p-2 bg-indigo-500 rounded hover:bg-indigo-600 transition"
+                      title="Quản lý chương"
+                    >
+                      <RiBookOpenLine className="text-white text-lg" />
+                    </button>
+
+                    <button
+                      onClick={() => handleNavigateToAudio(book)}
+                      className="p-2 bg-purple-500 rounded hover:bg-purple-600 transition"
+                      title="Audio"
+                    >
+                      <RiSoundModuleLine className="text-white text-lg" />
+                    </button>
+
+                    {book.status === "InActive" ? (
+                      <button
+                        className={`p-2 bg-green-500 rounded hover:bg-green-600 transition ${
+                          loadingReactivate && reactivatingBookId === book.bookId ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                        title="Phát hành lại"
+                        onClick={() => handleReactivateBook(book)}
+                        disabled={loadingReactivate && reactivatingBookId === book.bookId}
+                      >
+                        <RiPlayCircleLine className="text-white text-lg" />
+                      </button>
+                    ) : (
+                      <button
+                        className="p-2 bg-red-500 rounded hover:bg-red-600 transition"
+                        title="Tạm dừng"
+                        onClick={() => setSelectedBook(book)}
+                      >
+                        <RiDeleteBinLine className="text-white text-lg" />
+                      </button>
+                    )}
+
+                    {book.status === "Refused" && (
+                      <button
+                        className="p-2 bg-orange-500 rounded hover:bg-orange-600 transition"
+                        title="Xem lý do bị từ chối"
+                        onClick={() => handleShowRefused(book.bookId)}
+                      >
+                        <RiMessage2Line className="text-white text-lg" />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {paginatedBooks.map((book) => (
+          <div
+            key={book.bookId}
+            className="bg-slate-700 rounded-lg p-4 border border-gray-600"
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
                 <img
                   src={book.coverUrl}
                   alt={book.title}
-                  className="w-12 h-16 object-cover rounded"
+                  className="w-16 h-20 object-cover rounded flex-shrink-0"
                 />
-                <div>
-                  <p className="font-semibold">{book.title}</p>
-                  <p className="text-xs text-gray-400">{book.author}</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-white mb-1 truncate">{book.title}</h3>
+                  <p className="text-xs text-gray-400 mb-2">{book.author}</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {getStatusBadge(book.status)}
+                    <span className="text-xs text-gray-300">Giá: {book.totalPrice || 0} xu</span>
+                    <span className="text-xs text-gray-300">Đã bán: {book.sold || 0}</span>
+                  </div>
+                  <div className="mb-2">{getCategoryTags(book.categoryIds)}</div>
                 </div>
-              </td>
-              <td className="p-3">{getCategoryTags(book.categoryIds)}</td>
-              <td className="p-3">{book.totalPrice || 0}</td>
-              <td className="p-3">{book.sold || 0}</td>
-              <td className="p-3">{getStatusBadge(book.status)}</td>
-              <td className="p-3 align-middle">
-                <div className="flex items-center space-x-2">
-                  <Link
-                    to={`/owner/books/${book.bookId}`}
-                    className="p-2 bg-blue-500 rounded hover:bg-blue-600 transition"
-                    title="Xem"
-                  >
-                    <RiEyeLine className="text-white text-lg" />
-                  </Link>
-
-                  <Link
-                    to={`/owner/books/${book.bookId}/edit`}
-                    className="p-2 bg-green-500 rounded hover:bg-green-600 transition"
-                    title="Sửa"
-                  >
-                    <RiEdit2Line className="text-white text-lg" />
-                  </Link>
-
-                  <button
-                    onClick={() => handleNavigateToChapters(book)}
-                    className="p-2 bg-indigo-500 rounded hover:bg-indigo-600 transition"
-                    title="Quản lý chương"
-                  >
-                    <RiBookOpenLine className="text-white text-lg" />
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigateToAudio(book)}
-                    className="p-2 bg-purple-500 rounded hover:bg-purple-600 transition"
-                    title="Audio"
-                  >
-                    <RiSoundModuleLine className="text-white text-lg" />
-                  </button>
-
-                  <button
-                    className={`p-2 rounded transition ${
-                      book.status === "InActive"
-                        ? "bg-gray-500 cursor-not-allowed opacity-50"
-                        : "bg-red-500 hover:bg-red-600"
-                    }`}
-                    title="Tạm dừng"
-                    onClick={() => setSelectedBook(book)}
-                    disabled={book.status === "InActive"}
-                  >
-                    <RiDeleteBinLine className="text-white text-lg" />
-                  </button>
-
-                  {book.status === "Refused" && (
-                    <button
-                      className="p-2 bg-orange-500 rounded hover:bg-orange-600 transition"
-                      title="Xem lý do bị từ chối"
-                      onClick={() => handleShowRefused(book.bookId)}
+              </div>
+              
+              {/* Menu 3 chấm */}
+              <div className="relative flex-shrink-0" ref={(el) => (menuRefs.current[book.bookId] = el)}>
+                <button
+                  onClick={() => toggleMenu(book.bookId)}
+                  className="p-2 text-gray-300 hover:text-white hover:bg-gray-600 rounded-lg transition"
+                  aria-label="Menu"
+                >
+                  <RiMoreFill className="text-xl" />
+                </button>
+                
+                {openMenuId === book.bookId && (
+                  <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-gray-600 rounded-lg shadow-xl z-50 w-40 max-w-[calc(100vw-1rem)]">
+                    <Link
+                      to={`/owner/books/${book.bookId}`}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 rounded-t-lg transition"
+                      onClick={() => setOpenMenuId(null)}
                     >
-                      <RiMessage2Line className="text-white text-lg" />
+                      <RiEyeLine className="text-blue-400 text-sm flex-shrink-0" />
+                      <span className="truncate">Xem</span>
+                    </Link>
+                    
+                    <Link
+                      to={`/owner/books/${book.bookId}/edit`}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 transition"
+                      onClick={() => setOpenMenuId(null)}
+                    >
+                      <RiEdit2Line className="text-green-400 text-sm flex-shrink-0" />
+                      <span className="truncate">Sửa</span>
+                    </Link>
+                    
+                    <button
+                      onClick={() => {
+                        handleNavigateToChapters(book);
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 transition"
+                    >
+                      <RiBookOpenLine className="text-indigo-400 text-sm flex-shrink-0" />
+                      <span className="truncate">Quản lý chương</span>
                     </button>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                    
+                    <button
+                      onClick={() => {
+                        handleNavigateToAudio(book);
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 transition"
+                    >
+                      <RiSoundModuleLine className="text-purple-400 text-sm flex-shrink-0" />
+                      <span className="truncate">Audio</span>
+                    </button>
+                    
+                    {book.status === "Refused" && (
+                      <button
+                        onClick={() => {
+                          handleShowRefused(book.bookId);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-gray-700 transition"
+                      >
+                        <RiMessage2Line className="text-orange-400 text-sm flex-shrink-0" />
+                        <span className="truncate">Xem lý do từ chối</span>
+                      </button>
+                    )}
+                    
+                    {book.status === "InActive" ? (
+                      <button
+                        onClick={() => {
+                          handleReactivateBook(book);
+                          setOpenMenuId(null);
+                        }}
+                        disabled={loadingReactivate && reactivatingBookId === book.bookId}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-b-lg transition text-green-400 hover:bg-gray-700 disabled:opacity-50"
+                      >
+                        <RiPlayCircleLine className="text-sm flex-shrink-0" />
+                        <span className="truncate">
+                          {loadingReactivate && reactivatingBookId === book.bookId ? "Đang xử lý..." : "Phát hành lại"}
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setSelectedBook(book);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-b-lg transition text-red-400 hover:bg-gray-700"
+                      >
+                        <RiDeleteBinLine className="text-sm flex-shrink-0" />
+                        <span className="truncate">Tạm dừng</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-4 space-x-2">
+        <div className="flex justify-center mt-4 space-x-1 sm:space-x-2 flex-wrap gap-2">
           {/* Nút Trước */}
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={validCurrentPage === 1}
-            className={`px-3 py-1 rounded text-sm ${validCurrentPage === 1
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${validCurrentPage === 1
                 ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
@@ -357,7 +551,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           {/* Các số trang */}
           {getPaginationRange(validCurrentPage, totalPages).map((p, i) =>
             p === "..." ? (
-              <span key={`ellipsis-${i}`} className="px-3 py-1 text-gray-400">
+              <span key={`ellipsis-${i}`} className="px-2 sm:px-3 py-1 text-gray-400 text-xs sm:text-sm">
                 ...
               </span>
             ) : (
@@ -367,7 +561,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
                   const page = Math.max(1, Math.min(totalPages, p));
                   setCurrentPage(page);
                 }}
-                className={`px-3 py-1 rounded text-sm ${validCurrentPage === p
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${validCurrentPage === p
                     ? "bg-orange-500 text-white"
                     : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}
@@ -381,7 +575,7 @@ export default function BookTable({ books, categories, onBookDeleted }) {
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={validCurrentPage === totalPages}
-            className={`px-3 py-1 rounded text-sm ${validCurrentPage === totalPages
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${validCurrentPage === totalPages
                 ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                 : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
@@ -393,27 +587,27 @@ export default function BookTable({ books, categories, onBookDeleted }) {
 
       {/* Popup từ chối */}
       {approvalInfo && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-          <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-[600px]">
-            <h2 className="text-xl font-semibold text-white mb-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
+          <div className="bg-slate-800 p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">
               Thông tin từ chối
             </h2>
-            <p className="text-gray-300 mb-2">
+            <p className="text-sm sm:text-base text-gray-300 mb-2">
               <span className="font-bold text-orange-400">Nhân viên:</span>{" "}
               {approvalInfo.staffName}
             </p>
-            <p className="text-gray-300 mb-2">
+            <p className="text-sm sm:text-base text-gray-300 mb-2">
               <span className="font-bold text-orange-400">Ngày:</span>{" "}
               {new Date(approvalInfo.createdAt).toLocaleString()}
             </p>
-            <p className="text-gray-300 mb-4">
+            <p className="text-sm sm:text-base text-gray-300 mb-4">
               <span className="font-bold text-orange-400">Lý do:</span>{" "}
               {approvalInfo.reason}
             </p>
             <div className="flex justify-end">
               <button
                 onClick={() => setApprovalInfo(null)}
-                className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
+                className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700 text-sm sm:text-base"
               >
                 Đóng
               </button>
@@ -424,29 +618,29 @@ export default function BookTable({ books, categories, onBookDeleted }) {
 
       {/* Popup tạm dừng */}
       {selectedBook && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-          <div className="bg-slate-800 p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-semibold text-white mb-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
+          <div className="bg-slate-800 p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">
               Xác nhận tạm dừng
             </h2>
-            <p className="text-gray-300 mb-6">
+            <p className="text-sm sm:text-base text-gray-300 mb-6">
               Bạn có chắc chắn muốn chuyển sách{" "}
               <span className="font-bold text-orange-400">
                 {selectedBook.title}
               </span>{" "}
               sang trạng thái tạm dừng không?
             </p>
-            <div className="flex justify-end space-x-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3">
               <button
                 onClick={() => setSelectedBook(null)}
-                className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
+                className="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700 text-sm sm:text-base"
               >
                 Hủy
               </button>
               <button
                 onClick={handleDeleteBook}
                 disabled={loadingDelete}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 text-sm sm:text-base"
               >
                 {loadingDelete ? "Đang cập nhật..." : "Tạm dừng"}
               </button>

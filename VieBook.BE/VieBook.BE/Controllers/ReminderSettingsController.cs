@@ -40,7 +40,15 @@ namespace VieBook.BE.Controllers
                 var settings = await _reminderSettingsService.GetByUserIdAsync(userId);
                 if (settings == null)
                 {
-                    return NotFound(new Response(-1, "Reminder settings not found", null));
+                    // Tự động tạo ReminderSettings với IsActive = true nếu user chưa có
+                    var createDto = new CreateReminderSettingsDTO
+                    {
+                        DailyGoalMinutes = 30,
+                        WeeklyGoalHours = 5,
+                        ReminderMinutesBefore = 15,
+                        IsActive = true // Mặc định bật reminder để email có thể được gửi
+                    };
+                    settings = await _reminderSettingsService.CreateAsync(userId, createDto);
                 }
 
                 return Ok(new Response(0, "Success", settings));

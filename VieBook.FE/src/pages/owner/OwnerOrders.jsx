@@ -104,8 +104,8 @@ export default function OwnerOrders() {
 
   if (loading) {
     return (
-      <div className="p-6 text-white">
-        <h1 className="text-2xl font-bold mb-6">Lịch sử bán hàng</h1>
+      <div className="px-4 sm:px-6 py-4 sm:py-6 text-white min-h-screen">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Lịch sử bán hàng</h1>
         <OrderStatsSkeleton />
         <OrderTableSkeleton />
       </div>
@@ -114,10 +114,10 @@ export default function OwnerOrders() {
 
   if (error) {
     return (
-      <div className="p-6 text-white">
-        <h1 className="text-2xl font-bold mb-6">Lịch sử bán hàng</h1>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-red-400">Lỗi: {error}</div>
+      <div className="px-4 sm:px-6 py-4 sm:py-6 text-white min-h-screen">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Lịch sử bán hàng</h1>
+        <div className="flex justify-center items-center min-h-[300px] sm:min-h-[400px]">
+          <div className="text-base sm:text-lg text-red-400 text-center px-4">Lỗi: {error}</div>
         </div>
       </div>
     );
@@ -126,33 +126,33 @@ export default function OwnerOrders() {
   // Empty state khi không có orders
   if (orders.length === 0) {
     return (
-      <div className="p-6 text-white">
-        <h1 className="text-2xl font-bold mb-6">Lịch sử bán hàng</h1>
-        <div className="bg-slate-800 p-8 rounded-lg text-center">
-          <div className="text-6xl mb-4">📊</div>
-          <h3 className="text-xl font-semibold mb-2 text-gray-300">Chưa có đơn hàng nào</h3>
-          <p className="text-gray-400 mb-6">
+      <div className="px-4 sm:px-6 py-4 sm:py-6 text-white min-h-screen">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Lịch sử bán hàng</h1>
+        <div className="bg-slate-800 p-6 sm:p-8 rounded-lg text-center">
+          <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">📊</div>
+          <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-300">Chưa có đơn hàng nào</h3>
+          <p className="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6 px-2">
             Khi có khách hàng mua sách của bạn, các đơn hàng sẽ xuất hiện ở đây
           </p>
-          <div className="text-sm text-gray-500 mb-6">
+          <div className="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6 px-2">
             💡 Hãy tạo thêm sách và chương để thu hút khách hàng
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button 
               onClick={() => window.location.href = '/owner/books/create'}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg transition-colors text-sm sm:text-base font-medium min-h-[44px]"
             >
               📚 Tạo sách mới
             </button>
             <button 
               onClick={() => window.location.href = '/owner/books'}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 rounded-lg transition-colors text-sm sm:text-base font-medium min-h-[44px]"
             >
               📖 Quản lý sách
             </button>
             <button 
               onClick={() => window.open('https://help.viebook.com', '_blank')}
-              className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 rounded-lg transition-colors text-sm sm:text-base font-medium min-h-[44px]"
             >
               💡 Xem hướng dẫn
             </button>
@@ -163,18 +163,8 @@ export default function OwnerOrders() {
   }
 
   return (
-    <div className="p-6 text-white">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Lịch sử bán hàng</h1>
-        <button
-          onClick={fetchOwnerOrders}
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg transition-colors flex items-center space-x-2"
-        >
-          <span className={loading ? "animate-spin" : ""}>🔄</span>
-          <span>{loading ? "Đang tải..." : "Làm mới"}</span>
-        </button>
-      </div>
+    <div className="px-4 sm:px-6 py-4 sm:py-6 text-white min-h-screen">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Lịch sử bán hàng</h1>
       <OrderStats orders={orders} stats={stats} />
       <OrderTable orders={orders} />
     </div>

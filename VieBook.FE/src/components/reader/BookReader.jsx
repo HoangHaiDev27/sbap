@@ -485,10 +485,10 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       />
 
       {/* Layout tổng: dùng full width, chỉ padding ngang để mục lục sát lề trái */}
-      <div className="w-full px-4 py-8">
-        <div className="bg-gray-900/70 border border-gray-800 rounded-2xl shadow-xl px-4 py-5 lg:px-6 lg:py-6 flex gap-4 lg:gap-10 items-start">
+      <div className="w-full px-2 sm:px-4 py-2 sm:py-4 md:py-8">
+        <div className="bg-gray-900/70 border border-gray-800 rounded-xl sm:rounded-2xl shadow-xl px-2 sm:px-3 sm:py-4 md:px-4 md:py-5 lg:px-6 lg:py-6 flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-10 items-start">
           {/* Sidebar danh sách chương */}
-          <div className="w-80 hidden lg:block flex-shrink-0">
+          <div className="w-full lg:w-80 hidden lg:block flex-shrink-0">
             <ReaderContents
               book={book}
               purchasedChapters={purchasedChapters}
@@ -497,9 +497,9 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
           </div>
 
           {/* Nội dung chính */}
-          <main className="flex-1 relative">
-          <div className="flex justify-between items-start mb-6">
-            <h2 className="text-2xl font-bold">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
+          <main className="flex-1 relative w-full min-w-0">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold break-words">{currentChapter?.chapterTitle || "Chương không tìm thấy"}</h2>
             
             {/* AI Summary Button - Top right of content area */}
             <button
@@ -507,29 +507,29 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                 console.log("AI Summary button clicked");
                 setShowSummary(true);
               }}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 transition-colors flex items-center gap-2 shadow-lg"
+              className="px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 transition-colors flex items-center gap-1.5 sm:gap-2 shadow-lg flex-shrink-0 self-start sm:self-auto"
               title="Tóm tắt bằng AI"
             >
-              <RiRobotLine size={18} />
-              <span className="font-medium text-sm">Tóm tắt AI</span>
+              <RiRobotLine size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" />
+              <span className="font-medium text-xs sm:text-sm">Tóm tắt AI</span>
             </button>
           </div>
           
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-              <span className="ml-3">Đang tải nội dung...</span>
+            <div className="flex items-center justify-center py-8 sm:py-12">
+              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-orange-500"></div>
+              <span className="ml-3 text-sm sm:text-base">Đang tải nội dung...</span>
             </div>
           ) : (
             <>
               <div
-                className={`${currentTheme.contentBg} rounded-lg p-6`}
+                className={`${currentTheme.contentBg} rounded-lg p-2 sm:p-3 md:p-4 lg:p-6 relative`}
                 style={{ fontSize: `${fontSize}px`, fontFamily: fontFamily }}
                 ref={contentRef}
               >
                 <pre
                   ref={textRef}
-                  className="whitespace-pre-wrap break-words prose prose-lg max-w-none"
+                  className="whitespace-pre-wrap break-words prose prose-sm sm:prose-base md:prose-lg max-w-none"
                   style={{ cursor: 'text' }}
                   onClickCapture={(e) => {
                     if (!textRef.current) return;
@@ -559,7 +559,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                   {chapterContent}
                 </pre>
                 {offsetHint && (
-                  <div className="absolute top-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded shadow">
+                  <div className="absolute top-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded shadow z-10">
                     {offsetHint}
                   </div>
                 )}

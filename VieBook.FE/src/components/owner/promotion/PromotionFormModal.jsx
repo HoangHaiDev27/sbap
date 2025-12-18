@@ -145,18 +145,29 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-slate-900 w-full max-w-2xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh] text-white custom-scrollbar">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-slate-900 w-full max-w-2xl rounded-xl shadow-lg p-4 sm:p-6 overflow-y-auto max-h-[90vh] text-white custom-scrollbar">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{editingPromotion ? "Cập nhật Khuyến mãi" : "Tạo Khuyến mãi Mới"}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
+          <h2 className="text-lg sm:text-xl font-bold">{editingPromotion ? "Cập nhật Khuyến mãi" : "Tạo Khuyến mãi Mới"}</h2>
+          <button 
+            onClick={onClose} 
+            className="text-gray-400 hover:text-white text-2xl leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-800 transition-colors"
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
         </div>
 
         {/* Thông báo cảnh báo */}
         <div className="bg-amber-900/50 border border-amber-600 rounded-lg p-3 mb-4 flex items-start gap-3">
-          <span className="text-amber-400 text-xl">⚠️</span>
-          <div className="text-sm">
+          <span className="text-amber-400 text-lg sm:text-xl flex-shrink-0">⚠️</span>
+          <div className="text-xs sm:text-sm min-w-0">
             <p className="font-semibold text-amber-400">Lưu ý quan trọng</p>
             <p className="text-amber-200/90 mt-1">
               Khi khuyến mãi đã bắt đầu diễn ra, bạn sẽ <span className="font-semibold text-amber-400">không thể chỉnh sửa hoặc xóa</span> được nữa. 
@@ -166,21 +177,21 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         </div>
 
         {/* Form */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm">Tên Khuyến mãi *</label>
+            <label className="text-xs sm:text-sm font-medium block mb-1">Tên Khuyến mãi *</label>
             <input
               type="text"
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
+              className="w-full px-3 py-2.5 sm:py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
           <div>
-            <label className="text-sm">Giá trị giảm (%) *</label>
+            <label className="text-xs sm:text-sm font-medium block mb-1">Giá trị giảm (%) *</label>
             <input
               type="number"
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
+              className="w-full px-3 py-2.5 sm:py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
               value={form.value}
               onChange={(e) => setForm({ ...form, value: e.target.value })}
             />
@@ -188,21 +199,21 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
         </div>
 
         {/* Thời gian ngang hàng */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="text-sm">Ngày bắt đầu *</label>
+            <label className="text-xs sm:text-sm font-medium block mb-1">Ngày bắt đầu *</label>
             <input
               type="datetime-local"
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
+              className="w-full px-3 py-2.5 sm:py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
               value={form.startDate}
               onChange={(e) => setForm({ ...form, startDate: e.target.value })}
             />
           </div>
           <div>
-            <label className="text-sm">Ngày kết thúc *</label>
+            <label className="text-xs sm:text-sm font-medium block mb-1">Ngày kết thúc *</label>
             <input
               type="datetime-local"
-              className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
+              className="w-full px-3 py-2.5 sm:py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
               value={form.endDate}
               onChange={(e) => setForm({ ...form, endDate: e.target.value })}
             />
@@ -211,65 +222,70 @@ export default function PromotionFormModal({ isOpen, onClose, onCreated, editing
 
         {/* Search sách */}
         <div className="mt-4">
-          <label className="text-sm">Chọn sách áp dụng *</label>
+          <label className="text-xs sm:text-sm font-medium block mb-1">Chọn sách áp dụng *</label>
           <input
             type="text"
             placeholder="Tìm kiếm sách..."
-            className="w-full mt-2 px-3 py-2 rounded bg-slate-800"
+            className="w-full px-3 py-2.5 sm:py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base min-h-[44px]"
             value={bookSearch}
             onChange={(e) => setBookSearch(e.target.value)}
           />
-          <div className="mt-2 space-y-2 bg-slate-800 p-3 rounded max-h-40 overflow-y-auto">
-            {filteredBooks.map((b) => (
-              <label key={b.bookId} className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={form.books.includes(b.bookId)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setForm({ ...form, books: [...form.books, b.bookId] });
-                    } else {
-                      setForm({ ...form, books: form.books.filter(id => id !== b.bookId) });
-                    }
-                  }}
-                />
-                <img src={b.coverUrl} alt={b.title} className="w-10 h-14 object-cover rounded" />
-                <div>
-                  <p className="font-medium">{b.title}</p>
-                  <p className="text-xs opacity-70">
-                    {b.totalPrice?.toLocaleString()} đ • {b.sold} đã bán
-                  </p>
-                </div>
-              </label>
-            ))}
+          <div className="mt-2 space-y-2 bg-slate-800 p-3 rounded-lg max-h-40 overflow-y-auto">
+            {filteredBooks.length > 0 ? (
+              filteredBooks.map((b) => (
+                <label key={b.bookId} className="flex items-center gap-3 p-2 hover:bg-slate-700 rounded cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.books.includes(b.bookId)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setForm({ ...form, books: [...form.books, b.bookId] });
+                      } else {
+                        setForm({ ...form, books: form.books.filter(id => id !== b.bookId) });
+                      }
+                    }}
+                    className="w-4 h-4 flex-shrink-0"
+                  />
+                  <img src={b.coverUrl} alt={b.title} className="w-10 h-14 object-cover rounded flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm sm:text-base truncate">{b.title}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {b.totalPrice?.toLocaleString()} đ • {b.sold} đã bán
+                    </p>
+                  </div>
+                </label>
+              ))
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-2">Không tìm thấy sách</p>
+            )}
           </div>
         </div>
 
         {/* Mô tả */}
         <div className="mt-4">
-          <label className="text-sm">Mô tả khuyến mãi</label>
+          <label className="text-xs sm:text-sm font-medium block mb-1">Mô tả khuyến mãi</label>
           <textarea
-            rows="6"
-            className="w-full mt-1 px-3 py-2 rounded bg-slate-800"
+            rows="4"
+            className="w-full px-3 py-2.5 sm:py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base resize-none"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
           <button 
-            className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500" 
+            className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-sm sm:text-base font-medium min-h-[44px] transition-colors" 
             onClick={onClose}
             disabled={isSubmitting}
           >
             Hủy
           </button>
           <button 
-            className={`px-4 py-2 rounded ${
+            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-white text-sm sm:text-base font-medium min-h-[44px] transition-colors ${
               isSubmitting 
                 ? "bg-orange-400 cursor-not-allowed" 
-                : "bg-orange-500 hover:bg-orange-600"
+                : "bg-orange-500 hover:bg-orange-600 active:bg-orange-700"
             }`}
             onClick={handleSubmit}
             disabled={isSubmitting}

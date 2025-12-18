@@ -38,10 +38,10 @@ export default function GuestHeader({ onToggleSidebar }) {
 
   return (
     <header className="bg-gray-900 text-white sticky top-0 z-40 border-b border-gray-700">
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-2 sm:px-4 py-3 gap-2">
         {/* Nút menu mobile */}
         <button
-          className="lg:hidden w-6 h-6 flex items-center justify-center"
+          className="lg:hidden w-6 h-6 flex items-center justify-center flex-shrink-0"
           onClick={() => {
             setIsMenuOpen(!isMenuOpen);
             onToggleSidebar && onToggleSidebar();
@@ -51,7 +51,7 @@ export default function GuestHeader({ onToggleSidebar }) {
         </button>
 
         {/* Search */}
-        <div ref={searchRef} className="flex-1 max-w-md mx-4 relative">
+        <div ref={searchRef} className="flex-1 max-w-md mx-2 sm:mx-4 relative min-w-0">
           <div
             className={`relative flex items-center bg-gray-800 rounded-lg transition-all ${
               isSearchFocused ? "ring-2 ring-blue-500" : ""
@@ -115,10 +115,10 @@ export default function GuestHeader({ onToggleSidebar }) {
         </div>
 
         {/* Icon + Login button */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <Link
             to="/auth"
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
             >
             Đăng nhập
             </Link>

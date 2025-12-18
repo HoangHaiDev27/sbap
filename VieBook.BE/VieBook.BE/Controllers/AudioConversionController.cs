@@ -1,4 +1,4 @@
-﻿using DataAccess;
+using DataAccess;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
@@ -41,7 +41,12 @@ namespace VieBook.BE.Controllers
                 var existingAudio = await _chapterAudioService.GetChapterAudioByVoiceAsync(chapterId, voiceName);
                 if (existingAudio != null)
                 {
-                    return BadRequest($"Chapter already has audio with voice '{voiceName}'.");
+                    return BadRequest(new 
+                    { 
+                        success = false, 
+                        message = $"Chương này đã có audio với giọng '{voiceName}'. Vui lòng chọn giọng khác.",
+                        voiceName = voiceName
+                    });
                 }
 
                 // Tải nội dung text từ ChapterSoftUrl (Cloudinary link của file .txt)

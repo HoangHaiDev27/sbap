@@ -18,6 +18,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
   const [showSpeed, setShowSpeed] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [showChapters, setShowChapters] = useState(false);
+  const [showChaptersMobile, setShowChaptersMobile] = useState(false);
   const [currentChapter, setCurrentChapter] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
@@ -405,6 +406,21 @@ export default function AudioPlayer({ bookId, chapterId }) {
             }
             
             setHasLoadedSavedPosition(true);
+            
+            // Lưu ngay sau khi load saved position xong
+            setTimeout(async () => {
+              try {
+                const progressData = {
+                  bookId: parseInt(bookId),
+                  chapterId: currentChapterId,
+                  readingType: 'Listening',
+                  audioPosition: Math.floor(audio.currentTime)
+                };
+                await saveReadingProgress(progressData);
+              } catch (error) {
+                console.error("Error saving progress after loading saved position:", error);
+              }
+            }, 100);
           } catch (error) {
             console.error("Error loading saved position from metadata:", error);
             setHasLoadedSavedPosition(true);
@@ -488,54 +504,15 @@ export default function AudioPlayer({ bookId, chapterId }) {
     setHasLoadedSavedPosition(false);
   }, [currentChapter]);
 
+  // Lưu lịch sử nghe ngay khi vào và tự động lưu định kỳ
   useEffect(() => {
-    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
+    if (!bookId || chapters.length === 0) return;
     
-    if (saveProgressTimeoutRef.current) {
-      clearTimeout(saveProgressTimeoutRef.current);
-    }
-
-    const saveListeningHistory = async () => {
-      try {
-        const currentChapterId = chapters[currentChapter]?.chapterId;
-        if (!currentChapterId) return;
-
-        const listeningData = {
-          bookId: parseInt(bookId),
-          chapterId: currentChapterId,
-          readingType: 'Listening',
-          audioPosition: Math.floor(currentTime)
-        };
-        
-        await saveReadingProgress(listeningData);
-      } catch (error) {
-        console.error("Error saving listening history:", error);
-      }
-    };
-
-    saveProgressTimeoutRef.current = setTimeout(saveListeningHistory, 1000);
-
-    return () => {
-      if (saveProgressTimeoutRef.current) {
-        clearTimeout(saveProgressTimeoutRef.current);
-      }
-    };
-  }, [bookId, currentChapter, chapters, hasLoadedSavedPosition, currentTime]);
-
-  useEffect(() => {
-    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition) return;
-    
-    if (saveProgressTimeoutRef.current) {
-      clearTimeout(saveProgressTimeoutRef.current);
-    }
-
-    if (currentTime < 5) return;
+    const currentChapterId = chapters[currentChapter]?.chapterId;
+    if (!currentChapterId) return;
 
     const saveProgress = async () => {
       try {
-        const currentChapterId = chapters[currentChapter]?.chapterId;
-        if (!currentChapterId) return;
-
         const progressData = {
           bookId: parseInt(bookId),
           chapterId: currentChapterId,
@@ -545,18 +522,59 @@ export default function AudioPlayer({ bookId, chapterId }) {
         
         await saveReadingProgress(progressData);
       } catch (error) {
-        console.error("Error saving progress:", error);
+        console.error("Error saving listening progress:", error);
       }
     };
 
-    saveProgressTimeoutRef.current = setTimeout(saveProgress, 3000);
-    
+    // Lưu ngay khi đã load saved position xong (khi vào trang)
+    if (hasLoadedSavedPosition) {
+      saveProgress();
+    }
+
+    // Clear timeout cũ nếu có
+    if (saveProgressTimeoutRef.current) {
+      clearTimeout(saveProgressTimeoutRef.current);
+    }
+
+    // Tự động lưu sau 500ms khi có thay đổi (nhanh hơn để không mất lịch sử khi thao tác nhanh)
+    saveProgressTimeoutRef.current = setTimeout(() => {
+      if (hasLoadedSavedPosition) {
+        saveProgress();
+      }
+    }, 500);
+
     return () => {
       if (saveProgressTimeoutRef.current) {
         clearTimeout(saveProgressTimeoutRef.current);
       }
     };
-  }, [currentTime, bookId, currentChapter, chapters, hasLoadedSavedPosition]);
+  }, [bookId, currentChapter, chapters, hasLoadedSavedPosition, currentTime]);
+
+  // Lưu ngay khi bắt đầu play
+  useEffect(() => {
+    if (!bookId || chapters.length === 0 || !hasLoadedSavedPosition || !isPlaying) return;
+    
+    const currentChapterId = chapters[currentChapter]?.chapterId;
+    if (!currentChapterId) return;
+
+    const saveProgress = async () => {
+      try {
+        const progressData = {
+          bookId: parseInt(bookId),
+          chapterId: currentChapterId,
+          readingType: 'Listening',
+          audioPosition: Math.floor(currentTime)
+        };
+        
+        await saveReadingProgress(progressData);
+      } catch (error) {
+        console.error("Error saving listening progress on play:", error);
+      }
+    };
+
+    // Lưu ngay khi bắt đầu play
+    saveProgress();
+  }, [isPlaying, bookId, currentChapter, chapters, hasLoadedSavedPosition]);
 
   if (loading) {
     return (
@@ -663,10 +681,21 @@ export default function AudioPlayer({ bookId, chapterId }) {
         isFullscreen={isFullscreen}
         toggleFullscreen={toggleFullscreen}
         toggleTranscript={() => setShowTranscript(!showTranscript)}
+        showChaptersMobile={showChaptersMobile}
+        setShowChaptersMobile={setShowChaptersMobile}
       />
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-r border-gray-700 bg-gray-800 overflow-y-auto flex-shrink-0" style={{ zIndex: 20 }}>
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        {/* Overlay để đóng sidebar trên mobile */}
+        {showChaptersMobile && (
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+            onClick={() => setShowChaptersMobile(false)}
+          />
+        )}
+        
+        {/* Sidebar - Ẩn/hiện trên mobile, luôn hiển thị trên desktop */}
+        <div className={`${showChaptersMobile ? 'flex' : 'hidden'} lg:!flex w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-r border-gray-700 bg-gray-800 overflow-y-auto overflow-x-hidden flex-shrink-0 max-h-[50vh] lg:max-h-none fixed lg:relative top-0 left-0 h-[50vh] lg:h-auto z-50 lg:z-auto`}>
           <AudioChapterList
             chapters={chapters}
             currentChapter={currentChapter}
@@ -681,6 +710,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
             isOwner={isOwner}
             bookId={bookId}
             bookTitle={book?.title}
+            setShowChaptersMobile={setShowChaptersMobile}
             onPurchaseSuccess={(chapterIds) => {
               // Refresh purchased chapters
               const currentUserId = getUserId();
@@ -700,7 +730,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
           />
         </div>
 
-        <div className="flex-1 flex items-center justify-center min-w-0" style={{ zIndex: 1 }}>
+        <div className="flex-1 flex items-center justify-center min-w-0 lg:z-auto" style={{ zIndex: showChaptersMobile ? 1 : 'auto' }}>
           <AudioPlayerContent
             book={book}
             chapters={chapters}
@@ -732,6 +762,8 @@ export default function AudioPlayer({ bookId, chapterId }) {
             showSleepTimer={showSleepTimer}
             setShowSleepTimer={setShowSleepTimer}
             setShowChapters={setShowChapters}
+            showChaptersMobile={showChaptersMobile}
+            setShowChaptersMobile={setShowChaptersMobile}
             purchasedAudioChapters={purchasedAudioChapters}
             isOwner={isOwner}
           />

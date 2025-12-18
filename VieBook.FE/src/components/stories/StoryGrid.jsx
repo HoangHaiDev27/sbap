@@ -24,14 +24,19 @@ export default function StoryGrid({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [audioTotalsByBook, setAudioTotalsByBook] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchAudioBooks() {
       try {
+        setLoading(true);
         const data = await getAudioBooks();
         setStories(data.filter((b) => b.categories && b.categories.length > 0));
       } catch (err) {
         console.error("Failed to fetch audio books", err);
+        setStories([]);
+      } finally {
+        setLoading(false);
       }
     }
     fetchAudioBooks();
@@ -197,10 +202,19 @@ export default function StoryGrid({
     return pages;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <span className="ml-3 text-gray-400">Đang tải sách audio...</span>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Grid stories */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {currentStories.map((story) => {
           const audioRaw = Math.round(audioTotalsByBook[story.id] || 0);
           const hasPromo = !!story?.hasPromotion && (story?.discountValue || 0) > 0;
@@ -211,14 +225,17 @@ export default function StoryGrid({
           return (
           <div
             key={story.id}
-            className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors flex flex-col h-full"
+            className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors flex flex-col h-full w-full"
           >
             <Link to={`/bookdetails/${story.id}`} className="flex flex-col h-full">
               <div className="relative">
                 <img
-                  src={story.image}
+                  src={story.image || "https://via.placeholder.com/300x400/374151/ffffff?text=Book"}
                   alt={story.title}
-                  className="w-full h-64 object-cover object-top"
+                  className="w-full h-48 sm:h-56 md:h-64 object-cover object-top"
+                  onError={(e) => {
+                    e.target.src = "https://via.placeholder.com/300x400/374151/ffffff?text=Book";
+                  }}
                 />
 
                 {/* Thể loại & Giảm giá */}
@@ -258,57 +275,57 @@ export default function StoryGrid({
                 </div>
 
                 {/* Duration + Chapters */}
-                <div className="absolute bottom-3 left-3 right-3">
-                  <div className="bg-black/70 rounded-lg px-3 py-2">
-                    <div className="flex items-center justify-between text-white text-sm">
-                      <span className="flex items-center">
-                        <RiTimeLine className="mr-1" /> {story.duration}
+                <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3">
+                  <div className="bg-black/70 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2">
+                    <div className="flex items-center justify-between text-white text-xs sm:text-sm gap-2">
+                      <span className="flex items-center truncate">
+                        <RiTimeLine className="mr-1 flex-shrink-0" /> <span className="truncate">{story.duration || "N/A"}</span>
                       </span>
-                      <span className="flex items-center">
-                        <RiListCheck className="mr-1" /> {story.chapters} chương
+                      <span className="flex items-center whitespace-nowrap">
+                        <RiListCheck className="mr-1" /> {story.chapters || 0} chương
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 flex flex-col flex-grow">
-                <h3 className="text-white font-semibold text-lg mb-2 line-clamp-2 min-h-[3.5rem]">
+              <div className="p-3 sm:p-4 flex flex-col flex-grow min-h-[200px] sm:min-h-[240px]">
+                <h3 className="text-white font-semibold text-base sm:text-lg mb-2 line-clamp-2 min-h-[3rem] sm:min-h-[3.5rem]">
                   {story.title}
                 </h3>
-                <p className="text-gray-400 text-sm mb-2">Tác giả: {story.author}</p>
-                <p className="text-orange-400 text-sm mb-3">
+                <p className="text-gray-400 text-xs sm:text-sm mb-2 truncate">Tác giả: {story.author}</p>
+                <p className="text-orange-400 text-xs sm:text-sm mb-3 line-clamp-1">
                   Người kể: {story.narrator || "Đang cập nhật"}
                 </p>
-                <div className="flex items-center justify-between mt-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mt-auto">
                   {/* Rating */}
-                  <div className="flex items-center text-sm text-gray-400">
+                  <div className="flex items-center text-xs sm:text-sm text-gray-400">
                     <RiStarFill className="text-yellow-400 mr-1" />
-                    <span>{story.rating} ({story.reviews})</span>
+                    <span>{story.rating?.toFixed(1) || 0} ({story.reviews || 0})</span>
                   </div>
                   {/* Audio-only Price (with promotion if any) */}
                   <div className="flex flex-col items-end">
                     {hasPromo && audioRaw > 0 ? (
                       <>
-                        <div className="flex items-center gap-1 text-sm text-yellow-400 font-bold">
+                        <div className="flex items-center gap-1 text-xs sm:text-sm text-yellow-400 font-bold">
                           {audioDiscounted?.toLocaleString()}
-                          <RiCoinLine className="w-5 h-5" />
+                          <RiCoinLine className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                         <div className="flex items-center gap-1 text-xs text-gray-500 line-through">
                           {audioRaw.toLocaleString()}
-                          <RiCoinLine className="w-4 h-4" />
+                          <RiCoinLine className="w-3 h-3 sm:w-4 sm:h-4" />
                         </div>
                       </>
                     ) : (
-                      <div className="flex items-center gap-1 text-sm text-green-400 font-semibold">
+                      <div className="flex items-center gap-1 text-xs sm:text-sm text-green-400 font-semibold">
                         {audioRaw.toLocaleString()}
-                        <RiCoinLine className="w-5 h-5" />
+                        <RiCoinLine className="w-4 h-4 sm:w-5 sm:h-5" />
                       </div>
                     )}
                   </div>
                   {/* Play Button */}
-                  <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap flex items-center">
-                    <RiPlayFill className="mr-1" /> Nghe
+                  <button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 sm:py-1 rounded-full text-xs sm:text-sm transition-colors whitespace-nowrap flex items-center justify-center gap-1">
+                    <RiPlayFill className="text-sm sm:text-base" /> Nghe
                   </button>
                 </div>
               </div>
@@ -330,11 +347,11 @@ export default function StoryGrid({
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-6 space-x-2">
+        <div className="flex justify-center mt-6 space-x-1 sm:space-x-2 overflow-x-auto scrollbar-hide pb-2">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className={`px-3 py-1 rounded ${
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm whitespace-nowrap ${
               currentPage === 1
                 ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                 : "bg-gray-700 text-white hover:bg-gray-600"
@@ -345,14 +362,14 @@ export default function StoryGrid({
 
           {getPageNumbers().map((page, index) =>
             page === "..." ? (
-              <span key={`ellipsis-${index}`} className="px-3 py-1 text-gray-400">
+              <span key={`ellipsis-${index}`} className="px-2 sm:px-3 py-1 text-gray-400 text-xs sm:text-sm">
                 ...
               </span>
             ) : (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded ${
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${
                   currentPage === page
                     ? "bg-orange-600 text-white"
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -366,7 +383,7 @@ export default function StoryGrid({
           <button
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded ${
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm whitespace-nowrap ${
               currentPage === totalPages
                 ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                 : "bg-gray-700 text-white hover:bg-gray-600"
