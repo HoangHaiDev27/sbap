@@ -5,7 +5,7 @@ import { getStatistic } from "../../api/adminApi";
 
 export default function AdminPage() {
   const [statsData, setStatsData] = useState([]);
-  const [booksByDayData, setBooksByDayData] = useState([]);
+  const [booksByMonthData, setBooksByMonthData] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
   const [categoryDistribution, setCategoryDistribution] = useState([]);
   const [stats, setStats] = useState(null);
@@ -35,7 +35,7 @@ export default function AdminPage() {
           setError(data.message);
           setStats(null);
           setStatsData([]);
-          setBooksByDayData([]);
+          setBooksByMonthData([]);
           setRevenueData([]);
           setCategoryDistribution([]);
           setLoading(false);
@@ -88,7 +88,7 @@ export default function AdminPage() {
             link: "/admin/staff",
           },
           {
-            title: "Giao dịch trong tháng",
+            title: "Tổng Giao dịch",
             value: data.monthlyTransactions ?? 0,
             change: `${safePercent(data.transactionChangePercent)}%`,
             icon: <RiExchangeLine size={28} className="text-white" />,
@@ -96,7 +96,7 @@ export default function AdminPage() {
             link: "/staff/transactions",
           },
           {
-            title: "Doanh thu tháng (VNĐ)",
+            title: "Tổng Doanh thu(VNĐ)",
             value: `${data.monthlyRevenue?.toLocaleString() ?? "0"}`,
             change: `${safePercent(data.revenueChangePercent)}%`,
             icon: <RiDongIcon size={28} className="text-white" />,
@@ -113,7 +113,7 @@ export default function AdminPage() {
           },
         ]);
 
-        setBooksByDayData(data.booksByDayData ?? []);
+        setBooksByMonthData(data.booksByMonthData ?? []);
         setRevenueData(data.revenueData ?? []);
         setCategoryDistribution(data.categoryDistribution ?? []);
       } catch (err) {
@@ -217,14 +217,14 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {/* Books by Day */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Sách mới theo ngày</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Sách mới</h3>
                   <div className="h-64 sm:h-72 flex items-center justify-center overflow-x-auto">
-                    {booksByDayData.length > 0 ? (
+                    {booksByMonthData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={booksByDayData}>
+                        <BarChart data={booksByMonthData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis 
-                            dataKey="date" 
+                            dataKey="month" 
                             tick={{ fontSize: 12 }}
                             angle={-45}
                             textAnchor="end"
@@ -246,7 +246,7 @@ export default function AdminPage() {
 
                 {/* Revenue Chart */}
                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Doanh thu theo tháng</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Doanh thu</h3>
                 <div className="h-64 sm:h-72 flex items-center justify-center overflow-x-auto">
                   {revenueData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
@@ -264,7 +264,7 @@ export default function AdminPage() {
                           tick={{ fontSize: 12 }}
                           tickFormatter={(value) => {
                             if (value >= 1_000_000) return Math.round(value / 1_000_000) + " triệu";
-                            if (value >= 1_000) return Math.round(value / 1_000) + "k";
+                            if (value >= 1_000) return Math.round(value / 1_000) + "nghìn";
                             return value;
                           }}
                           domain={[0, 'dataMax + dataMax*0.1']}
@@ -336,10 +336,9 @@ export default function AdminPage() {
                   <div className="space-y-4">
                     {stats ? (
                       (() => {
-                        const hasFeedback =
-                          stats?.averageRating > 0 && stats?.positiveFeedbackPercent >= 0;
-                        const positive = hasFeedback ? stats.positiveFeedbackPercent : 0;
-                        const negative = hasFeedback ? 100 - positive : 0;
+                        //const hasFeedback = stats?.averageRating > 0;
+                        const positive = stats?.positiveFeedbackPercent ?? 0;
+                        const negative = stats?.negativeFeedbackPercent ?? 0; 
 
                         return (
                           <>
