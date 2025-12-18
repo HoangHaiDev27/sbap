@@ -1,4 +1,5 @@
 using BusinessObject.Dtos;
+using BusinessObject.Models;
 using DataAccess.DAO;
 using Repositories.Interfaces;
 
@@ -46,6 +47,11 @@ namespace Repositories.Implementations
         public async Task<int> GetTotalReadingHistoryCountAsync(int userId, ReadingHistoryFilterDTO? filter = null)
         {
             return await _readingHistoryDAO.GetTotalReadingHistoryCountAsync(userId, filter);
+        }
+
+        public async Task<List<ReadingHistory>> GetByUserIdAsync(int userId)
+        {
+            return await _readingHistoryDAO.GetByUserIdAsync(userId);
         }
     }
 }

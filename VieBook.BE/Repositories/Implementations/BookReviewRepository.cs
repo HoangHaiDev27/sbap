@@ -33,6 +33,7 @@ namespace Repositories.Implementations
         public Task<int> GetTotalCountForStaffAsync(string? searchTerm = null, int? bookId = null) 
             => _dao.GetTotalCountForStaffAsync(searchTerm, bookId);
         public Task<bool> DeleteAsync(int reviewId) => _dao.DeleteAsync(reviewId);
+        public Task<List<BookReview>> GetReviewsByUserIdAsync(int userId) => _dao.GetReviewsByUserIdAsync(userId);
     }
 }
 

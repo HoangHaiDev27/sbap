@@ -115,7 +115,7 @@ export async function getAllCategories() {
 export async function getRecommendations(userId = null) {
   const url = userId
     ? `${API_ENDPOINTS.RECOMMENDATIONS}?userId=${userId}`
-    : API_ENDPOINTS.RECOMMENDATIONS; // nếu null thì chỉ gọi thẳng /recommendations
+    : API_ENDPOINTS.RECOMMENDATIONS;
 
   console.log("🔍 [getRecommendations] Fetching URL:", url);
   const res = await fetch(url, {
@@ -127,6 +127,19 @@ export async function getRecommendations(userId = null) {
   return res.json();
 }
 
+// ✅ lấy collaborative filtering recommendations
+export async function getCollaborativeRecommendations(userId, topCount = 10) {
+  const url = `${API_ENDPOINTS.API_BASE_URL}/api/books/collaborative-recommendations?userId=${userId}&topCount=${topCount}`;
+
+  console.log("🤝 [getCollaborativeRecommendations] Fetching URL:", url);
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch collaborative recommendations");
+  return res.json();
+}
 
 // Lấy danh sách sách đã mua của user (cho reading schedule)
 export async function getUserPurchasedBooks() {

@@ -468,6 +468,23 @@ namespace VieBook.BE.Controllers
             return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
         }
 
+        // GET: api/books/collaborative-recommendations?userId=123&topCount=10
+        [HttpGet("collaborative-recommendations")]
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetCollaborativeRecommendations([FromQuery] int userId, [FromQuery] int topCount = 10)
+        {
+            try
+            {
+                var books = await _bookService.GetCollaborativeFilteringRecommendationsAsync(userId, topCount);
+                if (books == null || !books.Any())
+                    return NotFound("Không có sách gợi ý nào.");
+                return Ok(_mapper.Map<IEnumerable<BookDTO>>(books));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi lấy gợi ý sách collaborative filtering: {ex.Message}");
+            }
+        }
+
         // GET: api/books/{bookId}/check-draft-chapters
         [HttpGet("{bookId:int}/check-draft-chapters")]
         public async Task<IActionResult> CheckDraftChapters(int bookId)

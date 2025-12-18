@@ -201,5 +201,13 @@ namespace DataAccess.DAO
 
             return await query.CountAsync();
         }
+
+        public async Task<List<ReadingHistory>> GetByUserIdAsync(int userId)
+        {
+            return await _context.ReadingHistories
+                .Where(rh => rh.UserId == userId)
+                .Include(rh => rh.Book)
+                .ToListAsync();
+        }
     }
 }

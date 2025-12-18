@@ -297,6 +297,14 @@ namespace DataAccess.DAO
 
             return await query.CountAsync();
         }
+
+        public async Task<List<BookReview>> GetReviewsByUserIdAsync(int userId)
+        {
+            return await _context.BookReviews
+                .Where(r => r.UserId == userId)
+                .Include(r => r.Book)
+                .ToListAsync();
+        }
     }
 }
 
