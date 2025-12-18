@@ -674,9 +674,9 @@ VALUES
 -- Books by Owner
 IF NOT EXISTS (SELECT 1 FROM dbo.Books WHERE Title=N'The Art of Reading')
 BEGIN
-INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView, Author)
+INSERT INTO dbo.Books(OwnerId, Title, Description, CoverUrl, ISBN, Language, Status, TotalView, Author, CreatedAt)
 VALUES
-  (@OwnerId, N'The Art of Reading', N'Guide to effective reading habits.', 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1524369581i/39105249.jpg', '97800000000119', 'EN', 'Approved', 120, 'Henrik Fexeus'),
+  (@OwnerId, N'The Art of Reading', N'Guide to effective reading habits.', 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1524369581i/39105249.jpg', '97800000000119', 'EN', 'Approved', 120, 'Henrik Fexeus', '2025-10-01'),
   (@OwnerId, N'Miền Bắc - Một Thời Chiến Tranh Một Thời Hòa Bình',   N'**Miền Bắc - Một thời ế , một thời hòa bình của tác giả Folke Isaksson và Hình ảnh của Jean Hermanson/Saftra: Hành trình khắc sâu lịch sử**
 
 *Nước Việt Nam - Nơi hòa bình chế ngự chiến*
@@ -691,15 +691,15 @@ Cuốn sách "Miền Bắc - Một thời chiến tranh, một thời hòa bình
 
 Trang sách mở ra với những hình ảnh tuyệt vời về phong cảnh hùng vĩ, văn hóa độc đáo và cuộc sống bình dị của những người dân miền Bắc. Trong trường học, gia đình, khi lao động trên cánh đồng và trong các xưởng sản xuất, hình ảnh những chiếc xe đạp thồ, những nụ cười trong sáng, chúng ta sẽ cảm nhận được tình yêu thương và sức sống mạnh mẽ.
 
-"Miền Bắc - Một thời chiến , một thời hòa bình" không chỉ là một cuốn sách lịch sử, mà còn là một lời kêu gọi đến tất cả chúng ta hãy chung tay xây dựng một tương lai hòa bình, một tương lai mà mọi người Việt Nam xứng đáng và tự hào.',       'https://cdn1.fahasa.com/media/catalog/product/9/7/9786044700243.jpg', '9780000000099', 'VIE', 'Approved', 130, N'Folke Isaksson'),
+"Miền Bắc - Một thời chiến , một thời hòa bình" không chỉ là một cuốn sách lịch sử, mà còn là một lời kêu gọi đến tất cả chúng ta hãy chung tay xây dựng một tương lai hòa bình, một tương lai mà mọi người Việt Nam xứng đáng và tự hào.',       'https://cdn1.fahasa.com/media/catalog/product/9/7/9786044700243.jpg', '9780000000099', 'VIE', 'Approved', 130, N'Folke Isaksson', '2025-10-05'),
   (@OwnerId, N'Lịch Sử Các Nước Ven Địa Trung Hải - Bìa Cứng',   N'Đến với “Vùng đất của mặt trời” với những con sóng xô bờ, những bờ biển tuyệt đẹp của Địa Trung Hải, chắc hẳn ai cũng sẽ phải choáng ngợp với cảnh vật thật hùng vĩ. Nằm giữa các vĩ tuyến 35 - 45 và kéo dài trên 5.000km, vùng đất phía nam châu Âu này được thiên nhiên ưu đãi một khí hậu tuyệt vời mà chắc hẳn sẽ khiến bạn nhớ đến các địa điểm du lịch nổi tiếng bãi biển Côte d’Azur, Riviera, Costa Brava, quần đảo Balearic, các đảo của Hy Lạp hay hàng trăm địa điểm lý tưởng khác.
 
 Đối với du khách là thế, nhưng đối với những nhà nghiên cứu văn hóa, Địa Trung Hải chính là cái nôi của nền văn minh nhân loại, là vùng lõi mà ở đó và các vùng tiệm cận, những nền văn hóa rực rỡ nhất đã hình thành. Nhằm cung cấp những thông tin thú vị và hữu ích về vùng đất này, MaiHaBooks xin giới thiệu tới bạn đọc ấn phẩm “LỊCH SỬ CÁC NƯỚC VEN ĐỊA TRUNG HẢI”. Qua từng trang sách, bạn đọc sẽ cùng khám phá những đặc trưng như khí hậu, cảnh vật, đời sống con người của vùng Địa Trung Hải. Hãy cùng giải đáp những câu hỏi mà bạn đặt ra về những nền văn minh cổ đại trên miền đất này các bạn nhé!
 
-"Thật đáng ngạc nhiên vì thế giới nghèo nàn và khô cằn này lại là cái nôi văn minh của nhân loại. Chỉ cần nghĩ đến vai trò nguyên thủy của các Pharaoh ở Ai Cập ta sẽ hiểu." - GLOBERAMA.',       'https://cdn1.fahasa.com/media/catalog/product/9/7/9786044708904.jpg', '9780000000012', 'VIE', 'Approved', 115, N'Globerama'),
+"Thật đáng ngạc nhiên vì thế giới nghèo nàn và khô cằn này lại là cái nôi văn minh của nhân loại. Chỉ cần nghĩ đến vai trò nguyên thủy của các Pharaoh ở Ai Cập ta sẽ hiểu." - GLOBERAMA.',       'https://cdn1.fahasa.com/media/catalog/product/9/7/9786044708904.jpg', '9780000000012', 'VIE', 'Approved', 115, N'Globerama', '2025-10-25'),
   (@OwnerId, N'Bài Giảng Lịch Sử An Nam',   N'MỘT TRONG NHỮNG CÔNG TRÌNH NGHIÊN CỨU ĐẦY GIÁ TRỊ VỀ LỊCH SỬ AN NAM!
 
-Bài giảng lịch sử An Nam là công trình được Trương Vĩnh Ký tổng hợp và nghiên cứu từ nhiều nguồn tư liệu, viết về lịch sử Việt Nam xuyên suốt các thời kỳ, từ triều đại Hồng Bàng thị, trải qua một ngàn năm Bắc thuộc, cho đến thời kỳ đầu Pháp tiến vào Việt Nam. Tác phẩm này vốn được biên soạn nhằm mục đích giúp học trò của Trương Vĩnh Ký học ngoại ngữ thông qua lịch sử nước nhà, nên nội dung trong cuốn sách này hướng đến đại đa số người đọc phổ thông, khiến những câu chuyện lịch sử hiện lên một cách hết sức gần gũi, dễ hiểu.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935235240421.jpg', '9780000000022', 'VIE', 'Approved', 185, N'Trương Vĩnh Ký'),
+Bài giảng lịch sử An Nam là công trình được Trương Vĩnh Ký tổng hợp và nghiên cứu từ nhiều nguồn tư liệu, viết về lịch sử Việt Nam xuyên suốt các thời kỳ, từ triều đại Hồng Bàng thị, trải qua một ngàn năm Bắc thuộc, cho đến thời kỳ đầu Pháp tiến vào Việt Nam. Tác phẩm này vốn được biên soạn nhằm mục đích giúp học trò của Trương Vĩnh Ký học ngoại ngữ thông qua lịch sử nước nhà, nên nội dung trong cuốn sách này hướng đến đại đa số người đọc phổ thông, khiến những câu chuyện lịch sử hiện lên một cách hết sức gần gũi, dễ hiểu.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935235240421.jpg', '9780000000022', 'VIE', 'Approved', 185, N'Trương Vĩnh Ký', '2025-12-06'),
   (@OwnerId, N'Tâm Lý Học Tội Phạm Vén Màn Bí Mật Biểu Cảm',   N'ĐỪNG NGHE LỜI HỌ NÓI! HÃY QUAN SÁT BIỂU CẢM CỦA HỌ!
 
 Lập hồ sơ tội phạm là một nghề đặc thù được đào tạo bài bản, bắt đầu xuất hiện từ những năm 70 của Thế kỷ XX. Chuyên viên lập hồ sơ tội phạm thường phân tích thủ đoạn gây án, cách bố trí hiện trường… để đưa ra phán đoán về chủng tộc, giới tính, tuổi tác, nghề nghiệp, đặc trưng ngoại hình… của nghi phạm. Những thông tin vừa cụ thể vừa quan trọng này đều có đầu mối từ một số chi tiết rất nhỏ, chuyên viên lập hồ sơ tội phạm sẽ quan sát kỹ từng chi tiết để lần ra thông tin nghi phạm. Chức trách của chuyên viên lập hồ sơ tội phạm là giúp cảnh sát thu hẹp phạm vi tìm kiếm và kịp thời ngăn chặn hành vi phạm tội tiếp tục xảy ra.
@@ -714,29 +714,29 @@ Tâm sinh tướng, khi hành động và lời nói của một người không
 
 Bạn có muốn nhìn thấu mọi thứ từ bây giờ, để đối phương không thể có bất kỳ bí mật nào trước mặt bạn?
 
-Chuyên viên lập hồ sơ tội phạm sẽ giúp bạn hiểu rõ một người trong thời gian ngắn nhất, nhìn thấu nội tâm và hành vi của họ!',       'https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-tr_c---t_m-l_-h_c-t_i-ph_m-v_n-m_n-b_-m_t-bi_u-c_m.jpg', '9780000000041', 'VIE', 'Approved', 65, N'Henrik Fexeus'),
+Chuyên viên lập hồ sơ tội phạm sẽ giúp bạn hiểu rõ một người trong thời gian ngắn nhất, nhìn thấu nội tâm và hành vi của họ!',       'https://cdn1.fahasa.com/media/catalog/product/b/_/b_a-tr_c---t_m-l_-h_c-t_i-ph_m-v_n-m_n-b_-m_t-bi_u-c_m.jpg', '9780000000041', 'VIE', 'Approved', 65, N'Henrik Fexeus', '2025-10-27'),
   (@OwnerId, N'1111 - Nhật Ký Sáu Vạn Dặm Trên Yên Xe Cà Tàng',   N'Trần Đặng Đăng Khoa bắt đầu hành trình vạn dặm vòng quanh thế giới từ ngày 01/06/2017 tại cửa khẩu Mộc Bài (Tây Ninh). Với chiếc xe 100cc mang biển số Việt Nam, trong hành trình kéo dài 1.111 ngày, anh đã đặt chân tới 7 châu lục, 65 quốc gia và vùng lãnh thổ, băng qua đường xích đạo 8 lần. 
 Mỗi ngày trong chuyến đi - trừ ba tháng cuối cùng kẹt ở Mozambique vì dịch COVID-19 - anh đều ghi lại nhật ký, và cuốn sách này chính là tập hợp những trang viết của anh theo mốc thời gian. Những trang du ký vút nhanh, xoay đều như những vòng bánh xe, cuốn ta theo cùng trong chuyến đi “không hẹn ngày về”. Những ngoạn mục của thiên nhiên, những sặc sỡ của văn hóa, những bình dị ấm áp của cuộc sống con người, cộng với những kinh nghiệm và trải nghiệm rất cá nhân của một kẻ độc hành ham phiêu lưu, tất cả hứa hẹn sẽ thỏa mãn trí tưởng tượng và tò mò của độc giả, truyền cảm hứng cho những đam mê xê dịch biến thành những chuyến đi tiếp nối.
 
-Sách còn bao gồm Phụ lục: Từ ý tưởng đến hiện thực cung cấp tất cả các thông tin cần thiết để độc giả thực hiện một chuyến đi vòng quanh thế giới bằng xe máy. Phụ lục được thực hiện dưới dạng file sách để làm quà tặng cho độc giả. Độc giả quét mã QR trên bìa sách để đọc và tải file.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8934974183037.jpg', '9780000000030', 'VIE', 'Approved', 25, N'Trần Đặng Đăng Khoa'),
+Sách còn bao gồm Phụ lục: Từ ý tưởng đến hiện thực cung cấp tất cả các thông tin cần thiết để độc giả thực hiện một chuyến đi vòng quanh thế giới bằng xe máy. Phụ lục được thực hiện dưới dạng file sách để làm quà tặng cho độc giả. Độc giả quét mã QR trên bìa sách để đọc và tải file.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8934974183037.jpg', '9780000000030', 'VIE', 'Approved', 25, N'Trần Đặng Đăng Khoa', '2025-10-28'),
   (@OwnerId, N'Trên Đường Về Nhớ Đầy',   N'Trên Đường Về Nhớ Đầy
 
 Những câu chuyện rủ rỉ, có duyên cùng những bức hình độc đáo có sức lôi kéo người đọc đọc mãi mà không muốn đặt sách xuống. Bạn đọc có thể thu nhận được rất nhiều từ cái nhìn thưởng lãm có phân tích của những trang viết, biết thêm về những địa danh tưởng như quen thuộc, hiểu thêm vùng đất, con người, văn hóa xứ khác.
 
-"Đi theo bước chân du hành của Dương Thành Truyền qua năm tháng, người đọc cùng trải nghiệm sự thay đổi về không gian và lối sống của tác giả, nhưng cũng thu lượm được câu chuyện về một tiến trình biến chuyển của xã hội Việt Nam, từ chỗ là một nơi tách biệt với thế giới, đã trở thành một bến đi. Giống như đã đi từ một bến hẻo lánh ra với những điểm đến ngày càng hoành tráng hơn, kỳ vĩ hơn, ngạc nhiên này nối sửng sốt khác."',       'https://cdn1.fahasa.com/media/catalog/product/n/x/nxbtre_full_08472018_094704.jpg', '9780000000021', 'EN', 'Approved', 285, N'Dương Thành Truyền'),
+"Đi theo bước chân du hành của Dương Thành Truyền qua năm tháng, người đọc cùng trải nghiệm sự thay đổi về không gian và lối sống của tác giả, nhưng cũng thu lượm được câu chuyện về một tiến trình biến chuyển của xã hội Việt Nam, từ chỗ là một nơi tách biệt với thế giới, đã trở thành một bến đi. Giống như đã đi từ một bến hẻo lánh ra với những điểm đến ngày càng hoành tráng hơn, kỳ vĩ hơn, ngạc nhiên này nối sửng sốt khác."',       'https://cdn1.fahasa.com/media/catalog/product/n/x/nxbtre_full_08472018_094704.jpg', '9780000000021', 'EN', 'Approved', 285, N'Dương Thành Truyền', '2025-11-01'),
   (@OwnerId, N'Có Hẹn Với Paris',   N'Có Hẹn Với Paris
 
 Có hẹn với Paris là tập đầu tiên trong loạt sách Amanda Huỳnh và sắc màu du ký, do chính tác giả viết, vẽ và thiết kế.
 Cuốn du ký đầy những bức họa tuyệt đẹp này sẽ đưa độc giả đến với Paris, thành phố không chỉ nổi tiếng với những cảnh quan tráng lệ và lãng mạn mà còn lắm ngóc ngách bí mật, và nghe những câu chuyện mang màu sắc huyền thoại mà người Paris chưa hẳn đã biết hết. Như chuyện về nước giếng thần trong khuôn viên nhà thờ, bà phù thủy không tiên tri được số phận của chính mình hay lời nguyền của nàng công chúa giàu có và xinh đẹp trong nghĩa trang Père de la Chaise, cùng vô số bí ẩn thú vị khác phía sau những cánh cửa, con đường, góc phố…
 
-Amanda Huỳnh là tác giả của tập truyện ngắn và tản văn LAM vừa xuất bản vào tháng 7.2016; các câu chuyện và tranh vẽ rực rỡ về tuổi thanh xuân với những được-mất, trong bối cảnh Paris cổ kính lãng mạn đã gây ấn tượng mạnh với độc giả. Sách đã nhanh chóng được tái bản ngay sau khi ra mắt.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8934974147381.jpg', '97800000000110', 'VIE', 'Approved', 5, N'Amanda Huỳnh'),
+Amanda Huỳnh là tác giả của tập truyện ngắn và tản văn LAM vừa xuất bản vào tháng 7.2016; các câu chuyện và tranh vẽ rực rỡ về tuổi thanh xuân với những được-mất, trong bối cảnh Paris cổ kính lãng mạn đã gây ấn tượng mạnh với độc giả. Sách đã nhanh chóng được tái bản ngay sau khi ra mắt.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8934974147381.jpg', '97800000000110', 'VIE', 'Approved', 5, N'Amanda Huỳnh', '2025-11-05'),
   (@OwnerId, N'Cô Đơn Trên Everest',   N'Đây là cuốn du ký hay nhất tôi từng đọc. Cô Đơn Trên Everest có lẽ sẽ không khiến bất kỳ ai lật sách ra mà phải thất vọng. Một cuộc phiêu lưu bằng cả ngôn từ, thị giác lẫn xúc giác. Có lãng mạn, có xót xa, có đau đáu, có hài hước và đầy những hồi hộp như chính mình đang đi giữa cuộc hành trình. Đọc “Cô đơn trên Everest”, có đôi lúc tôi cảm nhận được mình đã nhìn thấy ảnh mặt trời đỏ ối vào lúc bình minh trên sông Hằng, có đôi khi, tôi rợn người vì cảnh người ta khuân củi chở đến lò thiêu xác.
 
 Nhà báo Bùi Kiều Trang (Từ “Ngày nay”)
 
 Di Li là nữ nhà văn đã có chuyến đi bão táp trên đất Ấn Độ ngay trước khi quốc gia này thiết lập lệnh phong tỏa vì đại dịch lần thứ nhất. Trong Cô Đơn Trên Everest, có tới non nửa dành kể những câu chuyện chị đã trải qua trên đất nước Ấn Độ. Di Li đã khiến người đọc đứng tim khi theo chị băng qua dãy núi tuyết Himalaya và dọc bờ sông Hằng. Sông Hằng, con sông thiêng của người Hindu, với đầy xác chết được đốt rồi thả xuống sông, có cả những người chết thiêng không đốt, cứ thế trôi trên sông, người ta phóng uế ở đấy, và tắm táp với lòng thành kính cũng ở đấy...
 
-Nhà báo Võ Hồng Thu (Từ "Sức khỏe đời sống")',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8936049957802.jpg', '9780000000010', 'VIE', 'Approved', 85, N'Di Li'),
+Nhà báo Võ Hồng Thu (Từ "Sức khỏe đời sống")',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8936049957802.jpg', '9780000000010', 'VIE', 'Approved', 85, N'Di Li', '2025-11-09'),
   (@OwnerId, N'Vàng Son Một Thuở Ba Tư (Tập Du Ký)',   N'Bản năng sinh tồn của loài sinh vật hai chân quả thật kỳ vĩ dù bàn tay Thượng Đế cố tình đặt loài sinh vật nhỏ bé ấy vào trong những khối băng lạnh giá, cánh rừng già hoang vu hay đất đá khô khốc mùi hoang mạc. Bản năng sinh tồn ấy trỗi dậy để tìm lấy sự sống như cách ái phi Scheherazade đã kể cho vua Shahryar nghe những câu chuyện thần thoại và luôn kết thúc trong dở dang, gây tò mò khi ánh dương vừa ló rạng. Hàng đêm, khi ánh lửa liêu xiêu được thắp sáng trong cung điện, không gian nồng ấm mùi trầm Frankince, những xứ sở mới lạ hiện ra trong 1.001 câu chuyện thật sống động, lấp lánh sắc màu như suy nghĩ từ những người Hy Lạp đi trước mở đường, một phương Đông vô cùng huyền bí nhưng cũng là vùng đất đầy ma thuật, bùa ngải ẩn hiện vào những lọn tóc rắn của nữ quỷ Medusa...
 
 Một vương triều Achaemenid của Đại đế Darius trỗi dậy từ thế kỷ 5 TCN quá hùng mạnh khiến người Hy Lạp không thể đặt chân đến Ba Tư khi họ luôn thất thủ tại eo biển Bophorus thuộc Thổ Nhĩ Kỳ ngày nay, trong khi đoàn quân thiện chiến Ba Tư liên tục vượt Địa Trung Hải mở những đợt vây hãm Hy Lạp. Nỗi buồn ghi thật sâu trong lòng những chiến binh Hy Lạp khi hoàng đế Ba Tư Xerxes I (519 - 465 TCN) đốt tan hoang pháo đài phòng thủ Acropolis ở thành Athen trong trận chiến mùa xuân 480 TCN. Khi trận chiến sống mái Plataea diễn ra năm 479 TCN đi qua, người Hy Lạp ca khúc khải hoàn bằng cây cột đồng dựng thẳng đứng và trên thân cột điêu khắc những con rắn ma quái phương Đông phủ phục và tôn vinh các vị thần của vùng đất Macedonia.
@@ -749,28 +749,28 @@ Trong dòng chảy hiện đại, Ba Tư vẫn huyền bí đến mơ hồ khi t
 
 Trỗi dậy từ bán đảo Tây Á vào thế kỷ 7, các vị vua Hồi chọn Ba Tư đầu tiên để truyền bá tôn giáo bởi ánh vàng son của vương quốc ấy có sức ảnh hưởng rộng khắp trên vùng đất châu Á.
 
-Bước chân qua một vài vùng đất Hồi giáo trước đây, người địa phương kể rằng nghề dệt thảm có cội nguồn từ vùng đất Hồi giáo Ba Tư và nếu mua làm quà lưu niệm thì không đâu đẹp bằng Iran. Nét văn hóa từ ngàn xưa ấy được tôn vinh bằng câu chuyện chiếc thảm thần trong Aladin và chiếc đèn thần được phương Tây loan truyền bằng nhiều bộ phim cùng tên. Tôi muốn đến Iran vẫn còn trong giai đoạn tranh tối tranh sáng, không vì những lời khen ngợi can đảm từ bạn bè hay một chút kiêu hãnh trong lòng mà chỉ vì câu nói của người xưa "Vàng son một thuở Ba Tư". Hai lần đến Iran theo tiếng gọi đam mê khác nhau của những nét văn hóa cổ xưa, tôi mơ ước được sở hữu trong tay chiếc thảm thần để được bay đến Ba Tư nhiều lần hơn nữa. Bởi một lý do rất đơn giản, chiếc vé máy bay và tấm visa để vào Iran đã ngốn một số tiền không nhỏ trong chuyến đi...',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_195509_1_32905.jpg', '9780000000013', 'VIE', 'Approved', 85, N'Nguyễn Văn Huy'),
+Bước chân qua một vài vùng đất Hồi giáo trước đây, người địa phương kể rằng nghề dệt thảm có cội nguồn từ vùng đất Hồi giáo Ba Tư và nếu mua làm quà lưu niệm thì không đâu đẹp bằng Iran. Nét văn hóa từ ngàn xưa ấy được tôn vinh bằng câu chuyện chiếc thảm thần trong Aladin và chiếc đèn thần được phương Tây loan truyền bằng nhiều bộ phim cùng tên. Tôi muốn đến Iran vẫn còn trong giai đoạn tranh tối tranh sáng, không vì những lời khen ngợi can đảm từ bạn bè hay một chút kiêu hãnh trong lòng mà chỉ vì câu nói của người xưa "Vàng son một thuở Ba Tư". Hai lần đến Iran theo tiếng gọi đam mê khác nhau của những nét văn hóa cổ xưa, tôi mơ ước được sở hữu trong tay chiếc thảm thần để được bay đến Ba Tư nhiều lần hơn nữa. Bởi một lý do rất đơn giản, chiếc vé máy bay và tấm visa để vào Iran đã ngốn một số tiền không nhỏ trong chuyến đi...',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_195509_1_32905.jpg', '9780000000013', 'VIE', 'Approved', 85, N'Nguyễn Văn Huy', '2025-11-11'),
   (@OwnerId, N'Trở Về Từ Iraq',   N'Đây là cuốn sách thứ ba của tác giả, điểm chung là tính chân thực và sự tinh tế, từ những chi tiết tưởng chừng rất nhỏ trong đời sống mà tác giả phát hiện, chắt lọc và chuyển tải. Mỗi câu chuyện đời sống chân thực là một lát cắt phô ra những thớ, những vân đọng lại trong thân một cội gỗ già. Nó nổi lên và lấp lánh như chứng tích thời gian được hun qua nắng gió, mồ hôi và những trải nghiệm cuộc đời của một người lao động chăm chỉ, thiện lương. Bút ký của Trần Kiêm Hạ hấp dẫn người đọc như khi ta nhìn một vân gỗ, vân đá đẹp, như chén trà Bắc…
 
 Giá trị nhất của tác phẩm này ở chỗ nó kết tinh từ cuộc sống của một con người yêu lao động, yêu quê hương đất nước và trân quý các giá trị truyền thống của gia đình, của quê hương.
 
-Hơn 20 bút ký riêng biệt trong một tập sách không tới 200 trang, đọc xong độc giả sẽ có cảm giác mình vừa gấp lại một bộ tiểu thuyết vậy.',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_195509_1_56468.jpg', '9780000000014', 'VIE', 'Approved', 85, N'Trần Kiêm Hạ'),
+Hơn 20 bút ký riêng biệt trong một tập sách không tới 200 trang, đọc xong độc giả sẽ có cảm giác mình vừa gấp lại một bộ tiểu thuyết vậy.',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_195509_1_56468.jpg', '9780000000014', 'VIE', 'Approved', 85, N'Trần Kiêm Hạ', '2025-11-12'),
   (@OwnerId, N'Nhẹ Bước Lãng Du (Tái Bản 2020)',   N'Cuốn sách tập hợp nhiều bài viết là những liên tưởng thú vị, cảm nhận tinh tế, cảm xúc dạt dào trước vẻ đẹp ở những nơi mà tác giả có dịp đặt chân đến trên bước đường “lãng du” của mình. Đó là Hy Lạp với thánh địa Delphi dìu dặt giữa mộng và thực, đó là Pháp với dòng sông Seine chảy trôi dưới cầu Mirabeau, vũ điệu Flamenco ở Barcelona, đến lăng mộ TJ Mahal nổi tiếng ở Ấn Độ, Hoa Thanh Trì với bức tượng Dương Quý Phi đẹp ngọc ngà, tháp Đại Nhạn ghi dấu công lao dịch kinh Phật của Đường Tam Tạng, hoa anh đào rộ nở trên đất Nhật Bản…
 
 Đó còn là tình cảm sâu sắc, đậm đà với đất nước qua những lần ra Hà Nội viếng Văn Miếu Quốc Tử Giám, qua những dòng sông cây cầu trên khắp mọi miền Tổ quốc… Đọc cuốn sách, ta như được phiêu lưu khắp thế giới, như được tận mắt chứng kiến cũng như có những am hiểu về lịch sử và quá trình hình thành của nhiều danh lam thắng cảnh, hiểu được cuộc đời của các bậc vĩ nhân.
 
-Như lời tác giả tâm sự, "không phải là nhà du khảo, người viết chỉ mong sẻ chia những gì thấy và cảm khi nhẹ bước lãng du", hy vọng quý độc giả cũng sẽ tìm thấy được sự sẻ chia qua lời văn bình dị, mộc mạc của cuốn sách, cùng tác giả "nhẹ bước lãng du".',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_195509_1_39558.jpg', '9780000000042', 'VIE', 'Approved', 85, N'Nguyễn Thị Hồng'),
+Như lời tác giả tâm sự, "không phải là nhà du khảo, người viết chỉ mong sẻ chia những gì thấy và cảm khi nhẹ bước lãng du", hy vọng quý độc giả cũng sẽ tìm thấy được sự sẻ chia qua lời văn bình dị, mộc mạc của cuốn sách, cùng tác giả "nhẹ bước lãng du".',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_195509_1_39558.jpg', '9780000000042', 'VIE', 'Approved', 85, N'Nguyễn Thị Hồng', '2025-11-13'),
   (@OwnerId, N'Collins - Writing For Ielts (Tái Bản 2023)',   N'- Bộ tài liệu được chia thành 10 cuốn bao gồm ngữ pháp, từ vựng, 4 kỹ năng và sách Test. Nội dung mỗi cuốn đều đem lại cho bạn nguồn kiến thức cao để ôn luyện mỗi ngày.
 
 - Ở mỗi cuốn lại được chia thành từng Topic khác nhau theo từng cấp độ nên giúp người học có thể dễ dàng hệ thống cũng như học từ cơ bản tới nâng cao. Các topics liên kết với nhau từ cuốn từ vựng, ngữ pháp đến 4 kỹ năng nên khi học theo bộ, bạn sẽ bám sát và học được nhiều hơn.
 
 - Phân chia các kỹ năng rõ ràng, mỗi bài học có từ kiến thức cơ bản đến bài tập thực hành cho các bạn luyện tập mỗi ngày.
 
-- Ngoài ra, một ưu điểm nữa của bộ sách là trình bày rất dễ xem, có hệ thống và có đầy đủ các dạng test nên dễ dàng học hơn cho mọi người. Các bạn nên chú ý lập kế hoạch học tập để rèn luyện theo từng kỹ năng. Mỗi ngày một kỹ năng hoặc mỗi tiếng một bài học là được rồi...',       'https://cdn1.fahasa.com/media/catalog/product/9/7/9786043778526.jpg', '9780000000043', 'VIE', 'Approved', 85, N'Collins'),
+- Ngoài ra, một ưu điểm nữa của bộ sách là trình bày rất dễ xem, có hệ thống và có đầy đủ các dạng test nên dễ dàng học hơn cho mọi người. Các bạn nên chú ý lập kế hoạch học tập để rèn luyện theo từng kỹ năng. Mỗi ngày một kỹ năng hoặc mỗi tiếng một bài học là được rồi...',       'https://cdn1.fahasa.com/media/catalog/product/9/7/9786043778526.jpg', '9780000000043', 'VIE', 'Approved', 85, N'Collins', '2025-11-14'),
   (@OwnerId, N'Tìm Hiểu Thế Giới Cảm Xúc Của Bé Trai',   N'Trong Tìm hiểu thế giới cảm xúc của bé trai, Tiến sĩ Dan Kindlon và Tiến sĩ Michael Thompson, hai trong số những nhà tâm lý học trẻ em hàng đầu của Mĩ, đã chia sẻ những gì họ nghiên cứu hơn 35 năm cùng với kinh nghiệm làm việc với vô vàn các bé trai và gia đình các bé.
 
-Tiến sĩ Michael Thompson đã chia sẻ: Qua cuốn sách, "tôi muốn minh hoạ đời sống nội tâm của các bé trai cho bố mẹ các bé thấy, để từ đó họ sẽ không xa cách con trai mình, không bị tổn thương và buồn rầu trước những thay đổi của con mà không thể hiểu nổi. Tôi muốn chỉ cho cho các bố mẹ cách làm thế nào để phát triển ngôn ngữ cảm xúc phù hợp với con trai mình, một thứ ngôn ngữ sâu sắc và lâu bền – một kênh giao tiếp có thể giúp các bé trai vượt qua được những cuộc đấu tranh dữ dội và tàn nhẫn của tuổi vị thành niên."',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_216561.jpg', '9780000000044', 'VIE', 'Approved', 85, N'Dan Kindlon, Michael Thompson'),
-  (@OwnerId, N'Những Từ Ngữ Làm Cho Trẻ Hạnh Phúc',   N'Thông qua 29 tình huống thường thấy trong cuộc sống hàng ngày từ khi trẻ còn là em bé sơ sinh cho đến khi trở thành học sinh trung học phổ thông (Khi trẻ sợ tiêm phòng/Khi trẻ không đánh răng/Khi trẻ hấp tấp/Khi trẻ đánh đổ đồ ăn/Khi trẻ làm nũng lúc mua hàng/Khi trẻ không thể ăn rau,...), tác giả Tanaka Shigeiki đưa ra 29 giải pháp lời nói cụ thể, đầy thuyết phục về một phương pháp nuôi dạy con hoàn toàn thoải mái, nhẹ nhàng. Cha mẹ sẽ thấy nuôi dạy con không hề là áp lực mà là trải nghiệm vui vẻ, là niềm hạnh phúc vô bờ.',       'https://cdn1.fahasa.com/media/catalog/product/n/h/nhung-tu-ngu-lam-cho-tre-hanh-phuc.jpg', '9780000000045', 'VIE', 'Approved', 85, N'Tanaka Shigeiki'),
+Tiến sĩ Michael Thompson đã chia sẻ: Qua cuốn sách, "tôi muốn minh hoạ đời sống nội tâm của các bé trai cho bố mẹ các bé thấy, để từ đó họ sẽ không xa cách con trai mình, không bị tổn thương và buồn rầu trước những thay đổi của con mà không thể hiểu nổi. Tôi muốn chỉ cho cho các bố mẹ cách làm thế nào để phát triển ngôn ngữ cảm xúc phù hợp với con trai mình, một thứ ngôn ngữ sâu sắc và lâu bền – một kênh giao tiếp có thể giúp các bé trai vượt qua được những cuộc đấu tranh dữ dội và tàn nhẫn của tuổi vị thành niên."',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_216561.jpg', '9780000000044', 'VIE', 'Approved', 85, N'Dan Kindlon, Michael Thompson', '2025-11-15'),
+  (@OwnerId, N'Những Từ Ngữ Làm Cho Trẻ Hạnh Phúc',   N'Thông qua 29 tình huống thường thấy trong cuộc sống hàng ngày từ khi trẻ còn là em bé sơ sinh cho đến khi trở thành học sinh trung học phổ thông (Khi trẻ sợ tiêm phòng/Khi trẻ không đánh răng/Khi trẻ hấp tấp/Khi trẻ đánh đổ đồ ăn/Khi trẻ làm nũng lúc mua hàng/Khi trẻ không thể ăn rau,...), tác giả Tanaka Shigeiki đưa ra 29 giải pháp lời nói cụ thể, đầy thuyết phục về một phương pháp nuôi dạy con hoàn toàn thoải mái, nhẹ nhàng. Cha mẹ sẽ thấy nuôi dạy con không hề là áp lực mà là trải nghiệm vui vẻ, là niềm hạnh phúc vô bờ.',       'https://cdn1.fahasa.com/media/catalog/product/n/h/nhung-tu-ngu-lam-cho-tre-hanh-phuc.jpg', '9780000000045', 'VIE', 'Approved', 85, N'Tanaka Shigeiki', '2025-11-16'),
   (@OwnerId, N'Đọc Sách Cùng Con, Đi Muôn Dặm Đường: Xây Dựng Mối Quan Hệ Ý Nghĩa Và Bền Lâu Với Con',   N'Chắc chắn bạn sẽ không bao giờ hối tiếc khi đọc sách cho con nghe. Bởi nhờ đó, bạn sẽ có thể gắn kết sâu sắc với gia đình mình trong một xã hội bận rộn, tràn ngập công nghệ hiện đại như ngày nay. Và bạn cũng sẽ được thực sự ở bên con, kể cả sau khi con có thể tự đọc. Trong Đọc sách cùng con, đi muôn dặm đường, bạn sẽ tìm thấy niềm cảm hứng thực sự để bắt đầu phong trào đọc sách cùng con ở chính ngôi nhà của mình.
 
 Cuốn sách sẽ giúp bạn khám phá ra cách:
@@ -785,13 +785,13 @@ Chọn sách dựa trên sở thích và độ tuổi khác nhau của các con
 
 Biến việc đọc sách cùng con trở thành khoảng thời gian tuyệt nhất trong ngày của gia đình bạn
 
-Đọc sách cùng con, đi muôn dặm đường cũng cung cấp một danh sách sách phù hợp cho con từ lứa tuổi sơ sinh cho đến vị thành niên. Ngạc nhiên vì những tò mò của tuổi tập đi tới những bướng bỉnh của tuổi mới lớn ở con, bạn sẽ khám phá ra những chiến lược thực tế để biến việc đọc sách cùng con trở thành một "nếp nhà" ý nghĩa. Đọc sách cùng con không chỉ có sức mạnh thay đổi gia đình bạn, mà còn thay đổi cả thế giới',       'https://cdn1.fahasa.com/media/catalog/product/b/i/bia---doc-sach-cung-con-di-muon-dam-duong---bia-1.jpg', '9780000000088', 'VIE', 'Approved', 85, N'Pam Allyn'),
+Đọc sách cùng con, đi muôn dặm đường cũng cung cấp một danh sách sách phù hợp cho con từ lứa tuổi sơ sinh cho đến vị thành niên. Ngạc nhiên vì những tò mò của tuổi tập đi tới những bướng bỉnh của tuổi mới lớn ở con, bạn sẽ khám phá ra những chiến lược thực tế để biến việc đọc sách cùng con trở thành một "nếp nhà" ý nghĩa. Đọc sách cùng con không chỉ có sức mạnh thay đổi gia đình bạn, mà còn thay đổi cả thế giới',       'https://cdn1.fahasa.com/media/catalog/product/b/i/bia---doc-sach-cung-con-di-muon-dam-duong---bia-1.jpg', '9780000000088', 'VIE', 'Approved', 85, N'Pam Allyn', '2025-11-20'),
   (@OwnerId, N'Bản Du Ca Cuối Cùng (Tái Bản)',   N'Chiến tranh đã đẩy biết bao người vào con đường tha hương khi mỗi bến đỗ đều chỉ là tạm bợ cho đến lúc họ bị dồn đuổi đến nơi khác. Kern, một chàng thanh niên Đức, chạy trốn chế độ Quốc xã bạo tàn, lưu lạc đến Áo, bị trục xuất sang Thụy Sĩ, rồi lại tìm đường trốn sang Pháp... Trong cuộc hành trình bất định ấy, anh có duyên gặp gỡ những con người tốt bụng như Steiner, Marill; họ đã cưu mang, giúp đỡ anh trong cuộc sống khó khăn nơi đất khách. Số phận cũng cho anh gặp Ruth – người con gái mang đến cho anh một tình yêu, một niềm an ủi, một hy vọng mới. Họ đến với nhau bằng sự cảm thông sâu sắc giữa hai con người cùng cảnh ngộ. Họ yêu nhau và làm mọi cách để được ở bên nhau bất chấp những lần bị bắt giam, bị trục xuất. Hành trình của họ tựa như bản du ca của những con người không còn đất sống, chỉ có thể bám víu vào con thuyền mang tên hy vọng và tình người.
 
-',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8936203361254.jpg', '9780000000092', 'VIE', 'Approved', 85, N'Erich Maria Remarque'),
+',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8936203361254.jpg', '9780000000092', 'VIE', 'Approved', 85, N'Erich Maria Remarque', '2025-11-22'),
   (@OwnerId, N'Huy Động Vốn: Khó Mà Dễ! (Tái Bản 2018)',   N'Khởi nghiệp là một phần của nền kinh tế hiện nay, nó không đơn giản là một phong trào, xu hướng của thời đại mà còn là lựa chọn, hướng đi của một bộ phận giới trẻ dám dấn thân, dám đón nhận rủi ro và nắm bắt cơ hội để theo đuổi những ý tưởng, những hoài bão nhằm tạo ra giá trị cho bản thân và giá trị cho xã hội.
 
-Alejandro Cremades – tác giả cuốn sách từng nằm trong "Top 30 gương mặt dưới 30 tuổi" của các tạp chí uy tín như Vanity Fair, Entrepreneur, Magazine và GQ Magazine. Ông cũng là nhà sáng lập và điều hành Onevest, hệ sinh thái khởi nghiệp nổi tiếng của Mỹ, chuyên hỗ trợ các sáng lập viên và nhà đầu tư xây dựng doanh nghiệp thành công. Alejandro Cremades đã dẫn dắt tầm nhìn và điều khiển Onevest trong vai trò người đồng sáng lập và chủ tịch điều hành, hỗ trợ các sáng lập viên và nhà đầu tư xây dựng doanh nghiệp thành công.',       'https://cdn1.fahasa.com/media/catalog/product/h/u/huy_dong_von.jpg', '9780000000047', 'VIE', 'Approved', 85, N'Alejandro Cremades'),
+Alejandro Cremades – tác giả cuốn sách từng nằm trong "Top 30 gương mặt dưới 30 tuổi" của các tạp chí uy tín như Vanity Fair, Entrepreneur, Magazine và GQ Magazine. Ông cũng là nhà sáng lập và điều hành Onevest, hệ sinh thái khởi nghiệp nổi tiếng của Mỹ, chuyên hỗ trợ các sáng lập viên và nhà đầu tư xây dựng doanh nghiệp thành công. Alejandro Cremades đã dẫn dắt tầm nhìn và điều khiển Onevest trong vai trò người đồng sáng lập và chủ tịch điều hành, hỗ trợ các sáng lập viên và nhà đầu tư xây dựng doanh nghiệp thành công.',       'https://cdn1.fahasa.com/media/catalog/product/h/u/huy_dong_von.jpg', '9780000000047', 'VIE', 'Approved', 85, N'Alejandro Cremades', '2025-11-24'),
   (@OwnerId, N'Tư Duy Logic (Tái Bản 2021)',   N'Kanbe – nhân vật chính trong cuốn sách, vào những năm cuối tuổi 20 của cuộc đời, một ngày cô chợt nhận ra, trong khi các bạn cùng trang lứa với cô đã và đang gặt hái nhiều thành quả thì bản thân cô đang dần chững lại trong sự nghiệp. Sau một thời gian suy nghĩ, cô quyết định từ bỏ công việc hiện tại, đi học thêm bằng MBA và đầu quân cho một công ty. Một chương mới tươi sáng hơn được mở ra, và tất cả bắt nguồn từ việc thay đổi nhận thức và tư duy của cô gái trẻ.
 
 - Một số trích dẫn hay trong cuốn “Tư duy Logic”:
@@ -808,7 +808,7 @@ Chính những “phép xã giao” như vậy đôi khi cũng khiến chúng ta
 
 Ví dụ tất cả cùng đi săn, mỗi người chỉ có 2 viên đạn. Khi muốn giết một con thú nào đó, bạn có sử dụng đạn bừa bãi không? Hay là phỏng đoán dựa vào âm thanh và hình dáng xem nơi nào có khả năng con thú cần săn đang ở để nhắm bắn? Tất nhiên chúng ta sẽ chọn cách thứ hai đúng không? Bắn mà không xác định được mục tiêu thì chỉ lãng phí đạn mà thôi.
 
-Trong giới kinh doanh, giả thuyết cần thiết vì không thể tùy hứng bắt đầu một lĩnh vực mới mà phó mặc sự thành công cho vận may được. Vậy, lợi ích của việc sử dụng giả thuyết trong kinh doanh là gì?',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_236462.jpg', '9780000000050', 'VIE', 'Approved', 85, N'Barbara Minto'),
+Trong giới kinh doanh, giả thuyết cần thiết vì không thể tùy hứng bắt đầu một lĩnh vực mới mà phó mặc sự thành công cho vận may được. Vậy, lợi ích của việc sử dụng giả thuyết trong kinh doanh là gì?',       'https://cdn1.fahasa.com/media/catalog/product/i/m/image_236462.jpg', '9780000000050', 'VIE', 'Approved', 85, N'Barbara Minto', '2025-11-27'),
   (@OwnerId, N'Chữa Lành Những Sang Chấn Tuổi Thơ',   N'Hiểu để phục hồi và chữa lành
 
 Hàng triệu đứa trẻ phải nếm trải sự ngược đãi và bị bỏ rơi 
@@ -827,10 +827,10 @@ Qua lăng kính này, ta có thể hình thành một ý thức mới về giá 
 
 “Chữa Lành Những Sang Chấn Tuổi Thơ” là cuốn sách giúp bạn khám phá những tác động của mất mát đau thương, ngược đãi, lạm dụng tình dục, phân biệt chủng tộc, kỳ thị nữ giới, bạo lực gia đình, bạo lực cộng đồng, các vấn đề bản dạng giới và tình dục, án oan... để từ đó giúp ta hiểu thêm về sức khỏe, quá trình chữa lành cũng như khả năng phục hồi và trưởng thành sau sang chấn.
 
-Và câu hỏi cơ bản "Điều gì đã xảy ra?" có thể giúp mỗi chúng ta hiểu thêm một chút về cách mà những trải nghiệm – cả tốt lẫn xấu – định hình con người mình. Khi chia sẻ những câu chuyện và khái niệm khoa học này, tác giả hy vọng mỗi người đọc, theo từng cách riêng, sẽ có được những chiêm nghiệm riêng để từ đó có thể sống tốt hơn, trọn vẹn hơn.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935278607137.jpg', '9780000000061', 'VIE', 'Approved', 85, N'Bruce D. Perry'),
+Và câu hỏi cơ bản "Điều gì đã xảy ra?" có thể giúp mỗi chúng ta hiểu thêm một chút về cách mà những trải nghiệm – cả tốt lẫn xấu – định hình con người mình. Khi chia sẻ những câu chuyện và khái niệm khoa học này, tác giả hy vọng mỗi người đọc, theo từng cách riêng, sẽ có được những chiêm nghiệm riêng để từ đó có thể sống tốt hơn, trọn vẹn hơn.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935278607137.jpg', '9780000000061', 'VIE', 'Approved', 85, N'Bruce D. Perry', '2025-12-01'),
   (@OwnerId, N'Khi Mọi Điều Không Như Ý',   N'KHI MỌI ĐIỀU KHÔNG NHƯ Ý - LIỆU BÌNH YÊN CÓ TỒN TẠI GIỮA GIÔNG BÃO?
 
-Có những ngày, mọi thứ đều chống lại ta - công việc bế tắc, các mối quan hệ rạn nứt, lòng trống rỗng đến nghẹt thở. Ta tự hỏi: "Bao giờ mọi thứ mới ổn?" Nhưng liệu bình yên có đến từ việc thay đổi hoàn cảnh, hay từ cách ta nhìn nhận nó? Hae Min không cho ta một lối thoát thần kỳ, mà là những lời thì thầm ấm áp, giúp ta chậm lại, thấu hiểu chính mình và tìm thấy sự nhẹ nhõm ngay cả khi mọi điều không như ý.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935235243163.jpg', '9780000000081', 'VIE', 'Approved', 85, N'Hae Min');
+Có những ngày, mọi thứ đều chống lại ta - công việc bế tắc, các mối quan hệ rạn nứt, lòng trống rỗng đến nghẹt thở. Ta tự hỏi: "Bao giờ mọi thứ mới ổn?" Nhưng liệu bình yên có đến từ việc thay đổi hoàn cảnh, hay từ cách ta nhìn nhận nó? Hae Min không cho ta một lối thoát thần kỳ, mà là những lời thì thầm ấm áp, giúp ta chậm lại, thấu hiểu chính mình và tìm thấy sự nhẹ nhõm ngay cả khi mọi điều không như ý.',       'https://cdn1.fahasa.com/media/catalog/product/8/9/8935235243163.jpg', '9780000000081', 'VIE', 'Approved', 85, N'Hae Min', '2025-12-05');
 END
 
 
@@ -856,12 +856,6 @@ DECLARE @Book_BanDuCaCuoiCung INT = (SELECT BookId FROM dbo.Books WHERE Title=N'
 DECLARE @Book_HuyDongVon INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Huy Động Vốn: Khó Mà Dễ! (Tái Bản 2018)');
 DECLARE @Book_TuDuyLogic INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tư Duy Logic (Tái Bản 2021)');
 DECLARE @Book_ChuaLanhSangChan INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Chữa Lành Những Sang Chấn Tuổi Thơ');
--- ĐÃ XÓA: 5 sách cuối cùng trong INSERT đầu tiên (sách thứ 21-25):
--- DECLARE @Book_MayVanOn INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Mày Vẫn Ổn, Đừng Lo Lắng! - Một Cuốn Sách Về OCD Bằng Chữ Và Tranh');
--- DECLARE @Book_NoBadParts INT = (SELECT BookId FROM dbo.Books WHERE Title=N'No Bad Parts - Không Có Phần Nào Xấu');
--- DECLARE @Book_KhongDuTot INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Tại Sao Chúng Ta Luôn Cảm Thấy Mình Không Đủ Tốt?');
--- DECLARE @Book_HocThuongMinh INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Học Thương Mình Giữa Muôn Vàn Vụn Vỡ - 1/5 Giây Để Rung Động Với Chính Mình');
--- DECLARE @Book_KhiMoiDieuKhongNhuY INT = (SELECT BookId FROM dbo.Books WHERE Title=N'Khi Mọi Điều Không Như Ý');
 
 -- Chapters (guard null)
 IF @Book1Id IS NOT NULL
@@ -888,12 +882,6 @@ INSERT INTO dbo.Promotions(OwnerId, PromotionName, Description, DiscountType, Di
 VALUES (@OwnerId, N'Back to School', N'20% off selected programming chapters', 'Percent', 20.00,
         DATEADD(DAY,-3,SYSUTCDATETIME()), DATEADD(DAY,30,SYSUTCDATETIME()), 1);
 
-
-
-
-/* =========================================================
-   Ví dụ dữ liệu demo cho WalletTransactions / OrderItems / PaymentRequests
-   ========================================================= */
 
 -- 1. Alice nạp xu qua VNPay (Succeeded)
 INSERT INTO dbo.WalletTransactions(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
@@ -929,10 +917,6 @@ IF @Book1Id IS NOT NULL
   INSERT INTO dbo.BookReviews(BookId, UserId, Rating, Comment)
   VALUES (@Book1Id, @AliceId, 5, N'Rất hữu ích để xây thói quen đọc!');
 
--- Seed a demo book with multiple reviews for pagination/filter demo
--- ĐÃ XÓA: Demo Feedback Book (sách thứ 22)
-
-
 
 -- Feedbacks
 INSERT INTO dbo.UserFeedbacks(FromUserId, Content, TargetType, TargetId)
@@ -957,16 +941,6 @@ INSERT INTO dbo.ChatMessages(ConversationId, SenderId, MessageText)
 VALUES
   (@ConvId, @AliceId, N'Chào anh, em muốn hỏi về chương 2 của sách ạ.'),
   (@ConvId, @OwnerId, N'Chào em, chương 2 nói kỹ hơn về xây thói quen, em gặp vướng chỗ nào?');
-
-
-/* =========================================================
-   Thêm sách & chapters demo (có audio và không audio)
-   ========================================================= */
--- ĐÃ XÓA: 4 sách sau (sách thứ 23-26):
--- - Learning SQL
--- - Tiếng Việt Thực Hành
--- - The Power of Habit
--- - Mindfulness Everyday
 
 
 -- Notifications
@@ -1169,14 +1143,8 @@ BEGIN
   END
 END
 
--- Nhóm Self-Help
--- ĐÃ XÓA: Các sách Self-Help từ thứ 21 trở đi đã bị xóa
 DECLARE @BooksSelfHelp TABLE(BookId INT);
--- INSERT INTO @BooksSelfHelp(BookId)
--- SELECT v FROM (VALUES
---   (@Book_MayVanOn),(@Book_NoBadParts),(@Book_KhongDuTot),(@Book_HocThuongMinh),(@Book_KhiMoiDieuKhongNhuY)
--- ) AS s(v)
--- WHERE v IS NOT NULL;
+
 
 -- Map Self-Help
 IF @CatSelfHelp IS NOT NULL
@@ -1441,11 +1409,6 @@ DECLARE @CatAudio INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Khoa
 DECLARE @CatHistory INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Lịch sử' AND Type='Genre');
 DECLARE @CatLiterature INT = (SELECT CategoryId FROM dbo.Categories WHERE Name=N'Văn học' AND Type='Genre');
 
--- ĐÃ XÓA: 3 sách minh họa từ HomeManager (sách thứ 27-29):
--- - Cặp Đôi Hoàn Cảnh
--- - Sử Ký III - Thế Gia
--- - Truyện Ngắn Thạch Lam 1
-
 -- Thêm Users
 INSERT INTO Users (Email, PasswordHash, Status, CreatedAt, LastLoginAt, Wallet)
 VALUES 
@@ -1457,10 +1420,10 @@ VALUES
 -- Thêm UserProfiles
 INSERT INTO UserProfiles (UserId, FullName, PhoneNumber, DateOfBirth, AvatarUrl, Wallet, BankNumber, BankName, [Address])
 VALUES
-(7, N'VieBookSupport', '0909000001', '2003-01-01', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729089/avatarImages/usawtquonrcofnowvtcu.jpg', 0, '111111', 'Vietcombank', N'Quảng Bình'),
-(8, N'Tấn Trần', '0909000002', '1992-02-02', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729154/avatarImages/zhdcwjo3qsaebz6ywfbv.jpg', 0, '222222', 'Techcombank', N'Quảng Trị'),
+(7, N'VieBookSupport', '0909000001', '2003-01-01', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729089/avatarImages/usawtquonrcofnowvtcu.jpg', 0, '111111', 'Vietcombank', N'Đại học FPT Đà Nẵng'),
+(8, N'Tấn Trần', '0909000002', '1992-02-02', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729154/avatarImages/zhdcwjo3qsaebz6ywfbv.jpg', 0, '101873450894', 'VietinBank', N'Quảng Trị'),
 (9, N'Văn Anh', '0382979693', '1995-03-03', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729408/avatarImages/lqlyga2avgux8hqdsklf.jpg', 0, '0382979693', 'MBBank', N'Quảng Nam'),
-(10, N'Trương Nhân', '0909000004', '1988-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729284/avatarImages/fnhbdcuien4vq5bjre9g.jpg', 5000, '444444', 'Sacombank', N'Quảng Nam'),
+(10, N'Trương Nhân', '0909000004', '1988-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729284/avatarImages/fnhbdcuien4vq5bjre9g.jpg', 5000, '331234554321', 'MBBank', N'Quảng Nam'),
 (11, N'Nguyễn Đình Hoàng Hải', '0909000004', '1988-04-04', 'https://res.cloudinary.com/dwduk4vjl/image/upload/v1764729457/avatarImages/fimepkkzo6nqymkc1yk5.jpg', 0, '444444', 'Sacombank', N'Đà Nẵng');
 
 -- Gán Role cho từng User
@@ -1538,9 +1501,6 @@ ALTER TABLE [dbo].[ReminderSettings]  WITH CHECK ADD FOREIGN KEY([UserId])
 REFERENCES [dbo].[Users] ([UserId])
 GO
 
-/* =========================================================
-   BookCategories (phù hợp với từng sách)
-   ========================================================= */
 DECLARE @BookId INT;
 
 -- 1. The Art of Reading → Giáo dục
@@ -1691,3 +1651,65 @@ VALUES
 INSERT INTO dbo.ChapterAudios(ChapterId, UserId, AudioLink, DurationSec, PriceAudio, VoiceName, CreatedAt)
 VALUES 
   (50, 3, 'https://res.cloudinary.com/dwduk4vjl/raw/upload/v1764744191/chapterAudios/hjz13yqk4ru7e4lyf49v.mp3', 30, 1, N'linhsan', '2025-12-03');
+
+
+--Wallet transaction
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-012025', 200000, 200000, 'Succeeded', '2025-10-10');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-022025', 300000, 300000, 'Succeeded', '2025-10-11');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-032025', 450000, 450000, 'Succeeded', '2025-10-16');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-042025', 600000, 600000, 'Succeeded', '2025-10-23');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-052025', 750000, 750000, 'Succeeded', '2025-11-05');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-062025', 900000, 900000, 'Succeeded', '2025-11-09');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-072025', 1100000, 1100000, 'Succeeded', '2025-11-24');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-082025', 1300000, 1300000, 'Succeeded', '2025-12-01');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-092025', 1500000, 1500000, 'Succeeded', '2025-12-03');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-102025', 1800000, 1800000, 'Succeeded', '2025-12-10');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-112025', 2100000, 2100000, 'Succeeded', '2025-12-13');
+
+INSERT INTO WalletTransactions
+(UserId, Provider, TransactionId, AmountMoney, AmountCoin, Status, CreatedAt)
+VALUES
+(3, 'VNPay', 'TXN-TEST-122025', 2500000, 2500000, 'Succeeded', '2025-12-15');
