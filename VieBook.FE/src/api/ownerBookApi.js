@@ -473,30 +473,45 @@ export async function generateChapterAudio(chapterId, voiceName = "banmai", spee
     url.searchParams.append('userId', userId);
   }
   
-  const res = await fetch(url.toString(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  });
+  // Tạo AbortController với timeout 10 phút (600 giây)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 phút
+  
+  try {
+    const res = await fetch(url.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal, // Thêm signal để có thể cancel
+    });
 
-  if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error("Không tìm thấy chương cần chuyển audio");
-    }
-    if (res.status === 400) {
-      const error = await res.json();
-      // Xử lý riêng trường hợp giọng đã tồn tại
-      if (error.message && error.message.includes("đã có audio với giọng")) {
-        const errorObj = new Error(error.message);
-        errorObj.isVoiceExists = true;
-        errorObj.voiceName = error.voiceName;
-        throw errorObj;
+    clearTimeout(timeoutId); // Clear timeout nếu request thành công
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error("Không tìm thấy chương cần chuyển audio");
       }
-      throw new Error(error.message || "Tạo audio thất bại");
+      if (res.status === 400) {
+        const error = await res.json();
+        // Xử lý riêng trường hợp giọng đã tồn tại
+        if (error.message && error.message.includes("đã có audio với giọng")) {
+          const errorObj = new Error(error.message);
+          errorObj.isVoiceExists = true;
+          errorObj.voiceName = error.voiceName;
+          throw errorObj;
+        }
+        throw new Error(error.message || "Tạo audio thất bại");
+      }
+      throw new Error("Tạo audio thất bại");
     }
-    throw new Error("Tạo audio thất bại");
-  }
 
-  return res.json();
+    return res.json();
+  } catch (error) {
+    clearTimeout(timeoutId); // Clear timeout trong trường hợp lỗi
+    if (error.name === 'AbortError') {
+      throw new Error("Request timeout: Quá trình tạo audio mất quá nhiều thời gian. Vui lòng thử lại sau.");
+    }
+    throw error;
+  }
 }
 
 // Lấy danh sách audio của chapter
