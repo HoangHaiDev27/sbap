@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet.Actions;
+using CloudinaryDotNet.Actions;
 using CloudinaryDotNet;
 using Microsoft.Extensions.Options;
 using System;
@@ -253,6 +253,34 @@ namespace Services.Implementations
             {
                 File = new FileDescription(file.FileName, stream),
                 Folder = "Post" // Thư mục lưu ảnh post
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                return uploadResult.SecureUrl.ToString();
+
+            return null;
+        }
+
+        // Upload post video
+        public async Task<string> UploadPostVideoAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return null;
+
+            // Validate file type (only videos)
+            var allowedTypes = new[] { "video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/webm" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                throw new ArgumentException("Chỉ chấp nhận file video (MP4, MOV, AVI, WEBM)");
+
+            // Validate file size (max 50MB)
+            if (file.Length > 50 * 1024 * 1024)
+                throw new ArgumentException("Video không được vượt quá 50MB");
+
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new VideoUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = "PostVideos" // Thư mục lưu video post
             };
 
             var uploadResult = await _cloudinary.UploadAsync(uploadParams);

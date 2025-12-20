@@ -665,24 +665,42 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
             </h2>
             <p className="text-slate-300 leading-relaxed">{post.content || ""}</p>
             
-            {/* Post Attachments (Images) */}
+            {/* Post Attachments (Images and Videos) */}
             {post.attachments && post.attachments.length > 0 && (
               <div className="mt-4 space-y-2">
-                {post.attachments
-                  .filter(att => att.fileType === "Image" || att.fileType === "image" || !att.fileType)
-                  .map((attachment, index) => (
+                {post.attachments.map((attachment, index) => {
+                  const fileType = (attachment.fileType || "").toLowerCase();
+                  const isVideo = fileType === "video" || attachment.fileUrl?.match(/\.(mp4|webm|mov|avi)$/i);
+                  const isImage = fileType === "image" || !fileType || !isVideo;
+                  
+                  return (
                     <div key={attachment.attachmentId || index} className="rounded-lg overflow-hidden border border-slate-600">
-                      <img 
-                        src={attachment.fileUrl} 
-                        alt={`Attachment ${index + 1}`}
-                        className="w-full h-auto max-h-96 object-contain bg-slate-700"
-                        onError={(e) => {
-                          console.error("Failed to load image:", attachment.fileUrl);
-                          e.target.style.display = "none";
-                        }}
-                      />
+                      {isVideo ? (
+                        <video 
+                          src={attachment.fileUrl} 
+                          controls
+                          className="w-full h-auto max-h-96 object-contain bg-slate-700"
+                          onError={(e) => {
+                            console.error("Failed to load video:", attachment.fileUrl);
+                            e.target.style.display = "none";
+                          }}
+                        >
+                          Trình duyệt của bạn không hỗ trợ video.
+                        </video>
+                      ) : isImage ? (
+                        <img 
+                          src={attachment.fileUrl} 
+                          alt={`Attachment ${index + 1}`}
+                          className="w-full h-auto max-h-96 object-contain bg-slate-700"
+                          onError={(e) => {
+                            console.error("Failed to load image:", attachment.fileUrl);
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      ) : null}
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             )}
           </div>

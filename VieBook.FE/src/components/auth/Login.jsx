@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { RiHomeLine } from "react-icons/ri";
@@ -11,7 +11,7 @@ export default function Login({ setActiveTab }) {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleGoogleSuccess = async (idToken) => {
+  const handleGoogleSuccess = useCallback(async (idToken) => {
     try {
       console.log('Google Identity login success, idToken:', idToken?.substring(0, 20) + '...');
       const res = await googleLogin(idToken);
@@ -40,12 +40,12 @@ export default function Login({ setActiveTab }) {
       console.warn("[Google Login] error", err);
       window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: err.message || "Đăng nhập Google thất bại" } }));
     }
-  };
+  }, [navigate]);
 
-  const handleGoogleError = (error) => {
+  const handleGoogleError = useCallback((error) => {
     console.error("Google OAuth error:", error);
     window.dispatchEvent(new CustomEvent("app:toast", { detail: { type: "error", message: error || "Lỗi đăng nhập Google" } }));
-  };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
