@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet.Actions;
+using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Configuration;
 using Services.Interfaces;
 using System;
@@ -30,6 +30,8 @@ namespace Services.Implementations
         public async Task<string> ConvertTextToSpeechAndUploadAsync(string text, string voiceName, string fileName, double speed)
         {
             var client = _httpClientFactory.CreateClient();
+            // Cấu hình timeout 10 phút cho HttpClient (600 giây)
+            client.Timeout = TimeSpan.FromMinutes(10);
             // Note: api_key sẽ được thêm vào từng request riêng biệt
 
             const int chunkSize = 1000;
