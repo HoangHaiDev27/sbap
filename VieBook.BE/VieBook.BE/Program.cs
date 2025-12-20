@@ -252,12 +252,39 @@ builder.Services.AddAuthentication()
         options.ClientSecret = builder.Configuration["GoogleAuth:ClientSecret"] ?? throw new Exception("Google ClientSecret not found");
     });
 
+// Configure Kestrel to accept large files (up to 100MB)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100 MB
+});
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100 MB
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         // Đăng ký UtcDateTimeConverter để xử lý DateTime đúng với UTC
         options.JsonSerializerOptions.Converters.Add(new VieBook.BE.Helpers.UtcDateTimeConverter());
     });
+
+// Cấu hình request timeout cho các request dài (như audio conversion - có thể mất 5-15 phút)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(10);
+    options.Limits.MaxRequestBodySize = 104857600; // 100MB - giới hạn kích thước request body
+});
+
+// Cấu hình form options cho multipart/form-data (upload file)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100MB - giới hạn tổng kích thước multipart form
+    options.ValueLengthLimit = 104857600; // 100MB - giới hạn kích thước từng field
+    options.MultipartBoundaryLengthLimit = 1024; // Giới hạn độ dài boundary
+});
 
 // Add SignalR
 builder.Services.AddSignalR();

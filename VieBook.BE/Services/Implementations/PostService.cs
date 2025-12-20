@@ -139,7 +139,7 @@ namespace Services.Implementations
                     await _bookOfferService.CreateAsync(createOfferDto, authorId);
                 }
 
-                // Create PostAttachment if imageUrl is provided (after getting PostId)
+                // Create PostAttachment if imageUrl or videoUrl is provided (after getting PostId)
                 if (!string.IsNullOrWhiteSpace(createDto.ImageUrl))
                 {
                     var attachment = new PostAttachment
@@ -148,6 +148,20 @@ namespace Services.Implementations
                         FileType = "Image",
                         FileUrl = createDto.ImageUrl,
                         SortOrder = 0,
+                        UploadedAt = DateTime.UtcNow
+                    };
+                    _context.PostAttachments.Add(attachment);
+                    await _context.SaveChangesAsync(); // Save the attachment
+                }
+                
+                if (!string.IsNullOrWhiteSpace(createDto.VideoUrl))
+                {
+                    var attachment = new PostAttachment
+                    {
+                        PostId = post.PostId,
+                        FileType = "Video",
+                        FileUrl = createDto.VideoUrl,
+                        SortOrder = 1, // Video sau Image nếu có cả hai
                         UploadedAt = DateTime.UtcNow
                     };
                     _context.PostAttachments.Add(attachment);

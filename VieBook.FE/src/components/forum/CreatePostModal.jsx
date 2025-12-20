@@ -14,7 +14,7 @@ import { getBooksByOwner, getChapterAudios } from "../../api/ownerBookApi";
 import { getBookDetail } from "../../api/bookApi";
 import { getChapterAudioPrices } from "../../api/ownerBookApi";
 import { createPost } from "../../api/postApi";
-import { uploadPostImage } from "../../api/uploadApi";
+import { uploadPostImage, uploadPostVideo } from "../../api/uploadApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { isBookOwner } from "../../api/authApi";
 import toast from "react-hot-toast";
@@ -25,8 +25,9 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    imageFile: null,
-    imagePreview: null,
+    mediaFile: null,
+    mediaPreview: null,
+    mediaType: null, // 'image' or 'video'
     tags: "",
     bookId: null,
     bookTitle: "",
@@ -55,24 +56,29 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
     }));
   };
 
-  const handleFileChange = (field, file) => {
-    if (field === "imageFile" && file) {
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          imageFile: file,
-          imagePreview: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    } else {
+  const handleFileChange = (file, type) => {
+    if (!file) return;
+    
+    // Determine media type
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+    
+    if (!isVideo && !isImage) {
+      toast.error("Chỉ chấp nhận file ảnh hoặc video");
+      return;
+    }
+    
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
       setFormData((prev) => ({
         ...prev,
-        [field]: file
+        mediaFile: file,
+        mediaPreview: reader.result,
+        mediaType: isVideo ? 'video' : 'image'
       }));
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Load owner's books
@@ -280,18 +286,27 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
     try {
       setIsSubmitting(true);
       
-      // Upload ảnh trước nếu có
-      let imageUrl = null;
-      if (formData.imageFile) {
+      // Upload media (ảnh hoặc video) trước nếu có
+      let mediaUrl = null;
+      if (formData.mediaFile) {
         try {
-          toast.loading("Đang tải ảnh lên...", { id: "upload-image" });
-          const uploadResult = await uploadPostImage(formData.imageFile);
-          imageUrl = uploadResult.imageUrl || uploadResult.url;
-          toast.success("Tải ảnh thành công!", { id: "upload-image" });
+          const isVideo = formData.mediaType === 'video';
+          const uploadingMsg = isVideo ? "Đang tải video lên..." : "Đang tải ảnh lên...";
+          const successMsg = isVideo ? "Tải video thành công!" : "Tải ảnh thành công!";
+          const errorMsg = isVideo ? "Không thể tải video lên. Vui lòng thử lại." : "Không thể tải ảnh lên. Vui lòng thử lại.";
+          
+          toast.loading(uploadingMsg, { id: "upload-media" });
+          
+          const uploadResult = isVideo 
+            ? await uploadPostVideo(formData.mediaFile)
+            : await uploadPostImage(formData.mediaFile);
+            
+          mediaUrl = uploadResult.videoUrl || uploadResult.imageUrl || uploadResult.url;
+          toast.success(successMsg, { id: "upload-media" });
         } catch (error) {
-          console.error("Failed to upload image:", error);
-          toast.error(error.message || "Không thể tải ảnh lên. Vui lòng thử lại.", { id: "upload-image" });
-          return; // Dừng lại nếu upload ảnh thất bại
+          console.error("Failed to upload media:", error);
+          toast.error(error.message || "Không thể tải file lên. Vui lòng thử lại.", { id: "upload-media" });
+          return; // Dừng lại nếu upload thất bại
         }
       }
       
@@ -307,9 +322,13 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
         tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : []
       };
       
-      // Thêm imageUrl vào payload (backend có thể dùng để tạo attachment)
-      if (imageUrl) {
-        postPayload.imageUrl = imageUrl;
+      // Thêm mediaUrl vào payload (backend có thể dùng để tạo attachment)
+      if (mediaUrl) {
+        if (formData.mediaType === 'video') {
+          postPayload.videoUrl = mediaUrl;
+        } else {
+          postPayload.imageUrl = mediaUrl;
+        }
       }
       
       // If it's a giveaway, include book offer data
@@ -424,42 +443,71 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
             />
           </div>
 
-          {/* Image Upload */}
+          {/* Media Upload (Image or Video) */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
-              Ảnh minh họa
+              Ảnh hoặc Video minh họa
             </label>
-            <label className="flex items-center gap-2 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:border-orange-500 hover:text-white cursor-pointer">
-              <RiImageLine size={18} />
-              <span>Tải ảnh lên</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) =>
-                  handleFileChange("imageFile", e.target.files[0])
-                }
-              />
-            </label>
-            {formData.imagePreview && (
-              <div className="mt-4">
-                <img 
-                  src={formData.imagePreview} 
-                  alt="Preview" 
-                  className="max-w-full h-auto max-h-64 rounded-lg border border-slate-600"
+            <div className="flex gap-2">
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:border-orange-500 hover:text-white cursor-pointer transition-colors">
+                <RiImageLine size={18} />
+                <span>Tải ảnh lên</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    handleFileChange(e.target.files[0], 'image')
+                  }
                 />
+              </label>
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:border-orange-500 hover:text-white cursor-pointer transition-colors">
+                <RiPlayCircleLine size={18} />
+                <span>Tải video lên</span>
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    handleFileChange(e.target.files[0], 'video')
+                  }
+                />
+              </label>
+            </div>
+            {formData.mediaPreview && (
+              <div className="mt-4">
+                {formData.mediaType === 'video' ? (
+                  <video 
+                    src={formData.mediaPreview} 
+                    controls
+                    className="max-w-full h-auto max-h-64 rounded-lg border border-slate-600"
+                  >
+                    Trình duyệt của bạn không hỗ trợ video.
+                  </video>
+                ) : (
+                  <img 
+                    src={formData.mediaPreview} 
+                    alt="Preview" 
+                    className="max-w-full h-auto max-h-64 rounded-lg border border-slate-600"
+                  />
+                )}
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, imageFile: null, imagePreview: null }))}
+                  onClick={() => setFormData(prev => ({ 
+                    ...prev, 
+                    mediaFile: null, 
+                    mediaPreview: null,
+                    mediaType: null 
+                  }))}
                   className="mt-2 text-sm text-red-400 hover:text-red-300"
                 >
-                  Xóa ảnh
+                  Xóa {formData.mediaType === 'video' ? 'video' : 'ảnh'}
                 </button>
               </div>
             )}
-            {formData.imageFile && !formData.imagePreview && (
+            {formData.mediaFile && !formData.mediaPreview && (
               <p className="text-xs text-slate-400 mt-2">
-                Đã chọn: {formData.imageFile.name}
+                Đã chọn: {formData.mediaFile.name}
               </p>
             )}
           </div>
