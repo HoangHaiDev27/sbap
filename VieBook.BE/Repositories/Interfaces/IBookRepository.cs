@@ -33,6 +33,7 @@ namespace Repositories.Interfaces
         Task<List<Book>> GetTopPurchasedAudioBooksAsync();
         Task<List<Book>> GetTopPurchasedReadBooksAsync();
         Task<List<Book>> GetRecommendedBooksAsync(int? userId = null);
+        Task<List<Book>> GetCollaborativeFilteringRecommendationsAsync(int userId, int topCount = 10);
         Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId);
         Task<bool> CheckBookHasActiveChaptersAsync(int bookId);
         Task<bool> CheckAllChaptersActiveAsync(int bookId);
@@ -42,5 +43,7 @@ namespace Repositories.Interfaces
         Task<(List<Book> Books, int TotalCount)> GetAllForStaffPagedAsync(int page = 1, int pageSize = 10, string? searchTerm = null, string? statusFilter = null, int? categoryId = null);
         Task<Dictionary<string, int>> GetStatsForStaffAsync(string? searchTerm = null, string? statusFilter = null, int? categoryId = null);
         Task<BookStatsDTO> GetBookStatsAsync(int bookId);
+        Task<List<Book>> GetBooksByIdsAsync(List<int> bookIds);
+        Task<List<Book>> GetTopBooksByCategoriesAsync(List<int> categoryIds, int topCount);
     }
 }

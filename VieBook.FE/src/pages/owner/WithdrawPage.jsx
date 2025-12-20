@@ -20,6 +20,7 @@ export default function WithdrawPage() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showConfirmWithdraw, setShowConfirmWithdraw] = useState(false);
+  const [showSuggestion, setShowSuggestion] = useState(false);
   
   // Notification store
   const { fetchNotifications, fetchUnreadCount } = useNotificationStore();
@@ -65,12 +66,39 @@ export default function WithdrawPage() {
   }, []);
 
   // Tính số tiền sau khi trừ 10%: 1 xu = 1.000 VNĐ, nhưng khi rút chỉ nhận 90%
-  const vndAmount = amount ? Math.floor(parseInt(amount) * 1000 * 0.9) : 0;
-  const originalVndAmount = amount ? parseInt(amount) * 1000 : 0;
+  const vndAmount = amount ? parseFloat((parseFloat(amount) * 1000 * 0.9).toFixed(2)) : 0;
+  const originalVndAmount = amount ? parseFloat(amount) * 1000 : 0;
+
+  // Function để xử lý validation và hiển thị gợi ý
+  const handleAmountChange = (value) => {
+    setAmount(value);
+    setError("");
+    setShowSuggestion(false);
+    
+    const coinsValue = parseFloat(value);
+    if (!isNaN(coinsValue) && coinsValue > 0) {
+      if (coinsValue > walletCoins) {
+        setShowSuggestion(true);
+      }
+    }
+  };
+
+  // Function để áp dụng số xu gợi ý
+  const applySuggestedAmount = (suggestedAmount) => {
+    setAmount(suggestedAmount.toString());
+    setShowSuggestion(false);
+    setError("");
+  };
+
+  // Function để áp dụng gợi ý số xu tối thiểu
+  const applyMinimumAmount = () => {
+    setAmount("50");
+    setError("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const coinsValue = parseInt(amount);
+    const coinsValue = parseFloat(amount);
 
     // Validate
     if (isNaN(coinsValue) || coinsValue <= 0) {
@@ -122,7 +150,7 @@ export default function WithdrawPage() {
   const handleFormSubmit = (e) => {
     e.preventDefault();
 
-    const coinsValue = parseInt(amount);
+    const coinsValue = parseFloat(amount);
     if (!amount || isNaN(coinsValue) || coinsValue <= 0) {
       setError("Số xu không hợp lệ");
       return;
@@ -259,7 +287,7 @@ export default function WithdrawPage() {
               <input
                 type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => handleAmountChange(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 placeholder="Nhập số xu"
                 required
@@ -276,6 +304,58 @@ export default function WithdrawPage() {
                   </p>
                 </div>
               )}
+              
+              {/* Gợi ý số xu có thể rút */}
+              {showSuggestion && walletCoins >= 50 && (
+                <div className="mt-2 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+                  <p className="text-blue-300 text-sm mb-2">
+                    Số xu bạn nhập vượt quá số dư. Bạn có thể rút tối đa:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => applySuggestedAmount(walletCoins)}
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-medium transition-colors"
+                    >
+                      {walletCoins.toLocaleString("vi-VN")} xu
+                    </button>
+                    <span className="text-blue-200 text-sm">
+                      (nhận {(walletCoins * 1000 * 0.9).toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} VNĐ)
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Gợi ý khi số xu dưới mức tối thiểu */}
+              {amount && parseFloat(amount) > 0 && parseFloat(amount) < 50 && walletCoins >= 50 && (
+                <div className="mt-2 p-3 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+                  <p className="text-yellow-300 text-sm mb-2">
+                    Số xu tối thiểu để rút là 50 xu:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={applyMinimumAmount}
+                      className="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 text-white rounded-md text-sm font-medium transition-colors"
+                    >
+                      50 xu
+                    </button>
+                    <span className="text-yellow-200 text-sm">
+                      (nhận {(50 * 1000 * 0.9).toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} VNĐ)
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Gợi ý khi số dư không đủ rút tối thiểu */}
+              {amount && parseFloat(amount) < 50 && walletCoins < 50 && (
+                <div className="mt-2 p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
+                  <p className="text-red-300 text-sm">
+                    Số dư của bạn không đủ để rút. Cần tối thiểu 50 xu để thực hiện giao dịch.
+                  </p>
+                </div>
+              )}
+              
               {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
             </div>
 

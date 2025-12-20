@@ -1,4 +1,5 @@
 using BusinessObject.Dtos;
+using BusinessObject.Models;
 
 namespace Repositories.Interfaces
 {
@@ -11,5 +12,6 @@ namespace Repositories.Interfaces
         Task<bool> UpdateReadingHistoryAsync(UpdateReadingHistoryDTO updateDto);
         Task<bool> DeleteReadingHistoryAsync(long readingHistoryId);
         Task<int> GetTotalReadingHistoryCountAsync(int userId, ReadingHistoryFilterDTO? filter = null);
+        Task<List<ReadingHistory>> GetByUserIdAsync(int userId);
     }
 }

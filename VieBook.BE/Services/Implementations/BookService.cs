@@ -126,6 +126,11 @@ namespace Services.Implementations
             return await _bookRepo.GetRecommendedBooksAsync(userId);
         }
 
+        public async Task<List<Book>> GetCollaborativeFilteringRecommendationsAsync(int userId, int topCount = 10)
+        {
+            return await _bookRepo.GetCollaborativeFilteringRecommendationsAsync(userId, topCount);
+        }
+
         public async Task<Dictionary<int, decimal>> GetChapterAudioPricesAsync(int bookId)
         {
             return await _bookRepo.GetChapterAudioPricesAsync(bookId);

@@ -40,7 +40,7 @@ namespace Services.Implementations.Admin
                 throw new Exception("Email không hợp lệ");
 
             // Validate password
-            var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$");
+            var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[^\s]{6,}$");
             if (!passwordRegex.IsMatch(password))
                 throw new Exception("Password phải >=6 ký tự, có chữ cái và số");
 
@@ -128,7 +128,7 @@ namespace Services.Implementations.Admin
             // Cập nhật mật khẩu nếu có
             if (!string.IsNullOrWhiteSpace(newPassword))
             {
-                var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$");
+                var passwordRegex = new Regex(@"^(?=.*[A-Za-z])(?=.*\d)[^\s]{6,}$");
                 if (!passwordRegex.IsMatch(newPassword))
                     throw new Exception("Password phải >=6 ký tự, có chữ cái và số");
 

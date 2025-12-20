@@ -12,5 +12,6 @@ namespace Repositories.Interfaces
         Task<Bookmark> UpdateBookmarkAsync(Bookmark bookmark);
         Task<bool> DeleteBookmarkAsync(int bookmarkId);
         Task<bool> DeleteBookmarkByUserAndChapterAsync(int userId, int chapterId);
+        Task<List<Bookmark>> GetBookmarksByUserIdAsync(int userId);
     }
 }

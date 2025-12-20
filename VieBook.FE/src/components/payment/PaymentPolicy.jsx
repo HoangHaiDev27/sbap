@@ -22,9 +22,9 @@ const PaymentPolicy = () => {
     },
     {
       title: "Không thể rút tiền",
-      content: "Xu không thể chuyển đổi ngược thành tiền",
+      content: "Người dùng không thể rút tiền",
       icon: "🚫",
-      details: "Xu đã nạp không thể rút về tài khoản ngân hàng hoặc chuyển đổi thành tiền mặt",
+      details: "Chỉ chủ sách mới có quyền yêu cầu rút tiền từ doanh thu bán sách. Người đọc nạp xu không thể rút xu.",
       important: true
     },
     {
@@ -117,8 +117,8 @@ const PaymentPolicy = () => {
                 </h4>
                 <ul className="text-sm text-gray-300 space-y-1">
                   <li>• <strong>Xu đã nạp không thể hoàn lại</strong> dưới mọi hình thức</li>
-                  <li>• <strong>Xu không thể rút về tài khoản ngân hàng</strong></li>
                   <li>• Xu chỉ có thể sử dụng để mua sách trên nền tảng</li>
+                  <li>• <strong>Chỉ chủ sách mới có quyền yêu cầu rút tiền từ doanh thu bán sách</strong>. Người đọc nạp xu không thể rút xu thành tiền mặt.</li>
                   <li>• Mọi giao dịch đều được ghi nhận và lưu trữ</li>
                   <li>• Vui lòng đọc kỹ trước khi thực hiện giao dịch</li>
                 </ul>
@@ -138,8 +138,8 @@ const PaymentPolicy = () => {
                   Nếu bạn có thắc mắc về chính sách nạp tiền, vui lòng liên hệ:
                 </p>
                 <div className="mt-2 text-sm text-gray-300">
-                  <p>📧 Email: viebook@gmail.com</p>
-                  <p>📞 Hotline: 0916450031</p>
+                  <p>📧 Email: vie.book.contact@gmail.com</p>
+                  <p>📞 Hotline: 0909000001</p>
                   <p></p>
                 </div>
               </div>
