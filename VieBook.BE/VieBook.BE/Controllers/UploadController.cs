@@ -1,4 +1,4 @@
-﻿using BusinessObject.Dtos;
+using BusinessObject.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Implementations;
@@ -101,6 +101,31 @@ namespace VieBook.BE.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Lỗi khi upload ảnh: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("postVideo")]
+        [RequestSizeLimit(100 * 1024 * 1024)] // 100 MB
+        [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)] // 100 MB
+        public async Task<IActionResult> UploadPostVideo([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "File không hợp lệ" });
+
+            try
+            {
+                var url = await _cloudinaryService.UploadPostVideoAsync(file);
+                if (url == null) return StatusCode(500, new { message = "Upload video bài viết thất bại" });
+
+                return Ok(new { videoUrl = url });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Lỗi khi upload video: {ex.Message}" });
             }
         }
     }
