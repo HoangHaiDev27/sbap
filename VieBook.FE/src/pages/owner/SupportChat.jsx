@@ -21,6 +21,7 @@ export default function SupportChat() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const initializedRef = useRef(false); // Tránh gọi startSupportChat nhiều lần
   const ownerName = getUserName() || "Book Owner";
   const currentUserId = parseInt(getUserId());
 
@@ -35,6 +36,10 @@ export default function SupportChat() {
 
   // Load conversation khi component mount
   useEffect(() => {
+    // Tránh gọi nhiều lần
+    if (initializedRef.current || !currentUserId) return;
+    initializedRef.current = true;
+    
     const initializeChat = async () => {
       try {
         setLoading(true);
@@ -51,21 +56,46 @@ export default function SupportChat() {
         const history = await getChatHistory(result.conversationId);
         console.log("Chat history loaded:", history);
         
+        const welcomeMessageText = "Xin chào! Tôi là nhân viên chăm sóc khách hàng của VieBook. Tôi có thể giúp gì cho bạn?";
+        
         if (history.messages && history.messages.length > 0) {
           const formattedMessages = history.messages.map(msg => ({
             sender: msg.senderId === currentUserId ? "me" : "staff",
             text: msg.messageText,
             time: new Date(msg.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            sentAt: msg.sentAt,
             senderName: msg.senderName,
-            senderAvatar: msg.senderAvatar
+            senderAvatar: msg.senderAvatar,
+            messageId: msg.messageId,
+            isWelcome: msg.messageText === welcomeMessageText
           }));
-          setMessages(formattedMessages);
+          
+          // Tách tin nhắn chào mừng và các tin nhắn khác
+          const welcomeMsg = formattedMessages.find(m => m.isWelcome);
+          const otherMessages = formattedMessages.filter(m => !m.isWelcome);
+          
+          // Sắp xếp: tin nhắn chào mừng luôn ở đầu, các tin nhắn khác sắp xếp theo thời gian
+          const sortedMessages = welcomeMsg 
+            ? [welcomeMsg, ...otherMessages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt))]
+            : [
+                // Nếu không tìm thấy tin nhắn chào mừng trong history, thêm vào đầu
+                {
+                  sender: "staff",
+                  text: welcomeMessageText,
+                  time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  isWelcome: true
+                },
+                ...otherMessages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt))
+              ];
+          
+          setMessages(sortedMessages);
         } else {
           // Tin nhắn chào mừng mặc định
           setMessages([{
             sender: "staff",
-            text: "Xin chào! Tôi là nhân viên chăm sóc khách hàng của VieBook. Tôi có thể giúp gì cho bạn?",
-            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            text: welcomeMessageText,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isWelcome: true
           }]);
         }
       } catch (error) {
@@ -113,6 +143,7 @@ export default function SupportChat() {
       
       // Chỉ cập nhật nếu tin nhắn thuộc conversation này
       if (message.conversationId === conversationId) {
+        const welcomeMessageText = "Xin chào! Tôi là nhân viên chăm sóc khách hàng của VieBook. Tôi có thể giúp gì cho bạn?";
         const newMessage = {
           sender: message.senderId === currentUserId ? "me" : "staff",
           text: message.messageText,
@@ -121,7 +152,8 @@ export default function SupportChat() {
           senderName: message.senderName,
           senderAvatar: message.senderAvatar,
           senderRole: message.senderRole,
-          messageId: message.messageId
+          messageId: message.messageId,
+          isWelcome: message.messageText === welcomeMessageText
         };
         
         // Thêm tin nhắn mới vào danh sách (tránh duplicate)
@@ -141,7 +173,14 @@ export default function SupportChat() {
           );
           if (isDuplicate) return nonTemp;
 
-          return [...nonTemp, newMessage];
+          // Thêm tin nhắn mới và sắp xếp lại: welcome message luôn ở đầu
+          const updated = [...nonTemp, newMessage];
+          const welcomeMsg = updated.find(m => m.isWelcome);
+          const otherMessages = updated.filter(m => !m.isWelcome);
+          
+          return welcomeMsg 
+            ? [welcomeMsg, ...otherMessages.sort((a, b) => new Date(a.sentAt || 0) - new Date(b.sentAt || 0))]
+            : updated.sort((a, b) => new Date(a.sentAt || 0) - new Date(b.sentAt || 0));
         });
       }
     });
@@ -237,7 +276,7 @@ export default function SupportChat() {
           <div>
             <h2 className="font-semibold">{customerSupport.name}</h2>
             <p className="text-xs text-green-400">
-              {customerSupport.role} • {customerSupport.isOnline ? "Đang online" : "Offline"}
+              {customerSupport.role} 
             </p>
           </div>
         </div>
