@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using Services.Interfaces;
 using Repositories.Interfaces;
 using System.Security.Claims;
+using System.Linq;
 using VieBook.BE.Hubs;
 
 namespace VieBook.BE.Controllers;
@@ -281,6 +282,58 @@ public class ChatController : ControllerBase
                 conversationId = await _chatService.GetOrCreateGroupConversationAsync(allUserIds, roleHints);
                 isNewConversation = true;
                 Console.WriteLine($"✅ Created new group conversation {conversationId}");
+            }
+
+            // Chỉ tạo tin nhắn chào mừng khi conversation mới được tạo
+            // Tránh duplicate khi StartSupportChat được gọi nhiều lần
+            if (isNewConversation)
+            {
+                try
+                {
+                    const string welcomeMessage = "Xin chào! Tôi là nhân viên chăm sóc khách hàng của VieBook. Tôi có thể giúp gì cho bạn?";
+                    
+                    // Kiểm tra xem đã có tin nhắn chào mừng chưa (tránh race condition)
+                    var history = await _chatService.GetChatHistoryAsync(userId, conversationId, 1, 50);
+                    var hasWelcomeMessage = history.Messages != null && 
+                        history.Messages.Any(m => m.MessageText == welcomeMessage);
+                    
+                    if (hasWelcomeMessage)
+                    {
+                        Console.WriteLine($"⚠️ Conversation {conversationId} already has welcome message, skipping");
+                    }
+                    else
+                    {
+                        // Lấy staff đầu tiên để gửi tin nhắn chào mừng
+                        var firstStaff = staffUsers.FirstOrDefault();
+                        if (firstStaff != null)
+                        {
+                            var welcomeRequest = new SendMessageRequest
+                            {
+                                ConversationId = conversationId,
+                                MessageText = welcomeMessage
+                            };
+                            
+                            var welcomeMsg = await _chatService.SendMessageAsync(firstStaff.UserId, welcomeRequest);
+                            Console.WriteLine($"✅ Created welcome message in conversation {conversationId}");
+                            
+                            // Broadcast tin nhắn chào mừng qua WebSocket
+                            try
+                            {
+                                await ChatHub.SendMessageToConversation(_hubContext, conversationId, welcomeMsg);
+                                Console.WriteLine($"✅ Broadcasted welcome message to conversation {conversationId}");
+                            }
+                            catch (Exception wsEx)
+                            {
+                                Console.WriteLine($"⚠️ Failed to broadcast welcome message: {wsEx.Message}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception welcomeEx)
+                {
+                    Console.WriteLine($"⚠️ Failed to create welcome message: {welcomeEx.Message}");
+                    // Không throw lỗi để không ảnh hưởng đến flow chính
+                }
             }
 
             // Broadcast notification đến tất cả staff về conversation mới (chỉ khi là conversation mới)
