@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet.Actions;
+using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Configuration;
 using Services.Interfaces;
 using System;
@@ -30,8 +30,7 @@ namespace Services.Implementations
         public async Task<string> ConvertTextToSpeechAndUploadAsync(string text, string voiceName, string fileName, double speed)
         {
             var client = _httpClientFactory.CreateClient();
-            // Tăng timeout để chờ FPT AI xử lý TTS lâu hơn (mặc định HttpClient ~100s)
-            // Ở đây cho phép tối đa 10 phút để xử lý toàn bộ request (bao gồm polling async URL)
+            // Cấu hình timeout 10 phút cho HttpClient (600 giây)
             client.Timeout = TimeSpan.FromMinutes(10);
             // Note: api_key sẽ được thêm vào từng request riêng biệt
 
@@ -57,14 +56,14 @@ namespace Services.Implementations
                     // - Headers: api_key, voice, speed, format
                     // - Body: plain text (không phải JSON)
                     var cleanedText = CleanText(chunk, chunkSize);
-                    
+
                     // Tạo request với headers đúng format
                     var request = new HttpRequestMessage(HttpMethod.Post, _baseUrl);
                     request.Headers.Add("api_key", _apiKey);
                     request.Headers.Add("voice", voiceName);
                     request.Headers.Add("speed", speed.ToString());
                     request.Headers.Add("format", "mp3");
-                    
+
                     // Body là plain text, không phải JSON
                     request.Content = new StringContent(cleanedText, new UTF8Encoding(false), "text/plain");
 

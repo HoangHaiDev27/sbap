@@ -195,7 +195,7 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">STT</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhân viên</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Nhân viên</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Số Điện Thoại</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Trạng thái</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ngày sinh</th>
@@ -209,7 +209,8 @@ const handleSaveForm = async (data, id, newAvatarFile) => {
                       {paginatedStaff.length > 0 ? paginatedStaff.map((staff, idx) => (
                         <tr key={staff.userId} className="hover:bg-gray-50 transition-colors">
                           <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
+
                             <div className="flex items-center space-x-3">
                               <img 
                                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-200" 

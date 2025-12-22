@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,5 +14,6 @@ namespace Services.Interfaces
         Task<bool> DeleteImageAsync(string fileUrl, bool isRaw = false);
         Task<string> UploadCertificateAsync(IFormFile file);
         Task<string> UploadPostImageAsync(IFormFile file);
+        Task<string> UploadPostVideoAsync(IFormFile file);
     }
 }

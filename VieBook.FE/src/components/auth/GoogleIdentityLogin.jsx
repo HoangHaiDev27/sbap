@@ -1,12 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 
-const GoogleIdentityLogin = ({ onSuccess, onError }) => {
+const GoogleIdentityLogin = memo(({ onSuccess, onError }) => {
   const buttonRef = useRef(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const retryCountRef = useRef(0);
   const maxRetries = 50; // 50 * 200ms = 10 seconds max wait time
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
+    // Only initialize once
+    if (hasInitializedRef.current) return;
     // Cleanup function to prevent memory leaks
     let retryTimeout = null;
     let isMounted = true;
@@ -27,8 +30,6 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
             callback: handleGoogleResponse,
             auto_select: false,
             cancel_on_tap_outside: true,
-            // Opt-in to FedCM for future compatibility
-            use_fedcm_for_prompt: true,
           });
 
           // Clear existing button and re-render
@@ -46,6 +47,7 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
               });
               console.log('[Google Login] Button rendered successfully');
               setIsInitialized(true);
+              hasInitializedRef.current = true;
             } catch (renderError) {
               console.error('[Google Login] Button render error:', renderError);
               if (onError && isMounted) onError('Lỗi render nút Google');
@@ -102,7 +104,7 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
         clearTimeout(retryTimeout);
       }
     };
-  }, [onError]); // Removed isInitialized from dependencies to prevent infinite loop
+  }, []); // Only run once on mount
 
   const handleGoogleResponse = (response) => {
     console.log('[Google Login] Response received');
@@ -121,11 +123,8 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
     }
   };
 
-  const handleCustomGoogleLogin = async () => {
+  const handleCustomGoogleLogin = () => {
     console.log('[Google Login] Custom button clicked');
-    console.log('[Google Login] Is initialized:', isInitialized);
-    console.log('[Google Login] Button ref exists:', !!buttonRef.current);
-    console.log('[Google Login] Button has children:', buttonRef.current?.hasChildNodes());
     
     // Check if Google script is loaded
     if (!window.google || !window.google.accounts || !window.google.accounts.id) {
@@ -136,11 +135,9 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
       return;
     }
 
-    // Ensure initialization is complete before triggering
-    if (!isInitialized || !buttonRef.current || !buttonRef.current.hasChildNodes()) {
-      console.log('[Google Login] Not ready yet, initializing...');
-      
-      // Force re-initialization
+    // If not initialized, try to initialize synchronously
+    if (!isInitialized) {
+      console.log('[Google Login] Initializing on demand...');
       try {
         window.google.accounts.id.initialize({
           client_id: "889743573215-vso9piikv2olur00ttq8kactvm10jtss.apps.googleusercontent.com",
@@ -148,23 +145,9 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
           auto_select: false,
           cancel_on_tap_outside: true,
         });
-
-        if (buttonRef.current) {
-          buttonRef.current.innerHTML = '';
-          window.google.accounts.id.renderButton(buttonRef.current, {
-            theme: 'outline',
-            size: 'large',
-            text: 'signin_with',
-            shape: 'rectangular',
-            width: 300,
-          });
-          setIsInitialized(true);
-          
-          // Wait for button to be fully rendered
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
+        setIsInitialized(true);
       } catch (error) {
-        console.error('[Google Login] Re-initialization error:', error);
+        console.error('[Google Login] Initialization error:', error);
         if (onError) {
           onError('Google Identity chưa sẵn sàng. Vui lòng thử lại.');
         }
@@ -172,15 +155,17 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
       }
     }
 
-    // Wait a bit to ensure button is fully interactive
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Note: We avoid using prompt() with notification callbacks to avoid FedCM warnings
-    // Instead, we directly trigger the button click which is more reliable and FedCM-compatible
+    // Trigger Google login immediately (no await/setTimeout to preserve user gesture)
     triggerButtonClick();
   };
 
   const triggerButtonClick = () => {
+    // Click the rendered button directly (no prompt() to avoid FedCM issues)
+    // This must happen synchronously in the same event loop as user click
+    clickRenderedButton();
+  };
+
+  const clickRenderedButton = () => {
     if (!buttonRef.current) {
       console.error('[Google Login] Button ref not available');
       if (onError) {
@@ -198,105 +183,75 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
       return;
     }
 
-    // Try multiple selectors to find the Google button (in order of preference)
-    const selectors = [
-      'div[role="button"]',  // Most common
-      'iframe',              // Google button is often in an iframe
-      'div[data-testid]',
-      'div[aria-label*="Sign in"]',
-      'div[aria-label*="Google"]',
-      'div > div',           // Nested div structure
-      '*'
-    ];
-
-    let clicked = false;
-
-    for (const selector of selectors) {
-      const element = buttonRef.current.querySelector(selector);
-      if (element) {
-        console.log(`[Google Login] Found element with selector: ${selector}`);
+    console.log('[Google Login] Attempting to click Google button');
+    
+    // Try clicking iframe first (Google button is typically inside an iframe)
+    const iframe = buttonRef.current.querySelector('iframe');
+    if (iframe) {
+      console.log('[Google Login] Found iframe, triggering click events');
+      try {
+        // Dispatch multiple events to ensure iframe responds
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: 1
+        });
+        iframe.dispatchEvent(clickEvent);
         
-        // Try different click methods
-        try {
-          // Method 1: Check if it's an iframe and access its content
-          if (element.tagName === 'IFRAME') {
-            console.log('[Google Login] Found iframe, trying to access content...');
-            try {
-              const iframeDoc = element.contentDocument || element.contentWindow?.document;
-              if (iframeDoc) {
-                const iframeButton = iframeDoc.querySelector('div[role="button"]') || 
-                                   iframeDoc.querySelector('div') ||
-                                   iframeDoc.body;
-                if (iframeButton) {
-                  iframeButton.click();
-                  console.log('[Google Login] Clicked button inside iframe');
-                  clicked = true;
-                  break;
-                }
-              }
-            } catch (iframeError) {
-              console.warn('[Google Login] Cannot access iframe content (CORS):', iframeError);
-              // Fall through to click iframe itself
-            }
-          }
-
-          // Method 2: Direct click
-          element.click();
-          console.log('[Google Login] Direct click triggered successfully');
-          clicked = true;
-          break;
-        } catch (e1) {
-          console.warn('[Google Login] Direct click failed, trying mouse event:', e1);
-          
-          try {
-            // Method 3: Mouse event with more options
-            const mouseEvent = new MouseEvent('click', {
-              view: window,
-              bubbles: true,
-              cancelable: true,
-              buttons: 1,
-              button: 0
-            });
-            element.dispatchEvent(mouseEvent);
-            console.log('[Google Login] Mouse event triggered');
-            clicked = true;
-            break;
-          } catch (e2) {
-            console.warn('[Google Login] Mouse event failed:', e2);
-            
-            try {
-              // Method 4: Touch event (for mobile)
-              const touchEvent = new TouchEvent('touchstart', {
-                bubbles: true,
-                cancelable: true
-              });
-              element.dispatchEvent(touchEvent);
-              console.log('[Google Login] Touch event triggered');
-              clicked = true;
-              break;
-            } catch (e3) {
-              console.warn('[Google Login] Touch event failed:', e3);
-            }
-          }
-        }
+        const mouseDownEvent = new MouseEvent('mousedown', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: 1
+        });
+        iframe.dispatchEvent(mouseDownEvent);
+        
+        const mouseUpEvent = new MouseEvent('mouseup', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: 1
+        });
+        iframe.dispatchEvent(mouseUpEvent);
+        
+        console.log('[Google Login] Iframe click events dispatched');
+        return;
+      } catch (e) {
+        console.warn('[Google Login] Iframe click failed:', e);
       }
     }
 
-    if (!clicked) {
-      console.error('[Google Login] Google button not found or not clickable in DOM');
-      console.log('[Google Login] Button ref content:', buttonRef.current.innerHTML);
-      if (onError) {
-        onError('Không thể tìm thấy nút Google. Vui lòng tải lại trang.');
+    // Fallback: try to find and click div elements (in case Google changes rendering)
+    const divButton = buttonRef.current.querySelector('div[role="button"]');
+    if (divButton) {
+      console.log('[Google Login] Found div button, clicking');
+      try {
+        divButton.click();
+        return;
+      } catch (e) {
+        console.warn('[Google Login] Div button click failed:', e);
       }
+    }
+
+    console.error('[Google Login] Could not find clickable element');
+    if (onError) {
+      onError('Không thể kích hoạt nút Google. Vui lòng thử lại.');
     }
   };
 
   return (
-    <div className="w-full relative">
-      <button
-        type="button"
-        onClick={handleCustomGoogleLogin}
-        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 flex items-center justify-center space-x-2 z-10 relative"
+    <div className="w-full relative" style={{ minHeight: '44px' }}>
+      {/* Custom styled button (visual only) */}
+      <div
+        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition duration-200 flex items-center justify-center space-x-2 pointer-events-none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1
+        }}
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -317,23 +272,23 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
           />
         </svg>
         <span>Đăng nhập với Google</span>
-      </button>
-      {/* Hidden Google button - will be rendered by Google Identity API */}
+      </div>
+      
+      {/* Real Google button - overlay on top with opacity 0 but clickable */}
       <div 
         ref={buttonRef} 
         className="w-full" 
         style={{ 
-          opacity: 0, 
-          position: 'absolute', 
-          top: 0,
-          left: 0,
-          pointerEvents: 'none',
-          zIndex: -1,
-          height: '100%'
+          position: 'relative',
+          zIndex: 2,
+          opacity: 0,
+          cursor: 'pointer'
         }}
       ></div>
     </div>
   );
-};
+});
+
+GoogleIdentityLogin.displayName = 'GoogleIdentityLogin';
 
 export default GoogleIdentityLogin;

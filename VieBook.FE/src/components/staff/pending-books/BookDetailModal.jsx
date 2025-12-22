@@ -121,9 +121,9 @@ export default function BookDetailModal({ book, onClose, staffId, onConfirm }) {
           </div>
 
           {/* Thông tin sách */}
-          <div className="flex flex-col md:flex-row space-x-0 md:space-x-6 mb-4 sm:mb-6">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8 mb-4 sm:mb-6">
             <img
-              className="h-40 sm:h-48 w-28 sm:w-36 rounded-lg object-cover object-top mb-4 md:mb-0 mx-auto md:mx-0"
+              className="h-40 sm:h-48 w-28 sm:w-36 rounded-lg object-cover object-top mx-auto md:mx-0 flex-shrink-0"
               src={book.cover}
               alt={book.title}
             />

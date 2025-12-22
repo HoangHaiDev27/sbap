@@ -31,19 +31,20 @@ namespace BusinessObject.Dtos
         public double RevenueChangePercent { get; set; }
 
         public double PositiveFeedbackPercent { get; set; }
+        public double NegativeFeedbackPercent { get; set; }
         public double FeedbackChangePercent { get; set; }
 
         public double AverageRating { get; set; }
         public string Message { get; set; } = string.Empty;
 
-        public List<BookByDayDTO>? BooksByDayData { get; set; }
+        public List<BookByMonthDTO>? BooksByMonthData { get; set; }
         public List<RevenueByMonthDTO>? RevenueData { get; set; }
         public List<CategoryDistributionDTO>? CategoryDistribution { get; set; }
     }
 
-    public class BookByDayDTO
+    public class BookByMonthDTO
     {
-        public string Date { get; set; } = string.Empty;
+        public string Month { get; set; } = string.Empty;
         public int Books { get; set; }
     }
 
