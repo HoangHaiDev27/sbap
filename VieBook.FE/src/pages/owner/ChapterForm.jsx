@@ -20,6 +20,28 @@ async function loadTesseract() {
   return tesseractWorker;
 }
 
+// Bảng map category OpenAI -> tiếng Việt thân thiện
+const POLICY_CATEGORY_LABELS = {
+  // Hate / Harassment
+  "hate": "Ngôn từ thù ghét",
+  "hate/threatening": "Ngôn từ thù ghét kèm đe dọa",
+  "harassment": "Quấy rối, xúc phạm",
+  "harassment/threatening": "Quấy rối kèm đe dọa",
+
+  // Self-harm
+  "self-harm": "Nội dung tự gây hại",
+  "self-harm/intent": "Ý định tự gây hại",
+  "self-harm/instructions": "Hướng dẫn tự gây hại",
+
+  // Sexual content
+  "sexual": "Nội dung khiêu dâm / tình dục",
+  "sexual/minors": "Nội dung tình dục liên quan đến trẻ vị thành niên",
+
+  // Violence
+  "violence": "Bạo lực",
+  "violence/graphic": "Bạo lực mang tính rùng rợn, đồ họa",
+};
+
 // Real API for content policy check
 async function checkPolicy(content) {
   try {
@@ -27,20 +49,27 @@ async function checkPolicy(content) {
     
     // Convert OpenAI moderation result to our format
     if (result.flagged) {
-      const flaggedCategories = Object.entries(result.categories || {})
-        .filter(([_, isFlagged]) => isFlagged)
-        .map(([category, _]) => category);
+      const rawCategories = result.categories || {};
+
+      const flaggedCategories = Object.entries(rawCategories)
+        .filter(([, isFlagged]) => isFlagged)
+        .map(([category]) => category);
+
+      // Map sang label tiếng Việt; nếu không có map thì fallback hiển thị key gốc
+      const vietnameseLabels = flaggedCategories.map((key) =>
+        POLICY_CATEGORY_LABELS[key] || key
+      );
       
       return {
         passed: false,
-        message: `Nội dung vi phạm chính sách: ${flaggedCategories.join(", ")}`,
-        flaggedCategories,
+        message: `Nội dung vi phạm chính sách ở các nhóm: ${vietnameseLabels.join(", ")}`,
+        flaggedCategories: vietnameseLabels,
         categoryScores: result.categoryScores || {}
       };
     } else {
       return {
         passed: true,
-        message: "Nội dung hợp lệ và tuân thủ chính sách nội dụng",
+        message: "Nội dung hợp lệ và tuân thủ chính sách nội dung",
         flaggedCategories: [],
         categoryScores: result.categoryScores || {}
       };
@@ -51,7 +80,7 @@ async function checkPolicy(content) {
     await new Promise(resolve => setTimeout(resolve, 1000));
     return Math.random() > 0.2 ? 
       { passed: true, message: "Nội dung hợp lệ (kiểm tra dự phòng)" } : 
-      { passed: false, message: "Nội dung vi phạm chính sách (kiểm tra dự phòng)" };
+      { passed: false, message: "Nội dung có thể vi phạm chính sách (kiểm tra dự phòng)" };
   }
 }
 

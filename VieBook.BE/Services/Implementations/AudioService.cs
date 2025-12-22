@@ -30,6 +30,9 @@ namespace Services.Implementations
         public async Task<string> ConvertTextToSpeechAndUploadAsync(string text, string voiceName, string fileName, double speed)
         {
             var client = _httpClientFactory.CreateClient();
+            // Tăng timeout để chờ FPT AI xử lý TTS lâu hơn (mặc định HttpClient ~100s)
+            // Ở đây cho phép tối đa 10 phút để xử lý toàn bộ request (bao gồm polling async URL)
+            client.Timeout = TimeSpan.FromMinutes(10);
             // Note: api_key sẽ được thêm vào từng request riêng biệt
 
             const int chunkSize = 1000;
