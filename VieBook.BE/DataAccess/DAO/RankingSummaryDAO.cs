@@ -15,7 +15,7 @@ namespace DataAccess.DAO
         public RankingSummaryDAO(VieBookContext context)
         {
             _context = context;
-            _last7Days = DateTime.UtcNow.AddDays(-7);
+            _last7Days = DateTime.UtcNow.AddDays(-14);
         }
 
         // ==================== PHỔ BIẾN ====================
