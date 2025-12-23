@@ -13,7 +13,18 @@ namespace BusinessObject.Dtos
         public MappingDTO()
         {
             // Map từ User entity sang UserDTO
-            CreateMap<User, UserDTO>().ReverseMap();
+            CreateMap<User, UserDTO>()
+                .ForMember(dest => dest.FullName,
+                    opt => opt.MapFrom(src => src.UserProfile != null
+                        ? src.UserProfile.FullName
+                        : null))
+                .ForMember(dest => dest.AvatarUrl,
+                    opt => opt.MapFrom(src => src.UserProfile != null
+                        ? src.UserProfile.AvatarUrl
+                        : null))
+                .ReverseMap()
+                .ForPath(dest => dest.UserProfile.FullName, opt => opt.Ignore())
+                .ForPath(dest => dest.UserProfile.AvatarUrl, opt => opt.Ignore());
 
             // BookReview → BookReviewDTO
             CreateMap<BookReview, BookReviewDTO>()
