@@ -51,6 +51,7 @@ namespace VieBook.BE.Controllers
 
                 // Tải nội dung text từ ChapterSoftUrl (Cloudinary link của file .txt)
                 using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromMinutes(5); // Timeout 5 phút cho việc tải text
                 var textContent = await httpClient.GetStringAsync(chapter.ChapterSoftUrl);
 
                 if (string.IsNullOrWhiteSpace(textContent))
@@ -88,6 +89,7 @@ namespace VieBook.BE.Controllers
                 try
                 {
                     using var audioClient = new HttpClient();
+                    audioClient.Timeout = TimeSpan.FromMinutes(5); // Timeout 5 phút cho việc tải audio
                     var audioBytes = await audioClient.GetByteArrayAsync(audioUrl);
 
                     using (var memoryStream = new MemoryStream(audioBytes))
