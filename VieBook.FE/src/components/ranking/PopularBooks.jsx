@@ -116,7 +116,7 @@ export default function PopularBooks() {
             <div className="flex-grow">
               <h3 className="font-semibold text-white mb-1">{book.title}</h3>
               <p className="text-gray-400 text-sm mb-2">
-                {book.ownerName || "Không rõ tác giả"}
+                {book.author || book.ownerName || "Không rõ tác giả"}
               </p>
               <div className="flex items-center space-x-4 text-xs text-gray-400">
                 <span>{book.totalView?.toLocaleString() || 0} lượt xem</span>
