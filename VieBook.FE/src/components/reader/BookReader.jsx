@@ -76,6 +76,11 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       return;
     }
 
+    // Chỉ lưu lịch sử khi đã kiểm tra quyền truy cập VÀ có quyền truy cập
+    if (!chapterOwnershipChecked || !hasAccess) {
+      return;
+    }
+
     const saveReadingHistory = async () => {
       if (!book?.bookId || !chapterId) return;
       
@@ -88,6 +93,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         
         await saveReadingProgress(readingData);
         setHasSavedReadingHistory(true);
+        console.log("Reading history saved successfully for chapter:", chapterId);
       } catch (error) {
         console.error("Error saving reading history:", error);
       }
@@ -102,7 +108,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         clearTimeout(saveHistoryTimeoutRef.current);
       }
     };
-  }, [book?.bookId, chapterId, hasSavedReadingHistory]);
+  }, [book?.bookId, chapterId, hasSavedReadingHistory, chapterOwnershipChecked, hasAccess]);
 
   // Check chapter ownership before allowing access
   useEffect(() => {
@@ -567,15 +573,6 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
                 className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 Đăng nhập
-              </button>
-            )}
-            
-            {isLoggedIn && !isOwner && !isFree && (
-              <button
-                onClick={() => window.location.href = `/books/${book.id || book.bookId}`}
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                Mua chương
               </button>
             )}
             
