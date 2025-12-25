@@ -627,6 +627,7 @@ export default function BookDetailPage() {
         chapters={chapters}
         isOwner={isOwner}
         promotionPercent={computedPromotionPercent}
+        bookStatus={bookDetail?.status}
         onPurchaseSuccess={async (newlyPurchasedChapters) => {
           console.log("Newly purchased chapters:", newlyPurchasedChapters);
           // Cập nhật state ngay lập tức bằng cách thêm các chương vừa mua (tạm thời, sẽ reload từ API)
