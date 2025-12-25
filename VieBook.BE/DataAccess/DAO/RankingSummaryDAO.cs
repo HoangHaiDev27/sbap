@@ -83,10 +83,14 @@ namespace DataAccess.DAO
         public async Task<List<Book>> GetTopRatedBooksAsync(int top = 5)
         {
             return await _context.Books
-                .Where(b => b.Status == "Approved" && b.BookReviews.Any(r => r.CreatedAt >= _last7Days))
+                .Where(b => b.Status == "Approved"
+                    && b.BookReviews.Any(r => r.CreatedAt >= _last7Days))
+                .Where(b => b.BookReviews
+                    .Where(r => r.CreatedAt >= _last7Days)
+                    .Average(r => (double?)r.Rating) >= 4.5)
                 .OrderByDescending(b => b.BookReviews
                     .Where(r => r.CreatedAt >= _last7Days)
-                    .Average(r => (double?)r.Rating >= 4.5 ? r.Rating : 0))
+                    .Average(r => (double?)r.Rating))
                 .Take(top)
                 .Include(b => b.BookReviews)
                 .Include(b => b.Categories)
