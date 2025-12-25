@@ -42,6 +42,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   const [chapterSummary, setChapterSummary] = useState("");
   const [chapterOwnershipChecked, setChapterOwnershipChecked] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
+  const [purchasesLoaded, setPurchasesLoaded] = useState(false);
 
   const dedupeBookmarks = (items) => {
     const map = new Map();
@@ -131,7 +132,15 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       chapterPrice: currentChapter.priceSoft,
       purchasedChapters,
       isPurchased,
+      purchasesLoaded,
     });
+
+    // Nếu cần kiểm tra mua (không phải owner, không free, đã đăng nhập) mà purchases chưa load xong
+    // thì chưa quyết định quyền truy cập, tránh nháy màn hình "không thể truy cập"
+    if (isLoggedIn && !isOwner && !isFree && !purchasesLoaded) {
+      setChapterOwnershipChecked(false);
+      return;
+    }
 
     // Quyền truy cập:
     // - Chủ sách
@@ -140,7 +149,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
     const canAccess = isOwner || isFree || isPurchased;
     setHasAccess(canAccess);
     setChapterOwnershipChecked(true);
-  }, [currentChapter, chapterId, book?.ownerId, purchasedChapters]);
+  }, [currentChapter, chapterId, book?.ownerId, purchasedChapters, purchasesLoaded]);
 
   // Tải nội dung từ Cloudinary - chỉ khi có quyền truy cập
   useEffect(() => {
@@ -420,6 +429,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   // Load purchased chapters from API
   useEffect(() => {
     const loadPurchasedChapters = async () => {
+      setPurchasesLoaded(false);
       const isLoggedIn = getUserId() !== null;
       if (isLoggedIn) {
         try {
@@ -436,6 +446,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       } else {
         setPurchasedChapters([]);
       }
+      setPurchasesLoaded(true);
     };
 
     loadPurchasedChapters();

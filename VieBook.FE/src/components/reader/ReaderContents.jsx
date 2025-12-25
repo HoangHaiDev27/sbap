@@ -137,8 +137,8 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                       toast.error("Bạn phải đăng nhập để đọc chương");
                       return;
                     }
-                    // Check if book is InActive
-                    if (book?.status === "InActive") {
+                    // Nếu sách đang InActive thì chỉ chặn khi chương chưa mua, không free và user không phải owner
+                    if (book?.status === "InActive" && !isOwned && !isFree && !isOwner) {
                       toast.error("Bạn không thể mua chương này vì sách đang tạm dừng phát hành");
                       return;
                     }
