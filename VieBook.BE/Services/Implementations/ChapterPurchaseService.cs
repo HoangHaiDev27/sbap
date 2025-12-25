@@ -55,6 +55,16 @@ namespace Services.Implementations
                     };
                 }
 
+                // Kiểm tra sách có đang ở trạng thái InActive không (không cho mua)
+                if (book.Status == "InActive")
+                {
+                    return new ChapterPurchaseResponseDTO
+                    {
+                        Success = false,
+                        Message = "Sách đang tạm dừng, không thể mua chương"
+                    };
+                }
+
                 // Kiểm tra user có phải là owner của sách không (không thể mua sách của mình)
                 if (book.OwnerId == userId)
                 {
