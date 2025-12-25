@@ -137,6 +137,11 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                       toast.error("Bạn phải đăng nhập để đọc chương");
                       return;
                     }
+                    // Nếu sách đang InActive thì chỉ chặn khi chương chưa mua, không free và user không phải owner
+                    if (book?.status === "InActive" && !isOwned && !isFree && !isOwner) {
+                      toast.error("Bạn không thể mua chương này vì sách đang tạm dừng phát hành");
+                      return;
+                    }
                     if (!isOwned && !isFree && !isOwner) {
                       // Mở popup xác nhận mua bản mềm thay vì chỉ báo lỗi
                       setPurchaseModal({ open: true, chapter });
@@ -316,6 +321,12 @@ export default function ReaderContents({ book, purchasedChapters = [], onClose, 
                   const chapter = purchaseModal.chapter;
                   const price = effectivePriceSoft;
                   const bookId = book.id || book.bookId;
+
+                  // Check if book is InActive before purchase
+                  if (book?.status === "InActive") {
+                    toast.error("Bạn không thể mua chương này vì sách đang tạm dừng phát hành");
+                    return;
+                  }
 
                   if (!bookId) {
                     toast.error("Không xác định được sách để mua chương");

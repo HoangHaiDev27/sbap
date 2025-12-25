@@ -56,14 +56,14 @@ namespace Services.Implementations
                     // - Headers: api_key, voice, speed, format
                     // - Body: plain text (không phải JSON)
                     var cleanedText = CleanText(chunk, chunkSize);
-                    
+
                     // Tạo request với headers đúng format
                     var request = new HttpRequestMessage(HttpMethod.Post, _baseUrl);
                     request.Headers.Add("api_key", _apiKey);
                     request.Headers.Add("voice", voiceName);
                     request.Headers.Add("speed", speed.ToString());
                     request.Headers.Add("format", "mp3");
-                    
+
                     // Body là plain text, không phải JSON
                     request.Content = new StringContent(cleanedText, new UTF8Encoding(false), "text/plain");
 

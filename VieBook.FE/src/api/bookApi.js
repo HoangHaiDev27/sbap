@@ -6,7 +6,8 @@ let readBooksCache = { data: null, ts: 0 };
 const READBOOKS_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export async function getBookDetail(id) {
-  const res = await fetch(API_ENDPOINTS.BOOK_DETAIL(id), {
+  // Sử dụng authFetch để gửi token, giúp backend lấy userId và cho phép truy cập sách đã mua dù bị tạm dừng
+  const res = await authFetch(API_ENDPOINTS.BOOK_DETAIL(id), {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });

@@ -4,11 +4,13 @@ import AudioPlayerContent from "./AudioPlayerContent";
 import AudioChapterList from "./AudioChapterList";
 import { saveReadingProgress, getCurrentReadingProgress } from "../../api/readingHistoryApi";
 import { API_ENDPOINTS } from "../../config/apiConfig";
-import { getUserId } from "../../api/authApi";
+import { getUserId, authFetch } from "../../api/authApi";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function AudioPlayer({ bookId, chapterId }) {
+  const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -46,9 +48,10 @@ export default function AudioPlayer({ bookId, chapterId }) {
         setLoading(true);
         setError(null);
 
-        let bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
+        // Sử dụng authFetch để gửi token, giúp backend lấy userId và cho phép truy cập sách đã mua dù bị tạm dừng
+        let bookRes = await authFetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
         if (!bookRes.ok) {
-          bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
+          bookRes = await authFetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
         }
         if (!bookRes.ok) throw new Error("Không thể tải thông tin sách");
         const bookData = await bookRes.json();
@@ -72,6 +75,7 @@ export default function AudioPlayer({ bookId, chapterId }) {
           userIsOwnerType: typeof userIsOwner
         });
 
+        let purchasedAudioChapterIds = [];
         if (currentUserId) {
           try {
             const purchasesResponse = await getMyPurchases();
@@ -79,14 +83,15 @@ export default function AudioPlayer({ bookId, chapterId }) {
             const audioPurchases = purchases.filter(p => 
               p.orderType === "BuyChapterAudio" || p.orderType === "BuyChapterBoth"
             );
-            const purchasedAudioChapterIds = audioPurchases.map((p) => p.chapterId);
+            purchasedAudioChapterIds = audioPurchases.map((p) => p.chapterId);
             setPurchasedAudioChapters(purchasedAudioChapterIds);
           } catch (error) {
             console.error("Error loading purchased audio chapters:", error);
           }
         }
 
-        const chaptersRes = await fetch(API_ENDPOINTS.CHAPTERS.GET_BY_BOOK_ID(bookId));
+        // Sử dụng authFetch để gửi token, giúp backend lấy userId và cho phép truy cập chapters đã mua dù bị tạm dừng
+        const chaptersRes = await authFetch(API_ENDPOINTS.CHAPTERS.GET_BY_BOOK_ID(bookId));
         if (!chaptersRes.ok) throw new Error("Không thể tải danh sách chương");
         const chaptersData = await chaptersRes.json();
 
@@ -178,6 +183,43 @@ export default function AudioPlayer({ bookId, chapterId }) {
             if (foundIndex >= 0) {
               initialChapterIndex = foundIndex;
             }
+          }
+          
+          const initialChapter = chaptersWithAudio[initialChapterIndex];
+          
+          // Kiểm tra quyền truy cập chapter ban đầu
+          const currentUserId = getUserId();
+          const currentUserIdNum = currentUserId ? Number(currentUserId) : null;
+          
+          // Kiểm tra xem user có phải là owner của chapter audio không
+          let isChapterAudioOwner = false;
+          try {
+            const audioRes = await fetch(API_ENDPOINTS.AUDIO_CONVERSION.GET_CHAPTER_AUDIOS(initialChapter.chapterId));
+            if (audioRes.ok) {
+              const audioDataCheck = await audioRes.json();
+              const audios = audioDataCheck.success && Array.isArray(audioDataCheck.data) 
+                ? audioDataCheck.data 
+                : Array.isArray(audioDataCheck) ? audioDataCheck : [];
+              
+              isChapterAudioOwner = audios.some(audio => {
+                const audioUserId = audio.userId || audio.UserId || null;
+                return currentUserIdNum && audioUserId && currentUserIdNum === Number(audioUserId);
+              });
+            }
+          } catch (error) {
+            console.error("Error checking chapter audio owner:", error);
+          }
+          
+          const isFree = !initialChapter.priceAudio || initialChapter.priceAudio === 0;
+          const isOwned = purchasedAudioChapterIds.includes(initialChapter.chapterId);
+          const isChapterOwner = isChapterAudioOwner || userIsOwner;
+          const hasAccess = isOwned || isChapterOwner || isFree;
+          
+          if (!hasAccess) {
+            // Không có quyền truy cập - hiển thị lỗi
+            setError(`Bạn cần mua audio chương "${initialChapter.title}" để nghe`);
+            setLoading(false);
+            return;
           }
           
           setCurrentChapter(initialChapterIndex);
@@ -588,18 +630,33 @@ export default function AudioPlayer({ bookId, chapterId }) {
   }
 
   if (error) {
+    const isAccessError = error.includes("cần mua");
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold mb-2">Không thể tải dữ liệu</h2>
-          <p className="text-gray-400 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-700"
-          >
-            Thử lại
-          </button>
+        <div className="text-center max-w-md px-4">
+          <div className={`${isAccessError ? 'text-yellow-500' : 'text-red-500'} text-5xl mb-4`}>
+            {isAccessError ? '🔒' : '⚠️'}
+          </div>
+          <h2 className="text-xl font-semibold mb-2">
+            {isAccessError ? 'Chương này yêu cầu mua trước' : 'Không thể tải dữ liệu'}
+          </h2>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => navigate(`/bookdetails/${bookId}`)}
+              className="px-6 py-2 bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              {isAccessError ? 'Xem chi tiết sách' : 'Quay lại'}
+            </button>
+            {!isAccessError && (
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Thử lại
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -608,15 +665,15 @@ export default function AudioPlayer({ bookId, chapterId }) {
   if (!book || chapters.length === 0) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md px-4">
           <div className="text-gray-500 text-5xl mb-4">🎧</div>
           <h2 className="text-xl font-semibold mb-2">Không có audio</h2>
-          <p className="text-gray-400 mb-4">Sách này chưa có phần audio nào.</p>
+          <p className="text-gray-400 mb-6">Sách này chưa có phần audio nào.</p>
           <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-700"
+            onClick={() => navigate(`/bookdetails/${bookId}`)}
+            className="px-6 py-2 bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
           >
-            Quay lại
+            Quay lại trang sách
           </button>
         </div>
       </div>

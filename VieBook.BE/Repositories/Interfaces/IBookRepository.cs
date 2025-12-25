@@ -13,7 +13,7 @@ namespace Repositories.Interfaces
         Task<List<Book>> GetAllAsync();
         Task<List<Book>> GetAllInforAsync();
         Task<Book?> GetByIdAsync(int id);
-        Task<Book?> GetBookDetailAsync(int id);
+        Task<Book?> GetBookDetailAsync(int id, int? userId = null);
         Task<Book?> GetBookDetail(int id);
         Task AddAsync(Book book);
         Task UpdateAsync(Book book);

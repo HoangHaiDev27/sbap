@@ -25,6 +25,7 @@ export default function PurchaseModal({
   chapters = [], 
   isOwner = false,
   promotionPercent = 0,
+  bookStatus,
   onPurchaseSuccess 
 }) {
   if (!isOpen) return null;
@@ -223,6 +224,12 @@ export default function PurchaseModal({
 
   // Xử lý mua
   const handlePurchase = async () => {
+    // Check if book is InActive before purchase
+    if (bookStatus === "InActive") {
+      toast.error("Bạn không thể mua chương này vì sách đang tạm dừng phát hành");
+      return;
+    }
+
     const totalSelected = selectedSoftChapters.length + selectedAudioChapters.length;
     if (totalSelected === 0) {
       toast.error("Vui lòng chọn ít nhất một chương để mua");
@@ -445,6 +452,21 @@ export default function PurchaseModal({
               </div>
             </div>
           )}
+
+          {/* InActive book warning */}
+          {bookStatus === "InActive" && (
+            <div className="bg-red-600/20 border-2 border-red-500 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <RiCloseLine className="text-red-400 text-2xl flex-shrink-0" />
+                <div>
+                  <h3 className="text-red-300 font-semibold mb-1">Sách đang tạm dừng phát hành</h3>
+                  <p className="text-red-200/80 text-sm">
+                    Bạn không thể mua chương từ sách đang ở trạng thái không hoạt động.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Số dư ví */}
           {!isOwner && (
@@ -475,7 +497,7 @@ export default function PurchaseModal({
           
 
           {/* Danh sách chương */}
-          {!isOwner && (
+          {!isOwner && bookStatus !== "InActive" && (
           <div className="space-y-1.5 sm:space-y-2 max-h-96 sm:max-h-80 md:max-h-96 lg:max-h-[28rem] overflow-y-auto">
             {chapters.length > 8 && (
               <div className="text-center py-2 mb-2">
@@ -677,7 +699,7 @@ export default function PurchaseModal({
         </div>
 
         {/* Footer */}
-        {!isOwner && (
+        {!isOwner && bookStatus !== "InActive" && (
         <div className="p-3 sm:p-4 md:p-5 lg:p-6 border-t border-gray-700 bg-gray-700/30 flex-shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0">
             <div className="text-gray-300 text-xs sm:text-sm md:text-base">

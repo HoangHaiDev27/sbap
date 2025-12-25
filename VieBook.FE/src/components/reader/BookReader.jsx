@@ -4,12 +4,12 @@ import ReaderSettings from "./ReaderSettings";
 import ReaderBookmarks from "./ReaderBookmarks";
 import ReaderContents from "./ReaderContents";
 import ReaderSummary from "./ReaderSummary";
-import { 
-  getUserBookmarks, 
-  createOrUpdateBookmark, 
+import {
+  getUserBookmarks,
+  createOrUpdateBookmark,
   deleteBookmarkByChapter,
   deleteBookmark,
-  getBookmarkByChapter 
+  getBookmarkByChapter,
 } from "../../api/bookmarkApi";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
 import { getUserId } from "../../api/authApi";
@@ -40,6 +40,9 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   const offsetHintTimerRef = useRef(null);
   const [offsetHint, setOffsetHint] = useState(null);
   const [chapterSummary, setChapterSummary] = useState("");
+  const [chapterOwnershipChecked, setChapterOwnershipChecked] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [purchasesLoaded, setPurchasesLoaded] = useState(false);
 
   const dedupeBookmarks = (items) => {
     const map = new Map();
@@ -74,6 +77,11 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       return;
     }
 
+    // Chỉ lưu lịch sử khi đã kiểm tra quyền truy cập VÀ có quyền truy cập
+    if (!chapterOwnershipChecked || !hasAccess) {
+      return;
+    }
+
     const saveReadingHistory = async () => {
       if (!book?.bookId || !chapterId) return;
       
@@ -86,6 +94,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         
         await saveReadingProgress(readingData);
         setHasSavedReadingHistory(true);
+        console.log("Reading history saved successfully for chapter:", chapterId);
       } catch (error) {
         console.error("Error saving reading history:", error);
       }
@@ -100,22 +109,82 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
         clearTimeout(saveHistoryTimeoutRef.current);
       }
     };
-  }, [book?.bookId, chapterId, hasSavedReadingHistory]);
+  }, [book?.bookId, chapterId, hasSavedReadingHistory, chapterOwnershipChecked, hasAccess]);
 
-  // Tải nội dung từ Cloudinary
+  // Check chapter ownership before allowing access
+  useEffect(() => {
+    if (!currentChapter || !chapterId) return;
+
+    const isLoggedIn = getUserId() !== null;
+    const currentUserId = getUserId();
+    const isOwner =
+      isLoggedIn && String(currentUserId) === String(book?.ownerId);
+    const isFree = !currentChapter.priceSoft || currentChapter.priceSoft === 0;
+    const isPurchased = purchasedChapters.includes(currentChapter.chapterId);
+
+    console.log("BookReader - Access check (local state):", {
+      isLoggedIn,
+      currentUserId,
+      bookOwnerId: book?.ownerId,
+      isOwner,
+      isFree,
+      chapterId,
+      chapterPrice: currentChapter.priceSoft,
+      purchasedChapters,
+      isPurchased,
+      purchasesLoaded,
+    });
+
+    // Nếu cần kiểm tra mua (không phải owner, không free, đã đăng nhập) mà purchases chưa load xong
+    // thì chưa quyết định quyền truy cập, tránh nháy màn hình "không thể truy cập"
+    if (isLoggedIn && !isOwner && !isFree && !purchasesLoaded) {
+      setChapterOwnershipChecked(false);
+      return;
+    }
+
+    // Quyền truy cập:
+    // - Chủ sách
+    // - Chương miễn phí
+    // - User đã mua chương (trong purchasedChapters)
+    const canAccess = isOwner || isFree || isPurchased;
+    setHasAccess(canAccess);
+    setChapterOwnershipChecked(true);
+  }, [currentChapter, chapterId, book?.ownerId, purchasedChapters, purchasesLoaded]);
+
+  // Tải nội dung từ Cloudinary - chỉ khi có quyền truy cập
   useEffect(() => {
     async function fetchChapterContent() {
+      console.log("BookReader - fetchChapterContent called:", {
+        chapterOwnershipChecked,
+        hasAccess,
+        chapterSoftUrl: currentChapter?.chapterSoftUrl
+      });
+      
+      // Don't load content if access hasn't been checked or is denied
+      if (!chapterOwnershipChecked || !hasAccess) {
+        console.log("BookReader - Content loading blocked:", {
+          chapterOwnershipChecked,
+          hasAccess,
+          reason: !chapterOwnershipChecked ? "Ownership not checked" : "No access"
+        });
+        setLoading(false);
+        return;
+      }
+      
       if (!currentChapter?.chapterSoftUrl) {
+        console.log("BookReader - No chapterSoftUrl found");
         setLoading(false);
         return;
       }
 
+      console.log("BookReader - Starting Cloudinary fetch");
       try {
         setLoading(true);
         const response = await fetch(currentChapter.chapterSoftUrl);
         if (response.ok) {
           const text = await response.text();
           setChapterContent(text);
+          console.log("BookReader - Content loaded successfully");
 
           // Scroll to saved position after content is loaded (page scroll)
           setTimeout(async () => {
@@ -169,7 +238,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
     }
 
     fetchChapterContent();
-  }, [currentChapter?.chapterSoftUrl, chapterId]);
+  }, [currentChapter?.chapterSoftUrl, chapterId, chapterOwnershipChecked, hasAccess]);
 
   // Auto-update bookmark when user scrolls (page scroll)
   useEffect(() => {
@@ -360,6 +429,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
   // Load purchased chapters from API
   useEffect(() => {
     const loadPurchasedChapters = async () => {
+      setPurchasesLoaded(false);
       const isLoggedIn = getUserId() !== null;
       if (isLoggedIn) {
         try {
@@ -376,6 +446,7 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       } else {
         setPurchasedChapters([]);
       }
+      setPurchasesLoaded(true);
     };
 
     loadPurchasedChapters();
@@ -464,6 +535,65 @@ export default function BookReader({ book, fontSize, setFontSize, fontFamily, se
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
         <div className="text-center">
           <p className="text-red-500">Không tìm thấy sách hoặc chương</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied message if ownership checked and no access
+  if (chapterOwnershipChecked && !hasAccess) {
+    const isLoggedIn = getUserId() !== null;
+    const isOwner = isLoggedIn && (String(getUserId()) === String(book?.ownerId));
+    const isFree = !currentChapter.priceSoft || currentChapter.priceSoft === 0;
+    
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold mb-2">Không thể truy cập chương này</h2>
+          </div>
+          
+          <div className="bg-gray-800 rounded-lg p-4 mb-6 text-left">
+            {!isLoggedIn && (
+              <p className="text-gray-300 mb-3">
+                Bạn cần <span className="text-orange-400 font-medium">đăng nhập</span> để đọc chương này.
+              </p>
+            )}
+            
+            {isLoggedIn && !isOwner && !isFree && (
+              <p className="text-gray-300 mb-3">
+                Bạn cần <span className="text-orange-400 font-medium">mua chương này</span> để đọc nội dung.
+              </p>
+            )}
+            
+            <div className="text-sm text-gray-400">
+              <p>Chương: {currentChapter.chapterTitle}</p>
+              <p>Giá: {currentChapter.priceSoft || 0} xu</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {!isLoggedIn && (
+              <button
+                onClick={() => window.location.href = '/auth'}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Đăng nhập
+              </button>
+            )}
+            
+            <button
+              onClick={() => window.location.href = `/bookdetails/${book.id || book.bookId}`}
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Quay lại trang sách
+            </button>
+          </div>
         </div>
       </div>
     );

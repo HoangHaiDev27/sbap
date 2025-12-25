@@ -164,12 +164,109 @@ export default function BookDetailPage() {
 
 
   if (loading) {
-    return <div className="text-center text-white p-6">Đang tải...</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Đang tải thông tin sách...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!bookDetail) {
     return (
-      <div className="text-center text-red-500 p-6">Không tìm thấy sách.</div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-gray-700">
+          <div className="text-center space-y-6">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="relative">
+                <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500/50">
+                  <svg
+                    className="w-10 h-10 text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center border-2 border-red-500/50">
+                  <svg
+                    className="w-5 h-5 text-red-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Message */}
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-white">Không tìm thấy sách</h2>
+              <p className="text-gray-400 text-base leading-relaxed">
+                Sách không tồn tại hoặc đã ngưng phát hành.
+                <br />
+                Vui lòng kiểm tra lại đường dẫn.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <Link
+                to="/"
+                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                Về trang chủ
+              </Link>
+              <button
+                onClick={() => navigate(-1)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                Quay lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -194,6 +291,7 @@ export default function BookDetailPage() {
     discountedPrice,
     completionStatus,
     uploadStatus,
+    status,
   } = bookDetail;
 
   // Tổng giá theo từng loại (bản mềm và audio)
@@ -351,17 +449,21 @@ export default function BookDetailPage() {
           <p className="text-gray-300 mb-3">Chủ sách: {ownerName}</p>
           
           {/* Badge trạng thái sách */}
-          {completionStatus && (
+          {(completionStatus || status) && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              {completionStatus === "Ongoing" ? (
+              {status === "InActive" ? (
+                <span className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-red-500/20 text-red-400 border border-red-500/30">
+                  Ngưng phát hành
+                </span>
+              ) : completionStatus === "Ongoing" ? (
                 <span className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-orange-500/20 text-orange-400 border border-orange-500/30">
                   Đang phát hành
                 </span>
-              ) : (
+              ) : completionStatus ? (
                 <span className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-green-500/20 text-green-400 border border-green-500/30">
                   Đã ra trọn bộ
                 </span>
-              )}
+              ) : null}
             </div>
           )}
           
@@ -525,6 +627,7 @@ export default function BookDetailPage() {
         chapters={chapters}
         isOwner={isOwner}
         promotionPercent={computedPromotionPercent}
+        bookStatus={bookDetail?.status}
         onPurchaseSuccess={async (newlyPurchasedChapters) => {
           console.log("Newly purchased chapters:", newlyPurchasedChapters);
           // Cập nhật state ngay lập tức bằng cách thêm các chương vừa mua (tạm thời, sẽ reload từ API)
