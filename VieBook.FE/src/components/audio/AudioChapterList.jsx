@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RiVoiceprintLine, RiCheckboxCircleLine, RiPlayCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiShoppingCartLine, RiCloseLine, RiArrowLeftLine } from "react-icons/ri";
 import { API_ENDPOINTS } from "../../config/apiConfig";
-import { getUserId } from "../../api/authApi";
+import { getUserId, authFetch } from "../../api/authApi";
 import { getVoiceDisplayName } from "../../utils/voiceMapping";
 import { purchaseChapters } from "../../api/chapterPurchaseApi";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
@@ -30,6 +30,7 @@ export default function AudioChapterList({
   const [purchaseModal, setPurchaseModal] = useState({ open: false, chapter: null });
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [bookOwnerId, setBookOwnerId] = useState(null);
+  const [bookStatus, setBookStatus] = useState(null);
   const [promotionInfo, setPromotionInfo] = useState({
     hasPromotion: false,
     discountType: null,
@@ -46,11 +47,12 @@ export default function AudioChapterList({
       const fetchBookOwner = async () => {
         try {
           // Ưu tiên dùng BOOK_DETAIL để chắc chắn có thông tin promotion
-          let bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
+          // Sử dụng authFetch để gửi token, giúp backend lấy userId và cho phép truy cập sách đã mua dù bị tạm dừng
+          let bookRes = await authFetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
 
           // Nếu BOOK_DETAIL lỗi, fallback sang AUDIO_BOOK_DETAIL
           if (!bookRes.ok) {
-            bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
+            bookRes = await authFetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
           }
 
           if (bookRes.ok) {
@@ -58,6 +60,9 @@ export default function AudioChapterList({
 
             // Lấy OwnerId từ BookDetailDTO (theo backend: OwnerId là int)
             const ownerId = bookData.OwnerId || bookData.ownerId || null;
+
+            // Lấy Status của sách
+            const status = bookData.Status || bookData.status || null;
 
             // Lấy thông tin promotion nếu có (HasPromotion, DiscountType, DiscountValue)
             const hasPromotion = bookData.HasPromotion ?? bookData.hasPromotion ?? false;
@@ -69,12 +74,14 @@ export default function AudioChapterList({
               OwnerId: bookData.OwnerId,
               ownerId: bookData.ownerId,
               finalOwnerId: ownerId,
+              status: status,
               hasPromotion,
               discountType,
               discountValue,
             });
 
             setBookOwnerId(ownerId);
+            setBookStatus(status);
             setPromotionInfo({
               hasPromotion: !!hasPromotion,
               discountType,
@@ -146,6 +153,13 @@ export default function AudioChapterList({
 
   const handlePurchase = async () => {
     if (!purchaseModal.chapter || !bookId) return;
+    
+    // Kiểm tra nếu sách đang ở trạng thái InActive thì không cho mua
+    if (bookStatus === "InActive") {
+      toast.error("Sách đang tạm dừng, không thể mua chương");
+      setPurchaseModal({ open: false, chapter: null });
+      return;
+    }
     
     // Kiểm tra nếu là owner của chapter audio hoặc sách thì không cho mua
     const chapterAudiosForModal = chapterAudios[purchaseModal.chapter.chapterId] || [];
@@ -387,8 +401,8 @@ export default function AudioChapterList({
                     </div>
                   </div>
                   
-                  {/* Nút mua ngay - chỉ hiện khi đã đăng nhập, chưa mua, không phải owner của chapter audio và không phải free */}
-                  {isLoggedIn && !isChapterOwner && !isOwned && !isFree && chapter.priceAudio > 0 && (
+                  {/* Nút mua ngay - chỉ hiện khi đã đăng nhập, chưa mua, không phải owner của chapter audio, không phải free, và sách không ở trạng thái InActive */}
+                  {isLoggedIn && !isChapterOwner && !isOwned && !isFree && chapter.priceAudio > 0 && bookStatus !== "InActive" && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

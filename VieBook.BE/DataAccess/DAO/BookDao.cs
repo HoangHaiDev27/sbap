@@ -17,10 +17,21 @@ namespace DataAccess.DAO
             _context = context;
         }
 
-        public async Task<Book?> GetBookDetailAsync(int id)
+        public async Task<Book?> GetBookDetailAsync(int id, int? userId = null)
         {
+            // Kiểm tra xem user đã mua sách chưa (nếu có userId)
+            bool hasPurchased = false;
+            if (userId.HasValue)
+            {
+                hasPurchased = await _context.OrderItems
+                    .AnyAsync(oi => oi.CustomerId == userId.Value 
+                        && oi.Chapter.BookId == id 
+                        && oi.PaidAt != null);
+            }
+
+            // Nếu user đã mua, cho phép lấy sách dù bị tạm dừng
             var book = await _context.Books
-                            .Where(b => b.Status == "Approved")
+                            .Where(b => b.BookId == id && (b.Status == "Approved" || (hasPurchased && b.Status == "InActive")))
                             .Include(b => b.Owner).ThenInclude(o => o.UserProfile)
                             .Include(b => b.Categories)
                             .Include(b => b.Chapters)
@@ -28,15 +39,36 @@ namespace DataAccess.DAO
                             .Include(b => b.BookReviews)
                                 .ThenInclude(r => r.User)
                                 .ThenInclude(u => u.UserProfile)
-                            .FirstOrDefaultAsync(b => b.BookId == id);
+                            .FirstOrDefaultAsync();
 
             if (book != null && book.Chapters != null)
             {
-                // Chỉ giữ các chapter có Status = "Active" để phục vụ màn hình mua/đọc
-                book.Chapters = book.Chapters
-                    .Where(c => c.Status == "Active")
-                    .OrderBy(c => c.ChapterId)
-                    .ToList();
+                // Nếu user đã mua, cho phép lấy cả chapters đã mua dù bị tạm dừng
+                if (hasPurchased && userId.HasValue)
+                {
+                    // Lấy danh sách chapter IDs đã mua
+                    var purchasedChapterIds = await _context.OrderItems
+                        .Where(oi => oi.CustomerId == userId.Value 
+                            && oi.Chapter.BookId == id 
+                            && oi.PaidAt != null)
+                        .Select(oi => oi.ChapterId)
+                        .Distinct()
+                        .ToListAsync();
+
+                    // Giữ các chapter Active hoặc đã mua
+                    book.Chapters = book.Chapters
+                        .Where(c => c.Status == "Active" || purchasedChapterIds.Contains(c.ChapterId))
+                        .OrderBy(c => c.ChapterId)
+                        .ToList();
+                }
+                else
+                {
+                    // Chỉ giữ các chapter có Status = "Active" để phục vụ màn hình mua/đọc
+                    book.Chapters = book.Chapters
+                        .Where(c => c.Status == "Active")
+                        .OrderBy(c => c.ChapterId)
+                        .ToList();
+                }
             }
 
             return book;

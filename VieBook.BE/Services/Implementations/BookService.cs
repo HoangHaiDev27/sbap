@@ -25,9 +25,9 @@ namespace Services.Implementations
             _mapper = mapper;
         }
 
-        public async Task<BookDetailDTO?> GetBookDetailAsync(int id)
+        public async Task<BookDetailDTO?> GetBookDetailAsync(int id, int? userId = null)
         {
-            var book = await _bookRepo.GetBookDetailAsync(id);
+            var book = await _bookRepo.GetBookDetailAsync(id, userId);
             if (book == null) return null;
             
             var bookDetailDto = _mapper.Map<BookDetailDTO>(book);

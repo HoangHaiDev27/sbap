@@ -221,8 +221,8 @@ namespace BusinessObject.Helper
         public static bool IsContextOnly(double contentWordOverlap, int phraseOverlap, int inputWordCount)
         {
             // Very low thresholds to filter out general topic similarity
-            const double contentWordThreshold = 0.05; // 5% word overlap
-            const double phraseThresholdRatio = 0.01; // 1% phrase overlap ratio
+            const double contentWordThreshold = 0.05; // Tỷ lệ trùng lặp từ nội dung thấp hơn 5%.
+            const double phraseThresholdRatio = 0.01; // Tỷ lệ trùng lặp từ ngữ thấp hơn 1%.
 
             var phraseThreshold = Math.Max(1, (int)(inputWordCount * phraseThresholdRatio));
 

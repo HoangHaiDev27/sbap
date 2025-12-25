@@ -4,7 +4,7 @@ import AudioPlayerContent from "./AudioPlayerContent";
 import AudioChapterList from "./AudioChapterList";
 import { saveReadingProgress, getCurrentReadingProgress } from "../../api/readingHistoryApi";
 import { API_ENDPOINTS } from "../../config/apiConfig";
-import { getUserId } from "../../api/authApi";
+import { getUserId, authFetch } from "../../api/authApi";
 import { getMyPurchases } from "../../api/chapterPurchaseApi";
 import toast from "react-hot-toast";
 
@@ -46,9 +46,10 @@ export default function AudioPlayer({ bookId, chapterId }) {
         setLoading(true);
         setError(null);
 
-        let bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
+        // Sử dụng authFetch để gửi token, giúp backend lấy userId và cho phép truy cập sách đã mua dù bị tạm dừng
+        let bookRes = await authFetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
         if (!bookRes.ok) {
-          bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
+          bookRes = await authFetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
         }
         if (!bookRes.ok) throw new Error("Không thể tải thông tin sách");
         const bookData = await bookRes.json();
@@ -86,7 +87,8 @@ export default function AudioPlayer({ bookId, chapterId }) {
           }
         }
 
-        const chaptersRes = await fetch(API_ENDPOINTS.CHAPTERS.GET_BY_BOOK_ID(bookId));
+        // Sử dụng authFetch để gửi token, giúp backend lấy userId và cho phép truy cập chapters đã mua dù bị tạm dừng
+        const chaptersRes = await authFetch(API_ENDPOINTS.CHAPTERS.GET_BY_BOOK_ID(bookId));
         if (!chaptersRes.ok) throw new Error("Không thể tải danh sách chương");
         const chaptersData = await chaptersRes.json();
 
