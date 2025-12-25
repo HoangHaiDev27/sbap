@@ -118,6 +118,7 @@ export const API_ENDPOINTS = {
   CHAPTER_PURCHASE: {
     PURCHASE: `${API_BASE_URL}/api/chapterpurchase/purchase`,
     CHECK_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-ownership`,
+    CHECK_AUDIO_OWNERSHIP: `${API_BASE_URL}/api/chapterpurchase/check-audio-ownership`,
     MY_PURCHASES: `${API_BASE_URL}/api/chapterpurchase/my-purchases`,
   },
 
