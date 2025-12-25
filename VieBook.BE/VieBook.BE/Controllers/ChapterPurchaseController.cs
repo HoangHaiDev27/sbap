@@ -83,6 +83,28 @@ namespace VieBook.BE.Controllers
                 return StatusCode(500, new Response(-1, $"Internal server error: {ex.Message}", null));
             }
         }
+
+        [HttpGet("check-audio-ownership/{chapterId}")]
+        public async Task<IActionResult> CheckChapterAudioOwnership(int chapterId)
+        {
+            try
+            {
+                // Lấy userId từ JWT token
+                var userId = UserHelper.GetCurrentUserId(HttpContext);
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new Response(-1, "User not authenticated", null));
+                }
+
+                var isOwned = await _chapterPurchaseService.CheckChapterAudioOwnershipAsync(userId.Value, chapterId);
+
+                return Ok(new Response(0, "Success", new { isOwned }));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new Response(-1, $"Internal server error: {ex.Message}", null));
+            }
+        }
         [Authorize(Roles = "Customer,Owner")]
         [HttpGet("my-purchases")]
         public async Task<IActionResult> GetMyPurchases()

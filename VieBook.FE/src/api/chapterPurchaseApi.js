@@ -40,6 +40,17 @@ export async function checkChapterOwnership(chapterId) {
   return res.json();
 }
 
+// Kiểm tra quyền sở hữu audio chapter
+export async function checkChapterAudioOwnership(chapterId) {
+  const res = await authFetch(`${API_ENDPOINTS.CHAPTER_PURCHASE.CHECK_AUDIO_OWNERSHIP}/${chapterId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return res.json();
+}
+
 // Lấy danh sách chapters đã mua
 export async function getMyPurchases() {
   const res = await authFetch(API_ENDPOINTS.CHAPTER_PURCHASE.MY_PURCHASES, {
