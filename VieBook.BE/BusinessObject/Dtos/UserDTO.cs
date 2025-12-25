@@ -14,6 +14,8 @@ namespace BusinessObject.Dtos
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public decimal Wallet { get; set; }
+        public string? FullName { get; set; }
+        public string? AvatarUrl { get; set; }
     }
 
     public class UserNameDTO

@@ -562,15 +562,15 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center overflow-hidden">
-                {post.author?.userProfile?.avatarUrl ? (
-                  <img src={post.author.userProfile.avatarUrl} alt={post.author.fullName} className="w-full h-full object-cover" />
+                {post.author?.avatarUrl ? (
+                  <img src={post.author.avatarUrl} alt={post.author.fullName || "Người dùng"} className="w-full h-full object-cover" />
                 ) : (
                   <RiUserLine className="text-slate-400" size={20} />
                 )}
               </div>
               <div className="flex-grow min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-medium text-white truncate">{post.author?.fullName || post.author?.email || "Người dùng"}</h3>
+                  <h3 className="font-medium text-white truncate">{post.author?.fullName || "Người dùng"}</h3>
                   <button className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded transition-colors flex-shrink-0">
                     {post.author?.role || "Thành viên"}
                   </button>
@@ -665,24 +665,42 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
             </h2>
             <p className="text-slate-300 leading-relaxed">{post.content || ""}</p>
             
-            {/* Post Attachments (Images) */}
+            {/* Post Attachments (Images and Videos) */}
             {post.attachments && post.attachments.length > 0 && (
               <div className="mt-4 space-y-2">
-                {post.attachments
-                  .filter(att => att.fileType === "Image" || att.fileType === "image" || !att.fileType)
-                  .map((attachment, index) => (
+                {post.attachments.map((attachment, index) => {
+                  const fileType = (attachment.fileType || "").toLowerCase();
+                  const isVideo = fileType === "video" || attachment.fileUrl?.match(/\.(mp4|webm|mov|avi)$/i);
+                  const isImage = fileType === "image" || !fileType || !isVideo;
+                  
+                  return (
                     <div key={attachment.attachmentId || index} className="rounded-lg overflow-hidden border border-slate-600">
-                      <img 
-                        src={attachment.fileUrl} 
-                        alt={`Attachment ${index + 1}`}
-                        className="w-full h-auto max-h-96 object-contain bg-slate-700"
-                        onError={(e) => {
-                          console.error("Failed to load image:", attachment.fileUrl);
-                          e.target.style.display = "none";
-                        }}
-                      />
+                      {isVideo ? (
+                        <video 
+                          src={attachment.fileUrl} 
+                          controls
+                          className="w-full h-auto max-h-96 object-contain bg-slate-700"
+                          onError={(e) => {
+                            console.error("Failed to load video:", attachment.fileUrl);
+                            e.target.style.display = "none";
+                          }}
+                        >
+                          Trình duyệt của bạn không hỗ trợ video.
+                        </video>
+                      ) : isImage ? (
+                        <img 
+                          src={attachment.fileUrl} 
+                          alt={`Attachment ${index + 1}`}
+                          className="w-full h-auto max-h-96 object-contain bg-slate-700"
+                          onError={(e) => {
+                            console.error("Failed to load image:", attachment.fileUrl);
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      ) : null}
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -905,8 +923,8 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                     <div key={cmt.commentId} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 hover:border-slate-500 transition-colors">
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {cmt.user?.userProfile?.avatarUrl ? (
-                            <img src={cmt.user.userProfile.avatarUrl} alt={cmt.user.fullName} className="w-full h-full object-cover" />
+                          {cmt.user?.avatarUrl ? (
+                            <img src={cmt.user.avatarUrl} alt={cmt.user.fullName || "Người dùng"} className="w-full h-full object-cover" />
                           ) : (
                             <RiUserLine className="text-slate-400" size={18} />
                           )}
@@ -914,7 +932,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-white font-semibold text-sm">
-                              {cmt.user?.fullName || cmt.user?.email || "Người dùng"}
+                              {cmt.user?.fullName || "Người dùng"}
                             </p>
                             <span className="text-xs text-slate-400">{getTimeAgo(cmt.createdAt)}</span>
                           </div>
@@ -935,7 +953,7 @@ export default function PostList({ activeTab = "all", searchQuery = "", tag = nu
                                 <div key={rep.commentId} className="bg-slate-600/50 rounded-lg p-3 border border-slate-500/50">
                                   <div className="flex items-center gap-2 mb-1">
                                     <p className="text-sm text-white font-semibold">
-                                      {rep.user?.fullName || rep.user?.email || "Người dùng"}
+                                      {rep.user?.fullName || "Người dùng"}
                                     </p>
                                     <span className="text-xs text-slate-400">{getTimeAgo(rep.createdAt)}</span>
                                   </div>

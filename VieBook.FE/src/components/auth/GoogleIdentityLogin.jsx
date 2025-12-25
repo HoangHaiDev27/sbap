@@ -1,12 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 
-const GoogleIdentityLogin = ({ onSuccess, onError }) => {
+const GoogleIdentityLogin = memo(({ onSuccess, onError }) => {
   const buttonRef = useRef(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const retryCountRef = useRef(0);
   const maxRetries = 50; // 50 * 200ms = 10 seconds max wait time
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
+    // Only initialize once
+    if (hasInitializedRef.current) return;
     // Cleanup function to prevent memory leaks
     let retryTimeout = null;
     let isMounted = true;
@@ -44,6 +47,7 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
               });
               console.log('[Google Login] Button rendered successfully');
               setIsInitialized(true);
+              hasInitializedRef.current = true;
             } catch (renderError) {
               console.error('[Google Login] Button render error:', renderError);
               if (onError && isMounted) onError('Lỗi render nút Google');
@@ -100,7 +104,7 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
         clearTimeout(retryTimeout);
       }
     };
-  }, [onError]); // Removed isInitialized from dependencies to prevent infinite loop
+  }, []); // Only run once on mount
 
   const handleGoogleResponse = (response) => {
     console.log('[Google Login] Response received');
@@ -283,6 +287,8 @@ const GoogleIdentityLogin = ({ onSuccess, onError }) => {
       ></div>
     </div>
   );
-};
+});
+
+GoogleIdentityLogin.displayName = 'GoogleIdentityLogin';
 
 export default GoogleIdentityLogin;

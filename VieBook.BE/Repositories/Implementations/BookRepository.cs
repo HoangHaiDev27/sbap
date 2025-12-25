@@ -22,18 +22,17 @@ namespace Repositories.Implementations
         public Task<List<Book>> GetAllAsync() => _bookDao.GetAllAsync();
         public Task<List<Book>> GetAllInforAsync() => _bookDao.GetAllInforAsync();
         public Task<Book?> GetByIdAsync(int id) => _bookDao.GetByIdAsync(id);
-        public async Task<Book?> GetBookDetailAsync(int id)
+        public async Task<Book?> GetBookDetailAsync(int id, int? userId = null)
         {
-            // Lấy thông tin sách (đã include các navigation cần thiết)
-            var book = await _bookDao.GetBookDetailAsync(id);
+            // Lấy thông tin sách (đã include các navigation cần thiết và đã lọc chapters trong BookDao)
+            var book = await _bookDao.GetBookDetailAsync(id, userId);
             if (book == null)
             {
                 return null;
             }
 
-            // Thay thế danh sách chapters bằng các chapter có Status = "Active"
-            var activeChapters = await _bookDao.GetChaptersActiveByBookIdAsync(id);
-            book.Chapters = activeChapters;
+            // Chapters đã được lọc trong BookDao (Active hoặc đã mua nếu user đã mua)
+            // Không cần ghi đè lại
 
             return book;
         }
@@ -144,7 +143,7 @@ namespace Repositories.Implementations
         {
             return await _bookDao.GetStatsForStaffAsync(searchTerm, statusFilter, categoryId);
         }
-
+    
         public async Task<List<Book>> GetBooksByIdsAsync(List<int> bookIds)
         {
             return await _bookDao.GetBooksByIdsAsync(bookIds);

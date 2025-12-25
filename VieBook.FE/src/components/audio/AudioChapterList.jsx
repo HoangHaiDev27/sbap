@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RiVoiceprintLine, RiCheckboxCircleLine, RiPlayCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiShoppingCartLine, RiCloseLine, RiArrowLeftLine } from "react-icons/ri";
 import { API_ENDPOINTS } from "../../config/apiConfig";
-import { getUserId } from "../../api/authApi";
+import { getUserId, authFetch } from "../../api/authApi";
 import { getVoiceDisplayName } from "../../utils/voiceMapping";
 import { purchaseChapters } from "../../api/chapterPurchaseApi";
 import { useCoinsStore } from "../../hooks/stores/coinStore";
@@ -46,11 +46,12 @@ export default function AudioChapterList({
       const fetchBookOwner = async () => {
         try {
           // Ưu tiên dùng BOOK_DETAIL để chắc chắn có thông tin promotion
-          let bookRes = await fetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
+          // Sử dụng authFetch để gửi token, giúp backend lấy userId và cho phép truy cập sách đã mua dù bị tạm dừng
+          let bookRes = await authFetch(API_ENDPOINTS.BOOK_DETAIL(bookId));
 
           // Nếu BOOK_DETAIL lỗi, fallback sang AUDIO_BOOK_DETAIL
           if (!bookRes.ok) {
-            bookRes = await fetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
+            bookRes = await authFetch(API_ENDPOINTS.AUDIO_BOOK_DETAIL(bookId));
           }
 
           if (bookRes.ok) {
